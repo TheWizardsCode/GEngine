@@ -38,7 +38,7 @@ and persist state.
 | `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district. |
 | `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                         |
 | `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                       |
-| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                |
+| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                 |
 | `exit` / `quit`        | Leave the shell.                                                                                                                                                 |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
@@ -84,6 +84,11 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   (stability, unrest, pollution, security, climate risk).
 - The tick report shows the tick number, global metrics, and notable events
   (e.g., "Industrial Tier pollution spike detected").
+- Agent AI (Phase 4, M4.1) now contributes narrative lines such as "Aria Volt
+  inspects Industrial Tier" or "Cassian Mire negotiates with Cartel of Mist";
+  use these to understand how background characters are reacting to system
+  pressures. The system ensures each tick includes at least one inspect or
+  negotiate beat so the feed always surfaces a strategic highlight.
 
 ### District Overview
 
@@ -285,7 +290,9 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
   `limits.engine_max_ticks` batches and printing per-batch diagnostics to
   stderr.
 - Summaries include tick counts, total duration, LOD mode, and the final
-  environment snapshot. Store the JSON outputs in version control to diff
+  environment snapshot. The JSON now also tracks the number of agent actions
+  and a per-intent breakdown so you can spot systemic shifts between builds.
+  Store the JSON outputs in version control to diff
   systemic changes over time.
 - Use `--seed` for deterministic comparisons and `--config-root` to point at a
   CI-specific configuration folder.

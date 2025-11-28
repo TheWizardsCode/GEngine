@@ -4,3 +4,10 @@
 [2025-11-28 15:32 UTC] Planning M3.5 headless driver: add scripts/run_headless_sim.py with chunked tick loops, JSON summary output, CLI args for world/ticks/lod, plus docs/tests updates.
 [2025-11-28 15:55 UTC] Implemented headless driver, new tests, and documentation updates; ready to merge M3.5 deliverable.
 [2025-11-28 16:05 UTC] Planning Phase 4 scope: break down agent AI, faction AI, economy, environment work into actionable milestones with dependencies, test strategy, and data updates before implementation.
+[2025-11-28 16:08 UTC] Began M4.1 Agent AI work on branch feature/m4-1-agent-ai; plan to extend agent schema, add systems/agents subsystem, telemetry, and regression tests.
+[2025-11-28 16:22 UTC] Investigating reported issues in AgentSystem (HEAD 7ff64328) to unblock M4.1 and ensure telemetry/tests stay accurate.
+[2025-11-28 16:30 UTC] Running full pytest suite on feature/m4-1-agent-ai (HEAD 7ff64328) and capturing telemetry for QA records once green.
+[2025-11-28 16:37 UTC] Pytest sweep passed (39 tests). Captured balanced LOD telemetry via run_headless_sim (ticks=200, seed=42) to build/m4-1-agent-telemetry.json for regression tracking.
+[2025-11-28 16:42 UTC] Documenting telemetry workflow (README, implementation plan, gamedev agent instructions) so every regression run captures canonical headless metrics.
+[2025-11-28 16:48 UTC] Preparing to merge feature/m4-1-agent-ai into main (HEAD 7ff64328) and spin up new branch for M4.2 per workflow instructions.
+[2025-11-28 16:52 UTC] Re-ran full pytest suite (39 green) post-doc updates; staging telemetry + M4.1 assets for merge.

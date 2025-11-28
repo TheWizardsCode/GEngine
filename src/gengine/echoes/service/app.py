@@ -102,4 +102,5 @@ def _serialize_report(report: TickReport) -> dict[str, Any]:
         "events": list(report.events),
         "environment": dict(report.environment),
         "districts": [dict(district) for district in report.districts],
+        "agent_actions": list(report.agent_actions),
     }

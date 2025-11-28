@@ -94,6 +94,9 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   - Personal state (needs, health, wealth, relationships).
   - City blackboard: global facts such as resource prices, crime level, pollution, policies.
   - Social graph: relationships, trust, fear, obligations.
+- Early-phase implementations guarantee at least one highly legible
+  reconnaissance or negotiation action per tick so playtesters always see
+  strategic agent beats in the log, even before deeper goal stacks ship.
 
 **Examples of Emergent Behaviors:**
 
@@ -227,10 +230,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 
 **Perspective & Controls:**
 
-  - **City Map:** ASCII grid of districts, control zones, environmental heatmaps expressed via characters/shading.
-  - **Relationships Graph:** text lists and simple ASCII node-edge diagrams.
-  - **Faction Influence Map:** textual summaries and bar-like ASCII charts.
-  - **Event Feed:** scrolling log of headlines, rumors, and system alerts.
+- **City Map:** ASCII grid of districts, control zones, environmental heatmaps expressed via characters/shading.
+- **Relationships Graph:** text lists and simple ASCII node-edge diagrams.
+- **Faction Influence Map:** textual summaries and bar-like ASCII charts.
+- **Event Feed:** scrolling log of headlines, rumors, and system alerts.
 
 **Legibility & Feedback:**
 

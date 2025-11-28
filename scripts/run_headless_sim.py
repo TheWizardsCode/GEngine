@@ -53,6 +53,8 @@ def run_headless_sim(
         "duration_ms": round(duration_ms, 2),
         "batches": batches,
         "events_emitted": sum(len(report.events) for report in reports),
+        "agent_actions": sum(len(report.agent_actions) for report in reports),
+        "agent_intent_breakdown": _intent_breakdown(reports),
     }
     if reports:
         summary["last_environment"] = reports[-1].environment
@@ -85,6 +87,7 @@ def _advance_in_batches(
                 "batch": batch_index,
                 "ticks": len(step_reports),
                 "ending_tick": step_reports[-1].tick if step_reports else engine.state.tick,
+                "agent_actions": sum(len(report.agent_actions) for report in step_reports),
             }
         )
         _emit_batch_log(batch_index, step_reports)
@@ -103,8 +106,18 @@ def _emit_batch_log(batch_index: int, reports: list[TickReport]) -> None:
     sys.stderr.write(
         f"[batch {batch_index}] tick={last.tick} "
         f"stb={env['stability']:.2f} unrest={env['unrest']:.2f} "
-        f"poll={env['pollution']:.2f} events={len(last.events)}\n"
+        f"poll={env['pollution']:.2f} events={len(last.events)} "
+        f"agent_actions={len(last.agent_actions)}\n"
     )
+
+
+def _intent_breakdown(reports: Sequence[TickReport]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for report in reports:
+        for action in report.agent_actions:
+            intent = action.get("intent", "unknown")
+            counts[intent] = counts.get(intent, 0) + 1
+    return counts
 
 
 def _load_config(config_root: Path | None, lod_mode: str | None) -> SimulationConfig:

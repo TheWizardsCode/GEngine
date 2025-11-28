@@ -11,6 +11,7 @@ from ..content import load_world_bundle
 from ..core import GameState
 from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
+from ..systems import AgentSystem
 from .tick import TickReport, advance_ticks as _advance_ticks
 
 ViewName = Literal["summary", "snapshot", "district"]
@@ -34,6 +35,7 @@ class SimEngine:
     ) -> None:
         self._state = state
         self._config = config or load_simulation_config()
+        self._agent_system = AgentSystem()
 
     # ------------------------------------------------------------------
     @property
@@ -77,7 +79,13 @@ class SimEngine:
             )
 
         start = perf_counter()
-        reports = _advance_ticks(self.state, count, seed=seed, lod=self._config.lod)
+        reports = _advance_ticks(
+            self.state,
+            count,
+            seed=seed,
+            lod=self._config.lod,
+            agent_system=self._agent_system,
+        )
         duration_ms = (perf_counter() - start) * 1000
         if self._config.profiling.log_ticks:
             logger.info(

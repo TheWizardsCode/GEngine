@@ -18,6 +18,7 @@ class TickReport:
     events: List[str] = field(default_factory=list)
     environment: dict[str, float] = field(default_factory=dict)
     districts: List[dict[str, float]] = field(default_factory=list)
+    agent_actions: List[dict[str, str]] = field(default_factory=list)
 
 
 def advance_ticks(
@@ -26,6 +27,7 @@ def advance_ticks(
     *,
     seed: int | None = None,
     lod: LodSettings | None = None,
+    agent_system: object | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -41,6 +43,8 @@ def advance_ticks(
 
     for _ in range(count):
         events: List[str] = []
+        agent_intents = _run_agent_system(agent_system, state, rng)
+        events.extend(_summarize_agent_actions(agent_intents))
         _update_resources(state, rng, events, scale)
         _update_district_modifiers(state, rng, events, scale)
         _update_environment(state, rng, events, scale)
@@ -52,6 +56,7 @@ def advance_ticks(
                 events=events,
                 environment=_environment_snapshot(state),
                 districts=_district_snapshot(state),
+                agent_actions=[action.to_report() for action in agent_intents],
             )
         )
 
@@ -177,3 +182,33 @@ def _enforce_event_budget(events: List[str], budget: int | None) -> None:
         return
     del events[budget:]
     events.append("Additional events suppressed by LOD budget")
+
+
+def _run_agent_system(agent_system: object | None, state: GameState, rng: random.Random):
+    if agent_system is None:
+        return []
+    try:
+        return agent_system.tick(state, rng=rng)
+    except Exception:  # pragma: no cover - defensive safeguard
+        return []
+
+
+def _summarize_agent_actions(actions: Sequence) -> List[str]:
+    summaries: List[str] = []
+    for action in actions:
+        agent_name = getattr(action, "agent_name", getattr(action, "agent_id", "Agent"))
+        intent = getattr(action, "intent", "")
+        target = getattr(action, "target_name", getattr(action, "target", ""))
+        if intent == "STABILIZE_UNREST":
+            summaries.append(f"{agent_name} eases unrest in {target}")
+        elif intent == "SUPPORT_SECURITY":
+            summaries.append(f"{agent_name} reinforces security in {target}")
+        elif intent == "NEGOTIATE_FACTION":
+            summaries.append(f"{agent_name} negotiates with {target}")
+        elif intent == "INSPECT_DISTRICT":
+            summaries.append(f"{agent_name} inspects {target}")
+        elif intent == "REQUEST_REPORT":
+            summaries.append(f"{agent_name} files a report on {target}")
+        else:
+            summaries.append(f"{agent_name} acts in {target}")
+    return summaries

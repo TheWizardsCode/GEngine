@@ -32,6 +32,12 @@ run locally.
   safeguards (CLI run cap, script limits, service tick cap), Level-of-Detail
   mode, and profiling toggles. `SimEngine` enforces these caps and logs tick
   timing when profiling is enabled.
+- Agent AI subsystem (Phase 4, M4.1) that evaluates authored agents each tick
+  and emits utility-based intents (inspect districts, stabilize unrest,
+  negotiate with factions). At least one reconnaissance/negotiation beat is
+  forced into every tick so logs and telemetry always surface a strategic
+  action. Summaries of these actions appear in tick logs,
+  service responses, and headless regression outputs for easy inspection.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions.
@@ -87,6 +93,18 @@ uv run --group dev pytest --cov=gengine --cov-report=term-missing
 The command above enables `pytest-cov`, producing line-level coverage in the
 terminal while reusing the same virtualenv/dev dependency group.
 
+### Regression Telemetry
+
+After every full pytest run, capture deterministic telemetry so reviewers can
+diff agent/faction behavior over time:
+
+```bash
+uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-1-agent-telemetry.json
+```
+
+Archive the JSON alongside the test results (commit or attach in review) so the
+canonical seed/tick profile is always available for comparison.
+
 ## Inspecting the Default World
 
 ```bash
@@ -133,6 +151,9 @@ Available in-shell commands:
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot (local engine mode only).
 - `exit`/`quit` – leave the shell.
+- Tick reports now include agent activity lines such as "Aria Volt inspects
+  Industrial Tier" or "Cassian Mire negotiates with Cartel of Mist", reflecting
+  the new agent subsystem.
 
 If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
 shell halts automatically and prints a safeguard warning so runaway loops do
@@ -208,7 +229,7 @@ Key flags:
 - `--snapshot`: start from a saved snapshot instead of content.
 - `--config-root`: point at an alternate config folder (useful in CI).
 - `--output`: path for the structured summary (includes tick counts, timing,
-  LOD mode, and last environment metrics).
+  LOD mode, agent intent breakdown, and last environment metrics).
 
 ## Next Steps
 

@@ -111,7 +111,10 @@ A staged implementation that builds a solid simulation core, then layers on agen
 - Testing: unit tests per subsystem (agents, economy, etc.), property tests for
   conservation rules, contract tests for `/tick` and `/actions`, golden-master
   tests for ASCII renderings, and scenario scripts (`scripts/run_scenario.py`)
-  that simulate multi-day campaigns.
+  that simulate multi-day campaigns. After every full pytest run, capture the
+  canonical telemetry artifact via
+  `scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-1-agent-telemetry.json`
+  so regressions always include a comparable metrics snapshot.
 - Observability: structured JSON logs with session/tick ids, Prometheus metrics
   for tick latency, agent counts, LLM latency, and intent failure rates, plus
   OpenTelemetry tracing that links CLI requests to LLM calls and simulation
@@ -281,24 +284,29 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
 #### Phase 4 Execution Plan
 
 - **M4.1 Agent AI (Deliverable: `systems/agents.py`)**
+
   - Expand YAML schema to capture needs/goals/memory slots; update validation script + fixtures.
   - Implement deterministic agent brain (utility model with seeded randomness) that consumes `GameState` slices and emits intents (inspect, negotiate, deploy_resource) recorded in a per-tick log.
+  - Guarantee each tick surfaces at least one "strategic" action (inspect or negotiate) so CLI/service/headless outputs always include a high-signal agent beat.
   - Surface agent telemetry in headless summaries (`run_headless_sim.py`) to validate aggregate behavior.
   - Tests: unit tests for decision scoring, property tests for deterministic outputs given identical seeds, CLI regression snapshot ensuring summaries reference new agent activity counts.
 
 - **M4.2 Faction AI (Deliverable: `systems/factions.py`)**
+
   - Model faction resources/legitimacy deltas per tick and implement strategic actions (lobby, recruit, sabotage, invest) with cooldowns.
   - Add conflict resolution layer so faction actions can transform agent/faction state and city modifiers.
   - Emit structured events for the CLI/service to surface (extend `/state?detail=summary`).
   - Tests: scenario tests where a faction loses legitimacy after repeated unrest, API contract tests ensuring `/metrics` reflects faction deltas.
 
 - **M4.3 Economy Subsystem (Deliverable: `systems/economy.py`)**
+
   - Introduce production/consumption matrices per district resource, plus global market prices derived from supply/demand curves.
   - Wire conservation checks into tick loop to prevent negative stocks; raise warnings when shortages persist N ticks.
   - Persist economic config knobs via `content/config/economy.yml` for tuning.
   - Tests: golden tests for economic drift, property tests verifying resources never exceed capacity or drop below zero.
 
 - **M4.4 Environment Dynamics (Deliverable: `systems/environment.py`)**
+
   - Model pollutant sources/sinks, biodiversity health, and climate events that respond to economy + faction actions.
   - Integrate with LOD settings so coarse mode aggregates environment updates while detailed mode runs district-level diffusion.
   - Extend CLI `summary`/`map` output with new environment indicators and warnings.
