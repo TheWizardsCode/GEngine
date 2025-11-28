@@ -62,5 +62,8 @@ environment:
   district_pollution_weight: 0.0001
   scarcity_event_threshold: 2.2
   diffusion_rate: 0.08
+  diffusion_neighbor_bias: 0.5
+  diffusion_min_delta: 0.0002
+  diffusion_max_delta: 0.01
   faction_invest_pollution_relief: 0.03
   faction_sabotage_pollution_spike: 0.015

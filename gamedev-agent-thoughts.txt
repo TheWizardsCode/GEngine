@@ -178,3 +178,5 @@
 727e630: Ran `uv run --group dev pytest` after the dependency refresh—93 tests passed, confirming the new tooling did not upset existing coverage.
 727e630: Smoke-tested the plotting workflow via `uv run python scripts/plot_environment_trajectories.py --output build/phase4-deepening-trajectories.png`, producing the comparison figure for review.
 727e630: Updated README, GDD, implementation plan, and gameplay guide with the new telemetry plotting workflow so designers have consistent instructions across surfaces.
+727e630: Added adjacency-biased diffusion clamps plus telemetry surfacing—EnvironmentSettings/EnvironmentSystem now support neighbor bias + min/max deltas, CLI summary prints averages/extremes/sample deltas, configs expose the knobs, and tests cover the new reporting.
+727e630: Re-ran `uv run --group dev pytest` (93 passed) after the diffusion telemetry updates to keep the validation log complete.

@@ -124,3 +124,41 @@ def test_environment_system_runs_diffusion_cycle() -> None:
 
     assert impact.diffusion_applied is True
     assert impact.district_deltas
+
+
+def test_environment_diffusion_reports_extremes_and_samples() -> None:
+    state = load_world_bundle()
+    if len(state.city.districts) < 2:
+        pytest.skip("requires at least two districts")
+    first, second = state.city.districts[:2]
+    first.modifiers.pollution = 1.0
+    second.modifiers.pollution = 0.0
+    first.adjacent = [second.id]
+    second.adjacent = [first.id]
+    system = EnvironmentSystem(
+        settings=EnvironmentSettings(
+            diffusion_rate=0.5,
+            diffusion_neighbor_bias=1.0,
+            diffusion_min_delta=0.0001,
+            diffusion_max_delta=0.01,
+            scarcity_unrest_weight=0.0,
+            scarcity_pollution_weight=0.0,
+            district_unrest_weight=0.0,
+            district_pollution_weight=0.0,
+        )
+    )
+
+    impact = system.tick(
+        state,
+        rng=random.Random(11),
+        economy_report=EconomyReport(prices={}, shortages={}),
+    )
+
+    assert impact.diffusion_applied is True
+    assert impact.diffusion_samples
+    assert impact.extremes
+    assert impact.average_pollution == pytest.approx(
+        sum(d.modifiers.pollution for d in state.city.districts) / len(state.city.districts)
+    )
+    assert all(abs(sample["delta"]) <= 0.01 for sample in impact.diffusion_samples)
+    assert any(sample.get("neighbor_avg") is not None for sample in impact.diffusion_samples)

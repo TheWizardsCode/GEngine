@@ -294,6 +294,20 @@ def _render_summary(summary: dict[str, object]) -> str:
         lines.append(f"    scarcity pressure: {pressure:.2f}")
         if impact.get("diffusion_applied"):
             lines.append("    diffusion: active")
+        avg_pollution = impact.get("average_pollution")
+        if isinstance(avg_pollution, (int, float)):
+            lines.append(f"    avg pollution: {float(avg_pollution):.3f}")
+        extremes = impact.get("extremes") or {}
+        if isinstance(extremes, dict) and extremes:
+            max_info = extremes.get("max") or {}
+            min_info = extremes.get("min") or {}
+            if max_info and min_info:
+                lines.append(
+                    "    extremes: "
+                    f"max {max_info.get('district')} {float(max_info.get('pollution', 0.0)):.3f}"
+                    ", "
+                    f"min {min_info.get('district')} {float(min_info.get('pollution', 0.0)):.3f}"
+                )
         deltas = impact.get("district_deltas") or {}
         if deltas:
             sample_id, sample_delta = next(iter(deltas.items()))
@@ -301,6 +315,16 @@ def _render_summary(summary: dict[str, object]) -> str:
             lines.append(
                 f"    sample delta: {sample_id} pollution {poll_delta:+.3f}"
             )
+        diffusion_samples = impact.get("diffusion_samples") or []
+        if diffusion_samples:
+            preview = []
+            for sample in diffusion_samples[:2]:
+                delta = float(sample.get("delta", 0.0))
+                preview.append(
+                    f"{sample.get('district_id')}: {delta:+.3f}"
+                )
+            if preview:
+                lines.append(f"    diffusion samples: {', '.join(preview)}")
         faction_effects = impact.get("faction_effects") or []
         if faction_effects:
             preview = []
