@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Sequence
+from typing import Dict, List, Sequence, Tuple
 
 from ..core import GameState
-from ..core.models import District
+from ..core.models import District, DistrictCoordinates
 from ..settings import FocusSettings
+from .spatial import euclidean_distance
 
 
 @dataclass(slots=True)
@@ -44,6 +45,7 @@ class RankedEvent:
     severity: float
     focus_distance: int
     in_focus_ring: bool
+    district_id: str | None = None
 
     def to_payload(self) -> Dict[str, object]:
         return {
@@ -53,6 +55,7 @@ class RankedEvent:
             "severity": round(self.severity, 3),
             "focus_distance": self.focus_distance,
             "in_focus_ring": self.in_focus_ring,
+            "district_id": self.district_id,
         }
 
 
@@ -121,6 +124,8 @@ class FocusManager:
             "global_used": global_used,
             "total_budget": total_budget,
             "suppressed": len(suppressed),
+            "spatial_weights": focus_state.get("spatial_weights", []),
+            "spatial_metrics": focus_state.get("spatial_metrics") or {},
         }
         ranked_archive = self._rank_events(archive, focus_state)
         return FocusBudgetResult(
@@ -177,13 +182,14 @@ class FocusManager:
             empty = {"district_id": None, "neighbors": [], "ring": []}
             state.metadata["focus_state"] = empty
             return empty
+        center_id = payload.get("district_id") if isinstance(payload, dict) else None
+        if center_id and not any(d.id == center_id for d in districts):
+            payload = None
         if payload:
-            center_id = payload.get("district_id")
-            if center_id and not any(d.id == center_id for d in districts):
-                payload = None
+            payload = self._build_focus_payload(state, center_id)
         if not payload:
             payload = self._build_focus_payload(state, self._settings.default_district)
-            state.metadata["focus_state"] = payload
+        state.metadata["focus_state"] = payload
         return payload
 
     def _build_focus_payload(
@@ -195,12 +201,18 @@ class FocusManager:
         if not districts:
             return {"district_id": None, "neighbors": [], "ring": []}
         center = self._resolve_center(districts, district_id)
-        ring = self._build_ring(center, districts)
+        scoring, metrics = self._score_districts(center, districts)
+        ring = self._build_ring(center.id, scoring)
         neighbors = [did for did in ring if did != center.id]
+        coords = center.coordinates.model_dump() if center.coordinates else None
         return {
             "district_id": center.id,
             "neighbors": neighbors,
             "ring": ring,
+            "adjacent": list(center.adjacent),
+            "coordinates": coords,
+            "spatial_weights": scoring,
+            "spatial_metrics": metrics,
         }
 
     def _resolve_center(self, districts: Sequence[District], district_id: str | None) -> District:
@@ -214,14 +226,21 @@ class FocusManager:
             return lookup[default_id]
         return max(districts, key=lambda district: (district.population, district.id))
 
-    def _build_ring(self, center: District, districts: Sequence[District]) -> List[str]:
-        ring = [center.id]
+    def _build_ring(
+        self,
+        center_id: str,
+        scoring: Sequence[Dict[str, object]],
+    ) -> List[str]:
+        ring = [center_id]
         if self._settings.neighborhood_size <= 0:
             return ring
-        candidates = [d for d in districts if d.id != center.id]
-        candidates.sort(key=lambda district: (-district.population, district.id))
-        for district in candidates[: self._settings.neighborhood_size]:
-            ring.append(district.id)
+        for entry in scoring:
+            district_id = entry["district_id"]
+            if district_id == center_id:
+                continue
+            ring.append(district_id)
+            if len(ring) >= self._settings.neighborhood_size + 1:
+                break
         return ring
 
     def _resolve_total_budget(self, event_count: int, event_budget: int | None) -> int:
@@ -268,6 +287,7 @@ class FocusManager:
                     severity=severity,
                     focus_distance=distance,
                     in_focus_ring=bool(entry.district_id and entry.district_id in ring),
+                    district_id=entry.district_id,
                 )
             )
         ranked.sort(key=lambda item: item.score, reverse=True)
@@ -318,6 +338,75 @@ class FocusManager:
         if len(history) > limit:
             history = history[-limit:]
         state.metadata["focus_history"] = history
+
+    # ------------------------------------------------------------------
+    def _score_districts(
+        self,
+        center: District,
+        districts: Sequence[District],
+    ) -> Tuple[List[Dict[str, object]], Dict[str, object]]:
+        max_population = max((district.population for district in districts), default=0)
+        adjacency = set(center.adjacent)
+        distances = self._distance_lookup(center.coordinates, districts)
+        raw_max_distance = max(distances.values(), default=0.0)
+        normalized_max = raw_max_distance if raw_max_distance > 0 else self._settings.spatial_falloff
+        total_weight = max(
+            0.001,
+            self._settings.spatial_population_weight + self._settings.spatial_distance_weight,
+        )
+
+        results: List[Dict[str, object]] = []
+        for district in districts:
+            pop_rank = (district.population / max_population) if max_population else 0.0
+            dist_value = distances.get(district.id)
+            if dist_value is None:
+                distance_score = 0.5
+            else:
+                ratio = min(dist_value / normalized_max, 1.0)
+                distance_score = max(0.0, 1.0 - ratio)
+            base_score = (
+                pop_rank * self._settings.spatial_population_weight
+                + distance_score * self._settings.spatial_distance_weight
+            ) / total_weight
+            if district.id in adjacency:
+                base_score += self._settings.adjacency_bonus
+            score = max(0.0, base_score)
+            results.append(
+                {
+                    "district_id": district.id,
+                    "score": round(score, 4),
+                    "population_rank": round(pop_rank, 4),
+                    "distance": None if dist_value is None else round(dist_value, 4),
+                    "distance_score": round(distance_score, 4),
+                    "adjacent": district.id in adjacency,
+                }
+            )
+
+        results.sort(key=lambda item: (item["score"], item["population_rank"]), reverse=True)
+        metrics = {
+            "population_weight": self._settings.spatial_population_weight,
+            "distance_weight": self._settings.spatial_distance_weight,
+            "adjacency_bonus": self._settings.adjacency_bonus,
+            "distance_reference": raw_max_distance if distances else None,
+            "fallback_distance": None if distances else self._settings.spatial_falloff,
+        }
+        return results, metrics
+
+    def _distance_lookup(
+        self,
+        center: DistrictCoordinates | None,
+        districts: Sequence[District],
+    ) -> Dict[str, float]:
+        if center is None:
+            return {}
+        lookup: Dict[str, float] = {}
+        for district in districts:
+            coords = district.coordinates
+            distance = euclidean_distance(center, coords)
+            if distance is None:
+                continue
+            lookup[district.id] = distance
+        return lookup
 
 
 __all__ = [

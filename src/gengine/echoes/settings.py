@@ -52,6 +52,10 @@ class FocusSettings(BaseModel):
     digest_size: int = Field(6, ge=1)
     history_limit: int = Field(30, ge=1)
     suppressed_preview: int = Field(5, ge=0)
+    spatial_population_weight: float = Field(0.6, ge=0.0, le=1.0)
+    spatial_distance_weight: float = Field(0.4, ge=0.0, le=1.0)
+    adjacency_bonus: float = Field(0.1, ge=0.0)
+    spatial_falloff: float = Field(10.0, ge=0.1)
 
 
 class EconomySettings(BaseModel):
@@ -94,11 +98,26 @@ class EnvironmentSettings(BaseModel):
     faction_sabotage_pollution_spike: float = Field(0.025, ge=0.0)
 
 
+class DirectorSettings(BaseModel):
+    """Lightweight knobs for bridging narrator output into the director."""
+
+    history_limit: int = Field(20, ge=1)
+    ranked_limit: int = Field(5, ge=1)
+    spatial_preview: int = Field(4, ge=1)
+    hotspot_limit: int = Field(3, ge=1)
+    hotspot_score_threshold: float = Field(0.75, ge=0.0)
+    travel_time_per_hop: float = Field(1.5, ge=0.0)
+    travel_time_per_distance: float = Field(0.25, ge=0.0)
+    travel_default_distance: float = Field(2.0, ge=0.0)
+    travel_max_routes: int = Field(4, ge=1)
+
+
 class SimulationConfig(BaseModel):
     limits: SimulationLimits = Field(default_factory=SimulationLimits)
     lod: LodSettings = Field(default_factory=LodSettings)
     profiling: ProfilingSettings = Field(default_factory=ProfilingSettings)
     focus: FocusSettings = Field(default_factory=FocusSettings)
+    director: DirectorSettings = Field(default_factory=DirectorSettings)
     economy: EconomySettings = Field(default_factory=EconomySettings)
     environment: EnvironmentSettings = Field(default_factory=EnvironmentSettings)
 
@@ -131,6 +150,7 @@ __all__ = [
     "SimulationLimits",
     "LodSettings",
     "ProfilingSettings",
+    "DirectorSettings",
     "EconomySettings",
     "FocusSettings",
     "EnvironmentSettings",

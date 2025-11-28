@@ -59,6 +59,9 @@ def run_headless_sim(
         "faction_action_breakdown": _faction_breakdown(reports),
     }
     summary["suppressed_events"] = sum(len(report.suppressed_events) for report in reports)
+    summary["director_feed"] = dict(engine.state.metadata.get("director_feed", {}))
+    summary["director_history"] = list(engine.state.metadata.get("director_history") or [])
+    summary["director_analysis"] = dict(engine.state.metadata.get("director_analysis") or {})
     if reports:
         summary["anomalies"] = sum(len(report.anomalies) for report in reports)
         summary["anomaly_examples"] = sorted(
@@ -76,6 +79,8 @@ def run_headless_sim(
             "focus_budget": dict(reports[-1].focus_budget),
             "ranked_archive": list(digest.get("ranked_archive", [])),
         }
+        summary["last_director_snapshot"] = dict(reports[-1].director_snapshot)
+        summary["last_director_analysis"] = dict(reports[-1].director_analysis)
     profiling = engine.state.metadata.get("profiling")
     if profiling:
         summary["profiling"] = profiling

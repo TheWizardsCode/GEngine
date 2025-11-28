@@ -22,6 +22,20 @@ focus:
   digest_size: 6
   history_limit: 30
   suppressed_preview: 5
+  spatial_population_weight: 0.65
+  spatial_distance_weight: 0.35
+  adjacency_bonus: 0.15
+  spatial_falloff: 12.0
+director:
+  history_limit: 24
+  ranked_limit: 5
+  spatial_preview: 4
+  hotspot_limit: 3
+  hotspot_score_threshold: 0.75
+  travel_time_per_hop: 1.5
+  travel_time_per_distance: 0.25
+  travel_default_distance: 2.0
+  travel_max_routes: 4
 economy:
   regen_scale: 1.6
   demand_population_scale: 180000

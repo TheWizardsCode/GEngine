@@ -1,11 +1,17 @@
 city:
   id: neo-echo
   name: Neo Echo
-  description: "A layered metropolis clinging to the edges of a megastructure."
+  description: A layered metropolis clinging to the edges of a megastructure.
   districts:
     - id: industrial-tier
       name: Industrial Tier
       population: 120000
+      coordinates:
+        x: 0.0
+        y: 0.0
+      adjacent:
+        - research-spire
+        - perimeter-hollow
       resources:
         energy:
           type: energy
@@ -25,6 +31,12 @@ city:
     - id: research-spire
       name: Research Spire
       population: 40000
+      coordinates:
+        x: 4.0
+        y: 6.0
+      adjacent:
+        - industrial-tier
+        - perimeter-hollow
       resources:
         data:
           type: data
@@ -44,6 +56,12 @@ city:
     - id: perimeter-hollow
       name: Perimeter Hollow
       population: 80000
+      coordinates:
+        x: -5.5
+        y: 3.5
+      adjacent:
+        - industrial-tier
+        - research-spire
       resources:
         food:
           type: food
@@ -55,29 +73,27 @@ city:
         unrest: 0.57
         prosperity: 0.33
         security: 0.36
-
 factions:
   - id: union_of_flux
     name: Union of Flux
-    ideology: "Labor futurists seeking equitable automation."
+    ideology: Labor futurists seeking equitable automation.
     legitimacy: 0.62
     resources:
       materials: 25
       influence: 18
     territory:
       - industrial-tier
-    description: "Manufacturing guild with deep roots in the Industrial Tier."
+    description: Manufacturing guild with deep roots in the Industrial Tier.
   - id: cartel_of_mist
     name: Cartel of Mist
-    ideology: "Shadow brokers monetizing scarcity."
+    ideology: Shadow brokers monetizing scarcity.
     legitimacy: 0.38
     resources:
       capital: 40
       covert: 30
     territory:
       - perimeter-hollow
-    description: "Black-market syndicate controlling perimeter trade."
-
+    description: Black-market syndicate controlling perimeter trade.
 agents:
   - id: aria-volt
     name: Aria Volt
@@ -88,7 +104,7 @@ agents:
       empathy: 0.82
       resolve: 0.74
     goals:
-      - "Secure fair energy quotas for worker districts"
+      - Secure fair energy quotas for worker districts
   - id: cassian-mire
     name: Cassian Mire
     role: Fixer
@@ -98,7 +114,7 @@ agents:
       cunning: 0.77
       stealth: 0.69
     goals:
-      - "Expand smuggling routes into the Research Spire"
+      - Expand smuggling routes into the Research Spire
   - id: dr-lyra-keel
     name: Dr. Lyra Keel
     role: Systems Ecologist
@@ -107,14 +123,12 @@ agents:
       analysis: 0.88
       curiosity: 0.91
     goals:
-      - "Reduce pollution spillover from the Industrial Tier"
-
+      - Reduce pollution spillover from the Industrial Tier
 environment:
   stability: 0.56
   unrest: 0.33
   pollution: 0.58
   climate_risk: 0.47
   security: 0.52
-
 metadata:
   seed: 424242

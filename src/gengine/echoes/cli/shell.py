@@ -171,7 +171,7 @@ class EchoesShell:
     def _cmd_help(self, _: Sequence[str]) -> CommandResult:
         return CommandResult(
             "Available commands: summary, next [n], run <n>, map [district], focus [district|clear], "
-            "history [count], save <path>, load world <name>|snapshot <path>, help, exit"
+            "history [count], director [count], save <path>, load world <name>|snapshot <path>, help, exit"
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
@@ -232,6 +232,22 @@ class EchoesShell:
             return CommandResult("No focus history recorded.")
         entries = history if limit is None else history[-limit:]
         return CommandResult(_render_history(entries))
+
+    def _cmd_director(self, args: Sequence[str]) -> CommandResult:
+        limit: int | None = None
+        if args:
+            try:
+                limit = max(1, int(args[0]))
+            except ValueError:
+                return CommandResult("Usage: director [count]")
+        summary = self.backend.summary()
+        feed = summary.get("director_feed")
+        history = summary.get("director_history") or []
+        analysis = summary.get("director_analysis")
+        if not feed:
+            return CommandResult("No director feed recorded.")
+        entries = history if limit is None else history[-limit:]
+        return CommandResult(_render_director_feed(feed, entries, analysis))
 
     def _cmd_save(self, args: Sequence[str]) -> CommandResult:
         if not args:
@@ -300,6 +316,26 @@ def _render_summary(summary: dict[str, object]) -> str:
         lines.append(
             f"  focus -> {focus['district_id']} (neighbors: {neighbor_text})"
         )
+        coords = focus.get("coordinates")
+        if coords:
+            lines.append(f"    coords: {_format_coordinates(coords)}")
+        adjacency = focus.get("adjacent") or []
+        if adjacency:
+            lines.append(f"    adjacent: {', '.join(adjacency)}")
+        weights = focus.get("spatial_weights") or []
+        if weights:
+            preview = ", ".join(
+                f"{entry['district_id']}:{float(entry.get('score', 0.0)):.2f}"
+                for entry in weights[:3]
+            )
+            lines.append(f"    spatial weights: {preview}")
+        metrics = focus.get("spatial_metrics") or {}
+        ref = metrics.get("distance_reference")
+        fallback = metrics.get("fallback_distance")
+        if isinstance(ref, (int, float)) and ref > 0:
+            lines.append(f"    distance ref: {ref:.2f}")
+        elif isinstance(fallback, (int, float)) and fallback > 0:
+            lines.append(f"    distance ref: fallback {fallback:.2f}")
     digest = summary.get("focus_digest")
     if isinstance(digest, dict) and digest.get("visible"):
         lines.append("  focus digest:")
@@ -317,6 +353,60 @@ def _render_summary(summary: dict[str, object]) -> str:
                 preview.append(f"{score:.2f}:{message}")
             if preview:
                 lines.append(f"    ranked: {', '.join(preview)}")
+    director_feed = summary.get("director_feed")
+    if isinstance(director_feed, dict) and director_feed:
+        lines.append("  director feed:")
+        lines.append(
+            "    focus="
+            f"{director_feed.get('focus_center') or 'unset'} suppressed={director_feed.get('suppressed_count', 0)}"
+        )
+        top_ranked = director_feed.get("top_ranked") or []
+        if top_ranked:
+            preview = []
+            for item in top_ranked[:2]:
+                score = float(item.get("score", 0.0))
+                preview.append(f"{score:.2f}:{item.get('message', '')}")
+            if preview:
+                lines.append(f"    ranked: {', '.join(preview)}")
+        weights = director_feed.get("spatial_weights") or []
+        if weights:
+            preview = []
+            for entry in weights[:2]:
+                preview.append(
+                    f"{entry.get('district_id', 'n/a')}:{float(entry.get('score', 0.0)):.2f}"
+                )
+            if preview:
+                lines.append(f"    spatial: {', '.join(preview)}")
+    analysis = summary.get("director_analysis")
+    if isinstance(analysis, dict) and analysis:
+        lines.append("  director analysis:")
+        recommended = analysis.get("recommended_focus")
+        if isinstance(recommended, dict) and recommended.get("district_id"):
+            travel_time = recommended.get("travel_time")
+            if isinstance(travel_time, (int, float)):
+                rec_text = (
+                    f"    recommend focus -> {recommended['district_id']} "
+                    f"({travel_time:.2f} travel time)"
+                )
+            else:
+                rec_text = f"    recommend focus -> {recommended['district_id']}"
+            lines.append(rec_text)
+        hotspots = analysis.get("hotspots") or []
+        if hotspots:
+            preview = []
+            for hotspot in hotspots[:2]:
+                travel = hotspot.get("travel") or {}
+                travel_time = travel.get("travel_time")
+                if isinstance(travel_time, (int, float)):
+                    preview.append(
+                        f"{hotspot.get('district_id', 'n/a')}:{travel_time:.2f}t"
+                    )
+                elif travel.get("reachable") is False:
+                    preview.append(f"{hotspot.get('district_id', 'n/a')}:blocked")
+                else:
+                    preview.append(f"{hotspot.get('district_id', 'n/a')}:pending")
+            if preview:
+                lines.append(f"    travel: {', '.join(preview)}")
     profiling = summary.get("profiling")
     if isinstance(profiling, dict) and profiling:
         lines.append("  profiling:")
@@ -356,6 +446,31 @@ def _render_focus_state(focus: dict[str, object] | None) -> str:
     lines.append(f"  neighbors: {', '.join(neighbors) if neighbors else 'none'}")
     if ring:
         lines.append(f"  ring     : {', '.join(ring)}")
+    coords = focus.get("coordinates")
+    if coords:
+        lines.append(f"  coords   : {_format_coordinates(coords)}")
+    adjacency = focus.get("adjacent") or []
+    lines.append(f"  adjacent : {', '.join(adjacency) if adjacency else 'none'}")
+    metrics = focus.get("spatial_metrics") or {}
+    ref = metrics.get("distance_reference")
+    fallback = metrics.get("fallback_distance")
+    if isinstance(ref, (int, float)) and ref > 0:
+        lines.append(f"  distance : {ref:.2f}")
+    elif isinstance(fallback, (int, float)) and fallback > 0:
+        lines.append(f"  distance : fallback {fallback:.2f}")
+    weights = focus.get("spatial_weights") or []
+    if weights:
+        lines.append("  spatial weights:")
+        for entry in weights[:4]:
+            distance = entry.get("distance")
+            distance_text = (
+                f"{float(distance):.2f}" if isinstance(distance, (int, float)) else "n/a"
+            )
+            lines.append(
+                "    "
+                f"{entry['district_id']:<16} score {float(entry.get('score', 0.0)):.2f} "
+                f"pop {float(entry.get('population_rank', 0.0)):.2f} dist {distance_text}"
+            )
     return "\n".join(lines)
 
 
@@ -374,6 +489,88 @@ def _render_history(entries: Sequence[dict[str, object]]) -> str:
         preview = entry.get("suppressed_preview") or []
         if preview:
             lines.append(f"    preview: {', '.join(preview[:3])}")
+    return "\n".join(lines)
+
+
+def _render_director_feed(
+    feed: dict[str, object],
+    history: Sequence[dict[str, object]] | None = None,
+    analysis: dict[str, object] | None = None,
+) -> str:
+    lines = ["Director feed:"]
+    tick = feed.get("tick")
+    focus_center = feed.get("focus_center") or "unset"
+    suppressed = feed.get("suppressed_count", 0)
+    lines.append(f"  tick {tick}: focus={focus_center} suppressed={suppressed}")
+    ring = feed.get("focus_ring") or []
+    if ring:
+        lines.append(f"  ring: {', '.join(ring)}")
+    allocation = feed.get("allocation") or {}
+    if allocation:
+        lines.append(
+            "  allocation -> "
+            f"focus {allocation.get('focus_used', 0)}/{allocation.get('focus_reserved', 0)} | "
+            f"global {allocation.get('global_used', 0)}/{allocation.get('global_reserved', 0)}"
+        )
+    weights = feed.get("spatial_weights") or []
+    if weights:
+        preview = ", ".join(
+            f"{entry.get('district_id', 'n/a')}:{float(entry.get('score', 0.0)):.2f}"
+            for entry in weights[:3]
+        )
+        lines.append(f"  spatial preview: {preview}")
+    ranked = feed.get("top_ranked") or []
+    if ranked:
+        lines.append("  ranked beats:")
+        for item in ranked[:3]:
+            score = float(item.get("score", 0.0))
+            message = item.get("message", "")
+            lines.append(f"    ({score:.2f}) {message}")
+    env = feed.get("environment") or {}
+    if env:
+        lines.append(
+            "  environment -> "
+            f"stb {env.get('stability', 0.0):.2f} | "
+            f"unrest {env.get('unrest', 0.0):.2f} | "
+            f"poll {env.get('pollution', 0.0):.2f}"
+        )
+    history = history or []
+    if history:
+        lines.append("  recent snapshots:")
+        for entry in reversed(history[-3:]):
+            lines.append(
+                f"    tick {entry.get('tick')}: focus={entry.get('focus_center') or 'unset'} "
+                f"suppressed={entry.get('suppressed_count', 0)}"
+            )
+    if analysis:
+        hotspots = analysis.get("hotspots") or []
+        if hotspots:
+            lines.append("  travel planning:")
+            for hotspot in hotspots[:3]:
+                travel = hotspot.get("travel") or {}
+                prefix = hotspot.get("district_id", "n/a")
+                if travel.get("reachable"):
+                    hops = travel.get("hops")
+                    travel_time = travel.get("travel_time")
+                    detail = ""
+                    if isinstance(hops, int):
+                        detail += f"{hops} hops"
+                    if isinstance(travel_time, (int, float)):
+                        detail = f"{detail} | {travel_time:.2f}t" if detail else f"{travel_time:.2f}t"
+                    lines.append(f"    {prefix}: {detail or 'reachable'}")
+                else:
+                    reason = travel.get("reason", "blocked")
+                    lines.append(f"    {prefix}: {reason}")
+        recommended = analysis.get("recommended_focus")
+        if isinstance(recommended, dict) and recommended.get("district_id"):
+            travel_time = recommended.get("travel_time")
+            if isinstance(travel_time, (int, float)):
+                lines.append(
+                    "  recommendation: focus -> "
+                    f"{recommended['district_id']} ({travel_time:.2f}t)"
+                )
+            else:
+                lines.append(f"  recommendation: focus -> {recommended['district_id']}")
     return "\n".join(lines)
 
 
@@ -431,14 +628,18 @@ def _render_map(state: GameState, district_id: str | None) -> str:
         )
         if district is None:
             return f"Unknown district '{district_id}'"
-        return (
-            f"District {district.name}\n"
-            f"  population : {district.population}\n"
-            f"  unrest     : {district.modifiers.unrest:.2f}\n"
-            f"  pollution  : {district.modifiers.pollution:.2f}\n"
-            f"  prosperity : {district.modifiers.prosperity:.2f}\n"
-            f"  security   : {district.modifiers.security:.2f}"
-        )
+        detail = [
+            f"District {district.name}",
+            f"  population : {district.population}",
+            f"  unrest     : {district.modifiers.unrest:.2f}",
+            f"  pollution  : {district.modifiers.pollution:.2f}",
+            f"  prosperity : {district.modifiers.prosperity:.2f}",
+            f"  security   : {district.modifiers.security:.2f}",
+            f"  coordinates: {_format_coordinates(district.coordinates)}",
+        ]
+        neighbors = ", ".join(district.adjacent) if district.adjacent else "none"
+        detail.append(f"  adjacent   : {neighbors}")
+        return "\n".join(detail)
 
     header = "| District ID      | District         |   Pop | Unrest | Poll | Prosper | Sec |"
     divider = "+------------------+-----------------+-------+--------+------+---------+-----+"
@@ -450,19 +651,50 @@ def _render_map(state: GameState, district_id: str | None) -> str:
             f"{district.modifiers.prosperity:0.2f} | {district.modifiers.security:0.2f} |"
         )
     lines.append(divider)
+    lines.append("Geometry overlay:")
+    for district in state.city.districts:
+        coord_text = _format_coordinates(district.coordinates)
+        adjacency = ", ".join(district.adjacent) if district.adjacent else "none"
+        lines.append(
+            f"  {district.id:<16} coords {coord_text:<18} neighbors: {adjacency}"
+        )
     return "\n".join(lines)
 
 
 def _render_remote_district(panel: dict[str, Any]) -> str:
     mods = panel["modifiers"]
-    return (
-        f"District {panel['name']}\n"
-        f"  population : {panel['population']}\n"
-        f"  unrest     : {mods['unrest']:.2f}\n"
-        f"  pollution  : {mods['pollution']:.2f}\n"
-        f"  prosperity : {mods['prosperity']:.2f}\n"
-        f"  security   : {mods['security']:.2f}"
-    )
+    lines = [
+        f"District {panel['name']}",
+        f"  population : {panel['population']}",
+        f"  unrest     : {mods['unrest']:.2f}",
+        f"  pollution  : {mods['pollution']:.2f}",
+        f"  prosperity : {mods['prosperity']:.2f}",
+        f"  security   : {mods['security']:.2f}",
+        f"  coordinates: {_format_coordinates(panel.get('coordinates'))}",
+    ]
+    adjacency = panel.get("adjacent") or []
+    lines.append(f"  adjacent   : {', '.join(adjacency) if adjacency else 'none'}")
+    return "\n".join(lines)
+
+
+def _format_coordinates(coords: Any | None) -> str:
+    if coords is None:
+        return "n/a"
+    if hasattr(coords, "x") and hasattr(coords, "y"):
+        x = getattr(coords, "x")
+        y = getattr(coords, "y")
+        z = getattr(coords, "z", None)
+    elif isinstance(coords, dict):
+        x = coords.get("x")
+        y = coords.get("y")
+        z = coords.get("z")
+    else:
+        return "n/a"
+    if x is None or y is None:
+        return "n/a"
+    if isinstance(z, (int, float)):
+        return f"({float(x):.1f}, {float(y):.1f}, {float(z):.1f})"
+    return f"({float(x):.1f}, {float(y):.1f})"
 
 
 def _jsonify(payload: dict[str, Any]) -> str:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class ResourceStock(BaseModel):
@@ -36,6 +36,15 @@ class DistrictModifiers(BaseModel):
 
     model_config = {"validate_assignment": True}
 
+class DistrictCoordinates(BaseModel):
+    """Planar or 3D coordinates for a district."""
+
+    x: float
+    y: float
+    z: float | None = None
+
+    model_config = {"validate_assignment": True}
+
 
 class District(BaseModel):
     """A single district within the city."""
@@ -45,8 +54,19 @@ class District(BaseModel):
     population: int = Field(..., ge=0)
     resources: Dict[str, ResourceStock] = Field(default_factory=dict)
     modifiers: DistrictModifiers = Field(default_factory=DistrictModifiers)
+    coordinates: DistrictCoordinates | None = None
+    adjacent: List[str] = Field(default_factory=list)
 
     model_config = {"validate_assignment": True}
+
+    @field_validator("adjacent")
+    @classmethod
+    def _dedupe_adjacent(cls, values: List[str]) -> List[str]:  # type: ignore[override]
+        ordered: List[str] = []
+        for neighbor in values:
+            if neighbor not in ordered:
+                ordered.append(neighbor)
+        return ordered
 
 
 class Faction(BaseModel):
@@ -100,3 +120,16 @@ class City(BaseModel):
     districts: List[District]
 
     model_config = {"validate_assignment": True}
+
+    @model_validator(mode="after")
+    def _normalize_adjacency(self) -> "City":
+        lookup = {district.id for district in self.districts}
+        for district in self.districts:
+            filtered: List[str] = []
+            for neighbor in district.adjacent:
+                if neighbor == district.id or neighbor not in lookup:
+                    continue
+                if neighbor not in filtered:
+                    filtered.append(neighbor)
+            district.adjacent = filtered
+        return self

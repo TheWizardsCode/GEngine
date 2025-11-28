@@ -130,6 +130,8 @@ def _serialize_report(report: TickReport) -> dict[str, Any]:
     return {
         "tick": report.tick,
         "events": list(report.events),
+        "event_archive": list(report.event_archive),
+        "suppressed_events": list(report.suppressed_events),
         "environment": dict(report.environment),
         "districts": [dict(district) for district in report.districts],
         "agent_actions": list(report.agent_actions),
@@ -138,6 +140,9 @@ def _serialize_report(report: TickReport) -> dict[str, Any]:
         "faction_legitimacy_delta": dict(report.faction_legitimacy_delta),
         "economy": dict(report.economy),
         "environment_impact": dict(report.environment_impact),
+        "focus_budget": dict(report.focus_budget),
+        "director_snapshot": dict(report.director_snapshot),
+        "director_analysis": dict(report.director_analysis),
         "timings": dict(report.timings),
         "anomalies": list(report.anomalies),
     }

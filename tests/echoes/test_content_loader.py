@@ -91,3 +91,44 @@ def test_load_world_bundle_generates_seed_when_missing(tmp_path: Path) -> None:
     state = load_world_bundle("custom", content_root=tmp_path)
 
     assert 0 <= state.seed <= 1_000_000
+
+
+def test_geometry_enrichment_derives_adjacency(tmp_path: Path) -> None:
+    world_root = tmp_path / "geom"
+    world_root.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "city": {
+            "id": "geom-city",
+            "name": "Geom City",
+            "districts": [
+                {
+                    "id": "alpha",
+                    "name": "Alpha",
+                    "population": 10_000,
+                    "coordinates": {"x": 0.0, "y": 0.0},
+                },
+                {
+                    "id": "beta",
+                    "name": "Beta",
+                    "population": 8_000,
+                    "coordinates": {"x": 4.0, "y": 0.0},
+                },
+                {
+                    "id": "gamma",
+                    "name": "Gamma",
+                    "population": 6_000,
+                    "coordinates": {"x": 0.0, "y": 4.0},
+                },
+            ],
+        },
+        "factions": [],
+        "agents": [],
+    }
+    (world_root / "world.yml").write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    state = load_world_bundle("geom", content_root=tmp_path)
+
+    adjacency = {district.id: set(district.adjacent) for district in state.city.districts}
+    assert adjacency["alpha"] == {"beta", "gamma"}
+    assert adjacency["beta"] == {"alpha", "gamma"}
+    assert adjacency["gamma"] == {"alpha", "beta"}

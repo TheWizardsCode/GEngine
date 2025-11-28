@@ -212,6 +212,11 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   coordinates, and resource diffusion plus territory contiguity checks finally
   honor true neighbors even when a lightly populated district sits between two
   dense hubs.
+- The same adjacency graph and coordinates now drive the travel planner used
+  by the early narrative director module. Every tick, the director computes
+  hop counts, distances, and estimated travel times between the current focus
+  center and the highest-scored districts so story seeds can factor in actual
+  movement costs instead of abstract ring distance alone.
 - The validation pipeline will derive adjacency whenever coordinates change so
   content authors manage one truth while future navigation meshes, patrols, and
   blockade logic reuse the same graph. Tools will also emit warnings when
@@ -240,6 +245,12 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - Activates seeds that are thematically and systemically appropriate.
 - Seeds attach to **existing** agents and factions to avoid feeling bolted on.
 - Balances pacing: prevents overload and ensures moments of calm reflection.
+- The first implementation step is live: a `NarrativeDirector` component reads
+  each tick's `director_feed`, selects the top-ranked hotspots, and evaluates
+  adjacency-aware travel routes (hops, distance, travel time, reachability).
+  The resulting `director_analysis` metadata powers CLI/service/headless views
+  so authors can inspect mobility pressure, suppressed counts, and recommended
+  focus shifts even before authored story seeds exist.
 
 **Endgame & Outcomes:**
 
@@ -297,6 +308,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   how many events were archived each tick so designers/testers understand what
   the narrator suppressed. Surface the ranked archive and history (latest
   ticks, top scored beats) so testers can drill into "why wasn't this shown?"
+- Director feed bridge: record each tick's spatial weights, ranked archive, and
+  suppression counts into a `director_feed` metadata block (plus a rolling
+  history) so the narrative director can ingest deterministic inputs without
+  re-scoring events.
 
 **Session Structure:**
 

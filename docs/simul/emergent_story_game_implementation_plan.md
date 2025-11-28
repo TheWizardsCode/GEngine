@@ -248,16 +248,21 @@ single row to validate whenever a guardrail knob changes.
   proved anomaly budgets stay below 100 per 1000 ticks once mean-reversion and
   faction gating landed, so the curator now keeps summaries legible without
   starving distant districts.
-- **M4.7 Spatial Coordinates & Adjacency Graph** (new): extend the district
-  schema with planar `coordinates` tuples and an `adjacent` list, update the
-  content validator plus fixtures, and wire the data into the TickCoordinator
-  so spatial proximity augments (not replaces) the existing population-ranked
-  rings. Focus scoring will blend population priority with spatial weighting,
-  diffusion/travel checks will lean on adjacency, and telemetry will record the
-  combined weights so designers see when a distant but populous district still
-  outranks a closer low-density neighbor. Include migration helpers for
-  existing content, CLI map overlays that read the new geometry, and tests that
-  prove adjacency derivation stayed stable across validation sweeps.
+- **M4.7 Spatial Coordinates & Adjacency Graph** (in progress): district
+  schemas now include planar `coordinates` plus an `adjacent` list. The content
+  loader auto-derives symmetric neighbors, the FocusManager blends population
+  rank with distance + adjacency bonuses, and tick telemetry/CLI overlays show
+  the resulting weights so designers can see when a distant but populous
+  district still outranks a nearby low-density one. The narrator's ranked
+  digest now feeds a deterministic `director_feed` snapshot (and rolling
+  history) so the new `NarrativeDirector` module can consume the same spatial
+  weights, ranked archive, and suppressed counts without reimplementing the
+  curator. The director now selects the highest-scoring districts, evaluates
+  adjacency-aware travel routes (hop counts, distances, estimated travel
+  times, reachability), and publishes `director_analysis` metadata that shows
+  hotspot mobility plus recommended focus handoffs across the CLI, service, and
+  headless telemetry. Remaining work will center on ingesting authored story
+  seeds now that deterministic travel scaffolding exists.
 
 ### Phase 5 – Narrative Director and Story Seeds
 

@@ -35,7 +35,7 @@ and persist state.
 | `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot, and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
 | `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                   |
 | `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                           |
-| `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district.                                                                   |
+| `map [district_id]`    | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district.                 |
 | `focus [district       | clear]`                                                                                                                                                                                                                            | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation. |
 | `history [count]`      | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown.                  |
 | `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                           |
@@ -229,9 +229,24 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
 - Run `history [count]` to print the latest ranked entries (latest first).
   Each entry shows the focus center, suppressed count, and the highest ranked
   archived events so testers can quickly review what was trimmed.
+- Run `director [count]` to inspect the director feed bridge _and_ the new
+  travel-aware narrative director layer. The command prints the current focus
+  center, allocation stats, spatial preview, highest-ranked archived beats,
+  and now the travel planner output: hotspot routes (hops, travel time,
+  reachability) plus any recommended focus shift based on suppressed pressure.
 - The CLI summary and tick reports show the digest preview and the latest
   focus-budget allocation so you always know whether anomalies are coming from
   raw subsystem volume or simply from the curator trimming noise.
+- Spatial weighting now blends authored coordinates/adjacency with the
+  population-ranked ring, so the focus output shows each district's
+  coordinates, neighbor list, and blended score contribution. Use this readout
+  to explain why a distant but populous district is still prioritized (or why
+  a nearby low-density one falls out of the ring) before running long burns.
+- Headless summaries now record `director_feed`, a rolling
+  `director_history`, the `last_director_snapshot`, and the new
+  `last_director_analysis` block so you can diff both the curator's ranked
+  archive/spatial context _and_ the director's travel reasoning alongside
+  suppressed counts in longer sweeps.
 
 ## 4. World and District Parameters
 
@@ -278,11 +293,11 @@ the simulation loop.
 - **Modifiers**: Continuous values between 0.0 and 1.0 for `pollution`,
   `unrest`, `prosperity`, and `security`. These drift slightly per tick and feed
   into environment changes. Spikes here usually trigger event log warnings.
-- **Coordinates & Adjacency (incoming)**: District YAML will gain explicit
-  `coordinates` tuples plus an auto-derived `adjacent` list so focus budgeting,
-  diffusion, and travel-aware stories can combine literal neighbors with the
-  existing population-ranked rings. Watch the changelog for the schema update
-  and use `map` once it lands to visualize the blended overlays.
+- **Coordinates & Adjacency**: Each district now defines a `coordinates` tuple
+  plus an `adjacent` list (often auto-derived). Focus budgeting, diffusion, and
+  future travel-aware stories combine literal neighbors with the population-
+  ranked rings, and the `map` command visualizes the blended overlay so data
+  mismatches surface immediately.
 
 Keeping these parameters consistent between YAML content and the shell output
 helps you detect data-entry mistakes quickly (e.g., mismatched IDs or runaway

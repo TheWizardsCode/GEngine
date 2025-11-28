@@ -71,6 +71,15 @@ class GameState(BaseModel):
         focus_history = self.metadata.get("focus_history") or []
         if focus_history:
             summary["focus_history"] = focus_history
+        director_feed = self.metadata.get("director_feed") or {}
+        if director_feed:
+            summary["director_feed"] = director_feed
+        director_history = self.metadata.get("director_history") or []
+        if director_history:
+            summary["director_history"] = director_history
+        director_analysis = self.metadata.get("director_analysis") or {}
+        if director_analysis:
+            summary["director_analysis"] = director_analysis
         return summary
 
     def snapshot(self) -> Dict[str, Any]:

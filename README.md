@@ -56,19 +56,23 @@ run locally.
   reacts to faction investments/sabotage with pollution relief/spikes, and
   captures the resulting `environment_impact` metadata for telemetry + CLI/
   service summaries.
-- Focus-aware narrative budgeting (Phase 4, M4.6 in flight) that introduces a
-  configurable focus manager, a `focus` CLI/service command, and per-tick
-  event budgets split between the focused district ring and the rest of the
-  city. Every tick now ranks the archive by severity + focus distance, records
-  a digest (visible beats) plus an archive of suppressed events, and appends a
-  rolling focus history. The CLI exposes `history [count]` so playtesters can
-  review suppressed beats, while the FastAPI `/focus` endpoint returns the same
-  ranked digest and history for remote gateways.
-- Spatial coordinate + adjacency planning (Phase 4, M4.7) underway to add
-  authored `coordinates` tuples and derived neighbor lists to every district so
-  focus budgeting, diffusion, travel time, and faction territory modeling can
-  blend literal proximity with the existing population-ranked rings instead of
-  replacing them outright.
+- Focus-aware narrative budgeting (Phase 4, M4.6) with CLI/service `focus`
+  commands, a deterministic digest/history, severity-distance ranking, and
+  telemetry that records suppressed beats. Phase 4, M4.7 extends the same
+  manager with spatial weighting so authored coordinates/adjacency graphs blend
+  literal proximity with the population-ranked rings. The CLI summary now shows
+  the blended scores, map overlays render coordinates + neighbor hints, and
+  tick telemetry captures the combined weights for headless sweeps.
+- Narrator-to-director bridge + narrative director scaffolding (Phase 4, M4.7)
+  that captures each tick's ranked archive, suppressed counts, and spatial
+  weights into a `director_feed` payload and then pipes it into the new
+  `NarrativeDirector`. The director inspects hotspot severity, computes travel
+  routes over the adjacency graph (hops, distances, travel time, reachability),
+  and publishes a `director_analysis` block with hotspot previews and a
+  recommended focus shift. The CLI `summary` + `director [count]` commands,
+  service `/state?detail=summary`, and headless telemetry surface both the
+  feed and the travel analysis so story-seed work can build atop deterministic
+  mobility signals.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions. Summaries now include focus-budget
@@ -146,9 +150,11 @@ uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod bala
 Archive the JSON alongside the test results (commit or attach in review) so the
 canonical seed/tick profile is always available for comparison. The telemetry
 now captures agent/faction breakdowns, per-faction legitimacy snapshots/deltas,
-and the `last_economy` block (price table + shortage counters) for regression
-diffs. Use `summary` on any saved snapshot to inspect the last tick's
-`environment_impact` block when diagnosing pollution swings.
+the `last_economy` block (price table + shortage counters), and
+`last_director_analysis` (hotspot travel recommendations) for regression diffs.
+Use `summary` on any saved snapshot to inspect the last tick's
+`environment_impact` block when diagnosing pollution swings or to review the
+director's recommended focus hand-offs.
 
 ### Scenario Sweeps
 
@@ -246,9 +252,10 @@ Available in-shell commands:
   `run` for batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.
   The CLI enforces the safeguard defined in `limits.cli_run_cap` (default 50).
-- `map [district_id]` – render ASCII table of all districts (includes an "ID"
-  column) or details for one. Use `map` with no arguments to discover values
-  such as `industrial-tier`.
+- `map [district_id]` – render an ASCII table of all districts (includes an "ID"
+  column) followed by a geometry overlay listing each district's coordinates
+  and neighbor list. Provide a district id to see detailed modifiers plus the
+  same coordinates/adjacency hints for that location.
 - `focus [district|clear]` – display or update the active focus ring that the
   narrator budget prioritizes. Selecting a district allocates more per-tick
   event slots to that district and its top neighbors, while `focus clear`
@@ -300,10 +307,12 @@ not wedge CI runs.
   regressions without attaching a debugger.
 - `focus`: declares the default focus center, how many neighbors should share
   its budget, the ratio reserved for the focus ring, the global floor, digest
-  size, history length, and suppressed preview size. Adjust these values to
-  tighten or loosen the narrator's per-tick budget without editing code; the
-  CLI/service focus and history commands will immediately reflect the updated
-  defaults after a restart.
+  size, history length, suppressed preview size, and the new spatial weighting
+  knobs (`spatial_population_weight`, `spatial_distance_weight`,
+  `adjacency_bonus`, `spatial_falloff`). Adjust these values to tighten or
+  loosen the narrator's per-tick budget and proximity bias without editing
+  code; the CLI/service focus and history commands immediately reflect the
+  updated defaults after a restart.
 - `economy`: exposes `regen_scale`, demand weights, shortage thresholds, base
   resource weights, and price tuning values (`base_price`, `price_increase_step`,
   `price_max_boost`, `price_decay`, `price_floor`). Adjust these numbers to

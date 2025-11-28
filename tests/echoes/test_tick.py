@@ -7,6 +7,7 @@ import pytest
 from gengine.echoes.content import load_world_bundle
 from gengine.echoes.settings import EconomySettings, SimulationConfig, SimulationLimits
 from gengine.echoes.sim import SimEngine, TickReport, advance_ticks
+from gengine.echoes.sim.director import NarrativeDirector
 
 
 def test_advance_ticks_updates_environment_and_tick_math() -> None:
@@ -114,7 +115,9 @@ def test_focus_budget_populates_metadata() -> None:
     report = engine.advance_ticks(1)[0]
 
     assert report.focus_budget
+    assert report.focus_budget.get("spatial_weights")
     assert report.event_archive
+    assert report.director_snapshot
     digest = engine.state.metadata.get("focus_digest")
     assert digest
     assert digest["visible"] == report.events
@@ -122,3 +125,47 @@ def test_focus_budget_populates_metadata() -> None:
     history = engine.state.metadata.get("focus_history")
     assert history
     assert history[-1]["top_ranked"]
+    assert report.districts and report.districts[0].get("coordinates") is not None
+    director_feed = engine.state.metadata.get("director_feed")
+    assert director_feed
+    assert director_feed["tick"] == report.tick
+    assert "top_ranked" in director_feed
+    assert director_feed["top_ranked"][0].get("district_id") is not None
+    director_history = engine.state.metadata.get("director_history")
+    assert director_history
+    assert director_history[-1]["tick"] == report.tick
+    analysis = engine.state.metadata.get("director_analysis")
+    assert analysis
+    assert report.director_analysis
+    assert analysis.get("hotspots") is not None
+
+
+def test_narrative_director_builds_travel_routes() -> None:
+    state = load_world_bundle()
+    assert len(state.city.districts) >= 2
+    origin = state.city.districts[0].id
+    target = state.city.districts[1].id
+    director = NarrativeDirector()
+    snapshot = {
+        "tick": 42,
+        "focus_center": origin,
+        "suppressed_count": 1,
+        "top_ranked": [
+            {
+                "message": "Spike",
+                "scope": "district",
+                "score": 1.1,
+                "severity": 1.0,
+                "focus_distance": 1,
+                "in_focus_ring": False,
+                "district_id": target,
+            }
+        ],
+    }
+
+    analysis = director.evaluate(state, snapshot=snapshot)
+
+    assert analysis["hotspots"]
+    travel = analysis["hotspots"][0]["travel"]
+    assert travel["origin"] == origin
+    assert travel["target"] == target

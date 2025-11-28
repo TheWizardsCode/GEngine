@@ -14,6 +14,7 @@ from ..core import GameState
 from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
 from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem
+from .director import DirectorBridge, NarrativeDirector
 from .focus import FocusManager
 from .tick import TickReport, advance_ticks as _advance_ticks
 
@@ -43,6 +44,8 @@ class SimEngine:
         self._economy_system = EconomySystem(settings=self._config.economy)
         self._environment_system = EnvironmentSystem(settings=self._config.environment)
         self._focus_manager = FocusManager(settings=self._config.focus)
+        self._director_bridge = DirectorBridge(settings=self._config.director)
+        self._narrative_director = NarrativeDirector(settings=self._config.director)
         self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
 
     # ------------------------------------------------------------------
@@ -98,6 +101,8 @@ class SimEngine:
             environment_system=self._environment_system,
             profiling=self._config.profiling,
             focus_manager=self._focus_manager,
+            director_bridge=self._director_bridge,
+            narrative_director=self._narrative_director,
         )
         duration_ms = (perf_counter() - start) * 1000
         self._record_profiling(reports)
@@ -145,6 +150,16 @@ class SimEngine:
     def focus_history(self) -> list[dict[str, Any]]:
         history = self.state.metadata.get("focus_history") or []
         return [dict(entry) for entry in history]
+
+    def director_feed(self) -> dict[str, Any]:
+        feed = self.state.metadata.get("director_feed") or {}
+        history = self.state.metadata.get("director_history") or []
+        analysis = self.state.metadata.get("director_analysis") or {}
+        return {
+            "latest": dict(feed),
+            "history": [dict(entry) for entry in history],
+            "analysis": dict(analysis),
+        }
 
     # Internal helpers --------------------------------------------------
     def _record_profiling(self, reports: Sequence[TickReport]) -> None:
@@ -212,5 +227,7 @@ class SimEngine:
                     "name": district.name,
                     "population": district.population,
                     "modifiers": district.modifiers.model_dump(),
+                    "coordinates": district.coordinates.model_dump() if district.coordinates else None,
+                    "adjacent": list(district.adjacent),
                 }
         raise ValueError(f"Unknown district '{district_id}'")

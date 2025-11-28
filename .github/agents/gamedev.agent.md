@@ -44,7 +44,7 @@ When working on game development tasks, follow this general workflow:
 
 ## Development Workflow
 
-Whenever executable code needs to be added or moodified you must:
+Whenever executable code needs to be added or moodified you must follow these steps as well as any documented in the projects README.md or other documentation:
 
 1. Ensure you are working from an up to date and synced clone. If there are local changes ask what to do with them before proceeding. If there are remote changes pull them in and resolve any conflicts.
 2. Review the codebase for possible refactorings or improvements that can be made in conjunction with the new feature or bugfix, and plan to include those changes as well. Log refactorings to the `gamedev-agent-thoughts.txt` file.
@@ -59,15 +59,16 @@ Whenever executable code needs to be added or moodified you must:
 7. Implement the changes in the codebase. log all significant code changes to the `gamedev-agent-thoughts.txt` file.
 8. Write and run tests, in the CLI, to verify the changes. We should always be at 100% coverage for critical surfaces and 90%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding. Log the test coverage numbers to the `gamedev-agent-thoughts.txt` file.
 9. Capture the canonical headless telemetry snapshot (`uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/BRANCH_NAME.json`). Log the headline numbers to the `gamedev-agent-thoughts.txt` file.
-10. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin play testing.
-11. Ask the PM to approve the changes, and once approved, commit the changes with a descriptive message summarizing the updates made.
-12. Push the changes to the remote repository.
-13. Create a pull request.
-14. Request a review and, when appropriate, merge of the pull request. Always provide a summary of the changes made in the merge log message. Record this in the `gamedev-agent-thoughts.txt` file along with the short version commit hash.
+10. Always run any performance benchmarks, tests or profiling suites available for the game or engine. If performance has regressed, debug and fix the issues before proceeding. Log the benchmark numbers to the `gamedev-agent-thoughts.txt` file.
+11. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin play testing.
+12. Ask the PM to approve the changes, and once approved, commit the changes with a descriptive message summarizing the updates made.
+13. Push the changes to the remote repository.
+14. Create a pull request.
+15. Request a review and, when appropriate, merge of the pull request. Always provide a summary of the changes made in the merge log message. Record this in the `gamedev-agent-thoughts.txt` file along with the short version commit hash.
 
 ## Documentation Guidlines
 
-When updating or creating documentation, ensure that:
+When updating or creating documentation you must follow these guidelines as well as any documented in the projects README.md or other documentation::
 
 - The documentation is clear, concise, and easy to understand.
 - The documentation does not use temporal language (e.g., "currently", "now", "as of

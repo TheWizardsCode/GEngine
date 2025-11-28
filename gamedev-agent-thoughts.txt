@@ -112,3 +112,27 @@
 [2025-11-28 17:36 UTC] HEAD af39b9e: Captured canonical telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-6-focus-budget-final.json` (stability 1.0, unrest 0.41, pollution 0.58, anomalies 0, tick_p95 0.19ms, suppressed 359) for the M4.6 deliverable.
 [2025-11-28 17:40 UTC] HEAD (pending): Prepared final "Deliver M4.6 focus-aware narration" commit covering focus manager code, docs, tests, configs, and telemetry artifacts.
 [2025-11-28 17:44 UTC] HEAD cb9badc (main): Fast-forwarded main with feature/m4-6-focus-budget after confirming tests (79 green, 95% cov) and capturing telemetry (ticks=200, anomalies=0).
+[2025-11-28 17:50 UTC] HEAD 137a0da (main): Planning M4.7 kickoff—district schema needs `coordinates`/`adjacent`, validators + migration tooling, spatial weighting in FocusManager + CLI overlays, and narrator digest wiring into director per PM brief.
+[2025-11-28 17:51 UTC] HEAD 137a0da -> branch feature/m4-7-spatial: Created working branch for the M4.7 spatial coordinate + narrator integration milestone per workflow instructions.
+[2025-11-28 18:05 UTC] HEAD 137a0da: Authored scripts/migrate_district_coordinates.py to backfill coordinates/adjacency for legacy worlds ahead of M4.7 spatial weighting.
+[2025-11-28 18:10 UTC] HEAD 137a0da: Ran migration across tracked worlds and scheduled removal of the helper script now that default content carries coordinates/adjacency in git.
+[2025-11-28 18:15 UTC] HEAD 137a0da: Ran `uv run --group dev pytest` (79 passed) to confirm loader/world parsing stays green after coordinate/adjacency migrations.
+[2025-11-28 18:18 UTC] HEAD 137a0da: Planning remaining M4.7 tasks—validators/tests for geometry, CLI map overlays, FocusManager spatial weighting, narrator/telemetry plumbing, and doc updates per workflow.
+[2025-11-28 18:20 UTC] HEAD 137a0da: Implementing spatial weighting + adjacency surfacing across loader validations, FocusManager, CLI overlays, telemetry, tests, and docs for M4.7.
+[2025-11-28 18:32 UTC] HEAD 137a0da: Ran `uv run --group dev pytest` (81 passed) to validate spatial geometry, CLI, and focus weighting updates.
+[2025-11-28 18:35 UTC] HEAD 137a0da: Captured spatial telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m4-7-spatial.json` (stability 1.0, unrest 0.41, pollution 0.58, anomalies 0, suppressed 359).
+[2025-11-28 18:42 UTC] HEAD 137a0da: Planning requested coverage verification plus CLI-invoked pytest run before threading narrator/director work.
+[2025-11-28 18:46 UTC] HEAD 137a0da: Ran `uv run --group dev pytest --cov=gengine --cov-report=term-missing` via CLI; 81 tests passed, total coverage 94% (meets ≥90% threshold).
+[2025-11-28 18:48 UTC] HEAD 137a0da: Drafting plan to thread narrator/director bridge so ranked digest + spatial weights feed upcoming director module per M4.7.
+[2025-11-28 19:12 UTC] HEAD 137a0da: Implemented DirectorBridge + settings/config, threaded tick reports + headless telemetry + CLI `director` command, and updated docs/tests to surface the new `director_feed` history.
+[2025-11-28 19:18 UTC] HEAD 137a0da: Re-ran `uv run --group dev pytest --cov=gengine --cov-report=term-missing`; 83 tests passed with 95% total coverage.
+[2025-11-28 19:22 UTC] HEAD 137a0da: Captured refreshed telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m4-7-spatial.json` (stability 1.0, unrest 0.41, pollution 0.58, suppressed=359, anomalies=0, director_feed now mirrored in summary/history).
+[2025-11-28 19:30 UTC] HEAD 137a0da: Planning narrative director consumer + adjacency/travel rule implementation per new request before touching code or docs.
+[2025-11-28 19:33 UTC] HEAD 137a0da: Identified spatial distance helpers as a shared refactor target—will extract reusable utilities while adding the director/travel features.
+[2025-11-28 19:55 UTC] HEAD 137a0da: Implemented NarrativeDirector + travel planner, spatial helper refactor, CLI/service/headless surfacing, and updated README/GDD/plan/how-to docs with the new analysis metadata.
+[2025-11-28 20:05 UTC] HEAD 137a0da: Ran `uv run --group dev pytest --cov=gengine --cov-report=term-missing` -> 86 tests passed, overall coverage 94% (CLI shell 91%, sim modules ≥90%).
+[2025-11-28 20:10 UTC] HEAD 137a0da: Captured refreshed telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m4-7-spatial.json` (stability 1.0, unrest ≈0.41, pollution ≈0.58, suppressed 359, anomalies 0, director analysis spotlighted Perimeter Hollow with 1-hop/3.13t travel time).
+[2025-11-28 20:20 UTC] HEAD 137a0da: Planning next steps—feed authored story seeds into NarrativeDirector hotspots and tune director config knobs (hotspot thresholds, travel timing) across sweep presets before implementation.
+[2025-11-28 20:23 UTC] HEAD 137a0da: PM request: merge feature/m4-7-spatial into main, then create a fresh branch for the story-seed + director tuning work once tests/telemetry are confirmed.
+[2025-11-28 20:26 UTC] HEAD 137a0da: Ran `uv run --group dev pytest --cov=gengine --cov-report=term-missing` (86 passed, 94% coverage) to validate the branch before merging.
+[2025-11-28 20:30 UTC] feature/m4-7-spatial: Committed `Add narrative director travel planner` capturing NarrativeDirector module, travel analysis surfaces, config/docs/tests updates, and telemetry references.

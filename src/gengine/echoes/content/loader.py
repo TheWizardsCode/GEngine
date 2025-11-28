@@ -10,7 +10,7 @@ from typing import Dict, Optional
 import yaml
 from pydantic import ValidationError
 
-from ..core.models import Agent, City, EnvironmentState, Faction
+from ..core.models import Agent, City, District, DistrictCoordinates, EnvironmentState, Faction
 from ..core.state import GameState
 
 DEFAULT_WORLD_NAME = "default"
@@ -59,6 +59,7 @@ def load_world_bundle(
         raise KeyError("World definition is missing 'city'") from exc
     except ValidationError as exc:  # pragma: no cover - validation detail
         raise ValueError(f"Invalid city definition: {exc}") from exc
+    _enrich_district_geometry(city)
 
     factions_raw = raw.get("factions", []) or []
     agents_raw = raw.get("agents", []) or []
@@ -91,3 +92,50 @@ def load_world_bundle(
         seed=int(seed),
         metadata=dict(metadata),
     )
+
+
+def _enrich_district_geometry(city: City, *, max_neighbors: int = 3) -> None:
+    """Ensure adjacency lists exist and stay consistent with coordinates."""
+
+    coords = {
+        district.id: district.coordinates
+        for district in city.districts
+        if district.coordinates is not None
+    }
+    if not coords:
+        return
+    for district in city.districts:
+        geometry = coords.get(district.id)
+        if geometry is None:
+            continue
+        existing = list(district.adjacent)
+        needed = max(0, max_neighbors - len(existing))
+        if needed <= 0:
+            continue
+        candidates = [other for other in city.districts if other.id != district.id and other.coordinates]
+        candidates.sort(key=lambda other: _distance(geometry, other.coordinates))  # type: ignore[arg-type]
+        for candidate in candidates:
+            if candidate.id in existing:
+                continue
+            existing.append(candidate.id)
+            if len(existing) >= max_neighbors:
+                break
+        district.adjacent = existing
+
+    adjacency: Dict[str, set[str]] = {district.id: set(district.adjacent) for district in city.districts}
+    for district in city.districts:
+        for neighbor in list(adjacency[district.id]):
+            adjacency.setdefault(neighbor, set()).add(district.id)
+    for district in city.districts:
+        ordered = list(dict.fromkeys(district.adjacent))
+        for neighbor in sorted(adjacency[district.id]):
+            if neighbor not in ordered:
+                ordered.append(neighbor)
+        district.adjacent = ordered
+
+
+def _distance(a: DistrictCoordinates, b: DistrictCoordinates) -> float:
+    dx = a.x - b.x
+    dy = a.y - b.y
+    dz = (a.z or 0.0) - (b.z or 0.0)
+    return (dx * dx + dy * dy + dz * dz) ** 0.5

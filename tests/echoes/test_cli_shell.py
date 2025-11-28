@@ -14,6 +14,7 @@ from gengine.echoes.cli.shell import (
     LocalBackend,
     ServiceBackend,
     _render_focus_state,
+    _render_director_feed,
     _render_history,
     _render_summary,
     main as cli_main,
@@ -41,6 +42,7 @@ def test_run_commands_executes_sequence(tmp_path: Path) -> None:
     assert "Tick" in out[1]
     assert (tmp_path / "state.json").exists()
     assert "City overview" in out[3]
+    assert "Geometry overlay" in out[3]
     assert "industrial-tier" in out[3]
     assert out[-1] == "Exiting shell."
 
@@ -107,10 +109,12 @@ def test_service_backend_map_and_save(tmp_path: Path) -> None:
 
     city_view = backend.render_map(None)
     assert "City overview" in city_view
+    assert "Geometry overlay" in city_view
 
     first_id = engine.state.city.districts[0].id
     district_view = backend.render_map(first_id)
     assert engine.state.city.districts[0].name in district_view
+    assert "coordinates" in district_view
 
     snapshot_path = tmp_path / "remote.json"
     backend.save_snapshot(snapshot_path)
@@ -123,6 +127,20 @@ def test_service_backend_map_and_save(tmp_path: Path) -> None:
         backend.load_snapshot(snapshot_path)
 
     client.close()
+
+
+def test_map_command_surfaces_geometry() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+
+    city_view = backend.render_map(None)
+    assert "Geometry overlay" in city_view
+    assert "coords" in city_view
+
+    detail_view = backend.render_map(engine.state.city.districts[0].id)
+    assert "coordinates" in detail_view
+    assert "adjacent" in detail_view
 
 
 def test_cli_main_script_local(capsys) -> None:
@@ -310,6 +328,7 @@ def test_render_summary_surfaces_environment_impact() -> None:
                     "severity": 1.0,
                     "focus_distance": 0,
                     "in_focus_ring": True,
+                    "district_id": "industrial-tier",
                 }
             ],
         },
@@ -324,6 +343,64 @@ def test_render_summary_surfaces_environment_impact() -> None:
     assert "ranked:" in rendered
 
 
+def test_render_summary_surfaces_director_feed() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 12,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.9,
+        "director_feed": {
+            "focus_center": "industrial-tier",
+            "suppressed_count": 2,
+            "top_ranked": [
+                {"message": "Event A", "score": 0.8, "district_id": "industrial-tier"},
+                {"message": "Event B", "score": 0.6, "district_id": "research-spire"},
+            ],
+            "spatial_weights": [
+                {"district_id": "industrial-tier", "score": 1.0},
+                {"district_id": "research-spire", "score": 0.8},
+            ],
+        },
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "director feed" in rendered
+    assert "ranked" in rendered
+    assert "spatial" in rendered
+
+
+def test_render_summary_surfaces_director_analysis() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 5,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.9,
+        "director_analysis": {
+            "hotspots": [
+                {
+                    "district_id": "research-spire",
+                    "travel": {"travel_time": 2.5, "reachable": True},
+                }
+            ],
+            "recommended_focus": {
+                "district_id": "research-spire",
+                "travel_time": 2.5,
+            },
+        },
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "director analysis" in rendered
+    assert "travel" in rendered
+    assert "recommend focus" in rendered
+
+
 def test_focus_command_reports_state() -> None:
     engine = SimEngine()
     engine.initialize_state(world="default")
@@ -332,6 +409,8 @@ def test_focus_command_reports_state() -> None:
     default_output = shell.execute("focus").output
 
     assert "Focus configuration" in default_output
+    assert "coords" in default_output
+    assert "adjacent" in default_output
 
     current_focus = engine.focus_state()
     neighbor = (current_focus.get("neighbors") or [None])[0]
@@ -348,12 +427,16 @@ def test_render_focus_state_formats_output() -> None:
         "district_id": "industrial-tier",
         "neighbors": ["research-spire"],
         "ring": ["industrial-tier", "research-spire"],
+        "adjacent": ["perimeter-hollow"],
+        "coordinates": {"x": 0.0, "y": 0.0},
     }
 
     rendered = _render_focus_state(panel)
 
     assert "industrial-tier" in rendered
     assert "research-spire" in rendered
+    assert "coords" in rendered
+    assert "adjacent" in rendered
 
 
 def test_game_state_summary_includes_environment_metadata() -> None:
@@ -410,6 +493,47 @@ def test_history_command_reports_entries() -> None:
 
     assert "tick" in rendered
     assert "focus=" in rendered
+
+
+def test_director_command_reports_feed() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(1)
+    shell = EchoesShell(LocalBackend(engine))
+
+    rendered = shell.execute("director").output
+
+    assert "Director feed" in rendered
+    assert "focus=" in rendered
+
+
+def test_render_director_feed_includes_analysis() -> None:
+    feed = {
+        "tick": 10,
+        "focus_center": "industrial-tier",
+        "suppressed_count": 3,
+    }
+    history = [
+        {"tick": 8, "focus_center": "industrial-tier", "suppressed_count": 2},
+        {"tick": 9, "focus_center": "industrial-tier", "suppressed_count": 1},
+    ]
+    analysis = {
+        "hotspots": [
+            {
+                "district_id": "research-spire",
+                "travel": {"reachable": True, "hops": 1, "travel_time": 1.5},
+            }
+        ],
+        "recommended_focus": {
+            "district_id": "research-spire",
+            "travel_time": 1.5,
+        },
+    }
+
+    rendered = _render_director_feed(feed, history, analysis)
+
+    assert "travel planning" in rendered
+    assert "recommendation" in rendered
 
 
 def test_render_history_formats_output() -> None:

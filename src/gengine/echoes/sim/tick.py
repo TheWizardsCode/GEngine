@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Sequence
 
 from ..core import GameState
 from ..settings import LodSettings, ProfilingSettings
+from .director import DirectorBridge, NarrativeDirector
 from .focus import FocusBudgetResult, FocusManager, NarrativeEvent
 
 
@@ -34,6 +35,8 @@ class TickReport:
     environment_impact: Dict[str, Any] = field(default_factory=dict)
     timings: Dict[str, float] = field(default_factory=dict)
     focus_budget: Dict[str, Any] = field(default_factory=dict)
+    director_snapshot: Dict[str, Any] = field(default_factory=dict)
+    director_analysis: Dict[str, Any] = field(default_factory=dict)
     anomalies: List[str] = field(default_factory=list)
 
 
@@ -48,12 +51,16 @@ class TickCoordinator:
         economy_system: object | None = None,
         environment_system: object | None = None,
         focus_manager: FocusManager | None = None,
+        director_bridge: DirectorBridge | None = None,
+        narrative_director: NarrativeDirector | None = None,
     ) -> None:
         self._agent_system = agent_system
         self._faction_system = faction_system
         self._economy_system = economy_system
         self._environment_system = environment_system
         self._focus_manager = focus_manager or FocusManager()
+        self._director_bridge = director_bridge
+        self._narrative_director = narrative_director
 
     def run(
         self,
@@ -83,6 +90,8 @@ class TickCoordinator:
                     event_budget=event_budget,
                     capture_timings=capture_timings,
                     focus_manager=self._focus_manager,
+                    director_bridge=self._director_bridge,
+                    narrative_director=self._narrative_director,
                 )
             )
         return reports
@@ -96,6 +105,8 @@ class TickCoordinator:
         event_budget: int | None,
         capture_timings: bool,
         focus_manager: FocusManager,
+        director_bridge: DirectorBridge | None,
+        narrative_director: NarrativeDirector | None,
     ) -> TickReport:
         tick_start = perf_counter()
         timings: Dict[str, float] = {}
@@ -188,6 +199,16 @@ class TickCoordinator:
 
         tick_value = state.advance_ticks(1)
         focus_manager.record_digest(state, tick=tick_value, result=focus_result)
+        director_snapshot: Dict[str, Any] = {}
+        if director_bridge is not None:
+            director_snapshot = director_bridge.record(
+                state,
+                tick=tick_value,
+                focus_result=focus_result,
+            )
+        director_analysis: Dict[str, Any] = {}
+        if narrative_director is not None:
+            director_analysis = narrative_director.evaluate(state, director_snapshot)
 
         timings["tick_total_ms"] = (perf_counter() - tick_start) * 1000
         return TickReport(
@@ -205,6 +226,8 @@ class TickCoordinator:
             environment_impact=impact_payload,
             timings=timings,
             focus_budget=focus_result.allocation,
+            director_snapshot=director_snapshot,
+            director_analysis=director_analysis,
             anomalies=anomalies,
         )
 
@@ -245,6 +268,8 @@ def advance_ticks(
     environment_system: object | None = None,
     profiling: ProfilingSettings | None = None,
     focus_manager: FocusManager | None = None,
+    director_bridge: DirectorBridge | None = None,
+    narrative_director: NarrativeDirector | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -254,6 +279,8 @@ def advance_ticks(
         economy_system=economy_system,
         environment_system=environment_system,
         focus_manager=focus_manager,
+        director_bridge=director_bridge,
+        narrative_director=narrative_director,
     )
     return coordinator.run(
         state,
@@ -385,8 +412,8 @@ def _environment_snapshot(state: GameState) -> dict[str, float]:
     }
 
 
-def _district_snapshot(state: GameState) -> List[dict[str, float]]:
-    entries: List[dict[str, float]] = []
+def _district_snapshot(state: GameState) -> List[dict[str, object]]:
+    entries: List[dict[str, object]] = []
     for district in state.city.districts:
         entries.append(
             {
@@ -395,6 +422,8 @@ def _district_snapshot(state: GameState) -> List[dict[str, float]]:
                 "unrest": district.modifiers.unrest,
                 "prosperity": district.modifiers.prosperity,
                 "security": district.modifiers.security,
+                "adjacent": list(district.adjacent),
+                "coordinates": district.coordinates.model_dump() if district.coordinates else None,
             }
         )
     return entries
