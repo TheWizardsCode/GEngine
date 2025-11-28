@@ -29,19 +29,19 @@ and persist state.
 
 ## 2. Shell Commands
 
-| Command                | Description                                                                                                                                                                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `help`                 | Lists all available commands.                                                                                                                                                                                                      |
-| `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
-| `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                   |
-| `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                           |
-| `map [district_id]`    | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district.                 |
-| `focus [district       | clear]`                                                                                                                                                                                                                            | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation. |
-| `history [count]`      | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown.                  |
-| `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                           |
-| `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                                                         |
-| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                                                   |
-| `exit` / `quit`        | Leave the shell.                                                                                                                                                                                                                   |
+| Command | Description |
+| --- | --- |
+| `help` | Lists all available commands. |
+| `summary` | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
+| `next` | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches. |
+| `run <n>` | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report. |
+| `map [district_id]` | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district. |
+| `focus [district\|clear]` | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation. |
+| `history [count]` | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown. |
+| `save <path>` | Writes the current `GameState` snapshot to disk as JSON. |
+| `load world <name>` | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only). |
+| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only). |
+| `exit` / `quit` | Leave the shell. |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
 quotes. The shell ignores blank lines and repeats the prompt after each command.

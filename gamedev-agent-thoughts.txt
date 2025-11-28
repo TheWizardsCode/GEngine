@@ -180,3 +180,8 @@
 727e630: Updated README, GDD, implementation plan, and gameplay guide with the new telemetry plotting workflow so designers have consistent instructions across surfaces.
 727e630: Added adjacency-biased diffusion clamps plus telemetry surfacing—EnvironmentSettings/EnvironmentSystem now support neighbor bias + min/max deltas, CLI summary prints averages/extremes/sample deltas, configs expose the knobs, and tests cover the new reporting.
 727e630: Re-ran `uv run --group dev pytest` (93 passed) after the diffusion telemetry updates to keep the validation log complete.
+4ae1b67: Cleaned docs/gengine/how_to_play_echoes.md command table formatting so the CLI command list renders correctly ahead of milestone wrap-up.
+4ae1b67: Awaiting clarification on the "go ahead" instruction before planning additional README or code updates; ready to proceed once scope is confirmed.
+4ae1b67: Proceeding to stage docs/gengine/how_to_play_echoes.md and gamedev-agent-thoughts.txt for commit per milestone wrap-up request.
+4ae1b67: Created branch chore/doc-table-fix from main to capture the documentation cleanup work per workflow rules.
+[doc-table-fix]: Committed the CLI command table formatting fix plus workflow log updates on chore/doc-table-fix; doc-only change so no tests/telemetry rerun. Fast-forwarded main (no upstream remote) per workflow instructions.
