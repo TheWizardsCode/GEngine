@@ -227,11 +227,6 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 
 **Perspective & Controls:**
 
-- CLI-driven, text-based interface backed by an LLM.
-- The primary interaction model is natural-language conversation: the player types free-form text, and the system interprets intents and executes appropriate in-world actions.
-- World and district map displayed as ASCII art (tile-like characters, symbols for factions, resources, and environmental states).
-- Common actions (moving, inspecting, influencing, conversing) are expressed conversationally rather than via a fixed command set (e.g., "head to the industrial belt and see who’s around", "ask the council liaison what they know about the blackout").
-- Overlay views rendered as textual tables and ASCII diagrams:
   - **City Map:** ASCII grid of districts, control zones, environmental heatmaps expressed via characters/shading.
   - **Relationships Graph:** text lists and simple ASCII node-edge diagrams.
   - **Faction Influence Map:** textual summaries and bar-like ASCII charts.
@@ -329,6 +324,9 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   mode (detailed/balanced/coarse), engine/service tick caps, CLI run/script
   limits, and tick-level logging so builds can hard-stop runaway loops while
   still emitting reproducible telemetry.
+- Headless regression driver: `scripts/run_headless_sim.py` executes long burns
+  in capped batches, prints batch diagnostics, and emits JSON summaries so
+  designers can compare macro metrics between builds or automated sweeps.
 
 **LLM Integration:**
 

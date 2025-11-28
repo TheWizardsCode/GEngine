@@ -8,8 +8,8 @@ A staged implementation that builds a solid simulation core, then layers on agen
 - ✅ Phase 2 (Early CLI Shell & Tick Loop): in-process `echoes-shell` CLI with summary/next/run/map/save/load commands plus a deterministic tick engine.
 - ⚙️ Phase 3 (Simulation Core & Service API): **M3.1 SimEngine abstraction
   landed**, **M3.2 FastAPI service + typed client shipped**, **M3.3 CLI service
-  mode running**, and **M3.4 safeguards + LOD shipped**; remaining work is the
-  headless driver.
+  mode running**, **M3.4 safeguards + LOD shipped**, and **M3.5 headless driver
+  online**.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -169,8 +169,11 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
   balanced, coarse) that scale volatility plus an event budget per tick.
   `SimEngine` now enforces the guardrails, logs tick metrics, and the CLI/service
   surface friendly warnings when requests exceed the configured caps.
-- **M3.5 Headless driver** (0.5 day): script `scripts/run_headless_sim.py`
-  advances ticks and logs diagnostics for regression tracking.
+- **M3.5 Headless driver** (complete): `scripts/run_headless_sim.py` runs
+  long-form burns by chunking work into `engine_max_ticks`, prints per-batch
+  diagnostics, and writes JSON summaries (tick counts, timing, LOD mode,
+  environment snapshot) for regression diffs or CI sweeps. Supports snapshot
+  bootstrap, seed overrides, and alternate config roots.
 
 ### Phase 4 – Agents, Factions, Economy, Environment
 

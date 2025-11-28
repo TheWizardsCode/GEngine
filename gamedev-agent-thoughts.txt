@@ -1,3 +1,5 @@
 [2025-11-28 14:45 UTC] Planned M3.4 scope: config-driven safeguards (CLI run/script caps, service tick limits), LOD tuning, and profiling hooks per implementation plan.
 [2025-11-28 14:47 UTC] Decided to add content/config/simulation.yml plus SimulationConfig loader, wire guards into SimEngine, CLI, and service, then update docs/tests accordingly.
 [2025-11-28 15:10 UTC] Planned validation pass: extend CLI/service/engine tests for new safeguards, refresh docs (README, gameplay guide, plan, GDD), and rerun pytest with coverage.
+[2025-11-28 15:32 UTC] Planning M3.5 headless driver: add scripts/run_headless_sim.py with chunked tick loops, JSON summary output, CLI args for world/ticks/lod, plus docs/tests updates.
+[2025-11-28 15:55 UTC] Implemented headless driver, new tests, and documentation updates; ready to merge M3.5 deliverable.

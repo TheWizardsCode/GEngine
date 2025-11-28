@@ -273,7 +273,24 @@ simulation branches.
 4. Keep an eye on the tick event logs—early warnings like "Civic tension is
    rising" indicate metrics approaching thresholds.
 
-## 8. What Comes Next
+## 8. Headless Regression Runs
+
+For longer burns or CI sweeps, use `scripts/run_headless_sim.py`:
+
+```bash
+uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coarse --output build/regression.json
+```
+
+- The driver obeys the same safeguards by chunking work into
+  `limits.engine_max_ticks` batches and printing per-batch diagnostics to
+  stderr.
+- Summaries include tick counts, total duration, LOD mode, and the final
+  environment snapshot. Store the JSON outputs in version control to diff
+  systemic changes over time.
+- Use `--seed` for deterministic comparisons and `--config-root` to point at a
+  CI-specific configuration folder.
+
+## 9. What Comes Next
 
 The shell currently operates entirely in-process. Upcoming phases of the plan
 will:

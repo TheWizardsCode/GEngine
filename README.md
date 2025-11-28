@@ -32,6 +32,9 @@ run locally.
   safeguards (CLI run cap, script limits, service tick cap), Level-of-Detail
   mode, and profiling toggles. `SimEngine` enforces these caps and logs tick
   timing when profiling is enabled.
+- Headless regression driver (`scripts/run_headless_sim.py`) that advances
+  batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
+  automated sweeps or CI regressions.
 - Utility script `scripts/eoe_dump_state.py` for quick world inspection and
   snapshot exports.
 - Test suite covering content loading, snapshot round-trip, tick behavior, and
@@ -185,6 +188,27 @@ Or, run the CLI shell against the service without restarting:
 ```bash
 uv run echoes-shell --service-url http://localhost:8000 --script "summary;run 5;map;exit"
 ```
+
+## Headless Regression Driver
+
+`scripts/run_headless_sim.py` advances long simulations without interactive
+input. It chunks work to respect `limits.engine_max_ticks`, prints per-batch
+diagnostics to stderr, and writes a JSON summary that downstream tools can
+diff.
+
+```bash
+uv run python scripts/run_headless_sim.py --world default --ticks 500 --lod coarse --output build/headless.json
+```
+
+Key flags:
+
+- `--ticks/-t`: total ticks to run (chunked automatically).
+- `--lod`: override `simulation.yml` LOD mode (`detailed|balanced|coarse`).
+- `--seed`: deterministic runs for regression capture.
+- `--snapshot`: start from a saved snapshot instead of content.
+- `--config-root`: point at an alternate config folder (useful in CI).
+- `--output`: path for the structured summary (includes tick counts, timing,
+  LOD mode, and last environment metrics).
 
 ## Next Steps
 
