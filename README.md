@@ -151,6 +151,38 @@ diffs. Use `summary` on any saved snapshot to inspect the last tick's
   ticks so you can compare how longer rolling windows smooth the tick-duration
   percentiles and subsystem timings. Compare their telemetry outputs to map
   safe ranges before promoting new environment or profiling tweaks.
+- For anomaly-budget investigations, run a longer soak against the profiling-
+  history config (history window 240) to see how safeguards behave deep into a
+  burn:
+
+  ```bash
+  uv run python scripts/run_headless_sim.py --world default --ticks 1000 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history --output build/profiling-history-1000tick.json
+  ```
+
+  The latest baseline burn recorded 989 `event_budget` anomalies while stability
+  collapsed after tick ~400, so feed anomaly budget tuning into Phase 4 M4.6 work
+  when prioritizing next steps.
+
+- Two mitigation-oriented presets now live under
+  `content/config/sweeps/profiling-history-high-budget/` (higher
+  `max_events_per_tick`) and `content/config/sweeps/profiling-history-soft-scarcity/`
+  (reduced scarcity pressure/weights). Example commands:
+
+  ```bash
+  uv run python scripts/run_headless_sim.py --world default --ticks 1000 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history-high-budget --output build/profiling-history-high-budget-1000tick.json
+  uv run python scripts/run_headless_sim.py --world default --ticks 1000 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history-soft-scarcity --output build/profiling-history-soft-scarcity-1000tick.json
+  ```
+
+  The high-budget run (now `max_events_per_tick=20`) cuts `event_budget`
+  anomalies to **3** but still loses citywide stability around tick 350, so it is
+  a stopgap that trades signal quality for noisier timelines. The soft-scarcity
+  variant aggressively boosts regeneration, trims pressure weights, and lowers
+  volatility to keep stability pegged at 1.0; even so it bottoms out around
+  **227** anomalies because agent summaries and resource drift still spike past
+  the 6-event cap roughly 20% of the time. Use the high-budget capture to get
+  immediate relief on small worlds, and keep the soft-scarcity profile handy for
+  profiling how close we can get with tuning alone ahead of the focus-aware
+  budgeting work planned for M4.6.
 
 ## Inspecting the Default World
 

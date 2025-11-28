@@ -1,0 +1,45 @@
+limits:
+  engine_max_ticks: 200
+  cli_run_cap: 50
+  cli_script_command_cap: 200
+  service_tick_cap: 100
+lod:
+  mode: balanced
+  volatility_scale:
+    detailed: 1.0
+    balanced: 0.75
+    coarse: 0.45
+  max_events_per_tick: 20
+profiling:
+  log_ticks: true
+  history_window: 240
+  capture_subsystems: true
+economy:
+  regen_scale: 0.8
+  demand_population_scale: 100000
+  demand_unrest_weight: 0.3
+  demand_prosperity_weight: 0.2
+  base_resource_weights:
+    energy: 4.0
+    food: 3.5
+    water: 3.0
+    materials: 2.5
+    capital: 2.4
+    data: 2.0
+  base_price: 1.0
+  shortage_threshold: 0.2
+  shortage_warning_ticks: 3
+  price_increase_step: 0.05
+  price_max_boost: 0.5
+  price_decay: 0.03
+  price_floor: 0.5
+environment:
+  scarcity_pressure_cap: 6
+  scarcity_unrest_weight: 0.0005
+  scarcity_pollution_weight: 0.0003
+  district_unrest_weight: 0.0003
+  district_pollution_weight: 0.0002
+  scarcity_event_threshold: 1.5
+  diffusion_rate: 0.1
+  faction_invest_pollution_relief: 0.02
+  faction_sabotage_pollution_spike: 0.025
