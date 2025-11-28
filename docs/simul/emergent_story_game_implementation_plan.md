@@ -7,9 +7,9 @@ A staged implementation that builds a solid simulation core, then layers on agen
 - ✅ Phase 1 (Foundations & Data Model): core models, YAML loader, snapshots, smoke tests.
 - ✅ Phase 2 (Early CLI Shell & Tick Loop): in-process `echoes-shell` CLI with summary/next/run/map/save/load commands plus a deterministic tick engine.
 - ⚙️ Phase 3 (Simulation Core & Service API): **M3.1 SimEngine abstraction
-  landed**, **M3.2 FastAPI service + typed client shipped**, and **M3.3 CLI
-  service mode running**; remaining tasks cover safeguards and headless
-  drivers.
+  landed**, **M3.2 FastAPI service + typed client shipped**, **M3.3 CLI service
+  mode running**, and **M3.4 safeguards + LOD shipped**; remaining work is the
+  headless driver.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -163,8 +163,12 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
 - **M3.3 CLI service mode** (complete): the `echoes-shell` now accepts
   `--service-url` to steer through `SimServiceClient`, with unit tests covering
   both `LocalBackend` and `ServiceBackend` flows.
-- **M3.4 LOD + safeguards** (1 day): cap loop iterations, add configs in
-  `content/config/`, and emit metrics/logs for profiling.
+- **M3.4 LOD + safeguards** (complete): `content/config/simulation.yml`
+  establishes reusable limits (engine cap, CLI run cap, script guard, service
+  tick cap), exposes `ECHOES_CONFIG_ROOT`, and tunes LOD modes (detailed,
+  balanced, coarse) that scale volatility plus an event budget per tick.
+  `SimEngine` now enforces the guardrails, logs tick metrics, and the CLI/service
+  surface friendly warnings when requests exceed the configured caps.
 - **M3.5 Headless driver** (0.5 day): script `scripts/run_headless_sim.py`
   advances ticks and logs diagnostics for regression tracking.
 

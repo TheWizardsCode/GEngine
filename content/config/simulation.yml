@@ -1,0 +1,14 @@
+limits:
+  engine_max_ticks: 200
+  cli_run_cap: 50
+  cli_script_command_cap: 200
+  service_tick_cap: 100
+lod:
+  mode: balanced
+  volatility_scale:
+    detailed: 1.0
+    balanced: 0.75
+    coarse: 0.45
+  max_events_per_tick: 6
+profiling:
+  log_ticks: true

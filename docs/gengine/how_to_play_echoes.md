@@ -55,6 +55,27 @@ Run `uv run python -m gengine.echoes.service.main` to host the service locally
 and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
 `curl`. The CLI gateway planned for Phase 3 will sit on top of this API.
 
+### Safeguards and Level of Detail
+
+- The CLI clamps `run` commands to the value configured in
+  `limits.cli_run_cap` (default 50). If you request more ticks you will see a
+  `Safeguard: run limited...` prefix but still receive the resulting report.
+- Scripts triggered via `--script` (or the `run_commands` helper in tests) are
+  capped by `limits.cli_script_command_cap` (default 200). Once the limit is
+  reached the shell prints a warning and exits the loop, preventing runaway CI
+  jobs.
+- The FastAPI `/tick` endpoint enforces `limits.service_tick_cap` (default 100)
+  and responds with HTTP 400 if a client exceeds it.
+- All limits live in `content/config/simulation.yml`. Override the config path
+  with `ECHOES_CONFIG_ROOT` to inject environment-specific guardrails.
+- Level-of-Detail settings (`lod` block) adjust how aggressively the tick loop
+  drifts resources/modifiers. `balanced` dampens volatility compared to
+  `detailed`, while `coarse` applies heavy smoothing and caps the number of
+  per-tick events so long burns stay legible.
+- When `profiling.log_ticks` is enabled, `SimEngine` emits log entries such as
+  `ticks=5 duration_ms=4.1 lod=balanced` via the `gengine.echoes.sim` logger so
+  you can measure performance of scripted runs or headless drivers.
+
 ### Ticks and Reports
 
 - Each `next`/`run` command calls the simulation tick loop.

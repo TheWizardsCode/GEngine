@@ -7,6 +7,7 @@ import os
 import uvicorn
 
 from .app import create_app
+from ..settings import load_simulation_config
 
 
 def main() -> None:  # pragma: no cover - thin wrapper around uvicorn
@@ -14,7 +15,8 @@ def main() -> None:  # pragma: no cover - thin wrapper around uvicorn
     port = int(os.environ.get("ECHOES_SERVICE_PORT", "8000"))
     world = os.environ.get("ECHOES_SERVICE_WORLD", "default")
 
-    app = create_app(auto_world=world)
+    config = load_simulation_config()
+    app = create_app(auto_world=world, config=config)
     uvicorn.run(app, host=host, port=port)
 
 

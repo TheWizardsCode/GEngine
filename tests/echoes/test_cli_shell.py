@@ -18,6 +18,7 @@ from gengine.echoes.cli.shell import (
 from gengine.echoes.client import SimServiceClient
 from gengine.echoes.content import load_world_bundle
 from gengine.echoes.service import create_app
+from gengine.echoes.settings import SimulationConfig, SimulationLimits
 from gengine.echoes.sim import SimEngine
 
 
@@ -210,6 +211,39 @@ def test_run_commands_with_service_backend() -> None:
 
     assert "Current world summary" in outputs[0]
     client.close()
+
+
+def test_shell_run_command_is_clamped() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    limits = SimulationLimits(
+        engine_max_ticks=10,
+        cli_run_cap=2,
+        cli_script_command_cap=5,
+        service_tick_cap=10,
+    )
+    shell = EchoesShell(LocalBackend(engine), limits=limits)
+
+    result = shell.execute("run 5")
+
+    assert "Safeguard" in result.output
+    assert result.output.count("Tick") == 2
+
+
+def test_run_commands_respects_script_cap() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    limits = SimulationLimits(
+        engine_max_ticks=10,
+        cli_run_cap=5,
+        cli_script_command_cap=2,
+        service_tick_cap=10,
+    )
+    config = SimulationConfig(limits=limits)
+
+    outputs = run_commands(["summary", "summary", "summary"], engine=engine, config=config)
+
+    assert outputs[-1].startswith("Safeguard: script exceeded 2 commands")
 
 
 def test_cli_main_interactive(monkeypatch, capsys) -> None:

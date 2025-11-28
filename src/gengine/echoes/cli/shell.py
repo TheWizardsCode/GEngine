@@ -12,6 +12,7 @@ from typing import Any, Iterable, List, Sequence
 from ..core import GameState
 from ..persistence import save_snapshot
 from ..client import SimServiceClient
+from ..settings import SimulationConfig, SimulationLimits, load_simulation_config
 from ..sim import SimEngine, TickReport
 
 PROMPT = "(echoes) "
@@ -111,8 +112,14 @@ class ServiceBackend(ShellBackend):
 class EchoesShell:
     """Minimal command processor for the early CLI shell."""
 
-    def __init__(self, backend: ShellBackend) -> None:
+    def __init__(
+        self,
+        backend: ShellBackend,
+        *,
+        limits: SimulationLimits | None = None,
+    ) -> None:
         self.backend = backend
+        self._limits = limits
 
     # Public API ---------------------------------------------------------
     def execute(self, command_line: str) -> CommandResult:
@@ -151,8 +158,16 @@ class EchoesShell:
             count = max(1, int(args[0]))
         except ValueError:
             return CommandResult("Usage: run <count>")
-        reports = self.backend.advance_ticks(count)
-        return CommandResult(_render_reports(reports))
+        limit = self._limits.cli_run_cap if self._limits else count
+        capped = min(count, limit)
+        reports = self.backend.advance_ticks(capped)
+        output = _render_reports(reports)
+        if capped < count:
+            prefix = (
+                f"Safeguard: run limited to {limit} ticks (requested {count})."
+            )
+            output = f"{prefix}\n{output}" if output else prefix
+        return CommandResult(output)
 
     def _cmd_map(self, args: Sequence[str]) -> CommandResult:
         district_id = args[0] if args else None
@@ -267,19 +282,29 @@ def run_commands(
     engine: SimEngine | None = None,
     state: GameState | None = None,
     world: str = "default",
+    config: SimulationConfig | None = None,
 ) -> List[str]:
     active_backend = backend
+    active_config = config or load_simulation_config()
     if active_backend is None:
-        sim_engine = engine or SimEngine()
+        sim_engine = engine or SimEngine(config=active_config)
         if engine is None:
             if state is not None:
                 sim_engine.initialize_state(state=state)
             else:
                 sim_engine.initialize_state(world=world)
         active_backend = LocalBackend(sim_engine)
-    shell = EchoesShell(active_backend)
+    shell = EchoesShell(active_backend, limits=active_config.limits)
     outputs: List[str] = []
+    max_commands = active_config.limits.cli_script_command_cap
+    executed = 0
     for command in commands:
+        if executed >= max_commands:
+            outputs.append(
+                f"Safeguard: script exceeded {max_commands} commands; halting."
+            )
+            break
+        executed += 1
         result = shell.execute(command)
         outputs.append(result.output)
         if result.should_exit:
@@ -287,8 +312,13 @@ def run_commands(
     return outputs
 
 
-def _build_engine(world: str, snapshot: Path | None) -> SimEngine:
-    engine = SimEngine()
+def _build_engine(
+    world: str,
+    snapshot: Path | None,
+    *,
+    config: SimulationConfig,
+) -> SimEngine:
+    engine = SimEngine(config=config)
     if snapshot is not None:
         engine.initialize_state(snapshot=snapshot)
     else:
@@ -319,20 +349,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="If provided, target a running simulation service instead of local state",
     )
     args = parser.parse_args(argv)
+    config = load_simulation_config()
 
     client: SimServiceClient | None = None
     if args.service_url:
         client = SimServiceClient(args.service_url)
         backend: ShellBackend = ServiceBackend(client)
     else:
-        engine = _build_engine(args.world, args.snapshot)
+        engine = _build_engine(args.world, args.snapshot, config=config)
         backend = LocalBackend(engine)
-    shell = EchoesShell(backend)
+    shell = EchoesShell(backend, limits=config.limits)
 
     try:
         if args.script:
             commands = [cmd.strip() for cmd in args.script.split(";") if cmd.strip()]
-            for result in run_commands(commands, backend=backend):
+            for result in run_commands(commands, backend=backend, config=config):
                 if result:
                     print(result)
             return 0

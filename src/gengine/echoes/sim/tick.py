@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import List, Sequence
 
 from ..core import GameState
+from ..settings import LodSettings
 
 
 @dataclass(slots=True)
@@ -24,6 +25,7 @@ def advance_ticks(
     count: int = 1,
     *,
     seed: int | None = None,
+    lod: LodSettings | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -34,12 +36,16 @@ def advance_ticks(
     rng = random.Random(rng_seed)
     reports: List[TickReport] = []
 
+    scale = lod.scale if lod else 1.0
+    event_budget = lod.max_events_per_tick if lod else None
+
     for _ in range(count):
         events: List[str] = []
-        _update_resources(state, rng, events)
-        _update_district_modifiers(state, rng, events)
-        _update_environment(state, rng, events)
+        _update_resources(state, rng, events, scale)
+        _update_district_modifiers(state, rng, events, scale)
+        _update_environment(state, rng, events, scale)
         tick_value = state.advance_ticks(1)
+        _enforce_event_budget(events, event_budget)
         reports.append(
             TickReport(
                 tick=tick_value,
@@ -56,12 +62,17 @@ def _clamp(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
     return max(lo, min(hi, value))
 
 
-def _update_resources(state: GameState, rng: random.Random, events: List[str]) -> None:
+def _update_resources(
+    state: GameState,
+    rng: random.Random,
+    events: List[str],
+    scale: float,
+) -> None:
     for district in state.city.districts:
         for stock in district.resources.values():
             midpoint = stock.capacity * 0.5
             drift = (midpoint - stock.current) * 0.05
-            fluctuation = rng.uniform(-1.5, 1.5)
+            fluctuation = rng.uniform(-1.5, 1.5) * scale
             new_value = _clamp(stock.current + drift + fluctuation, 0, stock.capacity)
             if abs(new_value - stock.current) > 3:
                 events.append(
@@ -71,13 +82,16 @@ def _update_resources(state: GameState, rng: random.Random, events: List[str]) -
 
 
 def _update_district_modifiers(
-    state: GameState, rng: random.Random, events: List[str]
+    state: GameState,
+    rng: random.Random,
+    events: List[str],
+    scale: float,
 ) -> None:
     for district in state.city.districts:
-        unrest_shift = rng.uniform(-0.02, 0.02)
-        pollution_shift = rng.uniform(-0.015, 0.015)
-        prosperity_shift = rng.uniform(-0.02, 0.02)
-        security_shift = rng.uniform(-0.02, 0.02)
+        unrest_shift = rng.uniform(-0.02, 0.02) * scale
+        pollution_shift = rng.uniform(-0.015, 0.015) * scale
+        prosperity_shift = rng.uniform(-0.02, 0.02) * scale
+        security_shift = rng.uniform(-0.02, 0.02) * scale
 
         district.modifiers.unrest = _clamp(district.modifiers.unrest + unrest_shift)
         district.modifiers.pollution = _clamp(
@@ -96,14 +110,23 @@ def _update_district_modifiers(
             events.append(f"{district.name} pollution spike detected")
 
 
-def _update_environment(state: GameState, rng: random.Random, events: List[str]) -> None:
+def _update_environment(
+    state: GameState,
+    rng: random.Random,
+    events: List[str],
+    scale: float,
+) -> None:
     env = state.environment
     avg_unrest = _average(d.modifiers.unrest for d in state.city.districts)
     avg_pollution = _average(d.modifiers.pollution for d in state.city.districts)
 
-    env.unrest = _clamp(env.unrest + 0.05 * (avg_unrest - 0.5) + rng.uniform(-0.01, 0.01))
+    env.unrest = _clamp(
+        env.unrest + 0.05 * (avg_unrest - 0.5) + rng.uniform(-0.01, 0.01) * scale
+    )
     env.pollution = _clamp(
-        env.pollution + 0.04 * (avg_pollution - 0.5) + rng.uniform(-0.015, 0.015)
+        env.pollution
+        + 0.04 * (avg_pollution - 0.5)
+        + rng.uniform(-0.015, 0.015) * scale
     )
     env.stability = _clamp(env.stability - (env.unrest - 0.5) * 0.04)
     env.security = _clamp(env.security - (env.pollution - 0.5) * 0.02)
@@ -147,3 +170,10 @@ def _average(values: Sequence[float]) -> float:
     if not items:
         return 0.0
     return sum(items) / len(items)
+
+
+def _enforce_event_budget(events: List[str], budget: int | None) -> None:
+    if budget is None or len(events) <= budget:
+        return
+    del events[budget:]
+    events.append("Additional events suppressed by LOD budget")

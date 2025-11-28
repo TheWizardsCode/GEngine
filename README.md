@@ -28,6 +28,10 @@ run locally.
 - CLI shell (`echoes-shell`) that runs the sim in-process, supports
   `summary`, `next`, `run`, `map`, `save`, and `load` commands, and can run in
   interactive or scripted mode.
+- Shared simulation config in `content/config/simulation.yml` that sets
+  safeguards (CLI run cap, script limits, service tick cap), Level-of-Detail
+  mode, and profiling toggles. `SimEngine` enforces these caps and logs tick
+  timing when profiling is enabled.
 - Utility script `scripts/eoe_dump_state.py` for quick world inspection and
   snapshot exports.
 - Test suite covering content loading, snapshot round-trip, tick behavior, and
@@ -118,6 +122,7 @@ Available in-shell commands:
 - `next` – advance exactly one tick with the inline report. Use `run` for
   batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.
+  The CLI enforces the safeguard defined in `limits.cli_run_cap` (default 50).
 - `map [district_id]` – render ASCII table of all districts (includes an "ID"
   column) or details for one. Use `map` with no arguments to discover values
   such as `industrial-tier`.
@@ -125,6 +130,28 @@ Available in-shell commands:
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot (local engine mode only).
 - `exit`/`quit` – leave the shell.
+
+If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
+shell halts automatically and prints a safeguard warning so runaway loops do
+not wedge CI runs.
+
+## Simulation Config and Safeguards
+
+- Configuration lives in `content/config/simulation.yml`. Override the folder by
+  setting `ECHOES_CONFIG_ROOT=/path/to/configs` before running any tools.
+- `limits`: controls `engine_max_ticks` (hard stop inside `SimEngine`),
+  `cli_run_cap`, `cli_script_command_cap`, and the service-facing
+  `service_tick_cap` (default 100). Exceeding a limit produces a friendly
+  error/warning rather than stalling the process.
+- `lod`: selects `detailed`, `balanced` (default), or `coarse` modes. Each mode
+  tweaks volatility in the tick loop and caps the number of events emitted per
+  tick to keep logs legible during long burns.
+- `profiling`: flips the structured tick log on/off. When enabled, every
+  `SimEngine.advance_ticks` call logs tick counts, duration (ms), and the active
+  LOD mode via the `gengine.echoes.sim` logger so you can profile headless runs.
+
+Edit the YAML, rerun the CLI/service, and the new safeguards apply immediately
+without code changes.
 
 ## Running the Simulation Service
 
@@ -140,6 +167,8 @@ Environment variables:
 - `ECHOES_SERVICE_HOST` – bind address (default `0.0.0.0`).
 - `ECHOES_SERVICE_PORT` – port (default `8000`).
 - `ECHOES_SERVICE_WORLD` – world name to load at startup (default `default`).
+- `ECHOES_CONFIG_ROOT` – optional root for `simulation.yml` when deploying with
+  external configuration management.
 
 You can integrate with the API using the bundled client:
 

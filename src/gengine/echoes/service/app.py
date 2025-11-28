@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from ..core import GameState
+from ..settings import SimulationConfig, load_simulation_config
 from ..sim import SimEngine, TickReport
 from ..sim.engine import EngineNotInitializedError
 
@@ -15,7 +16,7 @@ DetailName = Literal["summary", "snapshot", "district"]
 
 
 class TickRequest(BaseModel):
-    ticks: int = Field(1, ge=1, le=100)
+    ticks: int = Field(1, ge=1)
 
 
 class TickResponse(BaseModel):
@@ -35,10 +36,12 @@ def create_app(
     engine: SimEngine | None = None,
     *,
     auto_world: str = "default",
+    config: SimulationConfig | None = None,
 ) -> FastAPI:
     """Instantiate the FastAPI app backed by a ``SimEngine``."""
 
-    sim = engine or SimEngine()
+    active_config = config or getattr(engine, "config", None) or load_simulation_config()
+    sim = engine or SimEngine(config=active_config)
     _ensure_state(sim, auto_world)
 
     app = FastAPI(title="Echoes Simulation Service", version="0.1.0")
@@ -49,6 +52,12 @@ def create_app(
 
     @app.post("/tick", response_model=TickResponse)
     def post_tick(payload: TickRequest) -> TickResponse:
+        limit = active_config.limits.service_tick_cap
+        if payload.ticks > limit:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Tick request exceeds service limit of {limit}",
+            )
         reports = sim.advance_ticks(payload.ticks)
         return TickResponse(
             ticks_advanced=len(reports),

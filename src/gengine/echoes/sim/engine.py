@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Literal, Sequence
 
 from ..content import load_world_bundle
 from ..core import GameState
 from ..persistence import load_snapshot
+from ..settings import SimulationConfig, load_simulation_config
 from .tick import TickReport, advance_ticks as _advance_ticks
 
 ViewName = Literal["summary", "snapshot", "district"]
@@ -17,11 +20,20 @@ class EngineNotInitializedError(RuntimeError):
     """Raised when engine operations run without initialized state."""
 
 
+logger = logging.getLogger("gengine.echoes.sim")
+
+
 class SimEngine:
     """Thin façade that will back both in-process and service deployments."""
 
-    def __init__(self, state: GameState | None = None) -> None:
+    def __init__(
+        self,
+        state: GameState | None = None,
+        *,
+        config: SimulationConfig | None = None,
+    ) -> None:
         self._state = state
+        self._config = config or load_simulation_config()
 
     # ------------------------------------------------------------------
     @property
@@ -29,6 +41,10 @@ class SimEngine:
         if self._state is None:
             raise EngineNotInitializedError("SimEngine state is not initialized")
         return self._state
+
+    @property
+    def config(self) -> SimulationConfig:
+        return self._config
 
     # ------------------------------------------------------------------
     def initialize_state(
@@ -54,7 +70,23 @@ class SimEngine:
     def advance_ticks(self, count: int = 1, *, seed: int | None = None) -> Sequence[TickReport]:
         """Advance simulation time by ``count`` ticks using the tick driver."""
 
-        return _advance_ticks(self.state, count, seed=seed)
+        limit = self._config.limits.engine_max_ticks
+        if count > limit:
+            raise ValueError(
+                f"Requested {count} ticks exceeds engine limit of {limit}"
+            )
+
+        start = perf_counter()
+        reports = _advance_ticks(self.state, count, seed=seed, lod=self._config.lod)
+        duration_ms = (perf_counter() - start) * 1000
+        if self._config.profiling.log_ticks:
+            logger.info(
+                "ticks=%s duration_ms=%.2f lod=%s",
+                len(reports),
+                duration_ms,
+                self._config.lod.mode,
+            )
+        return reports
 
     # ------------------------------------------------------------------
     def apply_action(self, action: dict[str, Any] | None = None) -> dict[str, Any]:

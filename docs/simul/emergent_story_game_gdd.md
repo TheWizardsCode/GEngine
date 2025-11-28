@@ -325,6 +325,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   - Detailed simulation in the players current and adjacent districts.
   - Coarser approximations in distant or inactive regions.
 - Important agents get deeper reasoning passes; background populations are approximated statistically.
+- Safeguards and profiling: `content/config/simulation.yml` configures the LOD
+  mode (detailed/balanced/coarse), engine/service tick caps, CLI run/script
+  limits, and tick-level logging so builds can hard-stop runaway loops while
+  still emitting reproducible telemetry.
 
 **LLM Integration:**
 

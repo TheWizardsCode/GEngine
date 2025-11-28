@@ -64,3 +64,12 @@ def test_metrics_endpoint_reports_environment() -> None:
     payload = response.json()
     assert payload["tick"] == engine.state.tick
     assert "environment" in payload
+
+
+def test_tick_endpoint_rejects_large_requests() -> None:
+    client, _ = _client()
+
+    response = client.post("/tick", json={"ticks": 500})
+
+    assert response.status_code == 400
+    assert "limit" in response.json()["detail"]

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import pytest
+
+from gengine.echoes.settings import SimulationConfig, SimulationLimits
 from gengine.echoes.sim import SimEngine
 
 
@@ -42,3 +45,18 @@ def test_engine_apply_action_is_placeholder() -> None:
     result = engine.apply_action({"intent": "noop"})
 
     assert result["status"] == "noop"
+
+
+def test_engine_enforces_tick_limit() -> None:
+    limits = SimulationLimits(
+        engine_max_ticks=1,
+        cli_run_cap=1,
+        cli_script_command_cap=5,
+        service_tick_cap=1,
+    )
+    config = SimulationConfig(limits=limits)
+    engine = SimEngine(config=config)
+    engine.initialize_state(world="default")
+
+    with pytest.raises(ValueError):
+        engine.advance_ticks(2)
