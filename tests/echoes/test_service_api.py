@@ -24,8 +24,13 @@ def test_tick_endpoint_advances_state() -> None:
     body = response.json()
     assert body["ticks_advanced"] == 2
     assert engine.state.tick == 2
-    assert body["reports"][0]["agent_actions"]
-    assert "faction_actions" in body["reports"][0]
+    first_report = body["reports"][0]
+    assert first_report["agent_actions"]
+    assert "faction_actions" in first_report
+    assert "faction_legitimacy" in first_report
+    assert "faction_legitimacy_delta" in first_report
+    assert "economy" in first_report
+    assert "environment_impact" in first_report
 
 
 def test_state_endpoint_requires_district_id() -> None:

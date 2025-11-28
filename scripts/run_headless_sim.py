@@ -60,6 +60,8 @@ def run_headless_sim(
     }
     if reports:
         summary["last_environment"] = reports[-1].environment
+        summary["faction_legitimacy"] = reports[-1].faction_legitimacy
+        summary["last_economy"] = reports[-1].economy
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -110,7 +112,8 @@ def _emit_batch_log(batch_index: int, reports: list[TickReport]) -> None:
         f"[batch {batch_index}] tick={last.tick} "
         f"stb={env['stability']:.2f} unrest={env['unrest']:.2f} "
         f"poll={env['pollution']:.2f} events={len(last.events)} "
-        f"agent_actions={len(last.agent_actions)} factions={len(last.faction_actions)}\n"
+        f"agent_actions={len(last.agent_actions)} factions={len(last.faction_actions)} "
+        f"prices={len(last.economy.get('prices', {}))}\n"
     )
 
 

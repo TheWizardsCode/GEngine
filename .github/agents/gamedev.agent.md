@@ -47,7 +47,7 @@ When working on game development tasks, follow this general workflow:
 Whenever executable code needs to be added or moodified you must:
 
 1. Ensure you are working from an up to date and synced clone. If there are local changes ask what to do with them before proceeding. If there are remote changes pull them in and resolve any conflicts.
-2. Review the codebase for possible refactorings or improvements that can be made in conjunction with the new feature or bugfix, and plan to include those changes as well.
+2. Review the codebase for possible refactorings or improvements that can be made in conjunction with the new feature or bugfix, and plan to include those changes as well. Log refactorings to the `gamedev-agent-thoughts.txt` file.
 3. Create a branch for the feature or bugfix. Do not reuse an existing branch. If we are in a branch already ask if you should create a new branch from this one, merge this branch into main and create a new one or continue working in the existing one.
 4. Update the relevant Game Design Document (GDD) or implementation plan (see
    [docs/simul](../../docs/simul)) to reflect the changes.
@@ -56,14 +56,14 @@ Whenever executable code needs to be added or moodified you must:
 6. Update the gameplay documentation (for example,
    [docs/gengine/how_to_play_echoes.md](../../docs/gengine/how_to_play_echoes.md))
    to reflect any changes in game systems.
-7. Implement the changes in the codebase.
-8. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 90%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
-9. Capture the canonical headless telemetry snapshot (`uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-2-faction-telemetry.json`) and attach or commit the JSON for regression reference.
+7. Implement the changes in the codebase. log all significant code changes to the `gamedev-agent-thoughts.txt` file.
+8. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 90%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding. Log the test coverage numbers to the `gamedev-agent-thoughts.txt` file.
+9. Capture the canonical headless telemetry snapshot (`uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/BRANCH_NAME.json`). Log the headline numbers to the `gamedev-agent-thoughts.txt` file.
 10. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin play testing.
 11. Ask the PM to approve the changes, and once approved, commit the changes with a descriptive message summarizing the updates made.
 12. Push the changes to the remote repository.
 13. Create a pull request.
-14. Request a review and, if appropriate, merge of the pull request.
+14. Request a review and, when appropriate, merge of the pull request. Record this in the `gamedev-agent-thoughts.txt` file along with the commit hash.
 
 ## Documentation Guidlines
 

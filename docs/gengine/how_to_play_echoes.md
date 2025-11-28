@@ -32,7 +32,7 @@ and persist state.
 | Command                | Description                                                                                                                                                      |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `help`                 | Lists all available commands.                                                                                                                                    |
-| `summary`              | Shows city name, tick count, number of districts/factions/agents, and global stability.                                                                          |
+| `summary`              | Shows city name, tick count, number of districts/factions/agents, global stability, plus per-faction legitimacy (and market prices when available).              |
 | `next`                 | Advances the simulation exactly 1 tick and prints an inline report. Use `run` for larger batches.                                                                |
 | `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                         |
 | `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district. |
@@ -93,6 +93,10 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   invests in Industrial Tier" or "Cartel of Mist undermines Union of Flux"—and
   directly tweaks legitimacy, resources, and district modifiers so the macro
   picture evolves even without player input.
+- When legitimacy shifts are meaningful the shell prints a short "faction
+  legitimacy" block showing the three largest deltas (signed) so you can track
+  winners/losers at a glance. A `market -> energy:1.05, food:0.97, ...` line
+  follows whenever the economy subsystem has published prices for the tick.
 
 ### District Overview
 
@@ -111,6 +115,61 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
 - Environment metrics (stability/unrest/pollution/security) evolve slightly each
   tick based on district modifiers. Watch the tick reports for tipping-point
   messages.
+
+### Economy and Market Feedback
+
+- The economy subsystem rebalances each district's resource stocks every tick,
+  tracks shortages that persist beyond a configurable duration, and publishes a
+  lightweight market table. Those prices and shortage counters are stored in
+  the game state metadata so the CLI summary, service responses, and telemetry
+  can all display the latest values consistently.
+- When shortages linger you will see economy alerts in the tick log (e.g.,
+  "Economy alert: energy shortage persists for 3 ticks"), giving you an early
+  warning before unrest or faction pressure escalates.
+
+### Tuning the Economy via Config
+
+- Edit `content/config/simulation.yml` to tweak the `economy` block. Key knobs:
+  - `regen_scale`: multiplier applied to every district's resource regeneration
+    rate before random drift.
+  - `demand_population_scale`, `demand_unrest_weight`, and
+    `demand_prosperity_weight`: shape how population, unrest, and prosperity
+    amplify consumption.
+  - `base_resource_weights`: per-resource weighting that biases demand toward
+    certain commodities.
+  - `shortage_threshold` + `shortage_warning_ticks`: control when shortages are
+    counted and surfaced in reports.
+  - `base_price`, `price_increase_step`, `price_max_boost`, `price_decay`, and
+    `price_floor`: define how market prices spike during shortages and glide
+    back down when supply recovers.
+- Restart the shell or service after editing the file (or point
+  `ECHOES_CONFIG_ROOT` at an alternate folder) and the next tick will use the
+  new parameters. Pair config tweaks with long `run` or headless sessions to
+  see how scarcity curves and price ceilings change over time.
+
+### Environment Coupling
+
+- Scarcity signals now feed into the environment loop via `EnvironmentSystem`.
+  When the economy subsystem reports sustained shortages, the system applies a
+  configurable pressure value that drifts district unrest/pollution and, by
+  extension, global stability.
+- Tune the response curve through the `environment` block in
+  `content/config/simulation.yml`. The `scarcity_*_weight` fields control how
+  strongly shortages push on unrest or pollution, while `scarcity_event_threshold`
+  decides when the shell prints explicit "Scarcity" alerts.
+- Pollution diffuses toward a citywide average each tick when `diffusion_rate`
+  is non-zero, and faction actions now feed directly into the loop:
+  `faction_invest_pollution_relief` eases pollution whenever a faction invests
+  in one of its districts, while `faction_sabotage_pollution_spike` models the
+  fallout from covert ops.
+- Every tick writes an `environment_impact` block into the game state's
+  metadata. Inspect it via headless telemetry or by dumping the snapshot to see
+  the latest pressure, diffusion flag, faction effects, per-district deltas, and
+  emitted warnings while you tune. The `summary` command now prints this block
+  directly so designers can spot runaway pollution before advancing time.
+- For rapid scenario sweeps, switch configs with
+  `--config-root content/config/sweeps/high-pressure` (stress test) or
+  `.../cushioned` (long-form stability) when running `scripts/run_headless_sim.py`.
 
 ## 4. World and District Parameters
 
@@ -295,9 +354,9 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
   stderr.
 - Summaries include tick counts, total duration, LOD mode, and the final
   environment snapshot. The JSON now also tracks the number of agent actions,
-  faction actions, and their respective breakdowns so you can spot systemic
-  shifts between builds. Store the JSON outputs in version control to diff
-  systemic changes over time.
+  faction actions, their respective breakdowns, faction legitimacy snapshots,
+  and the `last_economy` block so you can spot systemic shifts between builds.
+  Store the JSON outputs in version control to diff systemic changes over time.
 - Use `--seed` for deterministic comparisons and `--config-root` to point at a
   CI-specific configuration folder.
 

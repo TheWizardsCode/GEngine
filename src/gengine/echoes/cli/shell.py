@@ -211,6 +211,28 @@ def _render_summary(summary: dict[str, object]) -> str:
     for key in ("city", "tick", "districts", "factions", "agents", "stability"):
         value = summary[key]
         lines.append(f"  {key:>10}: {value}")
+    impact = summary.get("environment_impact")
+    if isinstance(impact, dict) and impact:
+        pressure = impact.get("scarcity_pressure", 0.0)
+        lines.append("  env impact:")
+        lines.append(f"    scarcity pressure: {pressure:.2f}")
+        if impact.get("diffusion_applied"):
+            lines.append("    diffusion: active")
+        deltas = impact.get("district_deltas") or {}
+        if deltas:
+            sample_id, sample_delta = next(iter(deltas.items()))
+            poll_delta = sample_delta.get("pollution", 0.0)
+            lines.append(
+                f"    sample delta: {sample_id} pollution {poll_delta:+.3f}"
+            )
+        faction_effects = impact.get("faction_effects") or []
+        if faction_effects:
+            preview = []
+            for effect in faction_effects[:2]:
+                preview.append(
+                    f"{effect['faction']}->{effect['district']} ({effect['pollution_delta']:+.3f})"
+                )
+            lines.append(f"    faction effects: {', '.join(preview)}")
     return "\n".join(lines)
 
 
@@ -223,6 +245,23 @@ def _render_reports(reports: Sequence[TickReport]) -> str:
             "  env -> "
             f"stb {env['stability']:.2f} | unrest {env['unrest']:.2f} | poll {env['pollution']:.2f}"
         )
+        if report.faction_legitimacy_delta:
+            lines.append("  faction legitimacy:")
+            for faction_id, delta in sorted(
+                report.faction_legitimacy_delta.items(),
+                key=lambda item: abs(item[1]),
+                reverse=True,
+            )[:3]:
+                lines.append(
+                    f"    {faction_id:<18} {'+' if delta > 0 else ''}{delta:.3f}"
+                )
+        if report.economy:
+            prices = report.economy.get("prices", {})
+            if prices:
+                sample = ", ".join(
+                    f"{resource}:{price:.2f}" for resource, price in sorted(prices.items())[:3]
+                )
+                lines.append(f"  market -> {sample}")
         if report.events:
             for event in report.events:
                 lines.append(f"  - {event}")

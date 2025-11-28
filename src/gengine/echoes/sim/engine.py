@@ -11,7 +11,7 @@ from ..content import load_world_bundle
 from ..core import GameState
 from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
-from ..systems import AgentSystem, FactionSystem
+from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem
 from .tick import TickReport, advance_ticks as _advance_ticks
 
 ViewName = Literal["summary", "snapshot", "district"]
@@ -37,6 +37,8 @@ class SimEngine:
         self._config = config or load_simulation_config()
         self._agent_system = AgentSystem()
         self._faction_system = FactionSystem()
+        self._economy_system = EconomySystem(settings=self._config.economy)
+        self._environment_system = EnvironmentSystem(settings=self._config.environment)
 
     # ------------------------------------------------------------------
     @property
@@ -87,6 +89,8 @@ class SimEngine:
             lod=self._config.lod,
             agent_system=self._agent_system,
             faction_system=self._faction_system,
+            economy_system=self._economy_system,
+            environment_system=self._environment_system,
         )
         duration_ms = (perf_counter() - start) * 1000
         if self._config.profiling.log_ticks:

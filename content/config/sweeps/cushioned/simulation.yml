@@ -13,10 +13,10 @@ lod:
 profiling:
   log_ticks: true
 economy:
-  regen_scale: 0.8
-  demand_population_scale: 100000
-  demand_unrest_weight: 0.3
-  demand_prosperity_weight: 0.2
+  regen_scale: 0.85
+  demand_population_scale: 110000
+  demand_unrest_weight: 0.25
+  demand_prosperity_weight: 0.15
   base_resource_weights:
     energy: 4.0
     food: 3.5
@@ -27,17 +27,17 @@ economy:
   base_price: 1.0
   shortage_threshold: 0.2
   shortage_warning_ticks: 3
-  price_increase_step: 0.05
-  price_max_boost: 0.5
+  price_increase_step: 0.04
+  price_max_boost: 0.4
   price_decay: 0.03
   price_floor: 0.5
 environment:
-  scarcity_pressure_cap: 6
-  scarcity_unrest_weight: 0.0005
-  scarcity_pollution_weight: 0.0003
-  district_unrest_weight: 0.0003
-  district_pollution_weight: 0.0002
-  scarcity_event_threshold: 1.5
-  diffusion_rate: 0.1
-  faction_invest_pollution_relief: 0.02
-  faction_sabotage_pollution_spike: 0.025
+  scarcity_pressure_cap: 8
+  scarcity_unrest_weight: 0.0003
+  scarcity_pollution_weight: 0.0002
+  district_unrest_weight: 0.00015
+  district_pollution_weight: 0.0001
+  scarcity_event_threshold: 2.2
+  diffusion_rate: 0.08
+  faction_invest_pollution_relief: 0.03
+  faction_sabotage_pollution_spike: 0.015

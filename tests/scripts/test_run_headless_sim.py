@@ -50,10 +50,14 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert summary["batches"][-1]["ending_tick"] == summary["end_tick"]
     assert summary["agent_actions"] >= 1
     assert summary["faction_actions"] >= 0
+    assert "last_environment" in summary
+    assert "faction_legitimacy" in summary
+    assert "last_economy" in summary
     data = json.loads(output.read_text())
     assert data["ticks_requested"] == 5
     assert "agent_intent_breakdown" in data
     assert "faction_action_breakdown" in data
+    assert "last_economy" in data
 
 
 def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_path: Path) -> None:
@@ -78,3 +82,4 @@ def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_
     saved = json.loads(output.read_text())
     assert "agent_actions" in saved
     assert "faction_actions" in saved
+    assert "last_economy" in saved

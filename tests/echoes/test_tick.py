@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from gengine.echoes.content import load_world_bundle
-from gengine.echoes.sim import TickReport, advance_ticks
+from gengine.echoes.settings import EconomySettings, SimulationConfig
+from gengine.echoes.sim import SimEngine, TickReport, advance_ticks
 
 
 def test_advance_ticks_updates_environment_and_tick_math() -> None:
@@ -31,3 +32,35 @@ def test_advance_ticks_requires_positive_count() -> None:
         assert "count" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("Expected ValueError when count < 1")
+
+
+def test_engine_reports_include_economy_snapshot() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+
+    report = engine.advance_ticks(1)[0]
+
+    assert "prices" in report.economy
+    assert "shortages" in report.economy
+    assert isinstance(engine.state.metadata.get("market_prices"), dict)
+
+
+def test_environment_impact_metadata_tracks_scarcity() -> None:
+    config = SimulationConfig(
+        economy=EconomySettings(shortage_threshold=0.9, shortage_warning_ticks=1)
+    )
+    engine = SimEngine(config=config)
+    state = load_world_bundle()
+    for district in state.city.districts:
+        for stock in district.resources.values():
+            stock.current = 0
+            if stock.capacity == 0:
+                stock.capacity = 10
+    engine.initialize_state(state=state)
+
+    engine.advance_ticks(1)
+
+    impact = engine.state.metadata.get("environment_impact")
+    assert impact
+    assert impact["scarcity_pressure"] > 0
+    assert "diffusion_applied" in impact
