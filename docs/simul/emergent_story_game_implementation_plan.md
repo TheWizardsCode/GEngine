@@ -278,6 +278,45 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
   - Urban, industrial, and perimeter variables (pollution, emissions, biodiversity, stability).
   - Local rules (growth, decay, diffusion) influenced by human activity.
 
+#### Phase 4 Execution Plan
+
+- **M4.1 Agent AI (Deliverable: `systems/agents.py`)**
+  - Expand YAML schema to capture needs/goals/memory slots; update validation script + fixtures.
+  - Implement deterministic agent brain (utility model with seeded randomness) that consumes `GameState` slices and emits intents (inspect, negotiate, deploy_resource) recorded in a per-tick log.
+  - Surface agent telemetry in headless summaries (`run_headless_sim.py`) to validate aggregate behavior.
+  - Tests: unit tests for decision scoring, property tests for deterministic outputs given identical seeds, CLI regression snapshot ensuring summaries reference new agent activity counts.
+
+- **M4.2 Faction AI (Deliverable: `systems/factions.py`)**
+  - Model faction resources/legitimacy deltas per tick and implement strategic actions (lobby, recruit, sabotage, invest) with cooldowns.
+  - Add conflict resolution layer so faction actions can transform agent/faction state and city modifiers.
+  - Emit structured events for the CLI/service to surface (extend `/state?detail=summary`).
+  - Tests: scenario tests where a faction loses legitimacy after repeated unrest, API contract tests ensuring `/metrics` reflects faction deltas.
+
+- **M4.3 Economy Subsystem (Deliverable: `systems/economy.py`)**
+  - Introduce production/consumption matrices per district resource, plus global market prices derived from supply/demand curves.
+  - Wire conservation checks into tick loop to prevent negative stocks; raise warnings when shortages persist N ticks.
+  - Persist economic config knobs via `content/config/economy.yml` for tuning.
+  - Tests: golden tests for economic drift, property tests verifying resources never exceed capacity or drop below zero.
+
+- **M4.4 Environment Dynamics (Deliverable: `systems/environment.py`)**
+  - Model pollutant sources/sinks, biodiversity health, and climate events that respond to economy + faction actions.
+  - Integrate with LOD settings so coarse mode aggregates environment updates while detailed mode runs district-level diffusion.
+  - Extend CLI `summary`/`map` output with new environment indicators and warnings.
+  - Tests: regression tests covering event triggers (e.g., pollution emergency), CLI snapshot tests verifying messaging.
+
+- **M4.5 Tick Orchestration & Telemetry (Deliverable: updated `SimEngine.advance_ticks`)**
+  - Define subsystem execution order (agents → factions → economy → environment → narrative hooks) with clear contracts and shared context objects.
+  - Add OpenTelemetry-style trace hooks or structured logs capturing per-subsystem duration, errors, and key metrics; expose aggregates via `/metrics`.
+  - Update headless driver summary to include subsystem durations and detected anomalies, enabling nightly sweeps.
+  - Tests: integration suite running multi-tick scenarios ensuring subsystem order is deterministic, coverage for telemetry payloads, and failure-path tests verifying safeguards halt the tick with actionable errors.
+
+**Dependencies & Tooling Notes**
+
+- Content updates for traits/factions/resources must land before subsystem code to keep validation green.
+- Reuse the newly added safeguards + headless driver for soak testing after each milestone; target ≥500 ticks per run without instability.
+- Maintain ≥90% coverage for new modules; critical decision logic must hit 100% where feasible.
+- Document every milestone in README + gameplay guide once the corresponding subsystem becomes player-visible.
+
 ## 5. Narrative Director & Story Seeds
 
 - Define a data format for story seeds (triggers, roles, stakes, resolution templates) and load them from external files.
