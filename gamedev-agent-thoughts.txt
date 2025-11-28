@@ -17,3 +17,4 @@
 [2025-11-28 17:06 UTC] Started implementing FactionSystem (cooldowns, strategic actions, telemetry plumbing) and updating docs/tests to reflect faction beats.
 [2025-11-28 17:20 UTC] Added factions subsystem, tick wiring, telemetry outputs, and scenario tests; ran targeted pytest suites plus full run (41 green) before telemetry capture.
 [2025-11-28 17:23 UTC] Captured balanced telemetry with faction metrics via run_headless_sim (seed=42, ticks=200) to build/m4-2-faction-telemetry.json per updated workflow.
+[2025-11-28 17:28 UTC] Merged feature/m4-2-faction-ai (commit 2e7d47b) into main; ready to pick up next Phase 4 milestone tasks 1 & 2 requested by PM.
