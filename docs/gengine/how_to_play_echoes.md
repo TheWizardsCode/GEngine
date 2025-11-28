@@ -29,17 +29,19 @@ and persist state.
 
 ## 2. Shell Commands
 
-| Command                | Description                                                                                                                                                                                     |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `help`                 | Lists all available commands.                                                                                                                                                                   |
+| Command                | Description                                                                                                                                                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `help`                 | Lists all available commands.                                                                                                                                                                                                      |
 | `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot, and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
-| `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                |
-| `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                        |
-| `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district.                                |
-| `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                        |
-| `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                      |
-| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                |
-| `exit` / `quit`        | Leave the shell.                                                                                                                                                                                |
+| `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                   |
+| `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                           |
+| `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district.                                                                   |
+| `focus [district       | clear]`                                                                                                                                                                                                                            | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation. |
+| `history [count]`      | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown.                  |
+| `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                           |
+| `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                                                         |
+| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                                                   |
+| `exit` / `quit`        | Leave the shell.                                                                                                                                                                                                                   |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
 quotes. The shell ignores blank lines and repeats the prompt after each command.
@@ -89,8 +91,10 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   (e.g., "Industrial Tier pollution spike detected").
 - `summary` mirrors those metrics without advancing time and now includes both
   the `environment_impact` block (scarcity pressure, faction pollution deltas,
-  diffusion state) and profiling stats (tick duration percentiles plus the last
-  subsystem timings) so you know whether it's safe to request a large `run`.
+  diffusion state), profiling stats (tick duration percentiles plus the last
+  subsystem timings), and the focus digest preview (up to six curated events
+  plus a suppressed count). Use `focus` to retarget which districts receive the
+  larger per-tick budget whenever you need to spotlight a different hotspot.
 - Agent AI (Phase 4, M4.1) now contributes narrative lines such as "Aria Volt
   inspects Industrial Tier" or "Cassian Mire negotiates with Cartel of Mist";
   use these to understand how background characters are reacting to system
@@ -104,6 +108,12 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   legitimacy" block showing the three largest deltas (signed) so you can track
   winners/losers at a glance. A `market -> energy:1.05, food:0.97, ...` line
   follows whenever the economy subsystem has published prices for the tick.
+- Focus-aware narration: the tick log now prints a "focus budget" line that
+  reports how many curated events went to the focus ring versus the global pool
+  and how many additional beats were archived. The `focus` command exposes the
+  current ring (center + neighbors) so you can retarget the curator before
+  running long batches. Suppressed events remain available in metadata/telemetry
+  for post-run analysis.
 
 ### District Overview
 
@@ -168,7 +178,14 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   is non-zero, and faction actions now feed directly into the loop:
   `faction_invest_pollution_relief` eases pollution whenever a faction invests
   in one of its districts, while `faction_sabotage_pollution_spike` models the
-  fallout from covert ops.
+  fallout from covert ops. District modifiers now include a gentle mean-
+  reversion back toward the 0.5 midpoint, so long burns stay within believable
+  bands while still leaving room for spikes. On top of that, factions now push
+  toward `INVEST_DISTRICT` whenever unrest rises above ~0.4 or security dips
+  below ~0.5, and sabotage is throttled so only the weaker faction can escalate
+  (legitimacy gap ≥ 0.05) while stability is at least 0.45. The result is a
+  steady rhythm of relief actions punctuated by rare sabotage beats instead of
+  runaway crises every 300–400 ticks.
 - Every tick writes an `environment_impact` block into the game state's
   metadata. Inspect it via headless telemetry or by dumping the snapshot to see
   the latest pressure, diffusion flag, faction effects, per-district deltas, and
@@ -180,6 +197,41 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   `--config-root content/config/sweeps/high-pressure` (stress test),
   `.../cushioned` (long-form stability), or `.../profiling-history`
   (history window = 240 ticks) when running `scripts/run_headless_sim.py`.
+- Latest deterministic soaks (seed 42, 1000 ticks, balanced LOD) serve as
+  guardrail captures:
+  - **Baseline (`build/focus-baseline-1000tick.json`)** – 0 anomalies, stability
+    bottoms out around 0.57 with ~2.4k suppressed events for the narrator to
+    triage.
+  - **Profiling-history (`build/profiling-history-1000tick.json`)** – history
+    window raised to 240, 0 anomalies, stability locked at 1.0, unrest settles
+    to 0.0 by the end of the burn.
+  - **Soft-scarcity (`build/profiling-history-soft-scarcity-1000tick.json`)** –
+    regen boost and lower pressure weights keep both pollution and unrest at 0
+    with just 247 suppressed events. Use this preset to study how the narrator
+    behaves when scarcity is dialed down without touching code.
+- The shared config also includes a `focus` block (default district,
+  neighborhood size, focus/global budget split, digest/history lengths). Tuning
+  these settings lets you tighten or relax the curator without changing code.
+
+### Focus Manager & Narrative Digest
+
+- The focus manager guarantees that the player-selected district (plus a small
+  ring of neighbors) receives a larger share of the per-tick narrative budget
+  while the rest of the city competes for the global pool. This keeps long
+  burns legible without starving distant districts entirely.
+- Use `focus` with no arguments to see the current center/neighbors, with a
+  district id to retarget the ring, or with `clear` to reset to the configured
+  default. Every tick records a digest (what you saw), the full archive, and a
+  suppressed preview in metadata so you can diff exposure later.
+- The narrator now scores every archived beat by severity (scope + keywords)
+  and focus distance, then records the ranked archive and suppression history
+  so you can chase the most urgent beats first.
+- Run `history [count]` to print the latest ranked entries (latest first).
+  Each entry shows the focus center, suppressed count, and the highest ranked
+  archived events so testers can quickly review what was trimmed.
+- The CLI summary and tick reports show the digest preview and the latest
+  focus-budget allocation so you always know whether anomalies are coming from
+  raw subsystem volume or simply from the curator trimming noise.
 
 ## 4. World and District Parameters
 
@@ -226,6 +278,11 @@ the simulation loop.
 - **Modifiers**: Continuous values between 0.0 and 1.0 for `pollution`,
   `unrest`, `prosperity`, and `security`. These drift slightly per tick and feed
   into environment changes. Spikes here usually trigger event log warnings.
+- **Coordinates & Adjacency (incoming)**: District YAML will gain explicit
+  `coordinates` tuples plus an auto-derived `adjacent` list so focus budgeting,
+  diffusion, and travel-aware stories can combine literal neighbors with the
+  existing population-ranked rings. Watch the changelog for the schema update
+  and use `map` once it lands to visualize the blended overlays.
 
 Keeping these parameters consistent between YAML content and the shell output
 helps you detect data-entry mistakes quickly (e.g., mismatched IDs or runaway
@@ -367,9 +424,10 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
   subsystem, and anomaly tags). The JSON now also tracks the number of agent
   actions, faction actions, their respective breakdowns, per-batch `tick_ms`
   plus slowest-subsystem snapshots, anomaly totals/examples, faction
-  legitimacy snapshots, and the `last_economy` block so you can spot systemic
-  shifts between builds. Store the JSON outputs in version control to diff
-  systemic changes over time.
+  legitimacy snapshots, the `last_economy` block, and a `last_event_digest`
+  payload (visible events, archived events, suppressed preview, focus budget)
+  so you can audit what the curator showed versus what it archived. Store the
+  JSON outputs in version control to diff systemic changes over time.
 - Use `--seed` for deterministic comparisons and `--config-root` to point at a
   CI-specific configuration folder (high-pressure, cushioned, and profiling-
   history presets now live under `content/config/sweeps/`).

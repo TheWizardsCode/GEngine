@@ -56,15 +56,32 @@ run locally.
   reacts to faction investments/sabotage with pollution relief/spikes, and
   captures the resulting `environment_impact` metadata for telemetry + CLI/
   service summaries.
+- Focus-aware narrative budgeting (Phase 4, M4.6 in flight) that introduces a
+  configurable focus manager, a `focus` CLI/service command, and per-tick
+  event budgets split between the focused district ring and the rest of the
+  city. Every tick now ranks the archive by severity + focus distance, records
+  a digest (visible beats) plus an archive of suppressed events, and appends a
+  rolling focus history. The CLI exposes `history [count]` so playtesters can
+  review suppressed beats, while the FastAPI `/focus` endpoint returns the same
+  ranked digest and history for remote gateways.
+- Spatial coordinate + adjacency planning (Phase 4, M4.7) underway to add
+  authored `coordinates` tuples and derived neighbor lists to every district so
+  focus budgeting, diffusion, travel time, and faction territory modeling can
+  blend literal proximity with the existing population-ranked rings instead of
+  replacing them outright.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
-  automated sweeps or CI regressions.
+  automated sweeps or CI regressions. Summaries now include focus-budget
+  telemetry (`last_event_digest`, suppressed counts, allocation stats) so QA
+  can diff what players saw versus what was archived.
 - Instrumented profiling that records per-tick durations (p50/p95/max),
   subsystem timing deltas, the slowest subsystem per tick, and anomaly tags
   (subsystem errors, event-budget hits) directly into `GameState.metadata`. The
   CLI summary, FastAPI `/metrics` response, and headless regression outputs all
   surface the same block so designers can spot runaway ticks without attaching
-  a profiler.
+  a profiler. The profiling payload now also tracks focus-budget allocations
+  and suppressed-event counts so reviewers can see whether anomaly pressure is
+  coming from narrative volume or subsystem issues.
 - Utility script `scripts/eoe_dump_state.py` for quick world inspection and
   snapshot exports.
 - Test suite covering content loading, snapshot round-trip, tick behavior, and
@@ -159,9 +176,10 @@ diffs. Use `summary` on any saved snapshot to inspect the last tick's
   uv run python scripts/run_headless_sim.py --world default --ticks 1000 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history --output build/profiling-history-1000tick.json
   ```
 
-  The latest baseline burn recorded 989 `event_budget` anomalies while stability
-  collapsed after tick ~400, so feed anomaly budget tuning into Phase 4 M4.6 work
-  when prioritizing next steps.
+  The latest baseline burn (`build/focus-baseline-1000tick.json`) surfaced **0**
+  anomalies and held stability above **0.56** through tick 1000 thanks to the new
+  faction gating and mean-reverting district modifiers, so the focus-aware
+  curator can now rank a full digest without losing signal during long burns.
 
 - Two mitigation-oriented presets now live under
   `content/config/sweeps/profiling-history-high-budget/` (higher
@@ -173,16 +191,14 @@ diffs. Use `summary` on any saved snapshot to inspect the last tick's
   uv run python scripts/run_headless_sim.py --world default --ticks 1000 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history-soft-scarcity --output build/profiling-history-soft-scarcity-1000tick.json
   ```
 
-  The high-budget run (now `max_events_per_tick=20`) cuts `event_budget`
-  anomalies to **3** but still loses citywide stability around tick 350, so it is
-  a stopgap that trades signal quality for noisier timelines. The soft-scarcity
-  variant aggressively boosts regeneration, trims pressure weights, and lowers
-  volatility to keep stability pegged at 1.0; even so it bottoms out around
-  **227** anomalies because agent summaries and resource drift still spike past
-  the 6-event cap roughly 20% of the time. Use the high-budget capture to get
-  immediate relief on small worlds, and keep the soft-scarcity profile handy for
-  profiling how close we can get with tuning alone ahead of the focus-aware
-  budgeting work planned for M4.6.
+  Both mitigation presets now double as validation anchors: the profiling-history
+  variant (history window 240) finished 1000 ticks with **0** anomalies and
+  stability pinned at **1.0**, while the soft-scarcity configuration (regen boost
+  plus pressure damping) also logged **0** anomalies with stability pegged at
+  **1.0** and fewer than 300 suppressed events. Use these captures to compare
+  focus-budget allocations across different scarcity curves without touching the
+  baseline config, and keep the high-budget preset handy if you ever need to
+  raise `max_events_per_tick` for stress tests.
 
 ## Inspecting the Default World
 
@@ -222,6 +238,10 @@ Available in-shell commands:
   market prices, the `environment_impact` block, and the new profiling payload
   (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and any
   anomaly tags) so you can gauge systemic pressure before advancing time again.
+  The summary also surfaces the current focus configuration plus the last
+  digest (up to 6 curated events), a suppressed count, and a severity-ranked
+  preview of archived beats so you know exactly which stories were deferred by
+  the focus manager that tick.
 - `next` – advance exactly one tick with the inline report (no arguments). Use
   `run` for batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.
@@ -229,6 +249,14 @@ Available in-shell commands:
 - `map [district_id]` – render ASCII table of all districts (includes an "ID"
   column) or details for one. Use `map` with no arguments to discover values
   such as `industrial-tier`.
+- `focus [district|clear]` – display or update the active focus ring that the
+  narrator budget prioritizes. Selecting a district allocates more per-tick
+  event slots to that district and its top neighbors, while `focus clear`
+  resets to the default rotation.
+- `history [count]` – print the ranked narrator history captured over recent
+  ticks (latest first). Each entry shows the focus center, suppressed count,
+  and the top scored archived beats so testers can review what the curator
+  held back during long burns. Provide an optional count to limit the tail.
 - `save <path>` – write the current snapshot as JSON.
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot (local engine mode only).
@@ -240,11 +268,14 @@ Available in-shell commands:
   deltas each tick) and a `market -> energy:1.05, food:0.98, …` line whenever
   the economy subsystem has published prices. Any subsystem anomalies (errors
   or event-budget clamps) are listed per tick so you can correlate warnings
-  with the profiling block.
-- `summary` now renders the latest `environment_impact` snapshot and the shared
-  profiling block. Together they show scarcity pressure, whether diffusion
-  fired, pollution shifts from faction activity, plus tick-duration percentiles,
-  the slowest subsystems, and any anomaly tags from the most recent tick.
+  with the profiling block. Focus-budget stats also print per tick, showing how
+  many curated events were delivered to the focus ring versus the global pool
+  and how many were archived for the history log.
+- `summary` now renders the latest `environment_impact` snapshot, the shared
+  profiling block, and the focus digest preview. Together they show scarcity
+  pressure, whether diffusion fired, pollution shifts from faction activity,
+  tick-duration percentiles, the slowest subsystems, anomaly tags, and the
+  slices of the narrative that were prioritized for the current focus ring.
 
 If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
 shell halts automatically and prints a safeguard warning so runaway loops do
@@ -267,6 +298,12 @@ not wedge CI runs.
   still emits the logger message. The resulting profiling block appears in the
   CLI summary, FastAPI `/metrics`, and headless telemetry JSON so you can spot
   regressions without attaching a debugger.
+- `focus`: declares the default focus center, how many neighbors should share
+  its budget, the ratio reserved for the focus ring, the global floor, digest
+  size, history length, and suppressed preview size. Adjust these values to
+  tighten or loosen the narrator's per-tick budget without editing code; the
+  CLI/service focus and history commands will immediately reflect the updated
+  defaults after a restart.
 - `economy`: exposes `regen_scale`, demand weights, shortage thresholds, base
   resource weights, and price tuning values (`base_price`, `price_increase_step`,
   `price_max_boost`, `price_decay`, `price_floor`). Adjust these numbers to
@@ -324,6 +361,8 @@ from gengine.echoes.client import SimServiceClient
 with SimServiceClient("http://localhost:8000") as client:
   client.tick(5)
   summary = client.state("summary")
+  focus_payload = client.focus_state()  # {"focus": {...}, "digest": {...}, "history": [...]}
+  client.set_focus("industrial-tier")
 ```
 
 Or, run the CLI shell against the service without restarting:
@@ -355,8 +394,11 @@ Key flags:
 - `--config-root`: point at an alternate config folder (useful in CI).
 - `--output`: path for the structured summary (includes tick counts, timing
   percentiles, LOD mode, agent/faction action breakdowns, faction legitimacy
-  snapshot, anomaly totals/examples, the last economy report, and the shared
-  profiling block with subsystem timings + slowest/anomaly metadata).
+  snapshot, anomaly totals/examples, the last economy report, the shared
+  profiling block with subsystem timings + slowest/anomaly metadata, and the
+  `last_event_digest` payload that documents which events were shown, which
+  were archived, how the focus budget was allocated, and the severity-ranked
+  archive used by the narrator).
 
 ## Next Steps
 

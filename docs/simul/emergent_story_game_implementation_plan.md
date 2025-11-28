@@ -239,6 +239,25 @@ single row to validate whenever a guardrail knob changes.
   to economy + agent actions.
 - **M4.5 Tick orchestration** (0.5-1 day): explicitly order subsystem updates,
   emit traces per subsystem, and run smoke scenarios via headless driver.
+- **M4.6 Focus-Aware Narration** (complete): shipped the FocusManager module,
+  CLI/service `focus` controls, hybrid event budgets (ring + global pools), the
+  severity + focus-distance scoring stack, ranked archives, CLI `history`
+  browsing, FastAPI focus payloads, and telemetry (`last_event_digest`,
+  `focus_budget`, suppressed counts) that records both digest and archive data.
+  Long-run mitigation sweeps (baseline, profiling-history, soft-scarcity)
+  proved anomaly budgets stay below 100 per 1000 ticks once mean-reversion and
+  faction gating landed, so the curator now keeps summaries legible without
+  starving distant districts.
+- **M4.7 Spatial Coordinates & Adjacency Graph** (new): extend the district
+  schema with planar `coordinates` tuples and an `adjacent` list, update the
+  content validator plus fixtures, and wire the data into the TickCoordinator
+  so spatial proximity augments (not replaces) the existing population-ranked
+  rings. Focus scoring will blend population priority with spatial weighting,
+  diffusion/travel checks will lean on adjacency, and telemetry will record the
+  combined weights so designers see when a distant but populous district still
+  outranks a closer low-density neighbor. Include migration helpers for
+  existing content, CLI map overlays that read the new geometry, and tests that
+  prove adjacency derivation stayed stable across validation sweeps.
 
 ### Phase 5 – Narrative Director and Story Seeds
 
@@ -376,12 +395,21 @@ single row to validate whenever a guardrail knob changes.
   - Add OpenTelemetry-style trace hooks or structured logs capturing per-subsystem duration, errors, and key metrics; expose aggregates via `/metrics`.
   - Update headless driver summary to include subsystem durations and detected anomalies, enabling nightly sweeps.
   - Tests: integration suite running multi-tick scenarios ensuring subsystem order is deterministic, coverage for telemetry payloads, and failure-path tests verifying safeguards halt the tick with actionable errors.
-  - Long-run soak: profiling-history config (history window 240) over 1000 ticks with seed 42 logged 989 `event_budget` anomalies and stability collapse after tick 400, so anomaly budget tuning remains a top follow-up before M4.6 narrative work.
-  - Mitigation sweeps: introduced two config variants to measure stopgaps before focus-aware budgets. The high-budget profile (`content/config/sweeps/profiling-history-high-budget/`, now `max_events_per_tick=20`) slashed anomalies to **3** yet still drained stability to 0 by tick ~350 thanks to the extra narrative noise. The soft-scarcity profile (`content/config/sweeps/profiling-history-soft-scarcity/`, heavy regen + pressure damping) kept stability pinned at 1.0 but only reached **227** anomalies—the 6-event budget is still exceeded whenever agent summaries and resource drift stack up in the same tick. Both runs confirm that config-only tuning cannot fully solve the issue; focus-aware allocation plus dynamic scarcity relief remains the priority outcome for M4.6 planning, and we may need to trim subsystem event spam in parallel.
-  - Introduce a phased plan for dynamic event budgets: short term, raise `lod.max_events_per_tick` cautiously for regression sweeps; medium term (M4.6) add a "focus manager" so the TickCoordinator grants higher per-tick budgets to the player’s focused district plus its neighbors while leaving a smaller global pool for the rest of the city. This keeps summaries legible as the world grows (more districts/agents/factions) and preserves anomaly tags as meaningful signals. Document the API surface (CLI `focus` command, service session focus) and ensure telemetry exposes both global and focus-aware clamps.
+  - Long-run soak: after adding mean-reversion to district modifiers and gating sabotage so only low-legitimacy factions strike when stability is healthy, the baseline (`build/focus-baseline-1000tick.json`), profiling-history (`build/profiling-history-1000tick.json`), and soft-scarcity (`build/profiling-history-soft-scarcity-1000tick.json`) configs each cleared 1000 ticks with **0** `event_budget` anomalies. Baseline stability now bottoms out around **0.57** while the profiling-history and soft-scarcity variants remain at **1.0**, giving the narrator ample ranked inventory every tick.
+  - Mitigation sweeps: keep the dedicated profiles under `content/config/sweeps/` for targeted validation. The profiling-history variant (history window 240) offers a long rolling percentile reference, the soft-scarcity preset highlights how low pressure plus reduced volatility keeps suppressed events under 300, and the high-budget profile (`.../profiling-history-high-budget/`) is still available when you need to raise `lod.max_events_per_tick` for stress tests even though the baseline burn no longer requires it.
+  - Introduce a phased plan for dynamic event budgets: short term, raise `lod.max_events_per_tick` cautiously for regression sweeps; medium term (M4.6, now delivered) add a "focus manager" so the TickCoordinator grants higher per-tick budgets to the player’s focused district plus its neighbors while leaving a smaller global pool for the rest of the city. This keeps summaries legible as the world grows (more districts/agents/factions) and preserves anomaly tags as meaningful signals. Document the API surface (CLI `focus` command, service session focus) and ensure telemetry exposes both global and focus-aware clamps.
     - Narrator integration: once the focus manager allocates beats deterministically, the narrator layer can score every event by relevance (focus distance, severity, novelty) and promote the top 3–5 into the player-facing digest while pushing the rest into an append-only history buffer in `state.metadata`. The CLI/gateway will surface the digest by default and expose `history` commands so testers can browse suppressed beats after the fact.
     - Gameplay impact: exceeding ~100 `event_budget` anomalies per 1000 ticks means ~20% of ticks lose at least one story beat before curation, so the narrator cannot explain causality reliably. Likewise, the high-budget preset (20 events/tick) eliminates anomalies but crashes stability after ~350 ticks, producing repetitive crisis beats that overwhelm the narrator. The focus-aware plan must therefore (1) keep anomalies <100 without destabilizing the world and (2) give the narrator enough ranked inventory each tick to pick high-signal beats while archiving the rest for later discovery.
     - Telemetry tasks: extend the profiling payload with `focus_budget` vs. `global_budget` counters plus `suppressed_events` per tick so QA can confirm the curator is working even when the player only sees a handful of beats. Headless captures should store both the digest (what the player saw) and the archival log so we can diff narrative exposure over long soaks.
+  - Status: the focus manager + CLI/service command now exist, TickCoordinator
+    emits `focus_budget` payloads per tick, suppressed/archived events flow into
+    metadata and headless telemetry (`last_event_digest`), config files gain a
+    dedicated `focus` block (`default_district`, neighborhood sizing, budget
+    ratio, digest/history lengths), narrator scoring ranks every event by
+    severity + focus distance, and the CLI/gateway expose the ranked history.
+    Current focus defaults keep anomalies <100 during 1000-tick soaks; future
+    tuning will pair spatial weighting (M4.7) and narrative director hooks with
+    the delivered curator.
 
 **Dependencies & Tooling Notes**
 

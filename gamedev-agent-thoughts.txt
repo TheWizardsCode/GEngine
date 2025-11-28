@@ -89,3 +89,25 @@
 [2025-11-28 14:12 UTC] Logged the anomaly-mitigation presets (high-budget + soft-scarcity), README/plan updates, and telemetry notes so the M4.5 follow-up artifacts are captured before merging.
 [2025-11-28 14:15 UTC] HEAD=6dea209 (main) Fast-forwarded main with feature/m4-5-anomaly-mitigation after confirming tests/docs/configs were committed.
 [2025-11-28 14:18 UTC] Created branch feature/m4-6-focus-budget from main to begin the M4.6 focus-aware allocation + narrator curation milestone per the implementation plan.
+[2025-11-28 14:22 UTC] HEAD af39b9e: Reviewing GDD, implementation plan, and README to scope M4.6 focus-aware budget + narrator integration work before coding per gamedev workflow.
+[2025-11-28 14:24 UTC] HEAD af39b9e: Drafting M4.6 implementation plan—add focus manager/config, curate narrations, expose CLI/service focus controls, update docs/tests, and wire telemetry per workflow checklist.
+[2025-11-28 14:27 UTC] HEAD af39b9e: Implementing focus manager module + config changes to introduce focus-aware event budgets and narrator digest scaffolding.
+[2025-11-28 14:50 UTC] HEAD af39b9e: Added FocusManager module, focus-aware TickCoordinator budgeting, CLI focus command/service endpoints, headless telemetry hooks, and config knobs; updated tests for focus coverage.
+[2025-11-28 15:05 UTC] HEAD af39b9e: Ran `uv run --group dev pytest` (76 passed) to validate focus-aware budgeting and CLI/service upgrades.
+[2025-11-28 15:08 UTC] HEAD af39b9e: Captured headless telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m4-6-focus-budget.json` (anomalies=0, suppressed_events=505, focus digest split 2/4 focus/global, tick_ms_p95=0.21ms).
+[2025-11-28 15:20 UTC] HEAD af39b9e: Planning narrator scoring/rank surfaces, CLI history view, focus-aware docs updates, and 1000-tick soaks across baseline/profiling-history/soft-scarcity configs as requested.
+[2025-11-28 15:35 UTC] HEAD af39b9e: Implemented focus manager scoring/ranked archives, focus history metadata, CLI history command, service/client hooks, and telemetry/test updates before documentation.
+[2025-11-28 15:48 UTC] HEAD af39b9e: Ran `uv run --group dev pytest` (79 passed) to cover new narrator scoring + history surfaces end-to-end.
+[2025-11-28 16:05 UTC] HEAD af39b9e: Investigating 1000-tick baseline soak stability collapse; plan is to introduce mean-reversion in district modifiers plus softer scarcity coupling before rerunning baseline/profiling-history/soft-scarcity telemetry.
+[2025-11-28 16:20 UTC] HEAD af39b9e: Added mean-reversion to district modifiers, then ran `uv run --group dev pytest` (79 passed) and coverage (`--cov=gengine`, 95% total) to confirm no regressions.
+[2025-11-28 16:28 UTC] HEAD af39b9e: Increased mean-reversion strength and reran `uv run --group dev pytest` (79 passed) to validate stability tuning before another 1000-tick soak.
+[2025-11-28 16:40 UTC] HEAD af39b9e: Rebalanced faction behaviors (invest prioritization, gated sabotage) and reran `uv run --group dev pytest --cov=gengine --cov-report=term` (79 passed, 95% coverage) ahead of long-run telemetry.
+[2025-11-28 16:48 UTC] HEAD af39b9e: Softened stability decay coupling and reran `uv run --group dev pytest --cov=gengine --cov-report=term` (79 passed, 95% coverage) to ensure the new tuning stayed green.
+[2025-11-28 17:05 UTC] HEAD af39b9e: Reviewing GDD and implementation plan to layer in upcoming spatial coordinate modeling requirements before touching systems code.
+[2025-11-28 17:12 UTC] HEAD af39b9e: Drafted spatial coordinate + adjacency plan for Phase 4 deliverables; prepping GDD/implementation plan updates before modeling the data.
+[2025-11-28 17:18 UTC] HEAD af39b9e: Updating README and gameplay guide to mention the upcoming coordinate/adjacency schema so workflow docs stay aligned with the plan.
+[2025-11-28 17:24 UTC] HEAD af39b9e: Planning hybrid focus model per user request—spatial coordinates will augment (not replace) population-based rings; updating GDD/plan accordingly.
+[2025-11-28 17:28 UTC] HEAD af39b9e: Assessing M4.6 completion status before committing; plan to update implementation plan milestones and run regression tests/telemetry if needed.
+[2025-11-28 17:32 UTC] HEAD af39b9e: Ran `uv run --group dev pytest --cov=gengine --cov-report=term-missing` (79 passed, 95% overall coverage; CLI shell 93%, focus manager 94%) to validate the M4.6 branch post-doc updates.
+[2025-11-28 17:36 UTC] HEAD af39b9e: Captured canonical telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-6-focus-budget-final.json` (stability 1.0, unrest 0.41, pollution 0.58, anomalies 0, tick_p95 0.19ms, suppressed 359) for the M4.6 deliverable.
+[2025-11-28 17:40 UTC] HEAD (pending): Prepared final "Deliver M4.6 focus-aware narration" commit covering focus manager code, docs, tests, configs, and telemetry artifacts.

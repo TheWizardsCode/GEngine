@@ -60,3 +60,28 @@ def test_engine_enforces_tick_limit() -> None:
 
     with pytest.raises(ValueError):
         engine.advance_ticks(2)
+
+
+def test_engine_focus_controls_update_state() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+
+    initial = engine.focus_state()
+    assert initial["district_id"]
+    neighbors = initial.get("neighbors") or []
+    if neighbors:
+        updated = engine.set_focus(neighbors[0])
+        assert updated["district_id"] == neighbors[0]
+    cleared = engine.clear_focus()
+    assert cleared["district_id"]
+
+
+def test_engine_focus_history_reports_recent_ticks() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+
+    engine.advance_ticks(2)
+
+    history = engine.focus_history()
+    assert isinstance(history, list)
+    assert history

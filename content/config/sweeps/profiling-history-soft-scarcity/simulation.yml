@@ -14,6 +14,14 @@ profiling:
   log_ticks: true
   history_window: 240
   capture_subsystems: true
+focus:
+  default_district: industrial-tier
+  neighborhood_size: 2
+  focus_budget_ratio: 0.65
+  global_floor: 2
+  digest_size: 6
+  history_limit: 30
+  suppressed_preview: 5
 economy:
   regen_scale: 1.6
   demand_population_scale: 180000

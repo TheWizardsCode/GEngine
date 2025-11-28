@@ -57,6 +57,9 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert "profiling" in summary
     assert "anomalies" in summary
     assert isinstance(summary["anomaly_examples"], list)
+    assert "suppressed_events" in summary
+    assert "last_event_digest" in summary
+    assert "ranked_archive" in summary["last_event_digest"]
     for batch in summary["batches"]:
         assert batch["ticks"] <= 2
         assert "tick_ms" in batch
@@ -68,6 +71,9 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert "faction_action_breakdown" in data
     assert "last_economy" in data
     assert "anomaly_examples" in data
+    assert "suppressed_events" in data
+    assert "last_event_digest" in data
+    assert "ranked_archive" in data["last_event_digest"]
 
 
 def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_path: Path) -> None:
@@ -93,3 +99,5 @@ def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_
     assert "agent_actions" in saved
     assert "faction_actions" in saved
     assert "last_economy" in saved
+    assert "last_event_digest" in saved
+    assert "ranked_archive" in saved["last_event_digest"]

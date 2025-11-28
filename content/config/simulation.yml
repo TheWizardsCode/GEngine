@@ -6,14 +6,22 @@ limits:
 lod:
   mode: balanced
   volatility_scale:
-    detailed: 1.0
-    balanced: 0.75
-    coarse: 0.45
+    detailed: 0.9
+    balanced: 0.5
+    coarse: 0.3
   max_events_per_tick: 6
 profiling:
   log_ticks: true
   history_window: 60
   capture_subsystems: true
+focus:
+  default_district: industrial-tier
+  neighborhood_size: 2
+  focus_budget_ratio: 0.65
+  global_floor: 2
+  digest_size: 6
+  history_limit: 30
+  suppressed_preview: 5
 economy:
   regen_scale: 0.8
   demand_population_scale: 100000
@@ -34,12 +42,12 @@ economy:
   price_decay: 0.03
   price_floor: 0.5
 environment:
-  scarcity_pressure_cap: 6
-  scarcity_unrest_weight: 0.0005
-  scarcity_pollution_weight: 0.0003
-  district_unrest_weight: 0.0003
-  district_pollution_weight: 0.0002
-  scarcity_event_threshold: 1.5
+  scarcity_pressure_cap: 5000
+  scarcity_unrest_weight: 0.00005
+  scarcity_pollution_weight: 0.00003
+  district_unrest_weight: 0.00005
+  district_pollution_weight: 0.00003
+  scarcity_event_threshold: 0.35
   diffusion_rate: 0.1
   faction_invest_pollution_relief: 0.02
   faction_sabotage_pollution_spike: 0.025

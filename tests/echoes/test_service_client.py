@@ -46,6 +46,19 @@ def test_client_submit_actions() -> None:
     client.close()
 
 
+def test_client_focus_helpers() -> None:
+    client = build_client()
+
+    focus_state = client.focus_state()
+    assert "focus" in focus_state
+    assert "history" in focus_state
+
+    district_id = focus_state["focus"].get("district_id")
+    update = client.set_focus(district_id)
+    assert update["focus"]["district_id"] == district_id
+    client.close()
+
+
 def test_client_context_manager_closes_default() -> None:
     with SimServiceClient("http://example.com") as client:
         assert isinstance(client, SimServiceClient)

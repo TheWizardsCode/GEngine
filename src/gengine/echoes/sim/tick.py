@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Sequence
 
 from ..core import GameState
 from ..settings import LodSettings, ProfilingSettings
+from .focus import FocusBudgetResult, FocusManager, NarrativeEvent
 
 
 logger = logging.getLogger("gengine.echoes.sim.tick")
@@ -21,6 +22,8 @@ class TickReport:
 
     tick: int
     events: List[str] = field(default_factory=list)
+    event_archive: List[str] = field(default_factory=list)
+    suppressed_events: List[str] = field(default_factory=list)
     environment: dict[str, float] = field(default_factory=dict)
     districts: List[dict[str, float]] = field(default_factory=list)
     agent_actions: List[dict[str, Any]] = field(default_factory=list)
@@ -30,6 +33,7 @@ class TickReport:
     economy: Dict[str, Any] = field(default_factory=dict)
     environment_impact: Dict[str, Any] = field(default_factory=dict)
     timings: Dict[str, float] = field(default_factory=dict)
+    focus_budget: Dict[str, Any] = field(default_factory=dict)
     anomalies: List[str] = field(default_factory=list)
 
 
@@ -43,11 +47,13 @@ class TickCoordinator:
         faction_system: object | None = None,
         economy_system: object | None = None,
         environment_system: object | None = None,
+        focus_manager: FocusManager | None = None,
     ) -> None:
         self._agent_system = agent_system
         self._faction_system = faction_system
         self._economy_system = economy_system
         self._environment_system = environment_system
+        self._focus_manager = focus_manager or FocusManager()
 
     def run(
         self,
@@ -76,6 +82,7 @@ class TickCoordinator:
                     scale=scale,
                     event_budget=event_budget,
                     capture_timings=capture_timings,
+                    focus_manager=self._focus_manager,
                 )
             )
         return reports
@@ -88,10 +95,11 @@ class TickCoordinator:
         scale: float,
         event_budget: int | None,
         capture_timings: bool,
+        focus_manager: FocusManager,
     ) -> TickReport:
         tick_start = perf_counter()
         timings: Dict[str, float] = {}
-        events: List[str] = []
+        event_entries: List[NarrativeEvent] = []
         anomalies: List[str] = []
         prev_legitimacy = {
             faction_id: faction.legitimacy for faction_id, faction in state.factions.items()
@@ -107,7 +115,8 @@ class TickCoordinator:
             state=state,
             rng=rng,
         )
-        events.extend(_summarize_agent_actions(agent_intents))
+        district_ids = {district.id for district in state.city.districts}
+        event_entries.extend(_summarize_agent_actions(agent_intents, district_ids))
 
         faction_decisions = self._invoke_subsystem(
             "faction",
@@ -119,7 +128,7 @@ class TickCoordinator:
             state=state,
             rng=rng,
         )
-        events.extend(_summarize_faction_actions(faction_decisions))
+        event_entries.extend(_summarize_faction_actions(faction_decisions))
 
         economy_report = self._invoke_subsystem(
             "economy",
@@ -131,15 +140,15 @@ class TickCoordinator:
             state=state,
             rng=rng,
         )
-        events.extend(_summarize_economy(economy_report))
+        event_entries.extend(_summarize_economy(economy_report))
 
         segment_start = perf_counter()
-        _update_resources(state, rng, events, scale)
+        _update_resources(state, rng, event_entries, scale)
         if capture_timings:
             timings["resources_ms"] = (perf_counter() - segment_start) * 1000
 
         segment_start = perf_counter()
-        _update_district_modifiers(state, rng, events, scale)
+        _update_district_modifiers(state, rng, event_entries, scale)
         if capture_timings:
             timings["district_ms"] = (perf_counter() - segment_start) * 1000
 
@@ -158,7 +167,9 @@ class TickCoordinator:
         impact_payload: Dict[str, Any] = {}
         if env_result is not None:
             if getattr(env_result, "events", None):
-                events.extend(env_result.events)
+                event_entries.extend(
+                    NarrativeEvent(message, None, "environment") for message in env_result.events
+                )
             if hasattr(env_result, "to_dict"):
                 impact_payload = env_result.to_dict()
                 state.metadata["environment_impact"] = impact_payload
@@ -166,18 +177,24 @@ class TickCoordinator:
             impact_payload = state.metadata["environment_impact"]
 
         segment_start = perf_counter()
-        _update_environment(state, rng, events, scale)
+        _update_environment(state, rng, event_entries, scale)
         if capture_timings:
             timings["environment_ms"] = (perf_counter() - segment_start) * 1000
 
+        focus_result = focus_manager.curate(state, event_entries, event_budget=event_budget)
+        visible_events = [entry.to_display() for entry in focus_result.visible]
+        archive_events = [entry.to_display() for entry in focus_result.archive]
+        suppressed_events = [entry.to_display() for entry in focus_result.suppressed]
+
         tick_value = state.advance_ticks(1)
-        if _enforce_event_budget(events, event_budget):
-            anomalies.append("event_budget")
+        focus_manager.record_digest(state, tick=tick_value, result=focus_result)
 
         timings["tick_total_ms"] = (perf_counter() - tick_start) * 1000
         return TickReport(
             tick=tick_value,
-            events=events,
+            events=visible_events,
+            event_archive=archive_events,
+            suppressed_events=suppressed_events,
             environment=_environment_snapshot(state),
             districts=_district_snapshot(state),
             agent_actions=[action.to_report() for action in agent_intents],
@@ -187,6 +204,7 @@ class TickCoordinator:
             economy=economy_report.to_dict() if economy_report else {},
             environment_impact=impact_payload,
             timings=timings,
+            focus_budget=focus_result.allocation,
             anomalies=anomalies,
         )
 
@@ -226,6 +244,7 @@ def advance_ticks(
     economy_system: object | None = None,
     environment_system: object | None = None,
     profiling: ProfilingSettings | None = None,
+    focus_manager: FocusManager | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -234,6 +253,7 @@ def advance_ticks(
         faction_system=faction_system,
         economy_system=economy_system,
         environment_system=environment_system,
+        focus_manager=focus_manager,
     )
     return coordinator.run(
         state,
@@ -251,7 +271,7 @@ def _clamp(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
 def _update_resources(
     state: GameState,
     rng: random.Random,
-    events: List[str],
+    events: List[NarrativeEvent],
     scale: float,
 ) -> None:
     for district in state.city.districts:
@@ -262,7 +282,11 @@ def _update_resources(
             new_value = _clamp(stock.current + drift + fluctuation, 0, stock.capacity)
             if abs(new_value - stock.current) > 3:
                 events.append(
-                    f"{district.name} {stock.type} adjusted to {int(new_value)} units"
+                    NarrativeEvent(
+                        f"{district.name} {stock.type} adjusted to {int(new_value)} units",
+                        district_id=district.id,
+                        scope="resources",
+                    )
                 )
             stock.current = int(new_value)
 
@@ -270,36 +294,57 @@ def _update_resources(
 def _update_district_modifiers(
     state: GameState,
     rng: random.Random,
-    events: List[str],
+    events: List[NarrativeEvent],
     scale: float,
 ) -> None:
     for district in state.city.districts:
-        unrest_shift = rng.uniform(-0.02, 0.02) * scale
-        pollution_shift = rng.uniform(-0.015, 0.015) * scale
-        prosperity_shift = rng.uniform(-0.02, 0.02) * scale
-        security_shift = rng.uniform(-0.02, 0.02) * scale
-
-        district.modifiers.unrest = _clamp(district.modifiers.unrest + unrest_shift)
-        district.modifiers.pollution = _clamp(
-            district.modifiers.pollution + pollution_shift
+        district.modifiers.unrest = _mean_revert(
+            district.modifiers.unrest,
+            rng.uniform(-0.02, 0.02),
+            scale,
+            drift=0.2,
         )
-        district.modifiers.prosperity = _clamp(
-            district.modifiers.prosperity + prosperity_shift
+        district.modifiers.pollution = _mean_revert(
+            district.modifiers.pollution,
+            rng.uniform(-0.015, 0.015),
+            scale,
+            drift=0.18,
         )
-        district.modifiers.security = _clamp(
-            district.modifiers.security + security_shift
+        district.modifiers.prosperity = _mean_revert(
+            district.modifiers.prosperity,
+            rng.uniform(-0.02, 0.02),
+            scale,
+            drift=0.12,
+        )
+        district.modifiers.security = _mean_revert(
+            district.modifiers.security,
+            rng.uniform(-0.02, 0.02),
+            scale,
+            drift=0.12,
         )
 
         if district.modifiers.unrest > 0.75:
-            events.append(f"{district.name} protests intensify")
+            events.append(
+                NarrativeEvent(
+                    f"{district.name} protests intensify",
+                    district_id=district.id,
+                    scope="district",
+                )
+            )
         if district.modifiers.pollution > 0.75:
-            events.append(f"{district.name} pollution spike detected")
+            events.append(
+                NarrativeEvent(
+                    f"{district.name} pollution spike detected",
+                    district_id=district.id,
+                    scope="district",
+                )
+            )
 
 
 def _update_environment(
     state: GameState,
     rng: random.Random,
-    events: List[str],
+    events: List[NarrativeEvent],
     scale: float,
 ) -> None:
     env = state.environment
@@ -314,15 +359,19 @@ def _update_environment(
         + 0.04 * (avg_pollution - 0.5)
         + rng.uniform(-0.015, 0.015) * scale
     )
-    env.stability = _clamp(env.stability - (env.unrest - 0.5) * 0.04)
+    env.stability = _clamp(env.stability - (env.unrest - 0.5) * 0.02)
     env.security = _clamp(env.security - (env.pollution - 0.5) * 0.02)
 
     if env.unrest > 0.7:
-        events.append("Civic tension is rising across the city")
+        events.append(
+            NarrativeEvent("Civic tension is rising across the city", scope="environment")
+        )
     if env.pollution > 0.7:
-        events.append("Pollution breaches critical thresholds")
+        events.append(
+            NarrativeEvent("Pollution breaches critical thresholds", scope="environment")
+        )
     if env.stability < 0.4:
-        events.append("Governance stability wanes")
+        events.append(NarrativeEvent("Governance stability wanes", scope="environment"))
 
 
 def _environment_snapshot(state: GameState) -> dict[str, float]:
@@ -358,60 +407,69 @@ def _average(values: Sequence[float]) -> float:
     return sum(items) / len(items)
 
 
-def _enforce_event_budget(events: List[str], budget: int | None) -> bool:
-    if budget is None or len(events) <= budget:
-        return False
-    del events[budget:]
-    events.append("Additional events suppressed by LOD budget")
-    return True
+def _mean_revert(value: float, noise: float, scale: float, *, drift: float) -> float:
+    """Noise plus drift back toward the neutral 0.5 midpoint."""
+
+    return _clamp(value + (0.5 - value) * drift + noise * scale)
 
 
-def _summarize_agent_actions(actions: Sequence) -> List[str]:
-    summaries: List[str] = []
+def _summarize_agent_actions(actions: Sequence, district_ids: set[str]) -> List[NarrativeEvent]:
+    summaries: List[NarrativeEvent] = []
     for action in actions:
         agent_name = getattr(action, "agent_name", getattr(action, "agent_id", "Agent"))
         intent = getattr(action, "intent", "")
         target = getattr(action, "target_name", getattr(action, "target", ""))
+        district_id = getattr(action, "target", None)
+        if district_id not in district_ids:
+            district_id = None
         if intent == "STABILIZE_UNREST":
-            summaries.append(f"{agent_name} eases unrest in {target}")
+            message = f"{agent_name} eases unrest in {target}"
         elif intent == "SUPPORT_SECURITY":
-            summaries.append(f"{agent_name} reinforces security in {target}")
+            message = f"{agent_name} reinforces security in {target}"
         elif intent == "NEGOTIATE_FACTION":
-            summaries.append(f"{agent_name} negotiates with {target}")
+            message = f"{agent_name} negotiates with {target}"
         elif intent == "INSPECT_DISTRICT":
-            summaries.append(f"{agent_name} inspects {target}")
+            message = f"{agent_name} inspects {target}"
         elif intent == "REQUEST_REPORT":
-            summaries.append(f"{agent_name} files a report on {target}")
+            message = f"{agent_name} files a report on {target}"
         else:
-            summaries.append(f"{agent_name} acts in {target}")
+            message = f"{agent_name} acts in {target}"
+        summaries.append(NarrativeEvent(message, district_id=district_id, scope="agent"))
     return summaries
 
 
-def _summarize_faction_actions(actions: Sequence) -> List[str]:
-    summaries: List[str] = []
+def _summarize_faction_actions(actions: Sequence) -> List[NarrativeEvent]:
+    summaries: List[NarrativeEvent] = []
     for action in actions:
         name = getattr(action, "faction_name", getattr(action, "faction_id", "Faction"))
         intent = getattr(action, "action", "")
         target = getattr(action, "target_name", getattr(action, "target", "city"))
+        district_id = getattr(action, "district_id", None)
         if intent == "LOBBY_COUNCIL":
-            summaries.append(f"{name} lobbies city leadership")
+            message = f"{name} lobbies city leadership"
         elif intent == "RECRUIT_SUPPORT":
-            summaries.append(f"{name} recruits new supporters")
+            message = f"{name} recruits new supporters"
         elif intent == "INVEST_DISTRICT":
-            summaries.append(f"{name} invests in {target}")
+            message = f"{name} invests in {target}"
         elif intent == "SABOTAGE_RIVAL":
-            summaries.append(f"{name} undermines {target}")
+            message = f"{name} undermines {target}"
         else:
-            summaries.append(f"{name} acts strategically")
+            message = f"{name} acts strategically"
+        summaries.append(NarrativeEvent(message, district_id=district_id, scope="faction"))
     return summaries
 
 
-def _summarize_economy(report) -> List[str]:
+def _summarize_economy(report) -> List[NarrativeEvent]:
     if report is None:
         return []
-    lines: List[str] = []
+    lines: List[NarrativeEvent] = []
     for resource, ticks in report.shortages.items():
-        lines.append(f"Economy alert: {resource} shortage persists for {ticks} ticks")
+        lines.append(
+            NarrativeEvent(
+                f"Economy alert: {resource} shortage persists for {ticks} ticks",
+                scope="economy",
+            )
+        )
     return lines
 
 

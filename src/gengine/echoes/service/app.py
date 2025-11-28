@@ -32,6 +32,16 @@ class ActionsResponse(BaseModel):
     results: list[dict[str, Any]]
 
 
+class FocusRequest(BaseModel):
+    district_id: str | None = None
+
+
+class FocusResponse(BaseModel):
+    focus: dict[str, Any]
+    digest: dict[str, Any] | None = None
+    history: list[dict[str, Any]] = Field(default_factory=list)
+
+
 def create_app(
     engine: SimEngine | None = None,
     *,
@@ -87,6 +97,25 @@ def create_app(
         receipts = [sim.apply_action(action) for action in payload.actions]
         return ActionsResponse(results=receipts)
 
+    @app.get("/focus", response_model=FocusResponse)
+    def get_focus() -> FocusResponse:
+        digest = sim.state.metadata.get("focus_digest", {})
+        history = _focus_history(sim, sim.config.focus.history_limit)
+        return FocusResponse(focus=sim.focus_state(), digest=digest, history=history)
+
+    @app.post("/focus", response_model=FocusResponse)
+    def post_focus(payload: FocusRequest) -> FocusResponse:
+        try:
+            if payload.district_id is None:
+                focus = sim.clear_focus()
+            else:
+                focus = sim.set_focus(payload.district_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        digest = sim.state.metadata.get("focus_digest", {})
+        history = _focus_history(sim, sim.config.focus.history_limit)
+        return FocusResponse(focus=focus, digest=digest, history=history)
+
     return app
 
 
@@ -112,3 +141,10 @@ def _serialize_report(report: TickReport) -> dict[str, Any]:
         "timings": dict(report.timings),
         "anomalies": list(report.anomalies),
     }
+
+
+def _focus_history(sim: SimEngine, limit: int | None = None) -> list[dict[str, Any]]:
+    history = list(sim.state.metadata.get("focus_history") or [])
+    if limit is None or limit >= len(history):
+        return history
+    return history[-limit:]

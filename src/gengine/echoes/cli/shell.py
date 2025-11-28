@@ -46,6 +46,15 @@ class ShellBackend:
     def load_snapshot(self, path: Path) -> str:  # pragma: no cover
         raise NotImplementedError
 
+    def focus_state(self) -> dict[str, object]:  # pragma: no cover
+        raise NotImplementedError
+
+    def set_focus(self, district_id: str | None) -> dict[str, object]:  # pragma: no cover
+        raise NotImplementedError
+
+    def focus_history(self) -> List[dict[str, object]]:  # pragma: no cover
+        raise NotImplementedError
+
 
 class LocalBackend(ShellBackend):
     def __init__(self, engine: SimEngine) -> None:
@@ -75,6 +84,17 @@ class LocalBackend(ShellBackend):
     def load_snapshot(self, path: Path) -> str:
         self.engine.initialize_state(snapshot=path)
         return f"Loaded snapshot from {path}"
+
+    def focus_state(self) -> dict[str, object]:
+        return self.engine.focus_state()
+
+    def set_focus(self, district_id: str | None) -> dict[str, object]:
+        if district_id is None:
+            return self.engine.clear_focus()
+        return self.engine.set_focus(district_id)
+
+    def focus_history(self) -> List[dict[str, object]]:
+        return self.engine.focus_history()
 
 
 class ServiceBackend(ShellBackend):
@@ -108,6 +128,19 @@ class ServiceBackend(ShellBackend):
     def load_snapshot(self, path: Path) -> str:
         raise NotImplementedError("Loading snapshots requires local backend")
 
+    def focus_state(self) -> dict[str, object]:
+        payload = self.client.focus_state()
+        return payload.get("focus", {})
+
+    def set_focus(self, district_id: str | None) -> dict[str, object]:
+        payload = self.client.set_focus(district_id)
+        return payload.get("focus", {})
+
+    def focus_history(self) -> List[dict[str, object]]:
+        payload = self.client.focus_state()
+        history = payload.get("history") or []
+        return list(history)
+
 
 class EchoesShell:
     """Minimal command processor for the early CLI shell."""
@@ -137,8 +170,8 @@ class EchoesShell:
     # Command implementations -------------------------------------------
     def _cmd_help(self, _: Sequence[str]) -> CommandResult:
         return CommandResult(
-            "Available commands: summary, next [n], run <n>, map [district], "
-            "save <path>, load world <name>|snapshot <path>, help, exit"
+            "Available commands: summary, next [n], run <n>, map [district], focus [district|clear], "
+            "history [count], save <path>, load world <name>|snapshot <path>, help, exit"
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
@@ -172,6 +205,33 @@ class EchoesShell:
     def _cmd_map(self, args: Sequence[str]) -> CommandResult:
         district_id = args[0] if args else None
         return CommandResult(self.backend.render_map(district_id))
+
+    def _cmd_focus(self, args: Sequence[str]) -> CommandResult:
+        try:
+            if not args:
+                focus = self.backend.focus_state()
+            else:
+                target = args[0]
+                if target.lower() == "clear":
+                    focus = self.backend.set_focus(None)
+                else:
+                    focus = self.backend.set_focus(target)
+        except ValueError as exc:
+            return CommandResult(str(exc))
+        return CommandResult(_render_focus_state(focus))
+
+    def _cmd_history(self, args: Sequence[str]) -> CommandResult:
+        limit: int | None = None
+        if args:
+            try:
+                limit = max(1, int(args[0]))
+            except ValueError:
+                return CommandResult("Usage: history [count]")
+        history = self.backend.focus_history()
+        if not history:
+            return CommandResult("No focus history recorded.")
+        entries = history if limit is None else history[-limit:]
+        return CommandResult(_render_history(entries))
 
     def _cmd_save(self, args: Sequence[str]) -> CommandResult:
         if not args:
@@ -233,6 +293,30 @@ def _render_summary(summary: dict[str, object]) -> str:
                     f"{effect['faction']}->{effect['district']} ({effect['pollution_delta']:+.3f})"
                 )
             lines.append(f"    faction effects: {', '.join(preview)}")
+    focus = summary.get("focus")
+    if isinstance(focus, dict) and focus.get("district_id"):
+        neighbors = focus.get("neighbors") or []
+        neighbor_text = ", ".join(neighbors) if neighbors else "none"
+        lines.append(
+            f"  focus -> {focus['district_id']} (neighbors: {neighbor_text})"
+        )
+    digest = summary.get("focus_digest")
+    if isinstance(digest, dict) and digest.get("visible"):
+        lines.append("  focus digest:")
+        for event in digest.get("visible", [])[:3]:
+            lines.append(f"    - {event}")
+        suppressed = digest.get("suppressed_count", 0)
+        if suppressed:
+            lines.append(f"    suppressed: {suppressed} archived events")
+        ranked = digest.get("ranked_archive") or []
+        if ranked:
+            preview = []
+            for item in ranked[:2]:
+                score = float(item.get("score", 0.0))
+                message = item.get("message", "")
+                preview.append(f"{score:.2f}:{message}")
+            if preview:
+                lines.append(f"    ranked: {', '.join(preview)}")
     profiling = summary.get("profiling")
     if isinstance(profiling, dict) and profiling:
         lines.append("  profiling:")
@@ -259,6 +343,37 @@ def _render_summary(summary: dict[str, object]) -> str:
             lines.append(
                 f"    anomalies: {', '.join(anomalies[:3])}"
             )
+    return "\n".join(lines)
+
+
+def _render_focus_state(focus: dict[str, object] | None) -> str:
+    focus = focus or {}
+    center = focus.get("district_id")
+    neighbors = focus.get("neighbors") or []
+    ring = focus.get("ring") or []
+    lines = ["Focus configuration:"]
+    lines.append(f"  center   : {center or 'unset'}")
+    lines.append(f"  neighbors: {', '.join(neighbors) if neighbors else 'none'}")
+    if ring:
+        lines.append(f"  ring     : {', '.join(ring)}")
+    return "\n".join(lines)
+
+
+def _render_history(entries: Sequence[dict[str, object]]) -> str:
+    lines = ["Focus history (latest first):"]
+    for entry in reversed(entries):
+        tick = entry.get("tick")
+        center = entry.get("focus_center") or "unset"
+        suppressed = entry.get("suppressed_count", 0)
+        lines.append(f"  tick {tick}: focus={center} suppressed={suppressed}")
+        top_ranked = entry.get("top_ranked") or []
+        for ranked in top_ranked[:3]:
+            score = ranked.get("score", 0.0)
+            message = ranked.get("message", "")
+            lines.append(f"    ({score:.2f}) {message}")
+        preview = entry.get("suppressed_preview") or []
+        if preview:
+            lines.append(f"    preview: {', '.join(preview[:3])}")
     return "\n".join(lines)
 
 
@@ -291,6 +406,18 @@ def _render_reports(reports: Sequence[TickReport]) -> str:
         if report.events:
             for event in report.events:
                 lines.append(f"  - {event}")
+        if report.focus_budget:
+            fb = report.focus_budget
+            lines.append(
+                "  focus budget -> "
+                f"focus {fb.get('focus_used', 0)}/{fb.get('focus_reserved', 0)} | "
+                f"global {fb.get('global_used', 0)}/{fb.get('global_reserved', 0)} | "
+                f"suppressed {fb.get('suppressed', 0)}"
+            )
+        if report.suppressed_events:
+            lines.append(
+                f"  suppressed archive: {len(report.suppressed_events)} events held back"
+            )
         if report.anomalies:
             lines.append(f"  anomalies: {', '.join(report.anomalies)}")
     return "\n".join(lines)

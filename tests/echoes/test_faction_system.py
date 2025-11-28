@@ -49,14 +49,22 @@ def test_faction_system_lobbies_when_legitimacy_low() -> None:
 
 def test_faction_system_can_sabotage_rivals() -> None:
     state = _prepare_state(single_faction=False)
+    state.environment.stability = 0.8
     system = FactionSystem(cooldown_ticks=1)
     rng = random.Random(1)
+    baseline_legitimacy = {
+        faction_id: faction.legitimacy for faction_id, faction in state.factions.items()
+    }
 
-    actions = system.tick(state, rng=rng)
-
-    sabotage = next((action for action in actions if action.action == "SABOTAGE_RIVAL"), None)
+    sabotage = None
+    for _ in range(5):
+        actions = system.tick(state, rng=rng)
+        sabotage = next((action for action in actions if action.action == "SABOTAGE_RIVAL"), None)
+        if sabotage is not None:
+            break
     assert sabotage is not None
-    assert state.factions["cartel_of_mist"].legitimacy < 0.45
+    target = state.factions[sabotage.target]
+    assert target.legitimacy < baseline_legitimacy[target.id]
 
 
 def test_faction_system_invests_to_calm_unrest() -> None:

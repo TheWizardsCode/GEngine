@@ -62,6 +62,15 @@ class GameState(BaseModel):
         profiling = self.metadata.get("profiling") or {}
         if profiling:
             summary["profiling"] = profiling
+        focus_state = self.metadata.get("focus_state") or {}
+        if focus_state:
+            summary["focus"] = focus_state
+        focus_digest = self.metadata.get("focus_digest") or {}
+        if focus_digest:
+            summary["focus_digest"] = focus_digest
+        focus_history = self.metadata.get("focus_history") or []
+        if focus_history:
+            summary["focus_history"] = focus_history
         return summary
 
     def snapshot(self) -> Dict[str, Any]:

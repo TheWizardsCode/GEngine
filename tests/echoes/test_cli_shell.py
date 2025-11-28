@@ -13,6 +13,8 @@ from gengine.echoes.cli.shell import (
     EchoesShell,
     LocalBackend,
     ServiceBackend,
+    _render_focus_state,
+    _render_history,
     _render_summary,
     main as cli_main,
 )
@@ -205,6 +207,7 @@ def test_shell_help_and_error_paths() -> None:
     assert "Usage: save" in shell.execute("save").output
     assert "Usage" in shell.execute("load").output
     assert "Unknown command" in shell.execute("foobar").output
+    assert "Unknown district" in shell.execute("focus nowhere").output
 
 
 def test_run_commands_with_service_backend() -> None:
@@ -291,12 +294,66 @@ def test_render_summary_surfaces_environment_impact() -> None:
                 }
             ],
         },
+        "focus": {
+            "district_id": "industrial-tier",
+            "neighbors": ["research-spire"],
+            "ring": ["industrial-tier", "research-spire"],
+        },
+        "focus_digest": {
+            "visible": ["Agent A inspects Industrial Tier"],
+            "suppressed_count": 2,
+            "ranked_archive": [
+                {
+                    "message": "Industrial Tier protests intensify",
+                    "scope": "district",
+                    "score": 0.92,
+                    "severity": 1.0,
+                    "focus_distance": 0,
+                    "in_focus_ring": True,
+                }
+            ],
+        },
     }
 
     rendered = _render_summary(summary)
 
     assert "env impact" in rendered
     assert "faction effects" in rendered
+    assert "focus -> industrial-tier" in rendered
+    assert "focus digest" in rendered
+    assert "ranked:" in rendered
+
+
+def test_focus_command_reports_state() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    shell = EchoesShell(LocalBackend(engine))
+
+    default_output = shell.execute("focus").output
+
+    assert "Focus configuration" in default_output
+
+    current_focus = engine.focus_state()
+    neighbor = (current_focus.get("neighbors") or [None])[0]
+    if neighbor:
+        updated = shell.execute(f"focus {neighbor}").output
+        assert neighbor in updated
+
+    cleared = shell.execute("focus clear").output
+    assert "Focus configuration" in cleared
+
+
+def test_render_focus_state_formats_output() -> None:
+    panel = {
+        "district_id": "industrial-tier",
+        "neighbors": ["research-spire"],
+        "ring": ["industrial-tier", "research-spire"],
+    }
+
+    rendered = _render_focus_state(panel)
+
+    assert "industrial-tier" in rendered
+    assert "research-spire" in rendered
 
 
 def test_game_state_summary_includes_environment_metadata() -> None:
@@ -341,3 +398,35 @@ def test_game_state_summary_includes_profiling_metadata() -> None:
     summary = state.summary()
 
     assert "profiling" in summary
+
+
+def test_history_command_reports_entries() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(2)
+    shell = EchoesShell(LocalBackend(engine))
+
+    rendered = shell.execute("history").output
+
+    assert "tick" in rendered
+    assert "focus=" in rendered
+
+
+def test_render_history_formats_output() -> None:
+    entries = [
+        {
+            "tick": 10,
+            "focus_center": "industrial-tier",
+            "suppressed_count": 3,
+            "suppressed_preview": ["Event A", "Event B"],
+            "top_ranked": [
+                {"message": "Event A", "score": 0.8},
+                {"message": "Event B", "score": 0.6},
+            ],
+        }
+    ]
+
+    rendered = _render_history(entries)
+
+    assert "tick 10" in rendered
+    assert "Event A" in rendered

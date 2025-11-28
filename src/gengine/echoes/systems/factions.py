@@ -76,12 +76,19 @@ class FactionSystem:
         options: List[tuple[str, float]] = []
         if faction.legitimacy < 0.7:
             options.append(("LOBBY_COUNCIL", 0.4 + (0.7 - faction.legitimacy)))
-        if metrics["unrest"] > 0.55 or metrics["security"] < 0.45:
-            options.append(("INVEST_DISTRICT", 0.35 + metrics["unrest"]))
+        if faction.territory:
+            unrest_pressure = max(0.0, metrics["unrest"] - 0.4)
+            security_gap = max(0.0, 0.5 - metrics["security"])
+            if unrest_pressure > 0 or security_gap > 0:
+                invest_weight = 0.25 + unrest_pressure + security_gap
+                options.append(("INVEST_DISTRICT", invest_weight))
         if pressure < 0.5:
             options.append(("RECRUIT_SUPPORT", 0.3 + (0.5 - pressure)))
-        if rival is not None:
-            options.append(("SABOTAGE_RIVAL", 0.25 + rival.legitimacy))
+        stability_safe = state.environment.stability >= 0.45
+        if rival is not None and stability_safe:
+            legitimacy_gap = max(0.0, rival.legitimacy - faction.legitimacy)
+            if legitimacy_gap >= 0.05:
+                options.append(("SABOTAGE_RIVAL", 0.15 + legitimacy_gap))
 
         if not options:
             return None
@@ -188,7 +195,7 @@ class FactionSystem:
             if district is not None:
                 detail = f"agitates unrest in {district.name}"
                 district.modifiers.unrest = _clamp(
-                    district.modifiers.unrest + 0.04
+                    district.modifiers.unrest + 0.02
                 )
                 district_id = district.id
             else:

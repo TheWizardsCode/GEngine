@@ -42,6 +42,18 @@ class ProfilingSettings(BaseModel):
     capture_subsystems: bool = True
 
 
+class FocusSettings(BaseModel):
+    """Configuration for focus-aware narrative budgeting."""
+
+    default_district: str | None = None
+    neighborhood_size: int = Field(2, ge=0)
+    focus_budget_ratio: float = Field(0.65, ge=0.0, le=1.0)
+    global_floor: int = Field(2, ge=0)
+    digest_size: int = Field(6, ge=1)
+    history_limit: int = Field(30, ge=1)
+    suppressed_preview: int = Field(5, ge=0)
+
+
 class EconomySettings(BaseModel):
     """Tunable parameters driving the economy subsystem."""
 
@@ -86,6 +98,7 @@ class SimulationConfig(BaseModel):
     limits: SimulationLimits = Field(default_factory=SimulationLimits)
     lod: LodSettings = Field(default_factory=LodSettings)
     profiling: ProfilingSettings = Field(default_factory=ProfilingSettings)
+    focus: FocusSettings = Field(default_factory=FocusSettings)
     economy: EconomySettings = Field(default_factory=EconomySettings)
     environment: EnvironmentSettings = Field(default_factory=EnvironmentSettings)
 
@@ -119,6 +132,7 @@ __all__ = [
     "LodSettings",
     "ProfilingSettings",
     "EconomySettings",
+    "FocusSettings",
     "EnvironmentSettings",
     "load_simulation_config",
 ]

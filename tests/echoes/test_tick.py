@@ -105,3 +105,20 @@ def test_engine_enforces_tick_limit() -> None:
 
     with pytest.raises(ValueError):
         engine.advance_ticks(5)
+
+
+def test_focus_budget_populates_metadata() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+
+    report = engine.advance_ticks(1)[0]
+
+    assert report.focus_budget
+    assert report.event_archive
+    digest = engine.state.metadata.get("focus_digest")
+    assert digest
+    assert digest["visible"] == report.events
+    assert digest["ranked_archive"]
+    history = engine.state.metadata.get("focus_history")
+    assert history
+    assert history[-1]["top_ranked"]

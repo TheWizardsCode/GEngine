@@ -50,6 +50,16 @@ class SimServiceClient:
         response.raise_for_status()
         return response.json()
 
+    def focus_state(self) -> dict[str, Any]:
+        response = self._client.get("/focus")
+        response.raise_for_status()
+        return response.json()
+
+    def set_focus(self, district_id: str | None) -> dict[str, Any]:
+        response = self._client.post("/focus", json={"district_id": district_id})
+        response.raise_for_status()
+        return response.json()
+
     def close(self) -> None:
         close = getattr(self._client, "close", None)
         if callable(close):

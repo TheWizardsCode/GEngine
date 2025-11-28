@@ -84,3 +84,20 @@ def test_tick_endpoint_rejects_large_requests() -> None:
 
     assert response.status_code == 400
     assert "limit" in response.json()["detail"]
+
+
+def test_focus_endpoint_reports_state_and_validates() -> None:
+    client, _ = _client()
+
+    state_response = client.get("/focus")
+    assert state_response.status_code == 200
+    payload = state_response.json()
+    assert payload["focus"]["district_id"]
+    assert isinstance(payload.get("history"), list)
+
+    bad_response = client.post("/focus", json={"district_id": "unknown"})
+    assert bad_response.status_code == 400
+
+    good_response = client.post("/focus", json={"district_id": payload["focus"]["district_id"]})
+    assert good_response.status_code == 200
+    assert "history" in good_response.json()

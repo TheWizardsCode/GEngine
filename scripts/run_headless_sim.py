@@ -58,6 +58,7 @@ def run_headless_sim(
         "faction_actions": sum(len(report.faction_actions) for report in reports),
         "faction_action_breakdown": _faction_breakdown(reports),
     }
+    summary["suppressed_events"] = sum(len(report.suppressed_events) for report in reports)
     if reports:
         summary["anomalies"] = sum(len(report.anomalies) for report in reports)
         summary["anomaly_examples"] = sorted(
@@ -67,6 +68,14 @@ def run_headless_sim(
         summary["last_environment"] = reports[-1].environment
         summary["faction_legitimacy"] = reports[-1].faction_legitimacy
         summary["last_economy"] = reports[-1].economy
+        digest = engine.state.metadata.get("focus_digest", {})
+        summary["last_event_digest"] = {
+            "visible": list(reports[-1].events),
+            "archive": list(reports[-1].event_archive),
+            "suppressed": list(reports[-1].suppressed_events),
+            "focus_budget": dict(reports[-1].focus_budget),
+            "ranked_archive": list(digest.get("ranked_archive", [])),
+        }
     profiling = engine.state.metadata.get("profiling")
     if profiling:
         summary["profiling"] = profiling

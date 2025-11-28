@@ -188,13 +188,35 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   should ripple into civic unrest or ecological decline. Pollution also diffuses
   toward a citywide mean each tick, while faction investments/sabotage inject
   relief or spikes that are logged in telemetry so narrative beats remain tied
-  to systemic causes.
+  to systemic causes. District modifiers now include a subtle mean-reversion
+  step so long burns do not pin districts at the extremes, and faction AI
+  prioritizes investment whenever unrest/security drift beyond safe margins
+  while only allowing sabotage when a weaker faction has both the legitimacy
+  gap and global stability to justify escalation.
 
 **Emergent Environmental Behaviors:**
 
 - Invasive species outbreaks spreading from experimental sites into the city.
 - Climate anomalies or infrastructure failures in response to overuse/neglect.
 - Factions exploiting crises (e.g., climate emergencies) to justify power grabs.
+
+### 4.5 Spatial Model & Adjacency Graph
+
+- Districts gain explicit `coordinates` tuples (`x`, `y`, optional `z`) plus an
+  `adjacent` list authored or auto-derived from those points so systems can add
+  literal proximity on top of the existing population-ranked rings. Focus
+  distance continues to consider ring order; the new data supplies a spatial
+  modifier rather than a replacement.
+- Spatial metadata unlocks hybrid mechanics: focus budgeting blends population
+  rank with nearest-neighbor weighting, travel time for agents references the
+  coordinates, and resource diffusion plus territory contiguity checks finally
+  honor true neighbors even when a lightly populated district sits between two
+  dense hubs.
+- The validation pipeline will derive adjacency whenever coordinates change so
+  content authors manage one truth while future navigation meshes, patrols, and
+  blockade logic reuse the same graph. Tools will also emit warnings when
+  spatial proximity and population priority diverge sharply so designers can
+  tune the hybrid weights intentionally.
 
 ---
 
@@ -258,6 +280,11 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - **Relationships Graph:** text lists and simple ASCII node-edge diagrams.
 - **Faction Influence Map:** textual summaries and bar-like ASCII charts.
 - **Event Feed:** scrolling log of headlines, rumors, and system alerts.
+  Players can retarget their focus ring at any time, which in turn changes
+  which beats surface in the digest versus the archived history so the feed
+  stays legible even when dozens of subsystems emit events per tick. The
+  narrator now ranks archived beats by severity plus focus distance and keeps
+  a rolling history so UX surfaces can spotlight what was suppressed.
 
 **Legibility & Feedback:**
 
@@ -265,6 +292,11 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   - Event timelines showing key causes and effects.
   - Inspectable agents with summarized reasoning (e.g., "Joined protest because rent ↑, trust in Council ↓, trust in Underground ↑").
   - Policy tooltips explaining projected and actual impacts.
+- Focus manager UI: expose the current focus district, its prioritized
+  neighbors, the number of beats allocated to the ring vs. the global pool, and
+  how many events were archived each tick so designers/testers understand what
+  the narrator suppressed. Surface the ranked archive and history (latest
+  ticks, top scored beats) so testers can drill into "why wasn't this shown?"
 
 **Session Structure:**
 
@@ -362,7 +394,8 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - Headless regression driver: `scripts/run_headless_sim.py` executes long burns
   in capped batches, prints batch diagnostics, and emits JSON summaries (tick
   percentiles, slowest subsystem snapshots, anomaly totals/examples, faction
-  legitimacy, economy tables, environment snapshots) so designers can compare
+  legitimacy, economy tables, environment snapshots, and the narrator digest
+  (`visible`, `suppressed`, focus budget allocation) so designers can compare
   macro metrics between builds or automated sweeps.
 
 **LLM Integration:**

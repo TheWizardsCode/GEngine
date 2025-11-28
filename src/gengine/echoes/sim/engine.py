@@ -14,6 +14,7 @@ from ..core import GameState
 from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
 from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem
+from .focus import FocusManager
 from .tick import TickReport, advance_ticks as _advance_ticks
 
 ViewName = Literal["summary", "snapshot", "district"]
@@ -41,6 +42,7 @@ class SimEngine:
         self._faction_system = FactionSystem()
         self._economy_system = EconomySystem(settings=self._config.economy)
         self._environment_system = EnvironmentSystem(settings=self._config.environment)
+        self._focus_manager = FocusManager(settings=self._config.focus)
         self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
 
     # ------------------------------------------------------------------
@@ -95,6 +97,7 @@ class SimEngine:
             economy_system=self._economy_system,
             environment_system=self._environment_system,
             profiling=self._config.profiling,
+            focus_manager=self._focus_manager,
         )
         duration_ms = (perf_counter() - start) * 1000
         self._record_profiling(reports)
@@ -128,6 +131,20 @@ class SimEngine:
         if view == "district":
             return self._district_view(kwargs.get("district_id"))
         raise ValueError(f"Unknown view '{view}'")
+
+    # ------------------------------------------------------------------
+    def focus_state(self) -> dict[str, Any]:
+        return self._focus_manager.describe(self.state)
+
+    def set_focus(self, district_id: str | None) -> dict[str, Any]:
+        return self._focus_manager.set_focus(self.state, district_id)
+
+    def clear_focus(self) -> dict[str, Any]:
+        return self._focus_manager.clear_focus(self.state)
+
+    def focus_history(self) -> list[dict[str, Any]]:
+        history = self.state.metadata.get("focus_history") or []
+        return [dict(entry) for entry in history]
 
     # Internal helpers --------------------------------------------------
     def _record_profiling(self, reports: Sequence[TickReport]) -> None:
@@ -165,6 +182,8 @@ class SimEngine:
             }
         profiling_payload["slowest_subsystem"] = slowest_entry
         profiling_payload["anomalies"] = list(reports[-1].anomalies)
+        if reports[-1].focus_budget:
+            profiling_payload["focus_budget"] = reports[-1].focus_budget
         self.state.metadata["profiling"] = profiling_payload
 
     @staticmethod
