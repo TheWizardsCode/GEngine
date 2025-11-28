@@ -53,9 +53,12 @@ run locally.
   can connect systemic shifts to reported beats.
 - Early environment plumbing (Phase 4, M4.4) that listens to economy
   shortages, diffuses extreme pollution pockets toward a citywide baseline,
-  reacts to faction investments/sabotage with pollution relief/spikes, and
-  captures the resulting `environment_impact` metadata for telemetry + CLI/
-  service summaries.
+  reacts to faction investments/sabotage with pollution relief/spikes, and now
+  biases diffusion toward physically adjacent districts with configurable
+  neighbor weight/min/max deltas. The subsystem captures the resulting
+  `environment_impact` metadata (scarcity pressure, faction deltas, diffusion
+  samples, average pollution, and the latest max/min districts) for telemetry +
+  CLI/service summaries.
 - Focus-aware narrative budgeting (Phase 4, M4.6) with CLI/service `focus`
   commands, a deterministic digest/history, severity-distance ranking, and
   telemetry that records suppressed beats. Phase 4, M4.7 extends the same
@@ -215,6 +218,27 @@ director's recommended focus hand-offs.
   baseline config, and keep the high-budget preset handy if you ever need to
   raise `max_events_per_tick` for stress tests.
 
+### Plotting Environment Trajectories
+
+Once the cushioned, high-pressure, and profiling-history sweeps are captured you
+can visualize their pollution/unrest curves with
+`scripts/plot_environment_trajectories.py`. The script reads the
+`director_history` entries embedded in each telemetry file, so bump
+`focus.history_length` high enough (≥ the tick budget you plan to run) before
+capturing if you need a full-length timeline instead of the latest window.
+
+```bash
+uv run python scripts/plot_environment_trajectories.py --output build/phase4-deepening-trajectories.png
+```
+
+- By default, the script looks for the three Phase 4 deepening sweep files under
+  `build/feature-m4-8-phase4-deepening-*.json`. Pass `--run label=/path/to/file`
+  multiple times to compare other telemetry captures.
+- Omit `--output` to open an interactive window; specify it (as above) to save a
+  PNG under `build/` for sharing in reviews.
+- If a run only shows a couple of samples, regenerate telemetry with a larger
+  `focus.history_length` so the director history covers the desired span.
+
 ## Inspecting the Default World
 
 ```bash
@@ -250,7 +274,8 @@ Available in-shell commands:
 
 - `help` – list commands and syntax.
 - `summary` – show city, tick, counts, stability, faction legitimacy, latest
-  market prices, the `environment_impact` block, and the new profiling payload
+  market prices, the `environment_impact` block (now showing average pollution,
+  extremal districts, and the top diffusion samples), and the new profiling payload
   (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and any
   anomaly tags) so you can gauge systemic pressure before advancing time again.
   The summary also surfaces the current focus configuration plus the last
@@ -336,10 +361,13 @@ not wedge CI runs.
   these values to control how sharply shortages erode stability or spike
   pollution; the EnvironmentSystem writes every tick's `environment_impact`
   block into metadata so telemetry and CLI summaries can trace the effect. The
-  same block reports whether diffusion ran in the last tick and how faction
-  investments/sabotage adjusted local pollution via the
+  same block reports whether diffusion ran in the last tick, which districts
+  hit the max/min pollution extremes, the blended neighbor/global target, and
+  how faction investments/sabotage adjusted local pollution via the
   `faction_invest_pollution_relief` and `faction_sabotage_pollution_spike`
-  knobs.
+  knobs. The new `diffusion_neighbor_bias`, `diffusion_min_delta`, and
+  `diffusion_max_delta` settings expose how aggressively pollution equalizes
+  between adjacent districts versus the citywide mean.
 
 Edit the YAML, rerun the CLI/service, and the new safeguards apply immediately
 without code changes.

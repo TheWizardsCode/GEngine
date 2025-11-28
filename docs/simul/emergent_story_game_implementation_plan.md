@@ -13,10 +13,12 @@ A staged implementation that builds a solid simulation core, then layers on agen
 - ⚙️ Phase 4 (Agents/Factions/Economy): **M4.1 Agent AI** and **M4.2 Faction AI**
   shipped; **M4.3 Economy** now includes the subsystem, designer-facing config
   knobs, legitimacy/market telemetry, and expanded tests. **M4.4 Environment**
-  plumbing has begun with a scarcity-driven EnvironmentSystem plus new config
-  weights that push shortages into district/environment metrics. Remaining Phase
-  4 work focuses on long scenario sweeps and richer environment diffusion before
-  merging back to main.
+  now routes scarcity pressure into unrest/pollution, biases diffusion toward
+  adjacent districts with configurable neighbor weights/min/max clamps, and
+  captures richer telemetry (average pollution, extremes, sampled diffusion
+  deltas) that surfaces in CLI/service/headless summaries. Remaining Phase 4 work
+  focuses on long scenario sweeps and biodiversity/LOD follow-ups before merging
+  back to main.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -227,6 +229,14 @@ Instrumentation deliverables:
 Documenting this table (and keeping it in sync with the README) lets QA pick a
 single row to validate whenever a guardrail knob changes.
 
+- Telemetry visualization assists: `scripts/plot_environment_trajectories.py`
+  plots pollution/unrest trajectories from multiple sweep captures by reading
+  their `director_history` payloads. Before running the script, ensure sweeps
+  were captured with `focus.history_length` ≥ the tick budget so the timeline
+  covers the full run. Use the tool to compare cushioned, high-pressure, and
+  profiling-history presets (or any custom `--run label=path` inputs) whenever
+  diffusion weights or scarcity knobs change.
+
 ### Phase 4 – Agents, Factions, Economy, Environment
 
 - **M4.1 Agent AI** (1-1.5 days): extend agent traits/goals and implement
@@ -236,7 +246,9 @@ single row to validate whenever a guardrail knob changes.
 - **M4.3 Economy** (1-1.5 days): production/consumption, market price loop, and
   conservation tests to guard against runaway resource inflation.
 - **M4.4 Environment** (1 day): pollution/emissions/biodiversity dynamics tied
-  to economy + agent actions.
+  to economy + agent actions, adjacency-aware diffusion with configurable
+  neighbor bias/min/max clamps, and telemetry that records scarcity pressure,
+  faction deltas, and averaged/min/max pollution metrics per tick.
 - **M4.5 Tick orchestration** (0.5-1 day): explicitly order subsystem updates,
   emit traces per subsystem, and run smoke scenarios via headless driver.
 - **M4.6 Focus-Aware Narration** (complete): shipped the FocusManager module,
@@ -386,19 +398,22 @@ single row to validate whenever a guardrail knob changes.
 - **M4.4 Environment Dynamics (Deliverable: `systems/environment.py`)**
 
   - Implemented the EnvironmentSystem scaffolding plus config weights that turn
-    economy shortages into district unrest/pollution deltas, diffuse extreme
-    pollution pockets, and translate faction investments/sabotage into
-    pollution relief or spikes that appear in telemetry/CLI summaries (current
-    work). Next steps expand into biodiversity health and climate events.
+    economy shortages into district unrest/pollution deltas, drive adjacency-
+    aware diffusion (neighbor bias + min/max caps), and translate faction
+    investments/sabotage into pollution relief or spikes that appear in
+    telemetry/CLI summaries. Next steps expand into biodiversity health and
+    climate events.
   - Integrate with LOD settings so coarse mode aggregates environment updates
     while detailed mode runs district-level diffusion (baseline diffusion now
     implemented via EnvironmentSystem; future work tunes per LOD).
   - Extend CLI `summary`/`map` output with new environment indicators and
     warnings plus telemetry surfacing of `environment_impact` (summary block now
-    live; map warnings pending dedicated environment events).
+    live with scarcity pressure, faction deltas, average pollution, min/max
+    districts, and sampled diffusion deltas; map warnings pending dedicated
+    environment events).
   - Tests: maintain targeted regression/property tests for the coupling and add
-    scenario coverage for pollution emergencies and CLI messaging as diffusion
-    features arrive.
+    scenario coverage for pollution emergencies, diffusion telemetry, and CLI
+    messaging as biodiversity features arrive.
 
 - **M4.5 Tick Orchestration & Telemetry (Deliverable: updated `SimEngine.advance_ticks`)**
   - Define subsystem execution order (agents → factions → economy → environment → narrative hooks) with clear contracts and shared context objects.

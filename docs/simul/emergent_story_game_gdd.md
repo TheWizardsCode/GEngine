@@ -192,7 +192,13 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   step so long burns do not pin districts at the extremes, and faction AI
   prioritizes investment whenever unrest/security drift beyond safe margins
   while only allowing sabotage when a weaker faction has both the legitimacy
-  gap and global stability to justify escalation.
+  gap and global stability to justify escalation. Latest tuning biases diffusion
+  toward geographically adjacent neighbors via `diffusion_neighbor_bias`, clamps
+  the per-tick drift with `diffusion_min_delta`/`diffusion_max_delta`, and records
+  every tick's `environment_impact` payload with scarcity pressure, faction
+  deltas, average pollution, the districts holding the current min/max, and the
+  top sampled diffusion deltas so telemetry, CLI summaries, and headless reports
+  all expose the same diagnostics.
 
 **Emergent Environmental Behaviors:**
 
@@ -419,6 +425,14 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   legitimacy, economy tables, environment snapshots, and the narrator digest
   (`visible`, `suppressed`, focus budget allocation) so designers can compare
   macro metrics between builds or automated sweeps.
+- Telemetry visualization: `scripts/plot_environment_trajectories.py` reads the
+  `director_history` timelines embedded in sweep telemetry artifacts and plots
+  pollution/unrest overlays across multiple configs (for example cushioned vs.
+  high-pressure vs. profiling-history). Designers should bump
+  `focus.history_length` to at least the intended tick budget before capturing
+  telemetry so the plot spans the full run, then use the resulting PNG to
+  review how diffusion clamps or scarcity weights reshape curves before
+  iterating on config knobs.
 
 **LLM Integration:**
 

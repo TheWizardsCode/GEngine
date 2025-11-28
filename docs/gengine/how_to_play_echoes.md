@@ -32,7 +32,7 @@ and persist state.
 | Command                | Description                                                                                                                                                                                                                        |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `help`                 | Lists all available commands.                                                                                                                                                                                                      |
-| `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot, and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
+| `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
 | `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                   |
 | `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                           |
 | `map [district_id]`    | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district.                 |
@@ -91,7 +91,8 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   (e.g., "Industrial Tier pollution spike detected").
 - `summary` mirrors those metrics without advancing time and now includes both
   the `environment_impact` block (scarcity pressure, faction pollution deltas,
-  diffusion state), profiling stats (tick duration percentiles plus the last
+  diffusion state, average pollution, the latest extreme districts, and the top
+  diffusion samples captured during the tick), profiling stats (tick duration percentiles plus the last
   subsystem timings), and the focus digest preview (up to six curated events
   plus a suppressed count). Use `focus` to retarget which districts receive the
   larger per-tick budget whenever you need to spotlight a different hotspot.
@@ -178,7 +179,11 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
 - Tune the response curve through the `environment` block in
   `content/config/simulation.yml`. The `scarcity_*_weight` fields control how
   strongly shortages push on unrest or pollution, while `scarcity_event_threshold`
-  decides when the shell prints explicit "Scarcity" alerts.
+  decides when the shell prints explicit "Scarcity" alerts. Designers can also
+  steer diffusion with `diffusion_neighbor_bias` (how much more heavily adjacent
+  districts are weighted versus the citywide mean) plus
+  `diffusion_min_delta`/`diffusion_max_delta` clamps that keep the per-tick drift
+  inside predictable bounds.
 - Pollution diffuses toward a citywide average each tick when `diffusion_rate`
   is non-zero, and faction actions now feed directly into the loop:
   `faction_invest_pollution_relief` eases pollution whenever a faction invests
@@ -193,8 +198,9 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   runaway crises every 300–400 ticks.
 - Every tick writes an `environment_impact` block into the game state's
   metadata. Inspect it via headless telemetry or by dumping the snapshot to see
-  the latest pressure, diffusion flag, faction effects, per-district deltas, and
-  emitted warnings while you tune. The `summary` command now prints this block
+  the latest pressure, diffusion flag, faction effects, per-district deltas,
+  the average pollution level, which districts held the min/max values, and up
+  to three sampled diffusion deltas while you tune. The `summary` command now prints this block
   directly, alongside profiling metrics that include tick percentiles, the
   slowest subsystem, and any anomaly tags so designers can spot runaway
   pollution or suspicious subsystem spikes before advancing time.
@@ -202,6 +208,12 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   `--config-root content/config/sweeps/high-pressure` (stress test),
   `.../cushioned` (long-form stability), or `.../profiling-history`
   (history window = 240 ticks) when running `scripts/run_headless_sim.py`.
+- After capturing cushioned/high-pressure/profiling-history sweeps, run
+  `uv run python scripts/plot_environment_trajectories.py --output build/<name>.png`
+  to overlay their pollution/unrest trajectories. The script scans each
+  telemetry file's `director_history`, so raise `focus.history_length` to at
+  least the tick budget ahead of time if you need the full run plotted. Supply
+  additional `--run label=/path/to/file` arguments to compare custom captures.
 - Latest deterministic soaks (seed 42, 1000 ticks, balanced LOD) serve as
   guardrail captures:
   - **Baseline (`build/focus-baseline-1000tick.json`)** – 0 anomalies, stability
