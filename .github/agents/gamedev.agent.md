@@ -55,9 +55,9 @@ Whenever executable code needs to be added or moodified you must:
    [docs/gengine/how_to_play_echoes.md](../../docs/gengine/how_to_play_echoes.md))
    to reflect any changes in game systems.
 7. Implement the changes in the codebase.
-8. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 85%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
-9. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin testing.
-10. When approved, commit the changes with a descriptive message summarizing the updates made.
+8. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 90%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
+9. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin play testing.
+10. Ask the PM to approve the changes, and once approved, commit the changes with a descriptive message summarizing the updates made.
 11. Push the changes to the remote repository.
 12. Create a pull request.
 13. Request a review and, if appropriate, merge of the pull request.
