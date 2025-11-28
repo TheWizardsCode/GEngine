@@ -1,0 +1,39 @@
+[project]
+name = "gengine"
+version = "0.1.0"
+description = "Echoes of Emergence simulation prototype"
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "GEngine Team" }]
+dependencies = [
+    "fastapi>=0.115.0,<1.0.0",
+    "uvicorn[standard]>=0.30.0,<1.0.0",
+    "rich>=13.7.0,<14.0.0",
+    "pydantic>=2.7.0,<3.0.0",
+    "sqlmodel>=0.0.19,<1.0.0",
+    "pyyaml>=6.0.1,<7.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0,<9.0.0",
+    "ruff>=0.5.0,<1.0.0"
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2.0,<9.0.0",
+    "ruff>=0.5.0,<1.0.0"
+]
+
+[project.scripts]
+echoes-shell = "gengine.echoes.cli.shell:main"
+
+[build-system]
+requires = ["setuptools>=68.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "B", "I"]

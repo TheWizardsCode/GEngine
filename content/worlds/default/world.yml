@@ -1,0 +1,120 @@
+city:
+  id: neo-echo
+  name: Neo Echo
+  description: "A layered metropolis clinging to the edges of a megastructure."
+  districts:
+    - id: industrial-tier
+      name: Industrial Tier
+      population: 120000
+      resources:
+        energy:
+          type: energy
+          capacity: 80
+          current: 60
+          regen: 4.5
+        materials:
+          type: materials
+          capacity: 55
+          current: 38
+          regen: 2.1
+      modifiers:
+        pollution: 0.72
+        unrest: 0.35
+        prosperity: 0.48
+        security: 0.42
+    - id: research-spire
+      name: Research Spire
+      population: 40000
+      resources:
+        data:
+          type: data
+          capacity: 90
+          current: 70
+          regen: 6.0
+        capital:
+          type: capital
+          capacity: 60
+          current: 45
+          regen: 3.5
+      modifiers:
+        pollution: 0.28
+        unrest: 0.22
+        prosperity: 0.71
+        security: 0.68
+    - id: perimeter-hollow
+      name: Perimeter Hollow
+      population: 80000
+      resources:
+        food:
+          type: food
+          capacity: 75
+          current: 54
+          regen: 5.2
+      modifiers:
+        pollution: 0.41
+        unrest: 0.57
+        prosperity: 0.33
+        security: 0.36
+
+factions:
+  - id: union_of_flux
+    name: Union of Flux
+    ideology: "Labor futurists seeking equitable automation."
+    legitimacy: 0.62
+    resources:
+      materials: 25
+      influence: 18
+    territory:
+      - industrial-tier
+    description: "Manufacturing guild with deep roots in the Industrial Tier."
+  - id: cartel_of_mist
+    name: Cartel of Mist
+    ideology: "Shadow brokers monetizing scarcity."
+    legitimacy: 0.38
+    resources:
+      capital: 40
+      covert: 30
+    territory:
+      - perimeter-hollow
+    description: "Black-market syndicate controlling perimeter trade."
+
+agents:
+  - id: aria-volt
+    name: Aria Volt
+    role: Mediator
+    faction_id: union_of_flux
+    home_district: industrial-tier
+    traits:
+      empathy: 0.82
+      resolve: 0.74
+    goals:
+      - "Secure fair energy quotas for worker districts"
+  - id: cassian-mire
+    name: Cassian Mire
+    role: Fixer
+    faction_id: cartel_of_mist
+    home_district: perimeter-hollow
+    traits:
+      cunning: 0.77
+      stealth: 0.69
+    goals:
+      - "Expand smuggling routes into the Research Spire"
+  - id: dr-lyra-keel
+    name: Dr. Lyra Keel
+    role: Systems Ecologist
+    home_district: research-spire
+    traits:
+      analysis: 0.88
+      curiosity: 0.91
+    goals:
+      - "Reduce pollution spillover from the Industrial Tier"
+
+environment:
+  stability: 0.56
+  unrest: 0.33
+  pollution: 0.58
+  climate_risk: 0.47
+  security: 0.52
+
+metadata:
+  seed: 424242

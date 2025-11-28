@@ -1,0 +1,100 @@
+# ---- Ignore example project subdirectories ----
+aks-mcp/
+innovation-engine-mcp/
+open-webSearch/
+
+# ---- Python bytecode / cache ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.orig
+
+# ---- Python packaging / build artifacts ----
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.wheels/
+
+# ---- uv / virtual environments ----
+.venv/
+innovation-engine-mcp/.venv/
+
+# ---- Python tooling caches ----
+.pytest_cache/
+.mypy_cache/
+.cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# ---- Logs & temp data ----
+*.log
+ie.log*
+*.env
+*.sqlite3
+*.tmp
+*.bak
+
+# ---- Node / TypeScript ----
+node_modules/
+**/node_modules/
+*.tsbuildinfo
+# If build output shouldn't be committed uncomment the next line:
+# open-webSearch/build/
+.npm/
+.pnp.*
+.yarn/*
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Env & secrets ----
+.env
+.env.*
+!.env.example
+secrets*.yaml
+*.secret.yaml
+
+# ---- Editor / IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# ---- OS / UI cruft ----
+.DS_Store
+Thumbs.db
+
+# ---- Test artifacts ----
+coverage/
+reports/
+test-results/
+
+# ---- Docker / containers ----
+*.tar
+**/.dockerignore
+
+# ---- Kubernetes / manifests (keep specific tracked ones) ----
+# Do NOT ignore provided cluster config YAMLs (e.g. kind-config-openwebsearch.yaml)
+# Uncomment below to ignore local ephemeral overrides:
+# overrides/*.yaml
+
+# ---- Misc tooling ----
+*.lock.json
+*.lock
+
+# ---- Security review ----
+# Ensure no private keys are committed:
+*.pem
+*.key
+*.crt
+
+# End of file
