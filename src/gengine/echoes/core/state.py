@@ -59,6 +59,9 @@ class GameState(BaseModel):
         env_impact = self.metadata.get("environment_impact") or {}
         if env_impact:
             summary["environment_impact"] = env_impact
+        profiling = self.metadata.get("profiling") or {}
+        if profiling:
+            summary["profiling"] = profiling
         return summary
 
     def snapshot(self) -> Dict[str, Any]:

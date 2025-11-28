@@ -12,6 +12,8 @@ lod:
   max_events_per_tick: 6
 profiling:
   log_ticks: true
+  history_window: 60
+  capture_subsystems: true
 economy:
   regen_scale: 0.8
   demand_population_scale: 100000

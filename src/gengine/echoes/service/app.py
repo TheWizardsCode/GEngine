@@ -79,7 +79,8 @@ def create_app(
     @app.get("/metrics")
     def get_metrics() -> dict[str, Any]:
         env = sim.state.environment.model_dump()
-        return {"tick": sim.state.tick, "environment": env}
+        profiling = sim.state.metadata.get("profiling", {})
+        return {"tick": sim.state.tick, "environment": env, "profiling": profiling}
 
     @app.post("/actions", response_model=ActionsResponse)
     def post_actions(payload: ActionsRequest) -> ActionsResponse:
@@ -108,4 +109,5 @@ def _serialize_report(report: TickReport) -> dict[str, Any]:
         "faction_legitimacy_delta": dict(report.faction_legitimacy_delta),
         "economy": dict(report.economy),
         "environment_impact": dict(report.environment_impact),
+        "timings": dict(report.timings),
     }

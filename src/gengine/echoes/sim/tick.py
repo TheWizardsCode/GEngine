@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
+from time import perf_counter
 from typing import Any, Dict, List, Sequence
 
 from ..core import GameState
-from ..settings import LodSettings
+from ..settings import LodSettings, ProfilingSettings
 
 
 @dataclass(slots=True)
@@ -24,6 +25,7 @@ class TickReport:
     faction_legitimacy_delta: Dict[str, float] = field(default_factory=dict)
     economy: Dict[str, Any] = field(default_factory=dict)
     environment_impact: Dict[str, Any] = field(default_factory=dict)
+    timings: Dict[str, float] = field(default_factory=dict)
 
 
 def advance_ticks(
@@ -36,6 +38,7 @@ def advance_ticks(
     faction_system: object | None = None,
     economy_system: object | None = None,
     environment_system: object | None = None,
+    profiling: ProfilingSettings | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -49,18 +52,38 @@ def advance_ticks(
     scale = lod.scale if lod else 1.0
     event_budget = lod.max_events_per_tick if lod else None
 
+    capture_timings = profiling.capture_subsystems if profiling is not None else True
+
     for _ in range(count):
+        tick_start = perf_counter()
+        timings: Dict[str, float] = {}
         events: List[str] = []
         prev_legitimacy = {fid: faction.legitimacy for fid, faction in state.factions.items()}
 
+        segment_start = perf_counter()
         agent_intents = _run_agent_system(agent_system, state, rng)
+        if capture_timings:
+            timings["agent_ms"] = (perf_counter() - segment_start) * 1000
         events.extend(_summarize_agent_actions(agent_intents))
+        segment_start = perf_counter()
         faction_decisions = _run_faction_system(faction_system, state, rng)
+        if capture_timings:
+            timings["faction_ms"] = (perf_counter() - segment_start) * 1000
         events.extend(_summarize_faction_actions(faction_decisions))
+        segment_start = perf_counter()
         economy_report = _run_economy_system(economy_system, state, rng)
+        if capture_timings:
+            timings["economy_ms"] = (perf_counter() - segment_start) * 1000
         events.extend(_summarize_economy(economy_report))
+        segment_start = perf_counter()
         _update_resources(state, rng, events, scale)
+        if capture_timings:
+            timings["resources_ms"] = (perf_counter() - segment_start) * 1000
+        segment_start = perf_counter()
         _update_district_modifiers(state, rng, events, scale)
+        if capture_timings:
+            timings["district_ms"] = (perf_counter() - segment_start) * 1000
+        segment_start = perf_counter()
         env_impact = _run_environment_system(
             environment_system,
             state,
@@ -68,6 +91,10 @@ def advance_ticks(
             economy_report,
             faction_decisions,
         )
+        if capture_timings:
+            timings["environment_system_ms"] = (
+                perf_counter() - segment_start
+            ) * 1000
         impact_payload: Dict[str, Any] = {}
         if env_impact is not None:
             if getattr(env_impact, "events", None):
@@ -77,9 +104,13 @@ def advance_ticks(
                 state.metadata["environment_impact"] = impact_payload
         elif "environment_impact" in state.metadata:
             impact_payload = state.metadata["environment_impact"]
+        segment_start = perf_counter()
         _update_environment(state, rng, events, scale)
+        if capture_timings:
+            timings["environment_ms"] = (perf_counter() - segment_start) * 1000
         tick_value = state.advance_ticks(1)
         _enforce_event_budget(events, event_budget)
+        timings["tick_total_ms"] = (perf_counter() - tick_start) * 1000
         reports.append(
             TickReport(
                 tick=tick_value,
@@ -92,6 +123,7 @@ def advance_ticks(
                 faction_legitimacy_delta=_legitimacy_delta(prev_legitimacy, state),
                 economy=economy_report.to_dict() if economy_report else {},
                 environment_impact=impact_payload,
+                timings=timings,
             )
         )
 

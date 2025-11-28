@@ -43,3 +43,9 @@
 [2025-11-28 20:22 UTC] HEAD 0e72acd: Committed diffusion/faction environment work plus sweep configs (`Link environment impact to factions and add sweeps`) to lock in the latest telemetry + documentation updates.
 [2025-11-28 11:53 UTC] Preparing to merge feature/m4-3-economy back into main per PM request and outline the follow-up prep work for M3.4 safeguards before switching focus.
 [2025-11-28 11:54 UTC] HEAD bd17746 (main): Fast-forward merged feature/m4-3-economy into main so environment + economy upgrades, docs, and sweeps are now on the baseline branch.
+[2025-11-28 11:54 UTC] Created branch feature/m3-4-prep from main to capture renewed safeguards/LOD work for the requested M3.4 prep cycle.
+[2025-11-28 11:55 UTC] Drafted an M3.4 refresh prep checklist inside docs/simul/emergent_story_game_implementation_plan.md covering guardrail audits, profiling hooks, regression matrix, and doc updates so execution can start immediately once scoped.
+[2025-11-28 11:58 UTC] Kicking off the M3.4 safeguards refresh per "make it so": plan is to audit cap enforcement, wire profiling/timing hooks, expand regression coverage, and refresh docs before submitting for review.
+[2025-11-28 12:07 UTC] Implemented profiling instrumentation + guardrail docs/tests, then ran `uv run --group dev pytest` (70 passed, 96% cov baseline maintained) to confirm the refresh stays green.
+[2025-11-28 12:07 UTC] Captured telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m3-4-prep-telemetry.json` showing stb=1.0, unrest≈0.35, pollution pegged at 1.0, prices energy/materials 1.5, and profiling p50/p95 at 0.10/0.13ms for the refreshed guardrail build.
+[2025-11-28 12:10 UTC] Preparing to merge feature/m3-4-prep into main and then implement the follow-up recommendations (CLI summary verification + profiling history sweep config) requested by the PM.

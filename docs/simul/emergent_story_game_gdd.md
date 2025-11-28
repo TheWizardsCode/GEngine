@@ -349,8 +349,12 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - Important agents get deeper reasoning passes; background populations are approximated statistically.
 - Safeguards and profiling: `content/config/simulation.yml` configures the LOD
   mode (detailed/balanced/coarse), engine/service tick caps, CLI run/script
-  limits, and tick-level logging so builds can hard-stop runaway loops while
-  still emitting reproducible telemetry.
+  limits, and the profiling window. The engine now records tick-duration
+  percentiles and subsystem timings into shared metadata so the CLI summary,
+  FastAPI `/metrics`, and headless telemetry all surface the same block without
+  extra tooling. A guardrail regression matrix (documented in the plan/README)
+  ties each cap to a pytest so QA can prove the limits still trigger after any
+  tuning passes.
 - Headless regression driver: `scripts/run_headless_sim.py` executes long burns
   in capped batches, prints batch diagnostics, and emits JSON summaries so
   designers can compare macro metrics (agent/faction counts, legitimacy shifts,

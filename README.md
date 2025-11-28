@@ -59,6 +59,10 @@ run locally.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions.
+- Instrumented profiling that records per-tick durations (p50/p95/max) and
+  subsystem timing deltas directly into `GameState.metadata`. The CLI summary,
+  FastAPI `/metrics` response, and headless regression outputs all surface the
+  same block so designers can spot runaway ticks without attaching a profiler.
 - Utility script `scripts/eoe_dump_state.py` for quick world inspection and
   snapshot exports.
 - Test suite covering content loading, snapshot round-trip, tick behavior, and
@@ -87,7 +91,7 @@ tests/                   Pytest suites (content, tick loop, CLI shell)
 
 ```bash
 cd /home/rogardle/projects/gengine
-uv sync --all-extras --dev
+uv sync --group dev
 ```
 
 The first sync creates/updates `.venv` and installs runtime plus dev
@@ -167,7 +171,7 @@ uv run echoes-shell --world default
 Scripted mode (useful for CI/tests):
 
 ```bash
-uv run echoes-shell --world default --script "summary;runs 3;map;save build/state.json;exit"
+uv run echoes-shell --world default --script "summary;run 3;map;save build/state.json;exit"
 ```
 
 Both modes share the same in-process GameState and emit ASCII summaries/maps for
@@ -176,9 +180,12 @@ rapid iteration.
 Available in-shell commands:
 
 - `help` – list commands and syntax.
-- `summary` – show city, tick, counts, stability.
-- `next` – advance exactly one tick with the inline report. Use `run` for
-  batches.
+- `summary` – show city, tick, counts, stability, faction legitimacy, latest
+  market prices, the `environment_impact` block, and the new profiling payload
+  (tick ms p50/p95/max plus the last subsystem timings) so you can gauge
+  systemic pressure before advancing time again.
+- `next` – advance exactly one tick with the inline report (no arguments). Use
+  `run` for batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.
   The CLI enforces the safeguard defined in `limits.cli_run_cap` (default 50).
 - `map [district_id]` – render ASCII table of all districts (includes an "ID"
@@ -194,9 +201,10 @@ Available in-shell commands:
   environment summary you will also see a "faction legitimacy" block (top ±3
   deltas each tick) and a `market -> energy:1.05, food:0.98, …` line whenever
   the economy subsystem has published prices.
-- `summary` now renders the latest `environment_impact` snapshot so you can see
-  scarcity pressure, whether diffusion fired, and any pollution shifts caused
-  by faction activity without running a tick.
+- `summary` now renders the latest `environment_impact` snapshot and the shared
+  profiling block. Together they show scarcity pressure, whether diffusion
+  fired, pollution shifts from faction activity, plus tick-duration percentiles
+  and the slowest subsystems from the most recent tick.
 
 If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
 shell halts automatically and prints a safeguard warning so runaway loops do
@@ -213,9 +221,12 @@ not wedge CI runs.
 - `lod`: selects `detailed`, `balanced` (default), or `coarse` modes. Each mode
   tweaks volatility in the tick loop and caps the number of events emitted per
   tick to keep logs legible during long burns.
-- `profiling`: flips the structured tick log on/off. When enabled, every
-  `SimEngine.advance_ticks` call logs tick counts, duration (ms), and the active
-  LOD mode via the `gengine.echoes.sim` logger so you can profile headless runs.
+- `profiling`: controls tick logging plus the shared percentile window.
+  `history_window` sets how many tick durations feed the rolling p50/p95/max
+  calculations, `capture_subsystems` toggles per-system timing, and `log_ticks`
+  still emits the logger message. The resulting profiling block appears in the
+  CLI summary, FastAPI `/metrics`, and headless telemetry JSON so you can spot
+  regressions without attaching a debugger.
 - `economy`: exposes `regen_scale`, demand weights, shortage thresholds, base
   resource weights, and price tuning values (`base_price`, `price_increase_step`,
   `price_max_boost`, `price_decay`, `price_floor`). Adjust these numbers to
@@ -234,6 +245,19 @@ not wedge CI runs.
 
 Edit the YAML, rerun the CLI/service, and the new safeguards apply immediately
 without code changes.
+
+### Guardrail Regression Matrix
+
+| Surface                    | Config knob                     | Enforcement path                                          | Regression coverage                                                              |
+| -------------------------- | ------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `SimEngine.advance_ticks`  | `limits.engine_max_ticks`       | Raises `ValueError` when a request exceeds the engine cap | `tests/echoes/test_tick.py::test_engine_enforces_tick_limit`                     |
+| CLI `run <n>` command      | `limits.cli_run_cap`            | Output is prefixed with a safeguard warning and capped    | `tests/echoes/test_cli_shell.py::test_shell_run_command_is_clamped`              |
+| CLI scripted sequences     | `limits.cli_script_command_cap` | Script halts once the command budget is consumed          | `tests/echoes/test_cli_shell.py::test_run_commands_respects_script_cap`          |
+| FastAPI `/tick` endpoint   | `limits.service_tick_cap`       | Returns HTTP 400 detailing the configured limit           | `tests/echoes/test_service_api.py::test_tick_endpoint_rejects_large_requests`    |
+| Headless regression driver | `limits.engine_max_ticks`       | Automatically chunks batches so no call exceeds the cap   | `tests/scripts/test_run_headless_sim.py::test_run_headless_sim_supports_batches` |
+
+Run these tests (or the equivalent CLI/service commands) whenever knobs change
+to keep safeguard behavior reproducible across environments.
 
 ## Running the Simulation Service
 
@@ -273,7 +297,9 @@ uv run echoes-shell --service-url http://localhost:8000 --script "summary;run 5;
 `scripts/run_headless_sim.py` advances long simulations without interactive
 input. It chunks work to respect `limits.engine_max_ticks`, prints per-batch
 diagnostics to stderr, and writes a JSON summary that downstream tools can
-diff.
+diff. The JSON now mirrors the CLI/service profiling block so you can inspect
+tick duration percentiles and the slowest subsystems alongside the usual
+agent/faction metrics.
 
 ```bash
 uv run python scripts/run_headless_sim.py --world default --ticks 500 --lod coarse --output build/headless.json
@@ -286,9 +312,10 @@ Key flags:
 - `--seed`: deterministic runs for regression capture.
 - `--snapshot`: start from a saved snapshot instead of content.
 - `--config-root`: point at an alternate config folder (useful in CI).
-- `--output`: path for the structured summary (includes tick counts, timing,
-  LOD mode, agent/faction action breakdowns, faction legitimacy snapshot, and
-  the last economy report).
+- `--output`: path for the structured summary (includes tick counts, timing
+  percentiles, LOD mode, agent/faction action breakdowns, faction legitimacy
+  snapshot, the last economy report, and the shared profiling block with the
+  most recent subsystem timings).
 
 ## Next Steps
 

@@ -33,6 +33,7 @@ def minimal_config(tmp_path: Path) -> Path:
     (config_root / "simulation.yml").write_text(
         "limits:\n  engine_max_ticks: 2\n  cli_run_cap: 2\n  cli_script_command_cap: 5\n  service_tick_cap: 2\n"
         "lod:\n  mode: balanced\n  max_events_per_tick: 4\n  volatility_scale:\n    detailed: 1.0\n    balanced: 0.8\n    coarse: 0.5\nprofiling:\n  log_ticks: false\n"
+        "  history_window: 5\n  capture_subsystems: true\n"
     )
     return config_root
 
@@ -53,6 +54,9 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert "last_environment" in summary
     assert "faction_legitimacy" in summary
     assert "last_economy" in summary
+    assert "profiling" in summary
+    for batch in summary["batches"]:
+        assert batch["ticks"] <= 2
     data = json.loads(output.read_text())
     assert data["ticks_requested"] == 5
     assert "agent_intent_breakdown" in data

@@ -186,6 +186,39 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
   environment snapshot) for regression diffs or CI sweeps. Supports snapshot
   bootstrap, seed overrides, and alternate config roots.
 
+#### M3.4 Safeguards & LOD – Refresh Prep
+
+- Audit every guardrail surface (SimEngine caps, CLI `run` guard, service tick
+  limits, headless script batches) against the latest config to confirm the
+  values align with Phase 4 loads and note any deltas that need designer signoff.
+- Extend profiling hooks so the CLI/service/headless summaries capture tick
+  duration percentiles plus subsystem timing, enabling faster detection of
+  runaway scenarios before LOD shifts.
+- Draft a regression matrix that pairs each safeguard with a pytest or scenario
+  test (for example, CLI caps, service HTTP 400 responses, long-run script
+  throttling) so reopening the milestone has a clear verification checklist.
+- Stage documentation updates (README, gameplay guide, Exec Docs) that explain
+  how to tune the guardrails per environment; once the refresh lands, the docs
+  can be merged without scrambling for context.
+
+Instrumentation deliverables:
+
+- `SimEngine` tracks per-tick durations (p50/p95/max) plus subsystem timings
+  using the configurable profiling window so CLI/service/headless summaries all
+  surface the same performance block without extra tooling.
+- Guardrail verification matrix:
+
+  | Surface / Safeguard      | Config knob                     | Enforcement behavior                   | Regression hook                                                                  |
+  | ------------------------ | ------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+  | Engine tick requests     | `limits.engine_max_ticks`       | Raises `ValueError` when exceeded      | `tests/echoes/test_tick.py::test_engine_enforces_tick_limit`                     |
+  | CLI `run` batches        | `limits.cli_run_cap`            | Prefixes output with safeguard warning | `tests/echoes/test_cli_shell.py::test_shell_run_command_is_clamped`              |
+  | CLI scripted sequences   | `limits.cli_script_command_cap` | Halts scripts once cap is reached      | `tests/echoes/test_cli_shell.py::test_run_commands_respects_script_cap`          |
+  | FastAPI `/tick` endpoint | `limits.service_tick_cap`       | Returns HTTP 400 with detail message   | `tests/echoes/test_service_api.py::test_tick_endpoint_rejects_large_requests`    |
+  | Headless batch execution | `limits.engine_max_ticks`       | Auto-chunks to stay beneath engine cap | `tests/scripts/test_run_headless_sim.py::test_run_headless_sim_supports_batches` |
+
+Documenting this table (and keeping it in sync with the README) lets QA pick a
+single row to validate whenever a guardrail knob changes.
+
 ### Phase 4 – Agents, Factions, Economy, Environment
 
 - **M4.1 Agent AI** (1-1.5 days): extend agent traits/goals and implement

@@ -176,6 +176,7 @@ def test_cli_main_script_service(monkeypatch, capsys) -> None:
                 "faction_legitimacy": {},
                 "faction_legitimacy_delta": {},
                 "economy": {"prices": {}, "shortages": {}},
+                "timings": {"tick_total_ms": 1.0},
             }
             return {"reports": [report]}
 
@@ -305,3 +306,34 @@ def test_game_state_summary_includes_environment_metadata() -> None:
     summary = state.summary()
 
     assert "environment_impact" in summary
+
+
+def test_render_summary_surfaces_profiling() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 5,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.8,
+        "profiling": {
+            "tick_ms_p50": 1.2,
+            "tick_ms_p95": 2.1,
+            "tick_ms_max": 2.5,
+            "last_subsystem_ms": {"agent_ms": 0.5, "economy_ms": 0.6},
+        },
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "profiling" in rendered
+    assert "tick ms" in rendered
+
+
+def test_game_state_summary_includes_profiling_metadata() -> None:
+    state = load_world_bundle()
+    state.metadata["profiling"] = {"tick_ms_p50": 1.0}
+
+    summary = state.summary()
+
+    assert "profiling" in summary
