@@ -5,7 +5,7 @@ from .core.state import GameState
 from .service import create_app as create_service_app
 from .settings import SimulationConfig, load_simulation_config
 from .sim import SimEngine, TickReport, advance_ticks
-from .systems import AgentSystem
+from .systems import AgentSystem, FactionSystem
 
 __all__ = [
 	"GameState",
@@ -15,6 +15,7 @@ __all__ = [
 	"SimServiceClient",
 	"create_service_app",
 	"AgentSystem",
+	"FactionSystem",
 	"SimulationConfig",
 	"load_simulation_config",
 ]

@@ -39,7 +39,7 @@ class GameState(BaseModel):
     def summary(self) -> Dict[str, Any]:
         """Return a lightweight summary useful for CLI/debug output."""
 
-        return {
+        summary = {
             "city": self.city.name,
             "tick": self.tick,
             "districts": len(self.city.districts),
@@ -47,6 +47,11 @@ class GameState(BaseModel):
             "agents": len(self.agents),
             "stability": self.environment.stability,
         }
+        summary["faction_legitimacy"] = {
+            faction_id: round(faction.legitimacy, 3)
+            for faction_id, faction in self.factions.items()
+        }
+        return summary
 
     def snapshot(self) -> Dict[str, Any]:
         """Serialize the entire game state into a JSON-friendly dict."""

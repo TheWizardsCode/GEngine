@@ -128,6 +128,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   - Recruit or coerce agents.
   - Sabotage rivals (covert operations).
   - Invest in infrastructure or research.
+- The current prototype implements lightweight versions of these behaviors:
+  factions track legitimacy/resources, react to territory unrest, and emit
+  structured logs (lobby, recruit, invest, sabotage) that mutate district
+  modifiers and rival legitimacy so designers can trace macro shifts.
 
 **Emergent Faction Behaviors:**
 

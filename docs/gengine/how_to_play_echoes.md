@@ -89,6 +89,10 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   use these to understand how background characters are reacting to system
   pressures. The system ensures each tick includes at least one inspect or
   negotiate beat so the feed always surfaces a strategic highlight.
+- Faction AI (Phase 4, M4.2) injects slower, strategic beats—"Union of Flux
+  invests in Industrial Tier" or "Cartel of Mist undermines Union of Flux"—and
+  directly tweaks legitimacy, resources, and district modifiers so the macro
+  picture evolves even without player input.
 
 ### District Overview
 
@@ -290,9 +294,9 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
   `limits.engine_max_ticks` batches and printing per-batch diagnostics to
   stderr.
 - Summaries include tick counts, total duration, LOD mode, and the final
-  environment snapshot. The JSON now also tracks the number of agent actions
-  and a per-intent breakdown so you can spot systemic shifts between builds.
-  Store the JSON outputs in version control to diff
+  environment snapshot. The JSON now also tracks the number of agent actions,
+  faction actions, and their respective breakdowns so you can spot systemic
+  shifts between builds. Store the JSON outputs in version control to diff
   systemic changes over time.
 - Use `--seed` for deterministic comparisons and `--config-root` to point at a
   CI-specific configuration folder.

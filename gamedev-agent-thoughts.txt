@@ -11,3 +11,9 @@
 [2025-11-28 16:42 UTC] Documenting telemetry workflow (README, implementation plan, gamedev agent instructions) so every regression run captures canonical headless metrics.
 [2025-11-28 16:48 UTC] Preparing to merge feature/m4-1-agent-ai into main (HEAD 7ff64328) and spin up new branch for M4.2 per workflow instructions.
 [2025-11-28 16:52 UTC] Re-ran full pytest suite (39 green) post-doc updates; staging telemetry + M4.1 assets for merge.
+[2025-11-28 16:55 UTC] Fast-forwarded main with feature/m4-1-agent-ai (commit e0e3ea4) after confirming clean status; readying for Phase 4 follow-on work.
+[2025-11-28 16:56 UTC] Created branch feature/m4-2-faction-ai to begin the faction AI milestone per the implementation plan.
+[2025-11-28 17:02 UTC] Reviewing GDD/plan to break down M4.2 (faction AI) tasks before touching code; goal is scripted legitimacy/resource delta modeling plus events.
+[2025-11-28 17:06 UTC] Started implementing FactionSystem (cooldowns, strategic actions, telemetry plumbing) and updating docs/tests to reflect faction beats.
+[2025-11-28 17:20 UTC] Added factions subsystem, tick wiring, telemetry outputs, and scenario tests; ran targeted pytest suites plus full run (41 green) before telemetry capture.
+[2025-11-28 17:23 UTC] Captured balanced telemetry with faction metrics via run_headless_sim (seed=42, ticks=200) to build/m4-2-faction-telemetry.json per updated workflow.

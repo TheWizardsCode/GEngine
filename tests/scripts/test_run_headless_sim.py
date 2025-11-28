@@ -49,9 +49,11 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert summary["ticks_executed"] == 5
     assert summary["batches"][-1]["ending_tick"] == summary["end_tick"]
     assert summary["agent_actions"] >= 1
+    assert summary["faction_actions"] >= 0
     data = json.loads(output.read_text())
     assert data["ticks_requested"] == 5
     assert "agent_intent_breakdown" in data
+    assert "faction_action_breakdown" in data
 
 
 def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_path: Path) -> None:
@@ -75,3 +77,4 @@ def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_
     assert output.exists()
     saved = json.loads(output.read_text())
     assert "agent_actions" in saved
+    assert "faction_actions" in saved

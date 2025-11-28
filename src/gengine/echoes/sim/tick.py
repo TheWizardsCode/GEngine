@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import List, Sequence
+from typing import Any, List, Sequence
 
 from ..core import GameState
 from ..settings import LodSettings
@@ -18,7 +18,8 @@ class TickReport:
     events: List[str] = field(default_factory=list)
     environment: dict[str, float] = field(default_factory=dict)
     districts: List[dict[str, float]] = field(default_factory=list)
-    agent_actions: List[dict[str, str]] = field(default_factory=list)
+    agent_actions: List[dict[str, Any]] = field(default_factory=list)
+    faction_actions: List[dict[str, Any]] = field(default_factory=list)
 
 
 def advance_ticks(
@@ -28,6 +29,7 @@ def advance_ticks(
     seed: int | None = None,
     lod: LodSettings | None = None,
     agent_system: object | None = None,
+    faction_system: object | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -45,6 +47,8 @@ def advance_ticks(
         events: List[str] = []
         agent_intents = _run_agent_system(agent_system, state, rng)
         events.extend(_summarize_agent_actions(agent_intents))
+        faction_decisions = _run_faction_system(faction_system, state, rng)
+        events.extend(_summarize_faction_actions(faction_decisions))
         _update_resources(state, rng, events, scale)
         _update_district_modifiers(state, rng, events, scale)
         _update_environment(state, rng, events, scale)
@@ -57,6 +61,7 @@ def advance_ticks(
                 environment=_environment_snapshot(state),
                 districts=_district_snapshot(state),
                 agent_actions=[action.to_report() for action in agent_intents],
+                faction_actions=[action.to_report() for action in faction_decisions],
             )
         )
 
@@ -193,6 +198,15 @@ def _run_agent_system(agent_system: object | None, state: GameState, rng: random
         return []
 
 
+def _run_faction_system(faction_system: object | None, state: GameState, rng: random.Random):
+    if faction_system is None:
+        return []
+    try:
+        return faction_system.tick(state, rng=rng)
+    except Exception:  # pragma: no cover - defensive safeguard
+        return []
+
+
 def _summarize_agent_actions(actions: Sequence) -> List[str]:
     summaries: List[str] = []
     for action in actions:
@@ -211,4 +225,23 @@ def _summarize_agent_actions(actions: Sequence) -> List[str]:
             summaries.append(f"{agent_name} files a report on {target}")
         else:
             summaries.append(f"{agent_name} acts in {target}")
+    return summaries
+
+
+def _summarize_faction_actions(actions: Sequence) -> List[str]:
+    summaries: List[str] = []
+    for action in actions:
+        name = getattr(action, "faction_name", getattr(action, "faction_id", "Faction"))
+        intent = getattr(action, "action", "")
+        target = getattr(action, "target_name", getattr(action, "target", "city"))
+        if intent == "LOBBY_COUNCIL":
+            summaries.append(f"{name} lobbies city leadership")
+        elif intent == "RECRUIT_SUPPORT":
+            summaries.append(f"{name} recruits new supporters")
+        elif intent == "INVEST_DISTRICT":
+            summaries.append(f"{name} invests in {target}")
+        elif intent == "SABOTAGE_RIVAL":
+            summaries.append(f"{name} undermines {target}")
+        else:
+            summaries.append(f"{name} acts strategically")
     return summaries

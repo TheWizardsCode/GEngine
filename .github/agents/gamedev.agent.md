@@ -58,7 +58,7 @@ Whenever executable code needs to be added or moodified you must:
    to reflect any changes in game systems.
 7. Implement the changes in the codebase.
 8. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 90%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
-9. Capture the canonical headless telemetry snapshot (`uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-1-agent-telemetry.json`) and attach or commit the JSON for regression reference.
+9. Capture the canonical headless telemetry snapshot (`uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-2-faction-telemetry.json`) and attach or commit the JSON for regression reference.
 10. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin play testing.
 11. Ask the PM to approve the changes, and once approved, commit the changes with a descriptive message summarizing the updates made.
 12. Push the changes to the remote repository.

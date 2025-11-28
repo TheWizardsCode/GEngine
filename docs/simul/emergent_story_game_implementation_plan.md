@@ -113,7 +113,7 @@ A staged implementation that builds a solid simulation core, then layers on agen
   tests for ASCII renderings, and scenario scripts (`scripts/run_scenario.py`)
   that simulate multi-day campaigns. After every full pytest run, capture the
   canonical telemetry artifact via
-  `scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-1-agent-telemetry.json`
+  `scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-2-faction-telemetry.json`
   so regressions always include a comparable metrics snapshot.
 - Observability: structured JSON logs with session/tick ids, Prometheus metrics
   for tick latency, agent counts, LLM latency, and intent failure rates, plus
@@ -295,8 +295,8 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
 
   - Model faction resources/legitimacy deltas per tick and implement strategic actions (lobby, recruit, sabotage, invest) with cooldowns.
   - Add conflict resolution layer so faction actions can transform agent/faction state and city modifiers.
-  - Emit structured events for the CLI/service to surface (extend `/state?detail=summary`).
-  - Tests: scenario tests where a faction loses legitimacy after repeated unrest, API contract tests ensuring `/metrics` reflects faction deltas.
+  - Emit structured events for the CLI/service to surface (extend `/state?detail=summary`) and feed telemetry via `faction_actions` counts/breakdowns.
+  - Tests: scenario tests where a faction loses legitimacy after repeated unrest, API contract tests ensuring `/metrics` reflects faction deltas, and validation that headless telemetry records faction behavior alongside agent intents.
 
 - **M4.3 Economy Subsystem (Deliverable: `systems/economy.py`)**
 

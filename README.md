@@ -38,6 +38,11 @@ run locally.
   forced into every tick so logs and telemetry always surface a strategic
   action. Summaries of these actions appear in tick logs,
   service responses, and headless regression outputs for easy inspection.
+- Faction AI subsystem (Phase 4, M4.2) that models legitimacy/resources for
+  authored factions, executes low-frequency strategic actions (lobby, recruit,
+  invest, sabotage), and mutates district or faction state accordingly. These
+  decisions are logged as structured `faction_actions` in tick reports,
+  service responses, and telemetry captures.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions.
@@ -99,7 +104,7 @@ After every full pytest run, capture deterministic telemetry so reviewers can
 diff agent/faction behavior over time:
 
 ```bash
-uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-1-agent-telemetry.json
+uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-2-faction-telemetry.json
 ```
 
 Archive the JSON alongside the test results (commit or attach in review) so the
@@ -152,8 +157,8 @@ Available in-shell commands:
   on-disk snapshot (local engine mode only).
 - `exit`/`quit` – leave the shell.
 - Tick reports now include agent activity lines such as "Aria Volt inspects
-  Industrial Tier" or "Cassian Mire negotiates with Cartel of Mist", reflecting
-  the new agent subsystem.
+  Industrial Tier" plus faction beats like "Union of Flux invests in
+  Industrial Tier", making it easier to follow systemic reactions.
 
 If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
 shell halts automatically and prints a safeguard warning so runaway loops do
@@ -229,7 +234,7 @@ Key flags:
 - `--snapshot`: start from a saved snapshot instead of content.
 - `--config-root`: point at an alternate config folder (useful in CI).
 - `--output`: path for the structured summary (includes tick counts, timing,
-  LOD mode, agent intent breakdown, and last environment metrics).
+  LOD mode, agent/faction action breakdowns, and last environment metrics).
 
 ## Next Steps
 

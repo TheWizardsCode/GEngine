@@ -25,6 +25,7 @@ def test_tick_endpoint_advances_state() -> None:
     assert body["ticks_advanced"] == 2
     assert engine.state.tick == 2
     assert body["reports"][0]["agent_actions"]
+    assert "faction_actions" in body["reports"][0]
 
 
 def test_state_endpoint_requires_district_id() -> None:
