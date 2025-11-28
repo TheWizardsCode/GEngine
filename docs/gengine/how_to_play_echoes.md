@@ -3,7 +3,7 @@
 This guide explains how to run the current Echoes of Emergence prototype,
 interpret its outputs, and iterate on the simulation while new systems are
 under construction. It assumes you have cloned the repository and installed all
-runtime/dev dependencies via `uv sync --all-extras --dev`.
+runtime/dev dependencies via `uv sync --group dev`.
 
 ## 1. Launching the Shell
 
@@ -20,7 +20,7 @@ uv run echoes-shell --world default
   triggered server-side).
 - For scripted runs (handy for CI or quick experiments):
   ```bash
-  uv run echoes-shell --world default --script "summary;next 5;map;exit"
+  uv run echoes-shell --world default --script "summary;run 5;map;exit"
   ```
 
 On startup the shell prints a world summary and shows the prompt `(echoes)`.
@@ -32,8 +32,8 @@ and persist state.
 | Command                | Description                                                                                                                                                      |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `help`                 | Lists all available commands.                                                                                                                                    |
-| `summary`              | Shows city name, tick count, number of districts/factions/agents, global stability, plus per-faction legitimacy (and market prices when available).              |
-| `next`                 | Advances the simulation exactly 1 tick and prints an inline report. Use `run` for larger batches.                                                                |
+| `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot, and the shared profiling block (tick ms p50/p95/max plus recent subsystem timings). |
+| `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                 |
 | `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                         |
 | `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district. |
 | `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                         |
@@ -74,7 +74,10 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   per-tick events so long burns stay legible.
 - When `profiling.log_ticks` is enabled, `SimEngine` emits log entries such as
   `ticks=5 duration_ms=4.1 lod=balanced` via the `gengine.echoes.sim` logger so
-  you can measure performance of scripted runs or headless drivers.
+  you can measure performance of scripted runs or headless drivers. The same
+  profiling settings now populate a shared metadata block (tick ms p50/p95/max
+  plus the last subsystem timings) that appears in the CLI summary, FastAPI
+  `/metrics`, and headless telemetry JSON.
 
 ### Ticks and Reports
 
@@ -84,6 +87,10 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   (stability, unrest, pollution, security, climate risk).
 - The tick report shows the tick number, global metrics, and notable events
   (e.g., "Industrial Tier pollution spike detected").
+- `summary` mirrors those metrics without advancing time and now includes both
+  the `environment_impact` block (scarcity pressure, faction pollution deltas,
+  diffusion state) and profiling stats (tick duration percentiles plus the last
+  subsystem timings) so you know whether it's safe to request a large `run`.
 - Agent AI (Phase 4, M4.1) now contributes narrative lines such as "Aria Volt
   inspects Industrial Tier" or "Cassian Mire negotiates with Cartel of Mist";
   use these to understand how background characters are reacting to system
@@ -166,7 +173,8 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   metadata. Inspect it via headless telemetry or by dumping the snapshot to see
   the latest pressure, diffusion flag, faction effects, per-district deltas, and
   emitted warnings while you tune. The `summary` command now prints this block
-  directly so designers can spot runaway pollution before advancing time.
+  directly, alongside the profiling metrics, so designers can spot runaway
+  pollution or slow subsystems before advancing time.
 - For rapid scenario sweeps, switch configs with
   `--config-root content/config/sweeps/high-pressure` (stress test) or
   `.../cushioned` (long-form stability) when running `scripts/run_headless_sim.py`.
@@ -333,11 +341,11 @@ simulation branches.
 
 ## 7. Tips for Playtesting
 
-1. Run short bursts (`next 5`) to monitor how modifiers drift, then longer runs
+1. Run short bursts (`run 5`) to monitor how modifiers drift, then longer runs
    (`run 50`) to see macro trends.
 2. Save before experimenting so you can quickly reload if the metrics diverge.
 3. Use the scripted mode to reproduce issues: store sequences like
-   `summary;next 10;map;save tmp.json;exit` in a shell alias or task runner.
+   `summary;run 10;map;save tmp.json;exit` in a shell alias or task runner.
 4. Keep an eye on the tick event logs—early warnings like "Civic tension is
    rising" indicate metrics approaching thresholds.
 
@@ -352,11 +360,13 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
 - The driver obeys the same safeguards by chunking work into
   `limits.engine_max_ticks` batches and printing per-batch diagnostics to
   stderr.
-- Summaries include tick counts, total duration, LOD mode, and the final
-  environment snapshot. The JSON now also tracks the number of agent actions,
-  faction actions, their respective breakdowns, faction legitimacy snapshots,
-  and the `last_economy` block so you can spot systemic shifts between builds.
-  Store the JSON outputs in version control to diff systemic changes over time.
+- Summaries include tick counts, total duration, LOD mode, the final
+  environment snapshot, and the profiling block (tick ms p50/p95/max plus the
+  most recent subsystem timings). The JSON now also tracks the number of agent
+  actions, faction actions, their respective breakdowns, faction legitimacy
+  snapshots, and the `last_economy` block so you can spot systemic shifts
+  between builds. Store the JSON outputs in version control to diff systemic
+  changes over time.
 - Use `--seed` for deterministic comparisons and `--config-root` to point at a
   CI-specific configuration folder.
 

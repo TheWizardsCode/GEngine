@@ -38,6 +38,8 @@ class LodSettings(BaseModel):
 
 class ProfilingSettings(BaseModel):
     log_ticks: bool = True
+    history_window: int = Field(50, ge=1)
+    capture_subsystems: bool = True
 
 
 class EconomySettings(BaseModel):

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from gengine.echoes.content import load_world_bundle
-from gengine.echoes.settings import EconomySettings, SimulationConfig
+from gengine.echoes.settings import EconomySettings, SimulationConfig, SimulationLimits
 from gengine.echoes.sim import SimEngine, TickReport, advance_ticks
 
 
@@ -64,3 +66,40 @@ def test_environment_impact_metadata_tracks_scarcity() -> None:
     assert impact
     assert impact["scarcity_pressure"] > 0
     assert "diffusion_applied" in impact
+
+
+def test_tick_reports_include_timings() -> None:
+    state = load_world_bundle()
+
+    report = advance_ticks(state, count=1)[0]
+
+    assert "tick_total_ms" in report.timings
+    assert report.timings["tick_total_ms"] >= 0
+
+
+def test_profiling_metadata_tracks_percentiles() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+
+    engine.advance_ticks(5)
+
+    profiling = engine.state.metadata.get("profiling")
+    assert profiling
+    assert profiling["tick_ms_p50"] > 0
+    assert profiling["history_len"] >= 1
+    assert profiling["last_subsystem_ms"]
+
+
+def test_engine_enforces_tick_limit() -> None:
+    limits = SimulationLimits(
+        engine_max_ticks=2,
+        cli_run_cap=2,
+        cli_script_command_cap=5,
+        service_tick_cap=2,
+    )
+    config = SimulationConfig(limits=limits)
+    engine = SimEngine(config=config)
+    engine.initialize_state(world="default")
+
+    with pytest.raises(ValueError):
+        engine.advance_ticks(5)

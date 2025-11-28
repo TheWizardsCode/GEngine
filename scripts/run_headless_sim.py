@@ -62,6 +62,9 @@ def run_headless_sim(
         summary["last_environment"] = reports[-1].environment
         summary["faction_legitimacy"] = reports[-1].faction_legitimacy
         summary["last_economy"] = reports[-1].economy
+    profiling = engine.state.metadata.get("profiling")
+    if profiling:
+        summary["profiling"] = profiling
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)

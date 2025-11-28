@@ -233,6 +233,21 @@ def _render_summary(summary: dict[str, object]) -> str:
                     f"{effect['faction']}->{effect['district']} ({effect['pollution_delta']:+.3f})"
                 )
             lines.append(f"    faction effects: {', '.join(preview)}")
+    profiling = summary.get("profiling")
+    if isinstance(profiling, dict) and profiling:
+        lines.append("  profiling:")
+        lines.append(
+            "    tick ms -> "
+            f"p50 {profiling.get('tick_ms_p50', 0.0):.2f} | "
+            f"p95 {profiling.get('tick_ms_p95', 0.0):.2f} | max {profiling.get('tick_ms_max', 0.0):.2f}"
+        )
+        last_subs = profiling.get("last_subsystem_ms") or {}
+        if last_subs:
+            preview = ", ".join(
+                f"{name}:{value:.2f}ms"
+                for name, value in list(last_subs.items())[:3]
+            )
+            lines.append(f"    last subsystems: {preview}")
     return "\n".join(lines)
 
 

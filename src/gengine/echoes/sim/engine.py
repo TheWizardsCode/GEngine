@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
+import math
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Literal, Sequence
+from typing import Any, Deque, Literal, Sequence
 
 from ..content import load_world_bundle
 from ..core import GameState
@@ -39,6 +41,7 @@ class SimEngine:
         self._faction_system = FactionSystem()
         self._economy_system = EconomySystem(settings=self._config.economy)
         self._environment_system = EnvironmentSystem(settings=self._config.environment)
+        self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
 
     # ------------------------------------------------------------------
     @property
@@ -91,8 +94,10 @@ class SimEngine:
             faction_system=self._faction_system,
             economy_system=self._economy_system,
             environment_system=self._environment_system,
+            profiling=self._config.profiling,
         )
         duration_ms = (perf_counter() - start) * 1000
+        self._record_profiling(reports)
         if self._config.profiling.log_ticks:
             logger.info(
                 "ticks=%s duration_ms=%.2f lod=%s",
@@ -125,6 +130,51 @@ class SimEngine:
         raise ValueError(f"Unknown view '{view}'")
 
     # Internal helpers --------------------------------------------------
+    def _record_profiling(self, reports: Sequence[TickReport]) -> None:
+        if not reports:
+            return
+        history_updated = False
+        for report in reports:
+            total = report.timings.get("tick_total_ms")
+            if total is None:
+                continue
+            self._tick_history.append(total)
+            history_updated = True
+        if not history_updated or not self._tick_history:
+            return
+        history_values = list(self._tick_history)
+        profiling_payload = {
+            "tick_ms_p50": round(self._percentile(history_values, 50), 2),
+            "tick_ms_p95": round(self._percentile(history_values, 95), 2),
+            "tick_ms_max": round(max(history_values), 2),
+            "history_len": len(history_values),
+            "last_tick_ms": round(reports[-1].timings.get("tick_total_ms", 0.0), 2),
+        }
+        last_subsystems = {
+            key: round(value, 2)
+            for key, value in reports[-1].timings.items()
+            if key != "tick_total_ms"
+        }
+        if last_subsystems:
+            profiling_payload["last_subsystem_ms"] = last_subsystems
+        self.state.metadata["profiling"] = profiling_payload
+
+    @staticmethod
+    def _percentile(values: Sequence[float], percentile: float) -> float:
+        if not values:
+            return 0.0
+        if len(values) == 1:
+            return values[0]
+        sorted_vals = sorted(values)
+        rank = (len(sorted_vals) - 1) * (percentile / 100)
+        lower = math.floor(rank)
+        upper = math.ceil(rank)
+        if lower == upper:
+            return sorted_vals[int(rank)]
+        lower_value = sorted_vals[lower]
+        upper_value = sorted_vals[upper]
+        return lower_value + (upper_value - lower_value) * (rank - lower)
+
     def _district_view(self, district_id: str | None) -> dict[str, Any]:
         if not district_id:
             raise ValueError("district view requires 'district_id'")
