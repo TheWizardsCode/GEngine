@@ -316,14 +316,16 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
 - **M4.4 Environment Dynamics (Deliverable: `systems/environment.py`)**
 
   - Implemented the EnvironmentSystem scaffolding plus config weights that turn
-    economy shortages into district unrest/pollution deltas and environment
-    stability hits (current work). Next steps expand into pollutant sources/
-    sinks, biodiversity health, and climate events that respond to faction
-    actions.
+    economy shortages into district unrest/pollution deltas, diffuse extreme
+    pollution pockets, and translate faction investments/sabotage into
+    pollution relief or spikes that appear in telemetry/CLI summaries (current
+    work). Next steps expand into biodiversity health and climate events.
   - Integrate with LOD settings so coarse mode aggregates environment updates
-    while detailed mode runs district-level diffusion.
+    while detailed mode runs district-level diffusion (baseline diffusion now
+    implemented via EnvironmentSystem; future work tunes per LOD).
   - Extend CLI `summary`/`map` output with new environment indicators and
-    warnings plus telemetry surfacing of `environment_impact`.
+    warnings plus telemetry surfacing of `environment_impact` (summary block now
+    live; map warnings pending dedicated environment events).
   - Tests: maintain targeted regression/property tests for the coupling and add
     scenario coverage for pollution emergencies and CLI messaging as diffusion
     features arrive.

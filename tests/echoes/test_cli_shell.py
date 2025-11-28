@@ -13,6 +13,7 @@ from gengine.echoes.cli.shell import (
     EchoesShell,
     LocalBackend,
     ServiceBackend,
+    _render_summary,
     main as cli_main,
 )
 from gengine.echoes.client import SimServiceClient
@@ -267,3 +268,40 @@ def test_cli_main_interactive(monkeypatch, capsys) -> None:
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "Available commands" in captured.out
+
+
+def test_render_summary_surfaces_environment_impact() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 10,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.9,
+        "environment_impact": {
+            "scarcity_pressure": 1.25,
+            "diffusion_applied": True,
+            "district_deltas": {"industrial-tier": {"pollution": -0.02}},
+            "faction_effects": [
+                {
+                    "faction": "Union of Flux",
+                    "district": "industrial-tier",
+                    "pollution_delta": -0.02,
+                }
+            ],
+        },
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "env impact" in rendered
+    assert "faction effects" in rendered
+
+
+def test_game_state_summary_includes_environment_metadata() -> None:
+    state = load_world_bundle()
+    state.metadata["environment_impact"] = {"scarcity_pressure": 0.5}
+
+    summary = state.summary()
+
+    assert "environment_impact" in summary

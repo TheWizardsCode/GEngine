@@ -75,6 +75,9 @@ class EnvironmentSettings(BaseModel):
     district_unrest_weight: float = Field(0.0003, ge=0.0)
     district_pollution_weight: float = Field(0.0002, ge=0.0)
     scarcity_event_threshold: float = Field(1.5, ge=0.0)
+    diffusion_rate: float = Field(0.1, ge=0.0)
+    faction_invest_pollution_relief: float = Field(0.02, ge=0.0)
+    faction_sabotage_pollution_spike: float = Field(0.025, ge=0.0)
 
 
 class SimulationConfig(BaseModel):

@@ -30,6 +30,7 @@ def test_tick_endpoint_advances_state() -> None:
     assert "faction_legitimacy" in first_report
     assert "faction_legitimacy_delta" in first_report
     assert "economy" in first_report
+    assert "environment_impact" in first_report
 
 
 def test_state_endpoint_requires_district_id() -> None:

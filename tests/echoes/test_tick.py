@@ -63,3 +63,4 @@ def test_environment_impact_metadata_tracks_scarcity() -> None:
     impact = engine.state.metadata.get("environment_impact")
     assert impact
     assert impact["scarcity_pressure"] > 0
+    assert "diffusion_applied" in impact

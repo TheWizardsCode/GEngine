@@ -23,6 +23,7 @@ class TickReport:
     faction_legitimacy: Dict[str, float] = field(default_factory=dict)
     faction_legitimacy_delta: Dict[str, float] = field(default_factory=dict)
     economy: Dict[str, Any] = field(default_factory=dict)
+    environment_impact: Dict[str, Any] = field(default_factory=dict)
 
 
 def advance_ticks(
@@ -60,12 +61,22 @@ def advance_ticks(
         events.extend(_summarize_economy(economy_report))
         _update_resources(state, rng, events, scale)
         _update_district_modifiers(state, rng, events, scale)
-        env_impact = _run_environment_system(environment_system, state, rng, economy_report)
+        env_impact = _run_environment_system(
+            environment_system,
+            state,
+            rng,
+            economy_report,
+            faction_decisions,
+        )
+        impact_payload: Dict[str, Any] = {}
         if env_impact is not None:
             if getattr(env_impact, "events", None):
                 events.extend(env_impact.events)
             if hasattr(env_impact, "to_dict"):
-                state.metadata["environment_impact"] = env_impact.to_dict()
+                impact_payload = env_impact.to_dict()
+                state.metadata["environment_impact"] = impact_payload
+        elif "environment_impact" in state.metadata:
+            impact_payload = state.metadata["environment_impact"]
         _update_environment(state, rng, events, scale)
         tick_value = state.advance_ticks(1)
         _enforce_event_budget(events, event_budget)
@@ -80,6 +91,7 @@ def advance_ticks(
                 faction_legitimacy=_legitimacy_snapshot(state),
                 faction_legitimacy_delta=_legitimacy_delta(prev_legitimacy, state),
                 economy=economy_report.to_dict() if economy_report else {},
+                environment_impact=impact_payload,
             )
         )
 
@@ -239,11 +251,17 @@ def _run_environment_system(
     state: GameState,
     rng: random.Random,
     economy_report,
+    faction_actions,
 ):
     if environment_system is None:
         return None
     try:
-        return environment_system.tick(state, rng=rng, economy_report=economy_report)
+        return environment_system.tick(
+            state,
+            rng=rng,
+            economy_report=economy_report,
+            faction_actions=faction_actions,
+        )
     except Exception:  # pragma: no cover - defensive safeguard
         return None
 

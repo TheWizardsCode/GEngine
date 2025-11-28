@@ -52,9 +52,10 @@ run locally.
   alongside the market readout everywhere the reports appear so playtesters
   can connect systemic shifts to reported beats.
 - Early environment plumbing (Phase 4, M4.4) that listens to economy
-  shortages, applies configurable scarcity pressure into district unrest/
-  pollution, and captures the resulting environment impact in metadata for
-  telemetry so stability loops now react to the market knobs exposed earlier.
+  shortages, diffuses extreme pollution pockets toward a citywide baseline,
+  reacts to faction investments/sabotage with pollution relief/spikes, and
+  captures the resulting `environment_impact` metadata for telemetry + CLI/
+  service summaries.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions.
@@ -123,7 +124,23 @@ Archive the JSON alongside the test results (commit or attach in review) so the
 canonical seed/tick profile is always available for comparison. The telemetry
 now captures agent/faction breakdowns, per-faction legitimacy snapshots/deltas,
 and the `last_economy` block (price table + shortage counters) for regression
-diffs.
+diffs. Use `summary` on any saved snapshot to inspect the last tick's
+`environment_impact` block when diagnosing pollution swings.
+
+### Scenario Sweeps
+
+- For environment tuning, dedicated config variants live under
+  `content/config/sweeps/`. Example commands:
+
+  ```bash
+  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/high-pressure --output build/sweep-high-pressure.json
+  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/cushioned --output build/sweep-cushioned.json
+  ```
+
+- The high-pressure profile intentionally stress-tests scarcity by increasing
+  pressure/diffusion weights, while the cushioned profile keeps pollution in
+  check for longer playtests. Compare their telemetry outputs to map safe
+  ranges before promoting new environment tweaks.
 
 ## Inspecting the Default World
 
@@ -177,6 +194,9 @@ Available in-shell commands:
   environment summary you will also see a "faction legitimacy" block (top ±3
   deltas each tick) and a `market -> energy:1.05, food:0.98, …` line whenever
   the economy subsystem has published prices.
+- `summary` now renders the latest `environment_impact` snapshot so you can see
+  scarcity pressure, whether diffusion fired, and any pollution shifts caused
+  by faction activity without running a tick.
 
 If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
 shell halts automatically and prints a safeguard warning so runaway loops do
@@ -206,7 +226,11 @@ not wedge CI runs.
   weights such as `scarcity_unrest_weight` and the district-level deltas. Tweak
   these values to control how sharply shortages erode stability or spike
   pollution; the EnvironmentSystem writes every tick's `environment_impact`
-  block into metadata so telemetry and CLI summaries can trace the effect.
+  block into metadata so telemetry and CLI summaries can trace the effect. The
+  same block reports whether diffusion ran in the last tick and how faction
+  investments/sabotage adjusted local pollution via the
+  `faction_invest_pollution_relief` and `faction_sabotage_pollution_spike`
+  knobs.
 
 Edit the YAML, rerun the CLI/service, and the new safeguards apply immediately
 without code changes.
@@ -269,7 +293,8 @@ Key flags:
 ## Next Steps
 
 - Phase 4: continue deepening the subsystems (environment diffusion + telemetry
-  surfacing) and keep surfacing data so playtesters can see the
+  surfacing refinements, environment diffusion tuning, scenario sweeps) and keep
+  surfacing data so playtesters can see the
   cause/effect chain.
 - Phase 5+: narrative director, intent gateway, and multiplayer/Gateway
   services per the implementation plan.

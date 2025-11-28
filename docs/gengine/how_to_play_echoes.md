@@ -157,9 +157,19 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   `content/config/simulation.yml`. The `scarcity_*_weight` fields control how
   strongly shortages push on unrest or pollution, while `scarcity_event_threshold`
   decides when the shell prints explicit "Scarcity" alerts.
+- Pollution diffuses toward a citywide average each tick when `diffusion_rate`
+  is non-zero, and faction actions now feed directly into the loop:
+  `faction_invest_pollution_relief` eases pollution whenever a faction invests
+  in one of its districts, while `faction_sabotage_pollution_spike` models the
+  fallout from covert ops.
 - Every tick writes an `environment_impact` block into the game state's
   metadata. Inspect it via headless telemetry or by dumping the snapshot to see
-  the latest pressure, per-district deltas, and emitted warnings while you tune.
+  the latest pressure, diffusion flag, faction effects, per-district deltas, and
+  emitted warnings while you tune. The `summary` command now prints this block
+  directly so designers can spot runaway pollution before advancing time.
+- For rapid scenario sweeps, switch configs with
+  `--config-root content/config/sweeps/high-pressure` (stress test) or
+  `.../cushioned` (long-form stability) when running `scripts/run_headless_sim.py`.
 
 ## 4. World and District Parameters
 

@@ -185,7 +185,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   shortage counters produce a configurable pressure signal that nudges district
   unrest/pollution and, in turn, global stability. Designers can modulate the
   coupling weights via the shared config to explore how harshly shortages
-  should ripple into civic unrest or ecological decline.
+  should ripple into civic unrest or ecological decline. Pollution also diffuses
+  toward a citywide mean each tick, while faction investments/sabotage inject
+  relief or spikes that are logged in telemetry so narrative beats remain tied
+  to systemic causes.
 
 **Emergent Environmental Behaviors:**
 

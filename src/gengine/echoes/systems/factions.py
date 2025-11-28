@@ -22,6 +22,7 @@ class FactionAction:
     detail: str
     legitimacy_delta: float
     resource_delta: int
+    district_id: str | None = None
 
     def to_report(self) -> Dict[str, object]:
         return {
@@ -33,6 +34,7 @@ class FactionAction:
             "detail": self.detail,
             "legitimacy_delta": round(self.legitimacy_delta, 4),
             "resource_delta": self.resource_delta,
+            "district_id": self.district_id,
         }
 
 
@@ -170,6 +172,7 @@ class FactionSystem:
                 detail=detail,
                 legitimacy_delta=delta_leg,
                 resource_delta=resource_delta,
+                district_id=district.id,
             )
 
         if action == "SABOTAGE_RIVAL" and rival is not None:
@@ -187,6 +190,9 @@ class FactionSystem:
                 district.modifiers.unrest = _clamp(
                     district.modifiers.unrest + 0.04
                 )
+                district_id = district.id
+            else:
+                district_id = None
             return FactionAction(
                 faction_id=faction.id,
                 faction_name=faction.name,
@@ -196,6 +202,7 @@ class FactionSystem:
                 detail=detail,
                 legitimacy_delta=actor_leg_delta,
                 resource_delta=resource_delta,
+                district_id=district_id,
             )
 
         return None

@@ -211,6 +211,28 @@ def _render_summary(summary: dict[str, object]) -> str:
     for key in ("city", "tick", "districts", "factions", "agents", "stability"):
         value = summary[key]
         lines.append(f"  {key:>10}: {value}")
+    impact = summary.get("environment_impact")
+    if isinstance(impact, dict) and impact:
+        pressure = impact.get("scarcity_pressure", 0.0)
+        lines.append("  env impact:")
+        lines.append(f"    scarcity pressure: {pressure:.2f}")
+        if impact.get("diffusion_applied"):
+            lines.append("    diffusion: active")
+        deltas = impact.get("district_deltas") or {}
+        if deltas:
+            sample_id, sample_delta = next(iter(deltas.items()))
+            poll_delta = sample_delta.get("pollution", 0.0)
+            lines.append(
+                f"    sample delta: {sample_id} pollution {poll_delta:+.3f}"
+            )
+        faction_effects = impact.get("faction_effects") or []
+        if faction_effects:
+            preview = []
+            for effect in faction_effects[:2]:
+                preview.append(
+                    f"{effect['faction']}->{effect['district']} ({effect['pollution_delta']:+.3f})"
+                )
+            lines.append(f"    faction effects: {', '.join(preview)}")
     return "\n".join(lines)
 
 
