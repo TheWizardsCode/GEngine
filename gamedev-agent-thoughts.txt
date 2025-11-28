@@ -87,3 +87,4 @@
 [2025-11-28 14:05 UTC] HEAD=c7b206f Planning documentation update: elaborate the focus-aware budget plan with narrator prioritization (headline vs. archived beats) and explain why anomaly control is required before curation.
 [2025-11-28 14:08 UTC] HEAD=c7b206f Updated docs/simul/emergent_story_game_implementation_plan.md with narrator curation steps, anomaly impact guidance, and telemetry requirements tied to the focus-aware budget plan.
 [2025-11-28 14:12 UTC] Logged the anomaly-mitigation presets (high-budget + soft-scarcity), README/plan updates, and telemetry notes so the M4.5 follow-up artifacts are captured before merging.
+[2025-11-28 14:15 UTC] HEAD=6dea209 (main) Fast-forwarded main with feature/m4-5-anomaly-mitigation after confirming tests/docs/configs were committed.
