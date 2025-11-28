@@ -40,3 +40,4 @@
 [2025-11-28 20:12 UTC] HEAD e9b4e7b: Ran baseline 400-tick sweep (default config) -> stability crashed to 0.0 by tick 400 with unrest/pollution pegged at 1.0 (build/sweep-baseline.json).
 [2025-11-28 20:15 UTC] HEAD e9b4e7b: Ran high-pressure sweep (content/config/sweeps/high-pressure) -> harsher scarcity drove unrest/pollution to 1.0 by tick 200 with food shortages appearing (build/sweep-high-pressure.json).
 [2025-11-28 20:18 UTC] HEAD e9b4e7b: Ran cushioned sweep (content/config/sweeps/cushioned) -> stability/unrest held near 1.0/0.18, pollution settled ~0.08 with higher invest relief (build/sweep-cushioned.json) marking a safe operating range.
+[2025-11-28 20:22 UTC] HEAD 0e72acd: Committed diffusion/faction environment work plus sweep configs (`Link environment impact to factions and add sweeps`) to lock in the latest telemetry + documentation updates.
