@@ -147,6 +147,20 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   new parameters. Pair config tweaks with long `run` or headless sessions to
   see how scarcity curves and price ceilings change over time.
 
+### Environment Coupling
+
+- Scarcity signals now feed into the environment loop via `EnvironmentSystem`.
+  When the economy subsystem reports sustained shortages, the system applies a
+  configurable pressure value that drifts district unrest/pollution and, by
+  extension, global stability.
+- Tune the response curve through the `environment` block in
+  `content/config/simulation.yml`. The `scarcity_*_weight` fields control how
+  strongly shortages push on unrest or pollution, while `scarcity_event_threshold`
+  decides when the shell prints explicit "Scarcity" alerts.
+- Every tick writes an `environment_impact` block into the game state's
+  metadata. Inspect it via headless telemetry or by dumping the snapshot to see
+  the latest pressure, per-district deltas, and emitted warnings while you tune.
+
 ## 4. World and District Parameters
 
 The world YAML defines both global city metadata and per-district stats. The

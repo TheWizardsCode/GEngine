@@ -181,6 +181,11 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 
 - Simple local rules (growth/decay, diffusion) driving complex global patterns.
 - Human activity (construction, extraction, neglect) alters environmental variables.
+- Resource scarcity now pipes through the EnvironmentSystem: the economy's
+  shortage counters produce a configurable pressure signal that nudges district
+  unrest/pollution and, in turn, global stability. Designers can modulate the
+  coupling weights via the shared config to explore how harshly shortages
+  should ripple into civic unrest or ecological decline.
 
 **Emergent Environmental Behaviors:**
 

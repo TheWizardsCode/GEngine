@@ -66,11 +66,23 @@ class EconomySettings(BaseModel):
     price_floor: float = Field(0.5, ge=0.0)
 
 
+class EnvironmentSettings(BaseModel):
+    """Settings that couple scarcity pressure into environment metrics."""
+
+    scarcity_pressure_cap: int = Field(6, ge=1)
+    scarcity_unrest_weight: float = Field(0.0005, ge=0.0)
+    scarcity_pollution_weight: float = Field(0.0003, ge=0.0)
+    district_unrest_weight: float = Field(0.0003, ge=0.0)
+    district_pollution_weight: float = Field(0.0002, ge=0.0)
+    scarcity_event_threshold: float = Field(1.5, ge=0.0)
+
+
 class SimulationConfig(BaseModel):
     limits: SimulationLimits = Field(default_factory=SimulationLimits)
     lod: LodSettings = Field(default_factory=LodSettings)
     profiling: ProfilingSettings = Field(default_factory=ProfilingSettings)
     economy: EconomySettings = Field(default_factory=EconomySettings)
+    environment: EnvironmentSettings = Field(default_factory=EnvironmentSettings)
 
 
 def _default_config_root() -> Path:
@@ -102,5 +114,6 @@ __all__ = [
     "LodSettings",
     "ProfilingSettings",
     "EconomySettings",
+    "EnvironmentSettings",
     "load_simulation_config",
 ]

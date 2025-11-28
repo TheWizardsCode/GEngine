@@ -12,9 +12,11 @@ A staged implementation that builds a solid simulation core, then layers on agen
   online**.
 - ⚙️ Phase 4 (Agents/Factions/Economy): **M4.1 Agent AI** and **M4.2 Faction AI**
   shipped; **M4.3 Economy** now includes the subsystem, designer-facing config
-  knobs, legitimacy/market telemetry, and expanded tests. Remaining tasks focus
-  on longer scenario sweeps and environment follow-on work before merging back
-  to main.
+  knobs, legitimacy/market telemetry, and expanded tests. **M4.4 Environment**
+  plumbing has begun with a scarcity-driven EnvironmentSystem plus new config
+  weights that push shortages into district/environment metrics. Remaining Phase
+  4 work focuses on long scenario sweeps and richer environment diffusion before
+  merging back to main.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -313,10 +315,18 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
 
 - **M4.4 Environment Dynamics (Deliverable: `systems/environment.py`)**
 
-  - Model pollutant sources/sinks, biodiversity health, and climate events that respond to economy + faction actions.
-  - Integrate with LOD settings so coarse mode aggregates environment updates while detailed mode runs district-level diffusion.
-  - Extend CLI `summary`/`map` output with new environment indicators and warnings.
-  - Tests: regression tests covering event triggers (e.g., pollution emergency), CLI snapshot tests verifying messaging.
+  - Implemented the EnvironmentSystem scaffolding plus config weights that turn
+    economy shortages into district unrest/pollution deltas and environment
+    stability hits (current work). Next steps expand into pollutant sources/
+    sinks, biodiversity health, and climate events that respond to faction
+    actions.
+  - Integrate with LOD settings so coarse mode aggregates environment updates
+    while detailed mode runs district-level diffusion.
+  - Extend CLI `summary`/`map` output with new environment indicators and
+    warnings plus telemetry surfacing of `environment_impact`.
+  - Tests: maintain targeted regression/property tests for the coupling and add
+    scenario coverage for pollution emergencies and CLI messaging as diffusion
+    features arrive.
 
 - **M4.5 Tick Orchestration & Telemetry (Deliverable: updated `SimEngine.advance_ticks`)**
   - Define subsystem execution order (agents → factions → economy → environment → narrative hooks) with clear contracts and shared context objects.

@@ -28,3 +28,9 @@
 [2025-11-28 18:47 UTC] HEAD b78ad8c: Regenerated canonical headless telemetry via run_headless_sim (ticks=200, seed=42, lod=balanced) -> build/m4-3-economy-telemetry.json; baseline shows stability=1.0, unrest≈0.002, faction legitimacy 0.395/0.645, price band [1.0,1.5].
 [2025-11-28 18:52 UTC] HEAD b78ad8c: Updated README, GDD, implementation plan, and how-to-play guide with the new economy config knobs plus tuning guidance so designers know how to iterate on scarcity profiles without code changes.
 [2025-11-28 18:58 UTC] HEAD 8cdc30c: Committed tunable economy config + tests/docs updates (`Add tunable economy config and tests`) so the branch baseline is captured before starting environment plumbing.
+[2025-11-28 19:00 UTC] HEAD 1240107: Planning environment subsystem plumbing to route economy outputs into pollution/stability adjustments per PM request before implementing code.
+[2025-11-28 19:18 UTC] HEAD 1240107: Implemented EnvironmentSettings block, EnvironmentSystem plumbing, metadata writes, and docs updates so scarcity tuning flows into district/environment metrics.
+[2025-11-28 19:20 UTC] HEAD 1240107: Ran `uv run --group dev pytest` (61 passed) and coverage (`--cov=gengine`) to confirm environment coupling keeps total coverage at 96%.
+[2025-11-28 19:35 UTC] HEAD 1240107: Tuned scarcity pressure normalization/weights and reran pytest + coverage (61 passed, 96% total) to keep stability from saturating during telemetry burns.
+[2025-11-28 19:40 UTC] HEAD 1240107: Captured refreshed telemetry (`scripts/run_headless_sim.py --ticks 200 --lod balanced --seed 42 --output build/m4-3-environment-telemetry.json`) showing stability≈1.0, unrest≈0.35, pollution≈0.62 with scarcity coupling enabled.
+[2025-11-28 19:45 UTC] HEAD 1240107: Dialed back default coupling weights once more, reran pytest + coverage (61 passed, 96%) to lock in the final environment tuning before telemetry capture.

@@ -31,3 +31,10 @@ economy:
   price_max_boost: 0.5
   price_decay: 0.03
   price_floor: 0.5
+environment:
+  scarcity_pressure_cap: 6
+  scarcity_unrest_weight: 0.0005
+  scarcity_pollution_weight: 0.0003
+  district_unrest_weight: 0.0003
+  district_pollution_weight: 0.0002
+  scarcity_event_threshold: 1.5

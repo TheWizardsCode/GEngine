@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from gengine.echoes.content import load_world_bundle
+from gengine.echoes.settings import EconomySettings, SimulationConfig
 from gengine.echoes.sim import SimEngine, TickReport, advance_ticks
 
 
@@ -42,3 +43,23 @@ def test_engine_reports_include_economy_snapshot() -> None:
     assert "prices" in report.economy
     assert "shortages" in report.economy
     assert isinstance(engine.state.metadata.get("market_prices"), dict)
+
+
+def test_environment_impact_metadata_tracks_scarcity() -> None:
+    config = SimulationConfig(
+        economy=EconomySettings(shortage_threshold=0.9, shortage_warning_ticks=1)
+    )
+    engine = SimEngine(config=config)
+    state = load_world_bundle()
+    for district in state.city.districts:
+        for stock in district.resources.values():
+            stock.current = 0
+            if stock.capacity == 0:
+                stock.capacity = 10
+    engine.initialize_state(state=state)
+
+    engine.advance_ticks(1)
+
+    impact = engine.state.metadata.get("environment_impact")
+    assert impact
+    assert impact["scarcity_pressure"] > 0

@@ -51,6 +51,10 @@ run locally.
   summaries, and telemetry. Faction legitimacy snapshots/deltas are surfaced
   alongside the market readout everywhere the reports appear so playtesters
   can connect systemic shifts to reported beats.
+- Early environment plumbing (Phase 4, M4.4) that listens to economy
+  shortages, applies configurable scarcity pressure into district unrest/
+  pollution, and captures the resulting environment impact in metadata for
+  telemetry so stability loops now react to the market knobs exposed earlier.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions.
@@ -198,6 +202,11 @@ not wedge CI runs.
   explore different scarcity curves; the CLI, FastAPI service, and telemetry
   will immediately reflect the new market behavior after a restart or config
   reload.
+- `environment`: couples scarcity pressure into unrest/pollution/stability via
+  weights such as `scarcity_unrest_weight` and the district-level deltas. Tweak
+  these values to control how sharply shortages erode stability or spike
+  pollution; the EnvironmentSystem writes every tick's `environment_impact`
+  block into metadata so telemetry and CLI summaries can trace the effect.
 
 Edit the YAML, rerun the CLI/service, and the new safeguards apply immediately
 without code changes.
@@ -259,8 +268,8 @@ Key flags:
 
 ## Next Steps
 
-- Phase 4: continue deepening the subsystems (economy scenario sweeps,
-  environment dynamics) and keep surfacing telemetry so playtesters can see the
+- Phase 4: continue deepening the subsystems (environment diffusion + telemetry
+  surfacing) and keep surfacing data so playtesters can see the
   cause/effect chain.
 - Phase 5+: narrative director, intent gateway, and multiplayer/Gateway
   services per the implementation plan.

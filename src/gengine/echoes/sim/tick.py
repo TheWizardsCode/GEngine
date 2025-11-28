@@ -34,6 +34,7 @@ def advance_ticks(
     agent_system: object | None = None,
     faction_system: object | None = None,
     economy_system: object | None = None,
+    environment_system: object | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -59,6 +60,12 @@ def advance_ticks(
         events.extend(_summarize_economy(economy_report))
         _update_resources(state, rng, events, scale)
         _update_district_modifiers(state, rng, events, scale)
+        env_impact = _run_environment_system(environment_system, state, rng, economy_report)
+        if env_impact is not None:
+            if getattr(env_impact, "events", None):
+                events.extend(env_impact.events)
+            if hasattr(env_impact, "to_dict"):
+                state.metadata["environment_impact"] = env_impact.to_dict()
         _update_environment(state, rng, events, scale)
         tick_value = state.advance_ticks(1)
         _enforce_event_budget(events, event_budget)
@@ -223,6 +230,20 @@ def _run_economy_system(economy_system: object | None, state: GameState, rng: ra
         return None
     try:
         return economy_system.tick(state, rng=rng)
+    except Exception:  # pragma: no cover - defensive safeguard
+        return None
+
+
+def _run_environment_system(
+    environment_system: object | None,
+    state: GameState,
+    rng: random.Random,
+    economy_report,
+):
+    if environment_system is None:
+        return None
+    try:
+        return environment_system.tick(state, rng=rng, economy_report=economy_report)
     except Exception:  # pragma: no cover - defensive safeguard
         return None
 
