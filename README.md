@@ -139,12 +139,16 @@ diffs. Use `summary` on any saved snapshot to inspect the last tick's
   ```bash
   uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/high-pressure --output build/sweep-high-pressure.json
   uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/cushioned --output build/sweep-cushioned.json
+  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history --output build/sweep-profiling-history.json
   ```
 
 - The high-pressure profile intentionally stress-tests scarcity by increasing
   pressure/diffusion weights, while the cushioned profile keeps pollution in
-  check for longer playtests. Compare their telemetry outputs to map safe
-  ranges before promoting new environment tweaks.
+  check for longer playtests. The profiling-history profile leaves the economy
+  and environment knobs alone but expands `profiling.history_window` to 240
+  ticks so you can compare how longer rolling windows smooth the tick-duration
+  percentiles and subsystem timings. Compare their telemetry outputs to map
+  safe ranges before promoting new environment or profiling tweaks.
 
 ## Inspecting the Default World
 

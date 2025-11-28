@@ -353,8 +353,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   percentiles and subsystem timings into shared metadata so the CLI summary,
   FastAPI `/metrics`, and headless telemetry all surface the same block without
   extra tooling. A guardrail regression matrix (documented in the plan/README)
-  ties each cap to a pytest so QA can prove the limits still trigger after any
-  tuning passes.
+  ties each cap to a pytest so QA can prove safeguards still trigger after any
+  tuning passes, while the new `content/config/sweeps/profiling-history/`
+  variant (history window = 240 ticks) lets designers sweep long burns to study
+  percentile drift without editing the baseline config.
 - Headless regression driver: `scripts/run_headless_sim.py` executes long burns
   in capped batches, prints batch diagnostics, and emits JSON summaries so
   designers can compare macro metrics (agent/faction counts, legitimacy shifts,

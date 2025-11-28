@@ -176,8 +176,9 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   directly, alongside the profiling metrics, so designers can spot runaway
   pollution or slow subsystems before advancing time.
 - For rapid scenario sweeps, switch configs with
-  `--config-root content/config/sweeps/high-pressure` (stress test) or
-  `.../cushioned` (long-form stability) when running `scripts/run_headless_sim.py`.
+  `--config-root content/config/sweeps/high-pressure` (stress test),
+  `.../cushioned` (long-form stability), or `.../profiling-history`
+  (history window = 240 ticks) when running `scripts/run_headless_sim.py`.
 
 ## 4. World and District Parameters
 
@@ -368,7 +369,8 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
   between builds. Store the JSON outputs in version control to diff systemic
   changes over time.
 - Use `--seed` for deterministic comparisons and `--config-root` to point at a
-  CI-specific configuration folder.
+  CI-specific configuration folder (high-pressure, cushioned, and profiling-
+  history presets now live under `content/config/sweeps/`).
 
 ## 9. What Comes Next
 

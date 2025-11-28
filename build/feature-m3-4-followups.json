@@ -1,0 +1,76 @@
+{
+  "agent_actions": 600,
+  "agent_intent_breakdown": {
+    "INSPECT_DISTRICT": 265,
+    "NEGOTIATE_FACTION": 116,
+    "REQUEST_REPORT": 17,
+    "STABILIZE_UNREST": 113,
+    "SUPPORT_SECURITY": 89
+  },
+  "batches": [
+    {
+      "agent_actions": 600,
+      "batch": 1,
+      "ending_tick": 200,
+      "faction_actions": 100,
+      "ticks": 200
+    }
+  ],
+  "duration_ms": 23.17,
+  "end_tick": 200,
+  "events_emitted": 1370,
+  "faction_action_breakdown": {
+    "INVEST_DISTRICT": 25,
+    "LOBBY_COUNCIL": 20,
+    "RECRUIT_SUPPORT": 16,
+    "SABOTAGE_RIVAL": 39
+  },
+  "faction_actions": 100,
+  "faction_legitimacy": {
+    "cartel_of_mist": 0.38,
+    "union_of_flux": 0.61
+  },
+  "last_economy": {
+    "prices": {
+      "capital": 1.0,
+      "data": 1.0,
+      "energy": 1.5,
+      "food": 1.0,
+      "materials": 1.5,
+      "water": 1.0
+    },
+    "shortages": {
+      "energy": 187,
+      "materials": 191
+    }
+  },
+  "last_environment": {
+    "climate_risk": 0.47,
+    "pollution": 1.0,
+    "security": 0.0,
+    "stability": 1.0,
+    "unrest": 0.34948877309597554
+  },
+  "lod_mode": "balanced",
+  "profiling": {
+    "history_len": 50,
+    "last_subsystem_ms": {
+      "agent_ms": 0.01,
+      "district_ms": 0.02,
+      "economy_ms": 0.02,
+      "environment_ms": 0.01,
+      "environment_system_ms": 0.02,
+      "faction_ms": 0.0,
+      "resources_ms": 0.01
+    },
+    "last_tick_ms": 0.09,
+    "tick_ms_max": 0.15,
+    "tick_ms_p50": 0.09,
+    "tick_ms_p95": 0.13
+  },
+  "seed": 42,
+  "start_tick": 0,
+  "ticks_executed": 200,
+  "ticks_requested": 200,
+  "world": "default"
+}

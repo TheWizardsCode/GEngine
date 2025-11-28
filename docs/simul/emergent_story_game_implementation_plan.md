@@ -206,6 +206,10 @@ Instrumentation deliverables:
 - `SimEngine` tracks per-tick durations (p50/p95/max) plus subsystem timings
   using the configurable profiling window so CLI/service/headless summaries all
   surface the same performance block without extra tooling.
+- Dedicated profiling sweeps: `content/config/sweeps/profiling-history/` mirrors
+  the balanced baseline while expanding `profiling.history_window` to 240 ticks
+  so nightly headless runs can compare short-window versus long-window
+  percentile smoothing without editing the default config.
 - Guardrail verification matrix:
 
   | Surface / Safeguard      | Config knob                     | Enforcement behavior                   | Regression hook                                                                  |
