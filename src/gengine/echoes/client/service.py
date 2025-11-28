@@ -15,9 +15,8 @@ class SimServiceClient:
         base_url: str,
         *,
         timeout: float = 10.0,
-        client: httpx.Client | None = None,
+        client: Any = None,
     ) -> None:
-        self._owns_client = client is None
         self._client = client or httpx.Client(base_url=base_url, timeout=timeout)
 
     # Context manager helpers -----------------------------------------
@@ -52,5 +51,6 @@ class SimServiceClient:
         return response.json()
 
     def close(self) -> None:
-        if self._owns_client:
-            self._client.close()
+        close = getattr(self._client, "close", None)
+        if callable(close):
+            close()

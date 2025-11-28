@@ -46,7 +46,7 @@ Whenever executable code needs to be added or moodified you must:
 
 1. Ensure you are working from an up to date and synced clone. If there are local changes ask what to do with them before proceeding. If there are remote changes pull them in and resolve any conflicts.
 2. Review the codebase for possible refactorings or improvements that can be made in conjunction with the new feature or bugfix, and plan to include those changes as well.
-3. Create a branch for the feature or bugfix.
+3. Create a branch for the feature or bugfix. Do not reuse an existing branch. If we are in a branch already ask if you should create a new branch from this one, merge this branch into main and create a new one or continue working in the existing one.
 4. Update the relevant Game Design Document (GDD) or implementation plan (see
    [docs/simul](../../docs/simul)) to reflect the changes.
 5. Update the [README.md](../../README.md) to include any new commands or

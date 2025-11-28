@@ -97,6 +97,11 @@ Interactive mode:
 uv run echoes-shell --world default
 ```
 
+- To target a running FastAPI simulation service, supply
+  `--service-url http://localhost:8000`. When this flag is set the CLI routes
+  through HTTP using `SimServiceClient`; `load world`/`load snapshot` will emit
+  guidance because content swaps must happen server-side.
+
 Scripted mode (useful for CI/tests):
 
 ```bash
@@ -118,7 +123,7 @@ Available in-shell commands:
   such as `industrial-tier`.
 - `save <path>` – write the current snapshot as JSON.
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
-  on-disk snapshot.
+  on-disk snapshot (local engine mode only).
 - `exit`/`quit` – leave the shell.
 
 ## Running the Simulation Service
@@ -144,6 +149,12 @@ from gengine.echoes.client import SimServiceClient
 with SimServiceClient("http://localhost:8000") as client:
   client.tick(5)
   summary = client.state("summary")
+```
+
+Or, run the CLI shell against the service without restarting:
+
+```bash
+uv run echoes-shell --service-url http://localhost:8000 --script "summary;run 5;map;exit"
 ```
 
 ## Next Steps

@@ -15,6 +15,9 @@ uv run echoes-shell --world default
 
 - `--world` selects the authored content folder under `content/worlds/`.
 - Use `--snapshot path/to/save.json` to load a previously saved state.
+- Use `--service-url http://localhost:8000` to target the FastAPI simulation
+  service instead of running in-process (world/snapshot loads must then be
+  triggered server-side).
 - For scripted runs (handy for CI or quick experiments):
   ```bash
   uv run echoes-shell --world default --script "summary;next 5;map;exit"
@@ -34,8 +37,8 @@ and persist state.
 | `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                         |
 | `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district. |
 | `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                         |
-| `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml`.                                                                                                |
-| `load snapshot <path>` | Restores state from a JSON snapshot created via `save`.                                                                                                          |
+| `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                       |
+| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                |
 | `exit` / `quit`        | Leave the shell.                                                                                                                                                 |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
@@ -43,14 +46,14 @@ quotes. The shell ignores blank lines and repeats the prompt after each command.
 
 ## 3. Simulation Concepts
 
-The CLI now routes every command through the shared `SimEngine` abstraction.
-This is the same interface that the upcoming simulation service will expose,
-so all outputs you see in the shell mirror what remote clients will receive.
+The CLI now routes every command through the shared `SimEngine` abstraction or,
+when `--service-url` is provided, through the FastAPI simulation service using
+`SimServiceClient`. Either way the outputs you see are consistent with what
+remote clients receive.
 
-If you prefer to drive the sim over HTTP, run `uv run python -m
-gengine.echoes.service.main` and issue requests to `/tick`, `/state`, and
-`/metrics` (or use the bundled `SimServiceClient`). The CLI gateway planned for
-Phase 3 will talk to this exact API.
+Run `uv run python -m gengine.echoes.service.main` to host the service locally
+and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
+`curl`. The CLI gateway planned for Phase 3 will sit on top of this API.
 
 ### Ticks and Reports
 

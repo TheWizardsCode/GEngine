@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shlex
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Sequence
+from typing import Any, Iterable, List, Sequence
 
 from ..core import GameState
 from ..persistence import save_snapshot
+from ..client import SimServiceClient
 from ..sim import SimEngine, TickReport
 
 PROMPT = "(echoes) "
@@ -22,15 +24,95 @@ class CommandResult:
     should_exit: bool = False
 
 
-class EchoesShell:
-    """Minimal command processor for the early CLI shell."""
+class ShellBackend:
+    """Interface allowing the shell to target local or remote sims."""
 
+    def summary(self) -> dict[str, object]:  # pragma: no cover - interface
+        raise NotImplementedError
+
+    def advance_ticks(self, count: int) -> Sequence[TickReport]:  # pragma: no cover
+        raise NotImplementedError
+
+    def render_map(self, district_id: str | None) -> str:  # pragma: no cover
+        raise NotImplementedError
+
+    def save_snapshot(self, path: Path) -> str:  # pragma: no cover
+        raise NotImplementedError
+
+    def load_world(self, name: str) -> str:  # pragma: no cover
+        raise NotImplementedError
+
+    def load_snapshot(self, path: Path) -> str:  # pragma: no cover
+        raise NotImplementedError
+
+
+class LocalBackend(ShellBackend):
     def __init__(self, engine: SimEngine) -> None:
         self.engine = engine
 
     @property
     def state(self) -> GameState:
         return self.engine.state
+
+    def summary(self) -> dict[str, object]:
+        return self.engine.query_view("summary")
+
+    def advance_ticks(self, count: int) -> Sequence[TickReport]:
+        return self.engine.advance_ticks(count)
+
+    def render_map(self, district_id: str | None) -> str:
+        return _render_map(self.state, district_id)
+
+    def save_snapshot(self, path: Path) -> str:
+        save_snapshot(self.state, path)
+        return f"Saved snapshot to {path}"
+
+    def load_world(self, name: str) -> str:
+        self.engine.initialize_state(world=name)
+        return f"Loaded world '{name}'"
+
+    def load_snapshot(self, path: Path) -> str:
+        self.engine.initialize_state(snapshot=path)
+        return f"Loaded snapshot from {path}"
+
+
+class ServiceBackend(ShellBackend):
+    def __init__(self, client: SimServiceClient) -> None:
+        self.client = client
+
+    def summary(self) -> dict[str, object]:
+        return self.client.state("summary")["data"]
+
+    def advance_ticks(self, count: int) -> Sequence[TickReport]:
+        payload = self.client.tick(count)
+        return [TickReport(**report) for report in payload["reports"]]
+
+    def render_map(self, district_id: str | None) -> str:
+        if district_id:
+            detail = self.client.state("district", district_id=district_id)["data"]
+            return _render_remote_district(detail)
+        payload = self.client.state("snapshot")["data"]
+        state = GameState.model_validate(payload)
+        return _render_map(state, None)
+
+    def save_snapshot(self, path: Path) -> str:
+        payload = self.client.state("snapshot")["data"]
+        GameState.model_validate(payload)
+        path.write_text(_jsonify(payload))
+        return f"Saved snapshot to {path}"
+
+    def load_world(self, name: str) -> str:
+        raise NotImplementedError("Loading worlds requires local backend")
+
+    def load_snapshot(self, path: Path) -> str:
+        raise NotImplementedError("Loading snapshots requires local backend")
+
+
+class EchoesShell:
+    """Minimal command processor for the early CLI shell."""
+
+    def __init__(self, backend: ShellBackend) -> None:
+        self.backend = backend
 
     # Public API ---------------------------------------------------------
     def execute(self, command_line: str) -> CommandResult:
@@ -53,13 +135,13 @@ class EchoesShell:
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
-        summary = self.engine.query_view("summary")
+        summary = self.backend.summary()
         return CommandResult(_render_summary(summary))
 
     def _cmd_next(self, args: Sequence[str]) -> CommandResult:
         if args:
             return CommandResult("Usage: next")
-        reports = self.engine.advance_ticks(1)
+        reports = self.backend.advance_ticks(1)
         return CommandResult(_render_reports(reports))
 
     def _cmd_run(self, args: Sequence[str]) -> CommandResult:
@@ -69,19 +151,22 @@ class EchoesShell:
             count = max(1, int(args[0]))
         except ValueError:
             return CommandResult("Usage: run <count>")
-        reports = self.engine.advance_ticks(count)
+        reports = self.backend.advance_ticks(count)
         return CommandResult(_render_reports(reports))
 
     def _cmd_map(self, args: Sequence[str]) -> CommandResult:
         district_id = args[0] if args else None
-        return CommandResult(_render_map(self.state, district_id))
+        return CommandResult(self.backend.render_map(district_id))
 
     def _cmd_save(self, args: Sequence[str]) -> CommandResult:
         if not args:
             return CommandResult("Usage: save <path>")
         path = Path(args[0])
-        save_snapshot(self.state, path)
-        return CommandResult(f"Saved snapshot to {path}")
+        try:
+            message = self.backend.save_snapshot(path)
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        return CommandResult(message)
 
     def _cmd_load(self, args: Sequence[str]) -> CommandResult:
         if len(args) < 2:
@@ -89,11 +174,15 @@ class EchoesShell:
         source = args[0]
         target = args[1]
         if source == "world":
-            self.engine.initialize_state(world=target)
-            return CommandResult(f"Loaded world '{target}'")
+            try:
+                return CommandResult(self.backend.load_world(target))
+            except NotImplementedError as exc:
+                return CommandResult(str(exc))
         if source == "snapshot":
-            self.engine.initialize_state(snapshot=Path(target))
-            return CommandResult(f"Loaded snapshot from {target}")
+            try:
+                return CommandResult(self.backend.load_snapshot(Path(target)))
+            except NotImplementedError as exc:
+                return CommandResult(str(exc))
         return CommandResult("Usage: load world <name> | load snapshot <path>")
 
     def _cmd_exit(self, _: Sequence[str]) -> CommandResult:
@@ -155,20 +244,40 @@ def _render_map(state: GameState, district_id: str | None) -> str:
     return "\n".join(lines)
 
 
+def _render_remote_district(panel: dict[str, Any]) -> str:
+    mods = panel["modifiers"]
+    return (
+        f"District {panel['name']}\n"
+        f"  population : {panel['population']}\n"
+        f"  unrest     : {mods['unrest']:.2f}\n"
+        f"  pollution  : {mods['pollution']:.2f}\n"
+        f"  prosperity : {mods['prosperity']:.2f}\n"
+        f"  security   : {mods['security']:.2f}"
+    )
+
+
+def _jsonify(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, indent=2, sort_keys=True)
+
+
 def run_commands(
     commands: Iterable[str],
     *,
+    backend: ShellBackend | None = None,
     engine: SimEngine | None = None,
     state: GameState | None = None,
     world: str = "default",
 ) -> List[str]:
-    sim_engine = engine or SimEngine()
-    if engine is None:
-        if state is not None:
-            sim_engine.initialize_state(state=state)
-        else:
-            sim_engine.initialize_state(world=world)
-    shell = EchoesShell(sim_engine)
+    active_backend = backend
+    if active_backend is None:
+        sim_engine = engine or SimEngine()
+        if engine is None:
+            if state is not None:
+                sim_engine.initialize_state(state=state)
+            else:
+                sim_engine.initialize_state(world=world)
+        active_backend = LocalBackend(sim_engine)
+    shell = EchoesShell(active_backend)
     outputs: List[str] = []
     for command in commands:
         result = shell.execute(command)
@@ -203,32 +312,48 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Semicolon-separated list of commands to run non-interactively",
     )
+    parser.add_argument(
+        "--service-url",
+        type=str,
+        default=None,
+        help="If provided, target a running simulation service instead of local state",
+    )
     args = parser.parse_args(argv)
 
-    engine = _build_engine(args.world, args.snapshot)
-    shell = EchoesShell(engine)
+    client: SimServiceClient | None = None
+    if args.service_url:
+        client = SimServiceClient(args.service_url)
+        backend: ShellBackend = ServiceBackend(client)
+    else:
+        engine = _build_engine(args.world, args.snapshot)
+        backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
 
-    if args.script:
-        commands = [cmd.strip() for cmd in args.script.split(";") if cmd.strip()]
-        for result in run_commands(commands, engine=engine):
-            if result:
-                print(result)
+    try:
+        if args.script:
+            commands = [cmd.strip() for cmd in args.script.split(";") if cmd.strip()]
+            for result in run_commands(commands, backend=backend):
+                if result:
+                    print(result)
+            return 0
+
+        print(INTRO_TEXT)
+        print(_render_summary(backend.summary()))
+        while True:
+            try:
+                line = input(PROMPT)
+            except (EOFError, KeyboardInterrupt):
+                print()
+                break
+            result = shell.execute(line)
+            if result.output:
+                print(result.output)
+            if result.should_exit:
+                break
         return 0
-
-    print(INTRO_TEXT)
-    print(_render_summary(engine.query_view("summary")))
-    while True:
-        try:
-            line = input(PROMPT)
-        except (EOFError, KeyboardInterrupt):
-            print()
-            break
-        result = shell.execute(line)
-        if result.output:
-            print(result.output)
-        if result.should_exit:
-            break
-    return 0
+    finally:
+        if client is not None:
+            client.close()
 
 
 if __name__ == "__main__":  # pragma: no cover

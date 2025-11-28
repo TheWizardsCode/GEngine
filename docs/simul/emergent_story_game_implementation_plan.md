@@ -7,8 +7,9 @@ A staged implementation that builds a solid simulation core, then layers on agen
 - ✅ Phase 1 (Foundations & Data Model): core models, YAML loader, snapshots, smoke tests.
 - ✅ Phase 2 (Early CLI Shell & Tick Loop): in-process `echoes-shell` CLI with summary/next/run/map/save/load commands plus a deterministic tick engine.
 - ⚙️ Phase 3 (Simulation Core & Service API): **M3.1 SimEngine abstraction
-  landed** and **M3.2 FastAPI service + typed client shipped**; remaining tasks
-  cover CLI service mode, safeguards, and headless drivers.
+  landed**, **M3.2 FastAPI service + typed client shipped**, and **M3.3 CLI
+  service mode running**; remaining tasks cover safeguards and headless
+  drivers.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -159,9 +160,9 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
   `src/gengine/echoes/service/app.py` exposes `/tick`, `/state`, `/metrics`, and
   `/actions`, with a synchronous `SimServiceClient` in
   `src/gengine/echoes/client/service.py` for downstream tooling.
-- **M3.3 CLI service mode** (1 day): allow CLI to target either in-process or
-  HTTP client via config/env vars; add integration tests using FastAPI
-  TestClient.
+- **M3.3 CLI service mode** (complete): the `echoes-shell` now accepts
+  `--service-url` to steer through `SimServiceClient`, with unit tests covering
+  both `LocalBackend` and `ServiceBackend` flows.
 - **M3.4 LOD + safeguards** (1 day): cap loop iterations, add configs in
   `content/config/`, and emit metrics/logs for profiling.
 - **M3.5 Headless driver** (0.5 day): script `scripts/run_headless_sim.py`
