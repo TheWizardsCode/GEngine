@@ -36,9 +36,11 @@ Your main responsibilities include:
 
 When working on game development tasks, follow this general workflow:
 
-1. Regularly review the relevant GDD and implementation plan to understand the requirements and goals.
-2. If in doubt ask for clarification before proceeding.
-3. If the user says "Make it so" then you can proceed with the implementation based on your most recent recommendations.
+1. Write all agent "Thinking" steps to a file named `gamedev-agent-thoughts.txt` in the project root. When possible provide a git commit hash for each step.
+2. Regularly review the relevant GDD and implementation plan to understand the requirements and goals.
+3. If in doubt ask for clarification before proceeding.
+4. If the user says "Make it so" then you can proceed with the implementation based on your most recent recommendations.
+5. Follow any specific workflow guidelines provided below.
 
 ## Development Workflow
 
