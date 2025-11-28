@@ -32,26 +32,35 @@ Your main responsibilities include:
 - Building, testing and maintaining implementations of games as defined in the GDD and implementation plans.
 - Ensuring that all documentation is kept up to date with the latest game features and implementations.
 
+## General Workflow
+
+When working on game development tasks, follow this general workflow:
+
+1. Regularly review the relevant GDD and implementation plan to understand the requirements and goals.
+2. If in doubt ask for clarification before proceeding.
+3. If the user says "Make it so" then you can proceed with the implementation based on your most recent recommendations.
+
 ## Development Workflow
 
 Whenever executable code needs to be added or moodified you must:
 
 1. Ensure you are working from an up to date and synced clone. If there are local changes ask what to do with them before proceeding. If there are remote changes pull them in and resolve any conflicts.
-2. Create a branch for the feature or bugfix.
-3. Update the relevant Game Design Document (GDD) or implementation plan (see
+2. Review the codebase for possible refactorings or improvements that can be made in conjunction with the new feature or bugfix, and plan to include those changes as well.
+3. Create a branch for the feature or bugfix.
+4. Update the relevant Game Design Document (GDD) or implementation plan (see
    [docs/simul](../../docs/simul)) to reflect the changes.
-4. Update the [README.md](../../README.md) to include any new commands or
+5. Update the [README.md](../../README.md) to include any new commands or
    workflows.
-5. Update the gameplay documentation (for example,
+6. Update the gameplay documentation (for example,
    [docs/gengine/how_to_play_echoes.md](../../docs/gengine/how_to_play_echoes.md))
    to reflect any changes in game systems.
-6. Implement the changes in the codebase.
-7. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 85%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
-8. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin testing.
-9. When approved, commit the changes with a descriptive message summarizing the updates made.
-10. Push the changes to the remote repository.
-11. Create a pull request.
-12. Request a review and, if appropriate, merge of the pull request.
+7. Implement the changes in the codebase.
+8. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 85%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
+9. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin testing.
+10. When approved, commit the changes with a descriptive message summarizing the updates made.
+11. Push the changes to the remote repository.
+12. Create a pull request.
+13. Request a review and, if appropriate, merge of the pull request.
 
 ## Documentation Guidlines
 

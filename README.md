@@ -22,6 +22,9 @@ run locally.
 - `gengine.echoes.sim.SimEngine` centralizes `initialize_state`,
   `advance_ticks`, `query_view`, and placeholder `apply_action`, giving the
   CLI the same control surface the upcoming service layer will expose.
+- FastAPI simulation service (`gengine.echoes.service.create_app`) exposing
+  `/tick`, `/state`, `/metrics`, and `/actions`, plus a typed HTTP client in
+  `gengine.echoes.client.SimServiceClient` for downstream tooling.
 - CLI shell (`echoes-shell`) that runs the sim in-process, supports
   `summary`, `next`, `run`, `map`, `save`, and `load` commands, and can run in
   interactive or scripted mode.
@@ -117,6 +120,31 @@ Available in-shell commands:
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot.
 - `exit`/`quit` – leave the shell.
+
+## Running the Simulation Service
+
+The FastAPI service wraps the same `SimEngine` interface and is the next step
+toward remote clients and the CLI gateway.
+
+```bash
+uv run python -m gengine.echoes.service.main
+```
+
+Environment variables:
+
+- `ECHOES_SERVICE_HOST` – bind address (default `0.0.0.0`).
+- `ECHOES_SERVICE_PORT` – port (default `8000`).
+- `ECHOES_SERVICE_WORLD` – world name to load at startup (default `default`).
+
+You can integrate with the API using the bundled client:
+
+```python
+from gengine.echoes.client import SimServiceClient
+
+with SimServiceClient("http://localhost:8000") as client:
+  client.tick(5)
+  summary = client.state("summary")
+```
 
 ## Next Steps
 

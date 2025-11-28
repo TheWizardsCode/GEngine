@@ -47,6 +47,11 @@ The CLI now routes every command through the shared `SimEngine` abstraction.
 This is the same interface that the upcoming simulation service will expose,
 so all outputs you see in the shell mirror what remote clients will receive.
 
+If you prefer to drive the sim over HTTP, run `uv run python -m
+gengine.echoes.service.main` and issue requests to `/tick`, `/state`, and
+`/metrics` (or use the bundled `SimServiceClient`). The CLI gateway planned for
+Phase 3 will talk to this exact API.
+
 ### Ticks and Reports
 
 - Each `next`/`run` command calls the simulation tick loop.
