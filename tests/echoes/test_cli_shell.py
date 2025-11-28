@@ -401,6 +401,32 @@ def test_render_summary_surfaces_director_analysis() -> None:
     assert "recommend focus" in rendered
 
 
+def test_render_summary_surfaces_story_seeds() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 7,
+        "districts": 3,
+        "factions": 2,
+        "agents": 4,
+        "stability": 0.88,
+        "story_seeds": [
+            {
+                "seed_id": "energy-quota-crisis",
+                "title": "Energy Quota Fallout",
+                "district_id": "industrial-tier",
+                "reason": "Scarcity in energy, materials strains the city environment",
+                "score": 0.71,
+            }
+        ],
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "story seeds" in rendered
+    assert "Energy Quota Fallout" in rendered
+    assert "industrial-tier" in rendered
+
+
 def test_focus_command_reports_state() -> None:
     engine = SimEngine()
     engine.initialize_state(world="default")
@@ -534,6 +560,27 @@ def test_render_director_feed_includes_analysis() -> None:
 
     assert "travel planning" in rendered
     assert "recommendation" in rendered
+
+
+def test_render_director_feed_includes_story_seed_matches() -> None:
+    feed = {"tick": 15, "focus_center": "industrial-tier", "suppressed_count": 4}
+    analysis = {
+        "story_seeds": [
+            {
+                "seed_id": "hollow-supply-chain",
+                "title": "Smuggling Lanes Exposed",
+                "district_id": "perimeter-hollow",
+                "reason": "Cassian Mire inspects Perimeter Hollow",
+                "score": 0.6,
+            }
+        ]
+    }
+
+    rendered = _render_director_feed(feed, None, analysis)
+
+    assert "seed matches" in rendered
+    assert "Smuggling Lanes Exposed" in rendered
+    assert "perimeter-hollow" in rendered
 
 
 def test_render_history_formats_output() -> None:

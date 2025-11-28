@@ -110,6 +110,7 @@ class DirectorSettings(BaseModel):
     travel_time_per_distance: float = Field(0.25, ge=0.0)
     travel_default_distance: float = Field(2.0, ge=0.0)
     travel_max_routes: int = Field(4, ge=1)
+    story_seed_limit: int = Field(2, ge=1)
 
 
 class SimulationConfig(BaseModel):

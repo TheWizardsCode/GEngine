@@ -217,6 +217,9 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   hop counts, distances, and estimated travel times between the current focus
   center and the highest-scored districts so story seeds can factor in actual
   movement costs instead of abstract ring distance alone.
+- The first trio of authored seeds ships in `content/worlds/default/story_seeds.yml`,
+  and each evaluation pulls from the travel planner output plus the narrator's
+  ranked archive to determine where those seeds should anchor.
 - The validation pipeline will derive adjacency whenever coordinates change so
   content authors manage one truth while future navigation meshes, patrols, and
   blockade logic reuse the same graph. Tools will also emit warnings when
@@ -248,9 +251,13 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - The first implementation step is live: a `NarrativeDirector` component reads
   each tick's `director_feed`, selects the top-ranked hotspots, and evaluates
   adjacency-aware travel routes (hops, distance, travel time, reachability).
-  The resulting `director_analysis` metadata powers CLI/service/headless views
-  so authors can inspect mobility pressure, suppressed counts, and recommended
-  focus shifts even before authored story seeds exist.
+  The resulting `director_analysis` metadata (plus an accompanying
+  `story_seeds` block) powers CLI/service/headless views so authors can inspect
+  mobility pressure, suppressed counts, recommended focus shifts, and the
+  specific seeds that attached to those hotspots each tick. Seeds now stay in
+  the block for the duration of their cooldown and expose
+  `cooldown_remaining`/`last_trigger_tick` so telemetry still shows the most
+  recent beats even if the triggering tick already advanced.
 
 **Endgame & Outcomes:**
 

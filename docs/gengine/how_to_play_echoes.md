@@ -95,6 +95,11 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   subsystem timings), and the focus digest preview (up to six curated events
   plus a suppressed count). Use `focus` to retarget which districts receive the
   larger per-tick budget whenever you need to spotlight a different hotspot.
+  When the narrative director matches an authored story seed, the summary also
+  prints a `story seeds` block that lists the seed title, target district,
+  severity score, trigger reason, and a `cooldown_remaining` countdown. Seeds
+  stay visible for the duration of their cooldown, so telemetry and CLI runs
+  still show the latest matches even if the triggering tick has already passed.
 - Agent AI (Phase 4, M4.1) now contributes narrative lines such as "Aria Volt
   inspects Industrial Tier" or "Cassian Mire negotiates with Cartel of Mist";
   use these to understand how background characters are reacting to system
@@ -234,6 +239,9 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   center, allocation stats, spatial preview, highest-ranked archived beats,
   and now the travel planner output: hotspot routes (hops, travel time,
   reachability) plus any recommended focus shift based on suppressed pressure.
+  Director output also includes a `seed matches` section so you can see which
+  authored seeds attached to the listed hotspots without digging into the raw
+  metadata.
 - The CLI summary and tick reports show the digest preview and the latest
   focus-budget allocation so you always know whether anomalies are coming from
   raw subsystem volume or simply from the curator trimming noise.
@@ -246,7 +254,9 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   `director_history`, the `last_director_snapshot`, and the new
   `last_director_analysis` block so you can diff both the curator's ranked
   archive/spatial context _and_ the director's travel reasoning alongside
-  suppressed counts in longer sweeps.
+  suppressed counts in longer sweeps. The JSON payload also exposes a
+  top-level `story_seeds` array with the most recent matches so telemetry
+  captures which authored beats were live at the end of the run.
 
 ## 4. World and District Parameters
 

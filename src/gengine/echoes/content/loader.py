@@ -10,7 +10,7 @@ from typing import Dict, Optional
 import yaml
 from pydantic import ValidationError
 
-from ..core.models import Agent, City, District, DistrictCoordinates, EnvironmentState, Faction
+from ..core.models import Agent, City, District, DistrictCoordinates, EnvironmentState, Faction, StorySeed
 from ..core.state import GameState
 
 DEFAULT_WORLD_NAME = "default"
@@ -65,6 +65,8 @@ def load_world_bundle(
     agents_raw = raw.get("agents", []) or []
     env_raw = raw.get("environment", {}) or {}
     metadata = raw.get("metadata", {}) or {}
+    seed_path = root / world_name / "story_seeds.yml"
+    story_seeds = _load_story_seeds(seed_path)
 
     factions = {
         faction.id: faction
@@ -88,6 +90,7 @@ def load_world_bundle(
         city=city,
         factions=factions,
         agents=agents,
+        story_seeds=story_seeds,
         environment=environment,
         seed=int(seed),
         metadata=dict(metadata),
@@ -139,3 +142,21 @@ def _distance(a: DistrictCoordinates, b: DistrictCoordinates) -> float:
     dy = a.y - b.y
     dz = (a.z or 0.0) - (b.z or 0.0)
     return (dx * dx + dy * dy + dz * dz) ** 0.5
+
+
+def _load_story_seeds(path: Path) -> Dict[str, StorySeed]:
+    if not path.exists():
+        return {}
+    raw = _load_yaml(path)
+    entries = raw.get("story_seeds") if isinstance(raw, dict) else raw
+    if entries is None and isinstance(raw, dict):
+        entries = raw.get("seeds")
+    if entries is None:
+        entries = []
+    if not isinstance(entries, list):
+        raise ValueError("story seeds file must contain a list under 'story_seeds'")
+    seeds: Dict[str, StorySeed] = {}
+    for entry in entries:
+        seed = StorySeed.model_validate(entry)
+        seeds[seed.id] = seed
+    return seeds

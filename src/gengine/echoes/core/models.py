@@ -69,6 +69,43 @@ class District(BaseModel):
         return ordered
 
 
+class StorySeedTrigger(BaseModel):
+    """Activation criteria for an authored story seed."""
+
+    district_id: str | None = None
+    scope: str | None = None
+    min_score: float = Field(0.5, ge=0.0)
+    min_severity: float = Field(0.5, ge=0.0)
+    max_focus_distance: int | None = Field(default=None, ge=0)
+    min_suppressed: int = Field(0, ge=0)
+
+    model_config = {"validate_assignment": True}
+
+
+class StorySeed(BaseModel):
+    """Authored narrative seed triggered by hotspot conditions."""
+
+    id: str = Field(..., min_length=1)
+    title: str
+    summary: str
+    scope: str = "district"
+    tags: List[str] = Field(default_factory=list)
+    preferred_districts: List[str] = Field(default_factory=list)
+    cooldown_ticks: int = Field(30, ge=0)
+    triggers: List[StorySeedTrigger] = Field(default_factory=list)
+    roles: Dict[str, List[str]] = Field(default_factory=dict)
+    beats: List[str] = Field(default_factory=list)
+
+    model_config = {"validate_assignment": True}
+
+    @field_validator("triggers")
+    @classmethod
+    def _validate_triggers(cls, value: List[StorySeedTrigger]) -> List[StorySeedTrigger]:  # type: ignore[override]
+        if not value:
+            raise ValueError("story seed must define at least one trigger")
+        return value
+
+
 class Faction(BaseModel):
     """Political or social group that acts across multiple districts."""
 

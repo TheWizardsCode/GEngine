@@ -6,6 +6,7 @@ from collections import deque
 from typing import Any, Deque, Dict, Iterable, List, Mapping, Sequence
 
 from ..core import GameState
+from ..core.models import StorySeed, StorySeedTrigger
 from ..settings import DirectorSettings
 from .focus import FocusBudgetResult
 from .spatial import euclidean_distance
@@ -175,12 +176,19 @@ class NarrativeDirector:
                 )
                 break
 
+        story_seed_matches = self._match_story_seeds(
+            state,
+            feed=feed,
+            hotspots=travel_reports,
+        )
+
         analysis = {
             "tick": feed.get("tick"),
             "focus_center": focus_center,
             "suppressed_pressure": feed.get("suppressed_count", 0),
             "hotspots": travel_reports[: self._settings.travel_max_routes],
             "recommended_focus": recommended,
+            "story_seeds": story_seed_matches,
         }
         state.metadata["director_analysis"] = analysis
         return analysis
@@ -315,6 +323,158 @@ class NarrativeDirector:
         if missing:
             return None
         return total
+
+    # ------------------------------------------------------------------
+    def _match_story_seeds(
+        self,
+        state: GameState,
+        *,
+        feed: Mapping[str, Any],
+        hotspots: Sequence[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        if not state.story_seeds:
+            state.metadata.pop("story_seeds_active", None)
+            state.metadata.pop("story_seed_cooldowns", None)
+            return []
+
+        ranked = list(feed.get("top_ranked") or [])
+        suppressed = int(feed.get("suppressed_count", 0))
+        tick = int(feed.get("tick") or state.tick)
+        cooldowns = dict(state.metadata.get("story_seed_cooldowns") or {})
+        raw_contexts = state.metadata.get("story_seed_context") or {}
+        contexts: Dict[str, Dict[str, Any]] = {}
+        if isinstance(raw_contexts, dict):
+            for seed_id, payload in raw_contexts.items():
+                if isinstance(payload, dict):
+                    contexts[seed_id] = dict(payload)
+        travel_lookup = {
+            entry.get("district_id"): entry.get("travel")
+            for entry in hotspots
+            if entry.get("district_id")
+        }
+
+        for seed in state.story_seeds.values():
+            if not seed.triggers:
+                continue
+            last_tick = cooldowns.get(seed.id)
+            cooldown_window = max(1, seed.cooldown_ticks or 0)
+            if last_tick is not None and tick - last_tick < cooldown_window:
+                continue
+            trigger_match = self._match_seed_trigger(seed.triggers, ranked, suppressed)
+            if trigger_match is None:
+                continue
+            target = trigger_match.get("district_id")
+            if not target:
+                target = seed.preferred_districts[0] if seed.preferred_districts else feed.get("focus_center")
+            travel = travel_lookup.get(target)
+            contexts[seed.id] = {
+                "seed_id": seed.id,
+                "title": seed.title,
+                "summary": seed.summary,
+                "district_id": target,
+                "scope": seed.scope,
+                "tags": list(seed.tags),
+                "roles": {role: list(values) for role, values in seed.roles.items()},
+                "beats": list(seed.beats[:2]),
+                "reason": trigger_match.get("reason"),
+                "score": trigger_match.get("score"),
+                "travel": dict(travel) if isinstance(travel, dict) else travel,
+            }
+            cooldowns[seed.id] = tick
+
+        active_matches: List[Dict[str, Any]] = []
+        for seed in state.story_seeds.values():
+            last_tick = cooldowns.get(seed.id)
+            if last_tick is None:
+                contexts.pop(seed.id, None)
+                continue
+            cooldown_window = max(1, seed.cooldown_ticks or 0)
+            elapsed = tick - last_tick
+            if cooldown_window and elapsed >= cooldown_window:
+                cooldowns.pop(seed.id, None)
+                contexts.pop(seed.id, None)
+                continue
+            payload = contexts.get(seed.id)
+            if not payload:
+                continue
+            enriched = dict(payload)
+            enriched["last_trigger_tick"] = last_tick
+            remaining = max(cooldown_window - elapsed, 0)
+            enriched["cooldown_remaining"] = remaining
+            active_matches.append(enriched)
+
+        active_matches.sort(
+            key=lambda entry: (
+                float(entry.get("score", 0.0)),
+                int(entry.get("last_trigger_tick") or 0),
+            ),
+            reverse=True,
+        )
+        if len(active_matches) > self._settings.story_seed_limit:
+            active_matches = active_matches[: self._settings.story_seed_limit]
+
+        cooldowns = {seed_id: value for seed_id, value in cooldowns.items() if seed_id in state.story_seeds}
+        contexts = {seed_id: payload for seed_id, payload in contexts.items() if seed_id in state.story_seeds}
+
+        if active_matches:
+            state.metadata["story_seeds_active"] = active_matches
+        else:
+            state.metadata.pop("story_seeds_active", None)
+        if cooldowns:
+            state.metadata["story_seed_cooldowns"] = cooldowns
+        elif "story_seed_cooldowns" in state.metadata:
+            state.metadata.pop("story_seed_cooldowns", None)
+        if contexts:
+            state.metadata["story_seed_context"] = contexts
+        elif "story_seed_context" in state.metadata:
+            state.metadata.pop("story_seed_context")
+        return active_matches
+
+    def _match_seed_trigger(
+        self,
+        triggers: Sequence[StorySeedTrigger],
+        ranked: Sequence[Mapping[str, Any]],
+        suppressed: int,
+    ) -> Dict[str, Any] | None:
+        for trigger in triggers:
+            if suppressed < trigger.min_suppressed:
+                continue
+            match = self._match_hotspot(trigger, ranked)
+            if match is not None:
+                return match
+        return None
+
+    def _match_hotspot(
+        self,
+        trigger: StorySeedTrigger,
+        ranked: Sequence[Mapping[str, Any]],
+    ) -> Dict[str, Any] | None:
+        for entry in ranked:
+            district_id = entry.get("district_id")
+            if trigger.district_id and trigger.district_id != district_id:
+                continue
+            scope = entry.get("scope")
+            if trigger.scope and trigger.scope != scope:
+                continue
+            score = float(entry.get("score", 0.0))
+            if score < trigger.min_score:
+                continue
+            severity = float(entry.get("severity", 0.0))
+            if severity < trigger.min_severity:
+                continue
+            focus_distance = entry.get("focus_distance")
+            if (
+                trigger.max_focus_distance is not None
+                and (focus_distance is None or focus_distance > trigger.max_focus_distance)
+            ):
+                continue
+            return {
+                "district_id": district_id,
+                "reason": entry.get("message"),
+                "score": round(score, 3),
+                "severity": round(severity, 3),
+            }
+        return None
 
 
 __all__ = ["DirectorBridge", "NarrativeDirector"]

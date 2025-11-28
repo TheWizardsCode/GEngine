@@ -62,6 +62,7 @@ def run_headless_sim(
     summary["director_feed"] = dict(engine.state.metadata.get("director_feed", {}))
     summary["director_history"] = list(engine.state.metadata.get("director_history") or [])
     summary["director_analysis"] = dict(engine.state.metadata.get("director_analysis") or {})
+    summary["story_seeds"] = list(engine.state.metadata.get("story_seeds_active") or [])
     if reports:
         summary["anomalies"] = sum(len(report.anomalies) for report in reports)
         summary["anomaly_examples"] = sorted(

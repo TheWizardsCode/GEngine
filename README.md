@@ -73,6 +73,15 @@ run locally.
   service `/state?detail=summary`, and headless telemetry surface both the
   feed and the travel analysis so story-seed work can build atop deterministic
   mobility signals.
+- Authored story seeds live in `content/worlds/<world>/story_seeds.yml` and are
+  now loaded into `GameState.story_seeds`. Each director evaluation matches the
+  seeds against the latest hotspots, caches the most recent payload for each
+  seed, and records active matches (with `cooldown_remaining` +
+  `last_trigger_tick`) inside the `story_seeds` metadata block plus the
+  CLI/service/headless summaries. Designers can see which authored beats are
+  still live inside their cooldown window, which districts they target, and
+  why they attached to the current conditions without them blinking off between
+  ticks.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions. Summaries now include focus-budget
@@ -247,7 +256,10 @@ Available in-shell commands:
   The summary also surfaces the current focus configuration plus the last
   digest (up to 6 curated events), a suppressed count, and a severity-ranked
   preview of archived beats so you know exactly which stories were deferred by
-  the focus manager that tick.
+  the focus manager that tick. When the narrative director matches authored
+  story seeds, the summary prints a `story seeds` block that lists which seeds
+  attached, their target districts, and why they fired, mirroring the
+  headless/service summaries for quick debugging.
 - `next` – advance exactly one tick with the inline report (no arguments). Use
   `run` for batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.

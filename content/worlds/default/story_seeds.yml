@@ -1,0 +1,71 @@
+story_seeds:
+  - id: energy-quota-crisis
+    title: "Energy Quota Fallout"
+    summary: "Rolling brownouts push the Industrial Tier toward a credibility crisis."
+    scope: environment
+    tags: [energy, labor, crisis]
+    preferred_districts: [industrial-tier]
+    cooldown_ticks: 40
+    roles:
+      agents: [aria-volt]
+      factions: [union_of_flux]
+    beats:
+      - "Union of Flux leaders threaten a walkout unless worker grids receive priority amperage."
+      - "Aria Volt drafts an emergency ration plan that would divert power from research labs."
+    triggers:
+      - scope: environment
+        min_score: 0.45
+        min_severity: 0.75
+        max_focus_distance: 4
+      - scope: economy
+        min_score: 0.45
+        min_severity: 0.65
+        max_focus_distance: 4
+  - id: hollow-supply-chain
+    title: "Smuggling Lanes Exposed"
+    summary: "Cartel of Mist couriers lose safe passage through Perimeter Hollow."
+    scope: faction
+    tags: [smuggling, security]
+    preferred_districts: [perimeter-hollow]
+    cooldown_ticks: 35
+    roles:
+      agents: [cassian-mire]
+      factions: [cartel_of_mist]
+    beats:
+      - "Cartel couriers report drones shadowing every cargo convoy leaving the Hollow."
+      - "Cassian Mire proposes bribing Union of Flux stewards to reopen maintenance tunnels."
+    triggers:
+      - district_id: perimeter-hollow
+        scope: agent
+        min_score: 0.45
+        min_severity: 0.55
+        max_focus_distance: 4
+      - district_id: perimeter-hollow
+        scope: faction
+        min_score: 0.45
+        min_severity: 0.5
+        max_focus_distance: 4
+  - id: spire-data-leak
+    title: "Research Spire Data Leak"
+    summary: "Stolen climate models hint at sabotage inside the spire."
+    scope: agent
+    tags: [intel, climate]
+    preferred_districts: [research-spire]
+    cooldown_ticks: 45
+    roles:
+      agents: [dr-lyra-keel]
+      factions: []
+    beats:
+      - "Encrypted telemetry shows anomalous packet loss on the spire's uplink lattice."
+      - "Dr. Lyra Keel requests escorts to inspect the Industrial Tier emitters feeding the climate array."
+    triggers:
+      - district_id: research-spire
+        scope: agent
+        min_score: 0.45
+        min_severity: 0.6
+        max_focus_distance: 5
+      - district_id: industrial-tier
+        scope: environment
+        min_score: 0.45
+        min_severity: 0.6
+        max_focus_distance: 5

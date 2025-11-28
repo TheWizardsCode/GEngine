@@ -259,10 +259,15 @@ single row to validate whenever a guardrail knob changes.
   weights, ranked archive, and suppressed counts without reimplementing the
   curator. The director now selects the highest-scoring districts, evaluates
   adjacency-aware travel routes (hop counts, distances, estimated travel
-  times, reachability), and publishes `director_analysis` metadata that shows
-  hotspot mobility plus recommended focus handoffs across the CLI, service, and
-  headless telemetry. Remaining work will center on ingesting authored story
-  seeds now that deterministic travel scaffolding exists.
+  times, reachability), matches authored seeds from
+  `content/worlds/<world>/story_seeds.yml`, and publishes both
+  `director_analysis` and `story_seeds` metadata that shows hotspot mobility,
+  recommended focus handoffs, and the seeds ready to fire. The director caches
+  the latest payload for each seed so the `story_seeds` block now tracks
+  `cooldown_remaining`/`last_trigger_tick`, keeping matches visible for the
+  duration of their cooldowns in CLI/service/headless surfaces. Upcoming work focuses on
+  tuning the seed trigger thresholds, adding more authored seeds, and wiring
+  resolution/cooldown UX before moving to Phase 5 pacing features.
 
 ### Phase 5 – Narrative Director and Story Seeds
 

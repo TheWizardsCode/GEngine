@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 from pydantic import BaseModel, Field
 
-from .models import Agent, City, EnvironmentState, Faction
+from .models import Agent, City, EnvironmentState, Faction, StorySeed
 
 
 class GameState(BaseModel):
@@ -16,6 +16,7 @@ class GameState(BaseModel):
     city: City
     factions: Dict[str, Faction] = Field(default_factory=dict)
     agents: Dict[str, Agent] = Field(default_factory=dict)
+    story_seeds: Dict[str, StorySeed] = Field(default_factory=dict)
     environment: EnvironmentState = Field(default_factory=EnvironmentState)
     tick: int = Field(default=0, ge=0)
     seed: int = Field(default=0, ge=0)
@@ -80,6 +81,9 @@ class GameState(BaseModel):
         director_analysis = self.metadata.get("director_analysis") or {}
         if director_analysis:
             summary["director_analysis"] = director_analysis
+        story_seeds = self.metadata.get("story_seeds_active") or []
+        if story_seeds:
+            summary["story_seeds"] = story_seeds
         return summary
 
     def snapshot(self) -> Dict[str, Any]:

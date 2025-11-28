@@ -407,6 +407,32 @@ def _render_summary(summary: dict[str, object]) -> str:
                     preview.append(f"{hotspot.get('district_id', 'n/a')}:pending")
             if preview:
                 lines.append(f"    travel: {', '.join(preview)}")
+    story_seeds = summary.get("story_seeds") or []
+    if story_seeds:
+        lines.append("  story seeds:")
+        for seed in story_seeds[:3]:
+            district = seed.get("district_id")
+            score = seed.get("score")
+            prefix = f"    - {seed.get('title', seed.get('seed_id', 'seed'))}"
+            if district:
+                prefix = f"{prefix} @ {district}"
+            if isinstance(score, (int, float)):
+                prefix = f"{prefix} ({score:.2f})"
+            reason = seed.get("reason")
+            if reason:
+                prefix = f"{prefix} :: {reason}"
+            cooldown_bits: List[str] = []
+            remaining = seed.get("cooldown_remaining")
+            if isinstance(remaining, (int, float)):
+                cooldown_bits.append(f"{int(remaining)}t cd")
+            last_tick = seed.get("last_trigger_tick")
+            if isinstance(last_tick, (int, float)):
+                cooldown_bits.append(f"last {int(last_tick)}")
+            if cooldown_bits:
+                prefix = f"{prefix} [{' | '.join(cooldown_bits)}]"
+            lines.append(prefix)
+        if len(story_seeds) > 3:
+            lines.append(f"    (+{len(story_seeds) - 3} more)")
     profiling = summary.get("profiling")
     if isinstance(profiling, dict) and profiling:
         lines.append("  profiling:")
@@ -561,6 +587,32 @@ def _render_director_feed(
                 else:
                     reason = travel.get("reason", "blocked")
                     lines.append(f"    {prefix}: {reason}")
+        seeds = analysis.get("story_seeds") or []
+        if seeds:
+            lines.append("  seed matches:")
+            for seed in seeds[:3]:
+                reason = seed.get("reason")
+                detail = seed.get("district_id") or "unset"
+                score = seed.get("score")
+                line = f"    - {seed.get('title', seed.get('seed_id', 'seed'))}"
+                if detail:
+                    line = f"{line} -> {detail}"
+                if isinstance(score, (int, float)):
+                    line = f"{line} ({score:.2f})"
+                if reason:
+                    line = f"{line} :: {reason}"
+                cooldown_bits: List[str] = []
+                remaining = seed.get("cooldown_remaining")
+                if isinstance(remaining, (int, float)):
+                    cooldown_bits.append(f"{int(remaining)}t cd")
+                last_tick = seed.get("last_trigger_tick")
+                if isinstance(last_tick, (int, float)):
+                    cooldown_bits.append(f"last {int(last_tick)}")
+                if cooldown_bits:
+                    line = f"{line} [{' | '.join(cooldown_bits)}]"
+                lines.append(line)
+            if len(seeds) > 3:
+                lines.append(f"    (+{len(seeds) - 3} more)")
         recommended = analysis.get("recommended_focus")
         if isinstance(recommended, dict) and recommended.get("district_id"):
             travel_time = recommended.get("travel_time")
