@@ -248,13 +248,13 @@ without code changes.
 
 ### Guardrail Regression Matrix
 
-| Surface                    | Config knob                   | Enforcement path                                            | Regression coverage                                                |
-| -------------------------- | ----------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
-| `SimEngine.advance_ticks`  | `limits.engine_max_ticks`     | Raises `ValueError` when a request exceeds the engine cap   | `tests/echoes/test_tick.py::test_engine_enforces_tick_limit`       |
-| CLI `run <n>` command      | `limits.cli_run_cap`          | Output is prefixed with a safeguard warning and capped      | `tests/echoes/test_cli_shell.py::test_shell_run_command_is_clamped`|
-| CLI scripted sequences     | `limits.cli_script_command_cap`| Script halts once the command budget is consumed            | `tests/echoes/test_cli_shell.py::test_run_commands_respects_script_cap` |
-| FastAPI `/tick` endpoint   | `limits.service_tick_cap`     | Returns HTTP 400 detailing the configured limit             | `tests/echoes/test_service_api.py::test_tick_endpoint_rejects_large_requests` |
-| Headless regression driver | `limits.engine_max_ticks`     | Automatically chunks batches so no call exceeds the cap     | `tests/scripts/test_run_headless_sim.py::test_run_headless_sim_supports_batches` |
+| Surface                    | Config knob                     | Enforcement path                                          | Regression coverage                                                              |
+| -------------------------- | ------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `SimEngine.advance_ticks`  | `limits.engine_max_ticks`       | Raises `ValueError` when a request exceeds the engine cap | `tests/echoes/test_tick.py::test_engine_enforces_tick_limit`                     |
+| CLI `run <n>` command      | `limits.cli_run_cap`            | Output is prefixed with a safeguard warning and capped    | `tests/echoes/test_cli_shell.py::test_shell_run_command_is_clamped`              |
+| CLI scripted sequences     | `limits.cli_script_command_cap` | Script halts once the command budget is consumed          | `tests/echoes/test_cli_shell.py::test_run_commands_respects_script_cap`          |
+| FastAPI `/tick` endpoint   | `limits.service_tick_cap`       | Returns HTTP 400 detailing the configured limit           | `tests/echoes/test_service_api.py::test_tick_endpoint_rejects_large_requests`    |
+| Headless regression driver | `limits.engine_max_ticks`       | Automatically chunks batches so no call exceeds the cap   | `tests/scripts/test_run_headless_sim.py::test_run_headless_sim_supports_batches` |
 
 Run these tests (or the equivalent CLI/service commands) whenever knobs change
 to keep safeguard behavior reproducible across environments.

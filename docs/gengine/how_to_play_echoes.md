@@ -29,17 +29,17 @@ and persist state.
 
 ## 2. Shell Commands
 
-| Command                | Description                                                                                                                                                      |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `help`                 | Lists all available commands.                                                                                                                                    |
+| Command                | Description                                                                                                                                                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `help`                 | Lists all available commands.                                                                                                                                                                   |
 | `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot, and the shared profiling block (tick ms p50/p95/max plus recent subsystem timings). |
-| `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                 |
-| `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                         |
-| `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district. |
-| `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                         |
-| `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                       |
-| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                 |
-| `exit` / `quit`        | Leave the shell.                                                                                                                                                 |
+| `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                |
+| `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                        |
+| `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district.                                |
+| `save <path>`          | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                        |
+| `load world <name>`    | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                      |
+| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                |
+| `exit` / `quit`        | Leave the shell.                                                                                                                                                                                |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
 quotes. The shell ignores blank lines and repeats the prompt after each command.

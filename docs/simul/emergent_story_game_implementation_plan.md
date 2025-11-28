@@ -208,13 +208,13 @@ Instrumentation deliverables:
   surface the same performance block without extra tooling.
 - Guardrail verification matrix:
 
-  | Surface / Safeguard         | Config knob               | Enforcement behavior                     | Regression hook |
-  | --------------------------- | ------------------------- | ---------------------------------------- | --------------- |
-  | Engine tick requests        | `limits.engine_max_ticks` | Raises `ValueError` when exceeded         | `tests/echoes/test_tick.py::test_engine_enforces_tick_limit` |
-  | CLI `run` batches           | `limits.cli_run_cap`      | Prefixes output with safeguard warning   | `tests/echoes/test_cli_shell.py::test_shell_run_command_is_clamped` |
-  | CLI scripted sequences      | `limits.cli_script_command_cap` | Halts scripts once cap is reached | `tests/echoes/test_cli_shell.py::test_run_commands_respects_script_cap` |
-  | FastAPI `/tick` endpoint    | `limits.service_tick_cap` | Returns HTTP 400 with detail message     | `tests/echoes/test_service_api.py::test_tick_endpoint_rejects_large_requests` |
-  | Headless batch execution    | `limits.engine_max_ticks` | Auto-chunks to stay beneath engine cap   | `tests/scripts/test_run_headless_sim.py::test_run_headless_sim_supports_batches` |
+  | Surface / Safeguard      | Config knob                     | Enforcement behavior                   | Regression hook                                                                  |
+  | ------------------------ | ------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+  | Engine tick requests     | `limits.engine_max_ticks`       | Raises `ValueError` when exceeded      | `tests/echoes/test_tick.py::test_engine_enforces_tick_limit`                     |
+  | CLI `run` batches        | `limits.cli_run_cap`            | Prefixes output with safeguard warning | `tests/echoes/test_cli_shell.py::test_shell_run_command_is_clamped`              |
+  | CLI scripted sequences   | `limits.cli_script_command_cap` | Halts scripts once cap is reached      | `tests/echoes/test_cli_shell.py::test_run_commands_respects_script_cap`          |
+  | FastAPI `/tick` endpoint | `limits.service_tick_cap`       | Returns HTTP 400 with detail message   | `tests/echoes/test_service_api.py::test_tick_endpoint_rejects_large_requests`    |
+  | Headless batch execution | `limits.engine_max_ticks`       | Auto-chunks to stay beneath engine cap | `tests/scripts/test_run_headless_sim.py::test_run_headless_sim_supports_batches` |
 
 Documenting this table (and keeping it in sync with the README) lets QA pick a
 single row to validate whenever a guardrail knob changes.
