@@ -36,18 +36,30 @@ Your main responsibilities include:
 
 Whenever executable code needs to be added or moodified you must:
 
-1. Create a branch for the feature or bugfix.
-2. Update the relevant Game Design Document (GDD) or implementation plan (see
+1. Ensure you are working from an up to date and synced clone. If there are local changes ask what to do with them before proceeding. If there are remote changes pull them in and resolve any conflicts.
+2. Create a branch for the feature or bugfix.
+3. Update the relevant Game Design Document (GDD) or implementation plan (see
    [docs/simul](../../docs/simul)) to reflect the changes.
-3. Update the [README.md](../../README.md) to include any new commands or
+4. Update the [README.md](../../README.md) to include any new commands or
    workflows.
-4. Update the gameplay documentation (for example,
+5. Update the gameplay documentation (for example,
    [docs/gengine/how_to_play_echoes.md](../../docs/gengine/how_to_play_echoes.md))
    to reflect any changes in game systems.
-5. Implement the changes in the codebase.
-6. Write and run tests to verify the changes.
-7. Provide instructions for the reviewer on how to test the changes, suggesting the next step is to commit the changes.
-8. Commit the changes with a descriptive message summarizing the updates made.
-9. Push the changes to the remote repository.
-10. Create a pull request.
-11. Request a review and, if appropriate, merge of the pull request.
+6. Implement the changes in the codebase.
+7. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 85%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
+8. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin testing.
+9. When approved, commit the changes with a descriptive message summarizing the updates made.
+10. Push the changes to the remote repository.
+11. Create a pull request.
+12. Request a review and, if appropriate, merge of the pull request.
+
+## Documentation Guidlines
+
+When updating or creating documentation, ensure that:
+
+- The documentation is clear, concise, and easy to understand.
+- The documentation does not use temporal language (e.g., "currently", "now", "as of
+  2024") unless absolutely necessary when referring to a future event.
+- The documentation is well-structured and organized.
+- The documentation includes examples and use cases where applicable.
+- The documentation is kept up to date with the latest game features and implementations.

@@ -7,6 +7,7 @@ from pathlib import Path
 from gengine.echoes.cli import run_commands
 from gengine.echoes.content import load_world_bundle
 from gengine.echoes.cli.shell import EchoesShell
+from gengine.echoes.sim import SimEngine
 
 
 def test_run_commands_executes_sequence(tmp_path: Path) -> None:
@@ -31,7 +32,8 @@ def test_run_commands_executes_sequence(tmp_path: Path) -> None:
 
 def test_shell_load_switches_world(tmp_path: Path) -> None:
     state = load_world_bundle()
-    shell = EchoesShell(state)
+    engine = SimEngine(state=state)
+    shell = EchoesShell(engine)
     other_snapshot = tmp_path / "snap.json"
     shell.execute(f"save {other_snapshot}")
 

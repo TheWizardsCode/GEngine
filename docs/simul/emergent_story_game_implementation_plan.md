@@ -6,6 +6,9 @@ A staged implementation that builds a solid simulation core, then layers on agen
 
 - ✅ Phase 1 (Foundations & Data Model): core models, YAML loader, snapshots, smoke tests.
 - ✅ Phase 2 (Early CLI Shell & Tick Loop): in-process `echoes-shell` CLI with summary/next/run/map/save/load commands plus a deterministic tick engine.
+- ⚙️ Phase 3 (Simulation Core & Service API): **M3.1 SimEngine abstraction
+  landed**; CLI now routes through `SimEngine` while FastAPI service plus HTTP
+  client remain in-flight.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -148,8 +151,10 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
 
 ### Phase 3 – Simulation Core and Service API
 
-- **M3.1 Engine abstraction** (0.5 day): create `SimEngine` with methods
-  `initialize_state`, `advance_ticks`, `apply_action`, `query_view`.
+- **M3.1 Engine abstraction** (complete): `SimEngine` now lives in
+  `src/gengine/echoes/sim/engine.py`, centralizing `initialize_state`,
+  `advance_ticks`, `apply_action`, and `query_view` for both in-process and
+  service deployments.
 - **M3.2 FastAPI service** (1 day): expose `/tick`, `/state`, `/actions`, and
   `/metrics`; publish OpenAPI spec and add typed client in `src/echoes/client/`.
 - **M3.3 CLI service mode** (1 day): allow CLI to target either in-process or

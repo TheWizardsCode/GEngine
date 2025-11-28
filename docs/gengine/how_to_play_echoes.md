@@ -43,6 +43,10 @@ quotes. The shell ignores blank lines and repeats the prompt after each command.
 
 ## 3. Simulation Concepts
 
+The CLI now routes every command through the shared `SimEngine` abstraction.
+This is the same interface that the upcoming simulation service will expose,
+so all outputs you see in the shell mirror what remote clients will receive.
+
 ### Ticks and Reports
 
 - Each `next`/`run` command calls the simulation tick loop.

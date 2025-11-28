@@ -4,15 +4,13 @@ from __future__ import annotations
 
 import argparse
 import shlex
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Sequence
 
-from ..content import load_world_bundle
 from ..core import GameState
-from ..persistence import load_snapshot, save_snapshot
-from ..sim import TickReport, advance_ticks
+from ..persistence import save_snapshot
+from ..sim import SimEngine, TickReport
 
 PROMPT = "(echoes) "
 INTRO_TEXT = "Echoes shell ready. Type 'help' for commands."
@@ -27,8 +25,12 @@ class CommandResult:
 class EchoesShell:
     """Minimal command processor for the early CLI shell."""
 
-    def __init__(self, state: GameState) -> None:
-        self.state = state
+    def __init__(self, engine: SimEngine) -> None:
+        self.engine = engine
+
+    @property
+    def state(self) -> GameState:
+        return self.engine.state
 
     # Public API ---------------------------------------------------------
     def execute(self, command_line: str) -> CommandResult:
@@ -51,12 +53,13 @@ class EchoesShell:
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
-        return CommandResult(_render_summary(self.state))
+        summary = self.engine.query_view("summary")
+        return CommandResult(_render_summary(summary))
 
     def _cmd_next(self, args: Sequence[str]) -> CommandResult:
         if args:
             return CommandResult("Usage: next")
-        reports = advance_ticks(self.state, 1)
+        reports = self.engine.advance_ticks(1)
         return CommandResult(_render_reports(reports))
 
     def _cmd_run(self, args: Sequence[str]) -> CommandResult:
@@ -66,7 +69,7 @@ class EchoesShell:
             count = max(1, int(args[0]))
         except ValueError:
             return CommandResult("Usage: run <count>")
-        reports = advance_ticks(self.state, count)
+        reports = self.engine.advance_ticks(count)
         return CommandResult(_render_reports(reports))
 
     def _cmd_map(self, args: Sequence[str]) -> CommandResult:
@@ -86,10 +89,10 @@ class EchoesShell:
         source = args[0]
         target = args[1]
         if source == "world":
-            self.state = load_world_bundle(world_name=target)
+            self.engine.initialize_state(world=target)
             return CommandResult(f"Loaded world '{target}'")
         if source == "snapshot":
-            self.state = load_snapshot(Path(target))
+            self.engine.initialize_state(snapshot=Path(target))
             return CommandResult(f"Loaded snapshot from {target}")
         return CommandResult("Usage: load world <name> | load snapshot <path>")
 
@@ -99,8 +102,7 @@ class EchoesShell:
     _cmd_quit = _cmd_exit
 
 
-def _render_summary(state: GameState) -> str:
-    summary = state.summary()
+def _render_summary(summary: dict[str, object]) -> str:
     lines = ["Current world summary:"]
     for key in ("city", "tick", "districts", "factions", "agents", "stability"):
         value = summary[key]
@@ -156,11 +158,17 @@ def _render_map(state: GameState, district_id: str | None) -> str:
 def run_commands(
     commands: Iterable[str],
     *,
+    engine: SimEngine | None = None,
     state: GameState | None = None,
     world: str = "default",
 ) -> List[str]:
-    base_state = state or load_world_bundle(world_name=world)
-    shell = EchoesShell(base_state)
+    sim_engine = engine or SimEngine()
+    if engine is None:
+        if state is not None:
+            sim_engine.initialize_state(state=state)
+        else:
+            sim_engine.initialize_state(world=world)
+    shell = EchoesShell(sim_engine)
     outputs: List[str] = []
     for command in commands:
         result = shell.execute(command)
@@ -170,10 +178,13 @@ def run_commands(
     return outputs
 
 
-def _load_initial_state(world: str, snapshot: Path | None) -> GameState:
+def _build_engine(world: str, snapshot: Path | None) -> SimEngine:
+    engine = SimEngine()
     if snapshot is not None:
-        return load_snapshot(snapshot)
-    return load_world_bundle(world_name=world)
+        engine.initialize_state(snapshot=snapshot)
+    else:
+        engine.initialize_state(world=world)
+    return engine
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -194,18 +205,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    state = _load_initial_state(args.world, args.snapshot)
-    shell = EchoesShell(state)
+    engine = _build_engine(args.world, args.snapshot)
+    shell = EchoesShell(engine)
 
     if args.script:
         commands = [cmd.strip() for cmd in args.script.split(";") if cmd.strip()]
-        for result in run_commands(commands, state=state):
+        for result in run_commands(commands, engine=engine):
             if result:
                 print(result)
         return 0
 
     print(INTRO_TEXT)
-    print(_render_summary(state))
+    print(_render_summary(engine.query_view("summary")))
     while True:
         try:
             line = input(PROMPT)

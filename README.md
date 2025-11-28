@@ -17,7 +17,11 @@ run locally.
 - Default world bundle in `content/worlds/default/world.yml` featuring three
   districts, two factions, and three agents.
 - Simulation tick loop (`gengine.echoes.sim.advance_ticks`) that nudges
-  resources, districts, and environment metrics each tick.
+  resources, districts, and environment metrics each tick, now routed through
+  the `SimEngine` abstraction for future service mode.
+- `gengine.echoes.sim.SimEngine` centralizes `initialize_state`,
+  `advance_ticks`, `query_view`, and placeholder `apply_action`, giving the
+  CLI the same control surface the upcoming service layer will expose.
 - CLI shell (`echoes-shell`) that runs the sim in-process, supports
   `summary`, `next`, `run`, `map`, `save`, and `load` commands, and can run in
   interactive or scripted mode.
@@ -63,6 +67,15 @@ uv run --group dev pytest
 
 This runs the unit/integration tests for content loading, tick advancement, and
 the CLI shell.
+
+### Collecting Coverage
+
+```bash
+uv run --group dev pytest --cov=gengine --cov-report=term-missing
+```
+
+The command above enables `pytest-cov`, producing line-level coverage in the
+terminal while reusing the same virtualenv/dev dependency group.
 
 ## Inspecting the Default World
 
