@@ -44,3 +44,8 @@ def test_client_submit_actions() -> None:
 
     assert response["results"][0]["status"] == "noop"
     client.close()
+
+
+def test_client_context_manager_closes_default() -> None:
+    with SimServiceClient("http://example.com") as client:
+        assert isinstance(client, SimServiceClient)

@@ -9,7 +9,7 @@ import uvicorn
 from .app import create_app
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover - thin wrapper around uvicorn
     host = os.environ.get("ECHOES_SERVICE_HOST", "0.0.0.0")
     port = int(os.environ.get("ECHOES_SERVICE_PORT", "8000"))
     world = os.environ.get("ECHOES_SERVICE_WORLD", "default")
