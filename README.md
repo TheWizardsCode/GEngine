@@ -6,7 +6,7 @@ service, CLI gateway, LLM intent service) designed for Kubernetes. This README
 summarizes the current state of development and the immediate workflows you can
 run locally.
 
-## Current Status (Phases 1–2)
+## Current Status (Phases 1–4)
 
 - Python 3.12 project skeleton managed via `uv` and packaged under
   `src/gengine`.
@@ -30,8 +30,10 @@ run locally.
   interactive or scripted mode.
 - Shared simulation config in `content/config/simulation.yml` that sets
   safeguards (CLI run cap, script limits, service tick cap), Level-of-Detail
-  mode, and profiling toggles. `SimEngine` enforces these caps and logs tick
-  timing when profiling is enabled.
+  mode, profiling toggles, and an `economy` block that exposes regeneration,
+  demand, and price knobs. `SimEngine` enforces the guardrails, and the
+  economy subsystem reads the same file so designers can retune systems
+  without touching code.
 - Agent AI subsystem (Phase 4, M4.1) that evaluates authored agents each tick
   and emits utility-based intents (inspect districts, stabilize unrest,
   negotiate with factions). At least one reconnaissance/negotiation beat is
@@ -43,6 +45,12 @@ run locally.
   invest, sabotage), and mutates district or faction state accordingly. These
   decisions are logged as structured `faction_actions` in tick reports,
   service responses, and telemetry captures.
+- Economy subsystem (Phase 4, M4.3) that balances district production/
+  consumption, tracks multi-tick shortages, updates a lightweight market price
+  layer, and feeds the latest prices + shortage counters into tick reports,
+  summaries, and telemetry. Faction legitimacy snapshots/deltas are surfaced
+  alongside the market readout everywhere the reports appear so playtesters
+  can connect systemic shifts to reported beats.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions.
@@ -104,11 +112,14 @@ After every full pytest run, capture deterministic telemetry so reviewers can
 diff agent/faction behavior over time:
 
 ```bash
-uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-2-faction-telemetry.json
+uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-3-economy-telemetry.json
 ```
 
 Archive the JSON alongside the test results (commit or attach in review) so the
-canonical seed/tick profile is always available for comparison.
+canonical seed/tick profile is always available for comparison. The telemetry
+now captures agent/faction breakdowns, per-faction legitimacy snapshots/deltas,
+and the `last_economy` block (price table + shortage counters) for regression
+diffs.
 
 ## Inspecting the Default World
 
@@ -135,7 +146,7 @@ uv run echoes-shell --world default
 Scripted mode (useful for CI/tests):
 
 ```bash
-uv run echoes-shell --world default --script "summary;next 3;map;save build/state.json;exit"
+uv run echoes-shell --world default --script "summary;runs 3;map;save build/state.json;exit"
 ```
 
 Both modes share the same in-process GameState and emit ASCII summaries/maps for
@@ -158,7 +169,10 @@ Available in-shell commands:
 - `exit`/`quit` – leave the shell.
 - Tick reports now include agent activity lines such as "Aria Volt inspects
   Industrial Tier" plus faction beats like "Union of Flux invests in
-  Industrial Tier", making it easier to follow systemic reactions.
+  Industrial Tier", making it easier to follow systemic reactions. Below the
+  environment summary you will also see a "faction legitimacy" block (top ±3
+  deltas each tick) and a `market -> energy:1.05, food:0.98, …` line whenever
+  the economy subsystem has published prices.
 
 If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
 shell halts automatically and prints a safeguard warning so runaway loops do
@@ -178,6 +192,12 @@ not wedge CI runs.
 - `profiling`: flips the structured tick log on/off. When enabled, every
   `SimEngine.advance_ticks` call logs tick counts, duration (ms), and the active
   LOD mode via the `gengine.echoes.sim` logger so you can profile headless runs.
+- `economy`: exposes `regen_scale`, demand weights, shortage thresholds, base
+  resource weights, and price tuning values (`base_price`, `price_increase_step`,
+  `price_max_boost`, `price_decay`, `price_floor`). Adjust these numbers to
+  explore different scarcity curves; the CLI, FastAPI service, and telemetry
+  will immediately reflect the new market behavior after a restart or config
+  reload.
 
 Edit the YAML, rerun the CLI/service, and the new safeguards apply immediately
 without code changes.
@@ -234,14 +254,16 @@ Key flags:
 - `--snapshot`: start from a saved snapshot instead of content.
 - `--config-root`: point at an alternate config folder (useful in CI).
 - `--output`: path for the structured summary (includes tick counts, timing,
-  LOD mode, agent/faction action breakdowns, and last environment metrics).
+  LOD mode, agent/faction action breakdowns, faction legitimacy snapshot, and
+  the last economy report).
 
 ## Next Steps
 
-- Phase 3: extract the tick engine into a FastAPI-based simulation service and
-  add a thin HTTP client so the CLI can run in service mode.
-- Phase 4: enrich agents/factions/economy/environment subsystems to feed the
-  tick loop with deeper mechanics.
+- Phase 4: continue deepening the subsystems (economy scenario sweeps,
+  environment dynamics) and keep surfacing telemetry so playtesters can see the
+  cause/effect chain.
+- Phase 5+: narrative director, intent gateway, and multiplayer/Gateway
+  services per the implementation plan.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

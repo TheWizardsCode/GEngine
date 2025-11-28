@@ -51,6 +51,11 @@ class GameState(BaseModel):
             faction_id: round(faction.legitimacy, 3)
             for faction_id, faction in self.factions.items()
         }
+        market = self.metadata.get("market_prices") or {}
+        if market:
+            summary["market_prices"] = {
+                resource: round(price, 3) for resource, price in market.items()
+            }
         return summary
 
     def snapshot(self) -> Dict[str, Any]:

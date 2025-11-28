@@ -170,6 +170,11 @@ def test_cli_main_script_service(monkeypatch, capsys) -> None:
                     "security": 0.5,
                 },
                 "districts": [],
+                "agent_actions": [],
+                "faction_actions": [],
+                "faction_legitimacy": {},
+                "faction_legitimacy_delta": {},
+                "economy": {"prices": {}, "shortages": {}},
             }
             return {"reports": [report]}
 

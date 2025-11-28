@@ -18,3 +18,12 @@
 [2025-11-28 17:20 UTC] Added factions subsystem, tick wiring, telemetry outputs, and scenario tests; ran targeted pytest suites plus full run (41 green) before telemetry capture.
 [2025-11-28 17:23 UTC] Captured balanced telemetry with faction metrics via run_headless_sim (seed=42, ticks=200) to build/m4-2-faction-telemetry.json per updated workflow.
 [2025-11-28 17:28 UTC] Merged feature/m4-2-faction-ai (commit 2e7d47b) into main; ready to pick up next Phase 4 milestone tasks 1 & 2 requested by PM.
+[2025-11-28 17:31 UTC] Created branch feature/m4-3-economy to tackle follow-up items: (1) implement the economy subsystem reacting to agents/factions, (2) expose faction legitimacy deltas in CLI/service surfaces.
+[2025-11-28 17:40 UTC] HEAD b78ad8c: Began M4.3 follow-up by sketching EconomySystem tests and planning legitimacy/economy surfacing across tick reports, service payloads, CLI, docs, and telemetry.
+[2025-11-28 17:57 UTC] HEAD b78ad8c: Implemented economy tick plumbing (reports/service/CLI/headless), expanded docs, added new pytest coverage (44 green), and captured canonical telemetry via run_headless_sim -> build/m4-3-economy-telemetry.json.
+[2025-11-28 18:25 UTC] HEAD b78ad8c: Backfilled loader/snapshot/faction tests to push coverage ≥95%, added error-path cases, re-ran pytest + coverage (`uv run --group dev pytest --cov=...`) to document compliance.
+[2025-11-28 18:33 UTC] HEAD b78ad8c: Planning economy config knobs (regen/demand/price tuning) plus longer-run conservation tests and documentation updates per PM request (enable designer iteration without code changes).
+[2025-11-28 18:41 UTC] HEAD b78ad8c: Added EconomySettings model, simulation.yml economy block, and refactored EconomySystem to honor tunable regen/demand/price knobs; updated CLI/service hooks to propagate price metadata.
+[2025-11-28 18:44 UTC] HEAD b78ad8c: Expanded economy tests for price floors/ceilings and long-run conservation, re-ran pytest (58 green) and coverage (96%) to document stability of new configuration tunables.
+[2025-11-28 18:47 UTC] HEAD b78ad8c: Regenerated canonical headless telemetry via run_headless_sim (ticks=200, seed=42, lod=balanced) -> build/m4-3-economy-telemetry.json; baseline shows stability=1.0, unrest≈0.002, faction legitimacy 0.395/0.645, price band [1.0,1.5].
+[2025-11-28 18:52 UTC] HEAD b78ad8c: Updated README, GDD, implementation plan, and how-to-play guide with the new economy config knobs plus tuning guidance so designers know how to iterate on scarcity profiles without code changes.

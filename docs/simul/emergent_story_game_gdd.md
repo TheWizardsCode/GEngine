@@ -131,7 +131,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - The current prototype implements lightweight versions of these behaviors:
   factions track legitimacy/resources, react to territory unrest, and emit
   structured logs (lobby, recruit, invest, sabotage) that mutate district
-  modifiers and rival legitimacy so designers can trace macro shifts.
+  modifiers and rival legitimacy so designers can trace macro shifts. Each tick
+  also records per-faction legitimacy snapshots and deltas so CLI/service/
+  telemetry outputs can spotlight the top movers even before narrative systems
+  explain why a faction succeeded or failed.
 
 **Emergent Faction Behaviors:**
 
@@ -148,8 +151,17 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 **Model:**
 
 - Each district has production, consumption, and storage values.
-- Global market layer adjusts prices and incentives.
-- Scarcity and abundance feed into NPC and faction behavior (crime, migration, political pressure).
+- The in-flight prototype now rebalances stocks every tick, tracks shortages
+  that persist for multiple ticks, and feeds those counters into a lightweight
+  market price layer recorded in `GameState.metadata`.
+- Scarcity/abundance (plus the derived prices) feed into NPC and faction
+  behavior (crime, migration, political pressure) while giving designers clear
+  telemetry to tune against.
+- A shared `economy` block in `content/config/simulation.yml` defines
+  regeneration scale, demand weights, shortage thresholds, and price clamps
+  (base/floor/ceiling). Designers can retune the knobs between playtests with no
+  code changes, making it easy to explore harsh scarcity runs versus generous
+  surplus scenarios.
 
 **Emergent Economic Behaviors:**
 
@@ -333,7 +345,8 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   still emitting reproducible telemetry.
 - Headless regression driver: `scripts/run_headless_sim.py` executes long burns
   in capped batches, prints batch diagnostics, and emits JSON summaries so
-  designers can compare macro metrics between builds or automated sweeps.
+  designers can compare macro metrics (agent/faction counts, legitimacy shifts,
+  economy tables, environment snapshots) between builds or automated sweeps.
 
 **LLM Integration:**
 

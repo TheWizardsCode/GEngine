@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from gengine.echoes.content import load_world_bundle
-from gengine.echoes.sim import TickReport, advance_ticks
+from gengine.echoes.sim import SimEngine, TickReport, advance_ticks
 
 
 def test_advance_ticks_updates_environment_and_tick_math() -> None:
@@ -31,3 +31,14 @@ def test_advance_ticks_requires_positive_count() -> None:
         assert "count" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("Expected ValueError when count < 1")
+
+
+def test_engine_reports_include_economy_snapshot() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+
+    report = engine.advance_ticks(1)[0]
+
+    assert "prices" in report.economy
+    assert "shortages" in report.economy
+    assert isinstance(engine.state.metadata.get("market_prices"), dict)

@@ -2,7 +2,7 @@
 
 A staged implementation that builds a solid simulation core, then layers on agents and factions, narrative, and finally the CLI + LLM conversational interface with ASCII visualization. The runtime architecture is microservice-based and designed to run on Kubernetes from the outset. This plan is informed by and should be read alongside the game design document in `docs/simul/emergent_story_game_gdd.md`. Each phase should be testable in isolation via minimal scripts before integrating, with data-driven content and full save/load from the start.
 
-## Progress Log (Updated 2025-11-27)
+## Progress Log (Updated 2025-11-28)
 
 - ✅ Phase 1 (Foundations & Data Model): core models, YAML loader, snapshots, smoke tests.
 - ✅ Phase 2 (Early CLI Shell & Tick Loop): in-process `echoes-shell` CLI with summary/next/run/map/save/load commands plus a deterministic tick engine.
@@ -10,6 +10,11 @@ A staged implementation that builds a solid simulation core, then layers on agen
   landed**, **M3.2 FastAPI service + typed client shipped**, **M3.3 CLI service
   mode running**, **M3.4 safeguards + LOD shipped**, and **M3.5 headless driver
   online**.
+- ⚙️ Phase 4 (Agents/Factions/Economy): **M4.1 Agent AI** and **M4.2 Faction AI**
+  shipped; **M4.3 Economy** now includes the subsystem, designer-facing config
+  knobs, legitimacy/market telemetry, and expanded tests. Remaining tasks focus
+  on longer scenario sweeps and environment follow-on work before merging back
+  to main.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -113,8 +118,9 @@ A staged implementation that builds a solid simulation core, then layers on agen
   tests for ASCII renderings, and scenario scripts (`scripts/run_scenario.py`)
   that simulate multi-day campaigns. After every full pytest run, capture the
   canonical telemetry artifact via
-  `scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-2-faction-telemetry.json`
-  so regressions always include a comparable metrics snapshot.
+  `scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-3-economy-telemetry.json`
+  so regressions always include a comparable metrics snapshot (now including
+  faction legitimacy snapshots/deltas and the last economy table).
 - Observability: structured JSON logs with session/tick ids, Prometheus metrics
   for tick latency, agent counts, LLM latency, and intent failure rates, plus
   OpenTelemetry tracing that links CLI requests to LLM calls and simulation
@@ -300,10 +306,10 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
 
 - **M4.3 Economy Subsystem (Deliverable: `systems/economy.py`)**
 
-  - Introduce production/consumption matrices per district resource, plus global market prices derived from supply/demand curves.
+  - Introduce production/consumption matrices per district resource, plus global market prices derived from supply/demand curves. **Status:** subsystem live with district rebalancing, shortage counters, and CLI/service/telemetry surfacing of legitimacy + prices.
   - Wire conservation checks into tick loop to prevent negative stocks; raise warnings when shortages persist N ticks.
-  - Persist economic config knobs via `content/config/economy.yml` for tuning.
-  - Tests: golden tests for economic drift, property tests verifying resources never exceed capacity or drop below zero.
+  - Persist economic config knobs via the `economy` block inside `content/config/simulation.yml` (regen scale, demand weights, shortage thresholds, price floors/ceilings) so designers can retune without code changes.
+  - Tests: expanded regression/property-style unit tests covering price floors/ceilings, shortage-triggered price hikes, and long-run conservation. Scenario sweeps remain on the backlog to complement the new fast unit coverage.
 
 - **M4.4 Environment Dynamics (Deliverable: `systems/environment.py`)**
 

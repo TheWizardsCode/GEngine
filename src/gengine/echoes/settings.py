@@ -40,10 +40,37 @@ class ProfilingSettings(BaseModel):
     log_ticks: bool = True
 
 
+class EconomySettings(BaseModel):
+    """Tunable parameters driving the economy subsystem."""
+
+    regen_scale: float = Field(0.8, ge=0.0)
+    demand_population_scale: int = Field(100_000, ge=1)
+    demand_unrest_weight: float = Field(0.3, ge=0.0)
+    demand_prosperity_weight: float = Field(0.2, ge=0.0)
+    base_resource_weights: Dict[str, float] = Field(
+        default_factory=lambda: {
+            "energy": 4.0,
+            "food": 3.5,
+            "water": 3.0,
+            "materials": 2.5,
+            "capital": 2.4,
+            "data": 2.0,
+        }
+    )
+    base_price: float = Field(1.0, ge=0.0)
+    shortage_threshold: float = Field(0.2, ge=0.0, le=1.0)
+    shortage_warning_ticks: int = Field(3, ge=1)
+    price_increase_step: float = Field(0.05, ge=0.0)
+    price_max_boost: float = Field(0.5, ge=0.0)
+    price_decay: float = Field(0.03, ge=0.0)
+    price_floor: float = Field(0.5, ge=0.0)
+
+
 class SimulationConfig(BaseModel):
     limits: SimulationLimits = Field(default_factory=SimulationLimits)
     lod: LodSettings = Field(default_factory=LodSettings)
     profiling: ProfilingSettings = Field(default_factory=ProfilingSettings)
+    economy: EconomySettings = Field(default_factory=EconomySettings)
 
 
 def _default_config_root() -> Path:
@@ -74,5 +101,6 @@ __all__ = [
     "SimulationLimits",
     "LodSettings",
     "ProfilingSettings",
+    "EconomySettings",
     "load_simulation_config",
 ]

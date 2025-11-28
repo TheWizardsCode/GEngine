@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Any, List, Sequence
+from typing import Any, Dict, List, Sequence
 
 from ..core import GameState
 from ..settings import LodSettings
@@ -20,6 +20,9 @@ class TickReport:
     districts: List[dict[str, float]] = field(default_factory=list)
     agent_actions: List[dict[str, Any]] = field(default_factory=list)
     faction_actions: List[dict[str, Any]] = field(default_factory=list)
+    faction_legitimacy: Dict[str, float] = field(default_factory=dict)
+    faction_legitimacy_delta: Dict[str, float] = field(default_factory=dict)
+    economy: Dict[str, Any] = field(default_factory=dict)
 
 
 def advance_ticks(
@@ -30,6 +33,7 @@ def advance_ticks(
     lod: LodSettings | None = None,
     agent_system: object | None = None,
     faction_system: object | None = None,
+    economy_system: object | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -45,10 +49,14 @@ def advance_ticks(
 
     for _ in range(count):
         events: List[str] = []
+        prev_legitimacy = {fid: faction.legitimacy for fid, faction in state.factions.items()}
+
         agent_intents = _run_agent_system(agent_system, state, rng)
         events.extend(_summarize_agent_actions(agent_intents))
         faction_decisions = _run_faction_system(faction_system, state, rng)
         events.extend(_summarize_faction_actions(faction_decisions))
+        economy_report = _run_economy_system(economy_system, state, rng)
+        events.extend(_summarize_economy(economy_report))
         _update_resources(state, rng, events, scale)
         _update_district_modifiers(state, rng, events, scale)
         _update_environment(state, rng, events, scale)
@@ -62,6 +70,9 @@ def advance_ticks(
                 districts=_district_snapshot(state),
                 agent_actions=[action.to_report() for action in agent_intents],
                 faction_actions=[action.to_report() for action in faction_decisions],
+                faction_legitimacy=_legitimacy_snapshot(state),
+                faction_legitimacy_delta=_legitimacy_delta(prev_legitimacy, state),
+                economy=economy_report.to_dict() if economy_report else {},
             )
         )
 
@@ -207,6 +218,15 @@ def _run_faction_system(faction_system: object | None, state: GameState, rng: ra
         return []
 
 
+def _run_economy_system(economy_system: object | None, state: GameState, rng: random.Random):
+    if economy_system is None:
+        return None
+    try:
+        return economy_system.tick(state, rng=rng)
+    except Exception:  # pragma: no cover - defensive safeguard
+        return None
+
+
 def _summarize_agent_actions(actions: Sequence) -> List[str]:
     summaries: List[str] = []
     for action in actions:
@@ -245,3 +265,26 @@ def _summarize_faction_actions(actions: Sequence) -> List[str]:
         else:
             summaries.append(f"{name} acts strategically")
     return summaries
+
+
+def _summarize_economy(report) -> List[str]:
+    if report is None:
+        return []
+    lines: List[str] = []
+    for resource, ticks in report.shortages.items():
+        lines.append(f"Economy alert: {resource} shortage persists for {ticks} ticks")
+    return lines
+
+
+def _legitimacy_snapshot(state: GameState) -> Dict[str, float]:
+    return {faction_id: round(faction.legitimacy, 4) for faction_id, faction in state.factions.items()}
+
+
+def _legitimacy_delta(previous: Dict[str, float], state: GameState) -> Dict[str, float]:
+    deltas: Dict[str, float] = {}
+    for faction_id, faction in state.factions.items():
+        before = previous.get(faction_id, faction.legitimacy)
+        change = round(faction.legitimacy - before, 4)
+        if change:
+            deltas[faction_id] = change
+    return deltas

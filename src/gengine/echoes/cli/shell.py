@@ -223,6 +223,23 @@ def _render_reports(reports: Sequence[TickReport]) -> str:
             "  env -> "
             f"stb {env['stability']:.2f} | unrest {env['unrest']:.2f} | poll {env['pollution']:.2f}"
         )
+        if report.faction_legitimacy_delta:
+            lines.append("  faction legitimacy:")
+            for faction_id, delta in sorted(
+                report.faction_legitimacy_delta.items(),
+                key=lambda item: abs(item[1]),
+                reverse=True,
+            )[:3]:
+                lines.append(
+                    f"    {faction_id:<18} {'+' if delta > 0 else ''}{delta:.3f}"
+                )
+        if report.economy:
+            prices = report.economy.get("prices", {})
+            if prices:
+                sample = ", ".join(
+                    f"{resource}:{price:.2f}" for resource, price in sorted(prices.items())[:3]
+                )
+                lines.append(f"  market -> {sample}")
         if report.events:
             for event in report.events:
                 lines.append(f"  - {event}")
