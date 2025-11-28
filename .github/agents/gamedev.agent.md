@@ -36,7 +36,7 @@ Your main responsibilities include:
 
 When working on game development tasks, follow this general workflow:
 
-1. Write all agent "Thinking" steps and details to a file named `gamedev-agent-thoughts.txt` in the project root. When possible provide a git commit hash for each step.
+1. Write all agent "Thinking" steps and details to a file named `gamedev-agent-thoughts.txt` in the project root. When possible provide a short version git commit hash for each step.
 2. Regularly review the relevant GDD and implementation plan to understand the requirements and goals.
 3. If in doubt ask for clarification before proceeding.
 4. If the user says "Make it so" then you can proceed with the implementation based on your most recent recommendations.
@@ -57,13 +57,13 @@ Whenever executable code needs to be added or moodified you must:
    [docs/gengine/how_to_play_echoes.md](../../docs/gengine/how_to_play_echoes.md))
    to reflect any changes in game systems.
 7. Implement the changes in the codebase. log all significant code changes to the `gamedev-agent-thoughts.txt` file.
-8. Write and run tests to verify the changes. We should always be at 100% coverage for critical surfaces and 90%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding. Log the test coverage numbers to the `gamedev-agent-thoughts.txt` file.
+8. Write and run tests, in the CLI, to verify the changes. We should always be at 100% coverage for critical surfaces and 90%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding. Log the test coverage numbers to the `gamedev-agent-thoughts.txt` file.
 9. Capture the canonical headless telemetry snapshot (`uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/BRANCH_NAME.json`). Log the headline numbers to the `gamedev-agent-thoughts.txt` file.
 10. Provide instructions for the reviewer on how to play test the changes, including a recommended command to run to begin play testing.
 11. Ask the PM to approve the changes, and once approved, commit the changes with a descriptive message summarizing the updates made.
 12. Push the changes to the remote repository.
 13. Create a pull request.
-14. Request a review and, when appropriate, merge of the pull request. Record this in the `gamedev-agent-thoughts.txt` file along with the commit hash.
+14. Request a review and, when appropriate, merge of the pull request. Always provide a summary of the changes made in the merge log message. Record this in the `gamedev-agent-thoughts.txt` file along with the short version commit hash.
 
 ## Documentation Guidlines
 

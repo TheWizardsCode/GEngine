@@ -59,10 +59,12 @@ run locally.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions.
-- Instrumented profiling that records per-tick durations (p50/p95/max) and
-  subsystem timing deltas directly into `GameState.metadata`. The CLI summary,
-  FastAPI `/metrics` response, and headless regression outputs all surface the
-  same block so designers can spot runaway ticks without attaching a profiler.
+- Instrumented profiling that records per-tick durations (p50/p95/max),
+  subsystem timing deltas, the slowest subsystem per tick, and anomaly tags
+  (subsystem errors, event-budget hits) directly into `GameState.metadata`. The
+  CLI summary, FastAPI `/metrics` response, and headless regression outputs all
+  surface the same block so designers can spot runaway ticks without attaching
+  a profiler.
 - Utility script `scripts/eoe_dump_state.py` for quick world inspection and
   snapshot exports.
 - Test suite covering content loading, snapshot round-trip, tick behavior, and
@@ -186,8 +188,8 @@ Available in-shell commands:
 - `help` – list commands and syntax.
 - `summary` – show city, tick, counts, stability, faction legitimacy, latest
   market prices, the `environment_impact` block, and the new profiling payload
-  (tick ms p50/p95/max plus the last subsystem timings) so you can gauge
-  systemic pressure before advancing time again.
+  (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and any
+  anomaly tags) so you can gauge systemic pressure before advancing time again.
 - `next` – advance exactly one tick with the inline report (no arguments). Use
   `run` for batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.
@@ -204,11 +206,13 @@ Available in-shell commands:
   Industrial Tier", making it easier to follow systemic reactions. Below the
   environment summary you will also see a "faction legitimacy" block (top ±3
   deltas each tick) and a `market -> energy:1.05, food:0.98, …` line whenever
-  the economy subsystem has published prices.
+  the economy subsystem has published prices. Any subsystem anomalies (errors
+  or event-budget clamps) are listed per tick so you can correlate warnings
+  with the profiling block.
 - `summary` now renders the latest `environment_impact` snapshot and the shared
   profiling block. Together they show scarcity pressure, whether diffusion
-  fired, pollution shifts from faction activity, plus tick-duration percentiles
-  and the slowest subsystems from the most recent tick.
+  fired, pollution shifts from faction activity, plus tick-duration percentiles,
+  the slowest subsystems, and any anomaly tags from the most recent tick.
 
 If scripted sequences exceed `limits.cli_script_command_cap` (default 200) the
 shell halts automatically and prints a safeguard warning so runaway loops do
@@ -301,9 +305,10 @@ uv run echoes-shell --service-url http://localhost:8000 --script "summary;run 5;
 `scripts/run_headless_sim.py` advances long simulations without interactive
 input. It chunks work to respect `limits.engine_max_ticks`, prints per-batch
 diagnostics to stderr, and writes a JSON summary that downstream tools can
-diff. The JSON now mirrors the CLI/service profiling block so you can inspect
-tick duration percentiles and the slowest subsystems alongside the usual
-agent/faction metrics.
+diff. The JSON mirrors the CLI/service profiling block (tick percentiles,
+slowest subsystem, anomaly tags) and now captures per-batch `tick_ms`,
+slowest-subsystem snapshots, and anomaly lists so nightly sweeps surface
+performance spikes immediately.
 
 ```bash
 uv run python scripts/run_headless_sim.py --world default --ticks 500 --lod coarse --output build/headless.json
@@ -318,8 +323,8 @@ Key flags:
 - `--config-root`: point at an alternate config folder (useful in CI).
 - `--output`: path for the structured summary (includes tick counts, timing
   percentiles, LOD mode, agent/faction action breakdowns, faction legitimacy
-  snapshot, the last economy report, and the shared profiling block with the
-  most recent subsystem timings).
+  snapshot, anomaly totals/examples, the last economy report, and the shared
+  profiling block with subsystem timings + slowest/anomaly metadata).
 
 ## Next Steps
 

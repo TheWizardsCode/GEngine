@@ -1,7 +1,8 @@
-"""Simple tick loop and environment updates for the Echoes prototype."""
+"""Tick orchestration and subsystem telemetry for the Echoes prototype."""
 
 from __future__ import annotations
 
+import logging
 import random
 from dataclasses import dataclass, field
 from time import perf_counter
@@ -9,6 +10,9 @@ from typing import Any, Dict, List, Sequence
 
 from ..core import GameState
 from ..settings import LodSettings, ProfilingSettings
+
+
+logger = logging.getLogger("gengine.echoes.sim.tick")
 
 
 @dataclass(slots=True)
@@ -26,6 +30,189 @@ class TickReport:
     economy: Dict[str, Any] = field(default_factory=dict)
     environment_impact: Dict[str, Any] = field(default_factory=dict)
     timings: Dict[str, float] = field(default_factory=dict)
+    anomalies: List[str] = field(default_factory=list)
+
+
+class TickCoordinator:
+    """Coordinates subsystem execution order and diagnostics per tick."""
+
+    def __init__(
+        self,
+        *,
+        agent_system: object | None = None,
+        faction_system: object | None = None,
+        economy_system: object | None = None,
+        environment_system: object | None = None,
+    ) -> None:
+        self._agent_system = agent_system
+        self._faction_system = faction_system
+        self._economy_system = economy_system
+        self._environment_system = environment_system
+
+    def run(
+        self,
+        state: GameState,
+        count: int = 1,
+        *,
+        seed: int | None = None,
+        lod: LodSettings | None = None,
+        profiling: ProfilingSettings | None = None,
+    ) -> List[TickReport]:
+        if count < 1:
+            raise ValueError("count must be >= 1")
+
+        rng_seed = seed if seed is not None else state.seed + state.tick
+        rng = random.Random(rng_seed)
+        scale = lod.scale if lod else 1.0
+        event_budget = lod.max_events_per_tick if lod else None
+        capture_timings = profiling.capture_subsystems if profiling is not None else True
+
+        reports: List[TickReport] = []
+        for _ in range(count):
+            reports.append(
+                self._execute_tick(
+                    state,
+                    rng,
+                    scale=scale,
+                    event_budget=event_budget,
+                    capture_timings=capture_timings,
+                )
+            )
+        return reports
+
+    def _execute_tick(
+        self,
+        state: GameState,
+        rng: random.Random,
+        *,
+        scale: float,
+        event_budget: int | None,
+        capture_timings: bool,
+    ) -> TickReport:
+        tick_start = perf_counter()
+        timings: Dict[str, float] = {}
+        events: List[str] = []
+        anomalies: List[str] = []
+        prev_legitimacy = {
+            faction_id: faction.legitimacy for faction_id, faction in state.factions.items()
+        }
+
+        agent_intents = self._invoke_subsystem(
+            "agent",
+            self._agent_system,
+            default=[],
+            timings=timings,
+            capture_timings=capture_timings,
+            anomalies=anomalies,
+            state=state,
+            rng=rng,
+        )
+        events.extend(_summarize_agent_actions(agent_intents))
+
+        faction_decisions = self._invoke_subsystem(
+            "faction",
+            self._faction_system,
+            default=[],
+            timings=timings,
+            capture_timings=capture_timings,
+            anomalies=anomalies,
+            state=state,
+            rng=rng,
+        )
+        events.extend(_summarize_faction_actions(faction_decisions))
+
+        economy_report = self._invoke_subsystem(
+            "economy",
+            self._economy_system,
+            default=None,
+            timings=timings,
+            capture_timings=capture_timings,
+            anomalies=anomalies,
+            state=state,
+            rng=rng,
+        )
+        events.extend(_summarize_economy(economy_report))
+
+        segment_start = perf_counter()
+        _update_resources(state, rng, events, scale)
+        if capture_timings:
+            timings["resources_ms"] = (perf_counter() - segment_start) * 1000
+
+        segment_start = perf_counter()
+        _update_district_modifiers(state, rng, events, scale)
+        if capture_timings:
+            timings["district_ms"] = (perf_counter() - segment_start) * 1000
+
+        env_result = self._invoke_subsystem(
+            "environment_system",
+            self._environment_system,
+            default=None,
+            timings=timings,
+            capture_timings=capture_timings,
+            anomalies=anomalies,
+            state=state,
+            rng=rng,
+            economy_report=economy_report,
+            faction_actions=faction_decisions,
+        )
+        impact_payload: Dict[str, Any] = {}
+        if env_result is not None:
+            if getattr(env_result, "events", None):
+                events.extend(env_result.events)
+            if hasattr(env_result, "to_dict"):
+                impact_payload = env_result.to_dict()
+                state.metadata["environment_impact"] = impact_payload
+        elif "environment_impact" in state.metadata:
+            impact_payload = state.metadata["environment_impact"]
+
+        segment_start = perf_counter()
+        _update_environment(state, rng, events, scale)
+        if capture_timings:
+            timings["environment_ms"] = (perf_counter() - segment_start) * 1000
+
+        tick_value = state.advance_ticks(1)
+        if _enforce_event_budget(events, event_budget):
+            anomalies.append("event_budget")
+
+        timings["tick_total_ms"] = (perf_counter() - tick_start) * 1000
+        return TickReport(
+            tick=tick_value,
+            events=events,
+            environment=_environment_snapshot(state),
+            districts=_district_snapshot(state),
+            agent_actions=[action.to_report() for action in agent_intents],
+            faction_actions=[action.to_report() for action in faction_decisions],
+            faction_legitimacy=_legitimacy_snapshot(state),
+            faction_legitimacy_delta=_legitimacy_delta(prev_legitimacy, state),
+            economy=economy_report.to_dict() if economy_report else {},
+            environment_impact=impact_payload,
+            timings=timings,
+            anomalies=anomalies,
+        )
+
+    def _invoke_subsystem(
+        self,
+        label: str,
+        system: object | None,
+        *,
+        default: Any,
+        timings: Dict[str, float],
+        capture_timings: bool,
+        anomalies: List[str],
+        **kwargs: Any,
+    ) -> Any:
+        if system is None:
+            return default
+        segment_start = perf_counter()
+        try:
+            return system.tick(**kwargs)
+        except Exception as exc:  # pragma: no cover - defensive safeguard
+            anomalies.append(f"{label}_error")
+            logger.exception("%s system failed", label)
+            return default
+        finally:
+            if capture_timings:
+                timings[f"{label}_ms"] = (perf_counter() - segment_start) * 1000
 
 
 def advance_ticks(
@@ -42,92 +229,19 @@ def advance_ticks(
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
-    if count < 1:
-        raise ValueError("count must be >= 1")
-
-    rng_seed = seed if seed is not None else state.seed + state.tick
-    rng = random.Random(rng_seed)
-    reports: List[TickReport] = []
-
-    scale = lod.scale if lod else 1.0
-    event_budget = lod.max_events_per_tick if lod else None
-
-    capture_timings = profiling.capture_subsystems if profiling is not None else True
-
-    for _ in range(count):
-        tick_start = perf_counter()
-        timings: Dict[str, float] = {}
-        events: List[str] = []
-        prev_legitimacy = {fid: faction.legitimacy for fid, faction in state.factions.items()}
-
-        segment_start = perf_counter()
-        agent_intents = _run_agent_system(agent_system, state, rng)
-        if capture_timings:
-            timings["agent_ms"] = (perf_counter() - segment_start) * 1000
-        events.extend(_summarize_agent_actions(agent_intents))
-        segment_start = perf_counter()
-        faction_decisions = _run_faction_system(faction_system, state, rng)
-        if capture_timings:
-            timings["faction_ms"] = (perf_counter() - segment_start) * 1000
-        events.extend(_summarize_faction_actions(faction_decisions))
-        segment_start = perf_counter()
-        economy_report = _run_economy_system(economy_system, state, rng)
-        if capture_timings:
-            timings["economy_ms"] = (perf_counter() - segment_start) * 1000
-        events.extend(_summarize_economy(economy_report))
-        segment_start = perf_counter()
-        _update_resources(state, rng, events, scale)
-        if capture_timings:
-            timings["resources_ms"] = (perf_counter() - segment_start) * 1000
-        segment_start = perf_counter()
-        _update_district_modifiers(state, rng, events, scale)
-        if capture_timings:
-            timings["district_ms"] = (perf_counter() - segment_start) * 1000
-        segment_start = perf_counter()
-        env_impact = _run_environment_system(
-            environment_system,
-            state,
-            rng,
-            economy_report,
-            faction_decisions,
-        )
-        if capture_timings:
-            timings["environment_system_ms"] = (
-                perf_counter() - segment_start
-            ) * 1000
-        impact_payload: Dict[str, Any] = {}
-        if env_impact is not None:
-            if getattr(env_impact, "events", None):
-                events.extend(env_impact.events)
-            if hasattr(env_impact, "to_dict"):
-                impact_payload = env_impact.to_dict()
-                state.metadata["environment_impact"] = impact_payload
-        elif "environment_impact" in state.metadata:
-            impact_payload = state.metadata["environment_impact"]
-        segment_start = perf_counter()
-        _update_environment(state, rng, events, scale)
-        if capture_timings:
-            timings["environment_ms"] = (perf_counter() - segment_start) * 1000
-        tick_value = state.advance_ticks(1)
-        _enforce_event_budget(events, event_budget)
-        timings["tick_total_ms"] = (perf_counter() - tick_start) * 1000
-        reports.append(
-            TickReport(
-                tick=tick_value,
-                events=events,
-                environment=_environment_snapshot(state),
-                districts=_district_snapshot(state),
-                agent_actions=[action.to_report() for action in agent_intents],
-                faction_actions=[action.to_report() for action in faction_decisions],
-                faction_legitimacy=_legitimacy_snapshot(state),
-                faction_legitimacy_delta=_legitimacy_delta(prev_legitimacy, state),
-                economy=economy_report.to_dict() if economy_report else {},
-                environment_impact=impact_payload,
-                timings=timings,
-            )
-        )
-
-    return reports
+    coordinator = TickCoordinator(
+        agent_system=agent_system,
+        faction_system=faction_system,
+        economy_system=economy_system,
+        environment_system=environment_system,
+    )
+    return coordinator.run(
+        state,
+        count=count,
+        seed=seed,
+        lod=lod,
+        profiling=profiling,
+    )
 
 
 def _clamp(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
@@ -244,58 +358,12 @@ def _average(values: Sequence[float]) -> float:
     return sum(items) / len(items)
 
 
-def _enforce_event_budget(events: List[str], budget: int | None) -> None:
+def _enforce_event_budget(events: List[str], budget: int | None) -> bool:
     if budget is None or len(events) <= budget:
-        return
+        return False
     del events[budget:]
     events.append("Additional events suppressed by LOD budget")
-
-
-def _run_agent_system(agent_system: object | None, state: GameState, rng: random.Random):
-    if agent_system is None:
-        return []
-    try:
-        return agent_system.tick(state, rng=rng)
-    except Exception:  # pragma: no cover - defensive safeguard
-        return []
-
-
-def _run_faction_system(faction_system: object | None, state: GameState, rng: random.Random):
-    if faction_system is None:
-        return []
-    try:
-        return faction_system.tick(state, rng=rng)
-    except Exception:  # pragma: no cover - defensive safeguard
-        return []
-
-
-def _run_economy_system(economy_system: object | None, state: GameState, rng: random.Random):
-    if economy_system is None:
-        return None
-    try:
-        return economy_system.tick(state, rng=rng)
-    except Exception:  # pragma: no cover - defensive safeguard
-        return None
-
-
-def _run_environment_system(
-    environment_system: object | None,
-    state: GameState,
-    rng: random.Random,
-    economy_report,
-    faction_actions,
-):
-    if environment_system is None:
-        return None
-    try:
-        return environment_system.tick(
-            state,
-            rng=rng,
-            economy_report=economy_report,
-            faction_actions=faction_actions,
-        )
-    except Exception:  # pragma: no cover - defensive safeguard
-        return None
+    return True
 
 
 def _summarize_agent_actions(actions: Sequence) -> List[str]:

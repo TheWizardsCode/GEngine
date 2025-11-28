@@ -32,7 +32,7 @@ and persist state.
 | Command                | Description                                                                                                                                                                                     |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `help`                 | Lists all available commands.                                                                                                                                                                   |
-| `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot, and the shared profiling block (tick ms p50/p95/max plus recent subsystem timings). |
+| `summary`              | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot, and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
 | `next`                 | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                |
 | `run <n>`              | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                        |
 | `map [district_id]`    | With no argument, prints a city-wide ASCII table including **district IDs** (e.g., `industrial-tier`). Provide an ID to see an in-depth panel for that district.                                |
@@ -173,8 +173,9 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   metadata. Inspect it via headless telemetry or by dumping the snapshot to see
   the latest pressure, diffusion flag, faction effects, per-district deltas, and
   emitted warnings while you tune. The `summary` command now prints this block
-  directly, alongside the profiling metrics, so designers can spot runaway
-  pollution or slow subsystems before advancing time.
+  directly, alongside profiling metrics that include tick percentiles, the
+  slowest subsystem, and any anomaly tags so designers can spot runaway
+  pollution or suspicious subsystem spikes before advancing time.
 - For rapid scenario sweeps, switch configs with
   `--config-root content/config/sweeps/high-pressure` (stress test),
   `.../cushioned` (long-form stability), or `.../profiling-history`
@@ -362,12 +363,13 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
   `limits.engine_max_ticks` batches and printing per-batch diagnostics to
   stderr.
 - Summaries include tick counts, total duration, LOD mode, the final
-  environment snapshot, and the profiling block (tick ms p50/p95/max plus the
-  most recent subsystem timings). The JSON now also tracks the number of agent
-  actions, faction actions, their respective breakdowns, faction legitimacy
-  snapshots, and the `last_economy` block so you can spot systemic shifts
-  between builds. Store the JSON outputs in version control to diff systemic
-  changes over time.
+  environment snapshot, and the profiling block (tick ms p50/p95/max, slowest
+  subsystem, and anomaly tags). The JSON now also tracks the number of agent
+  actions, faction actions, their respective breakdowns, per-batch `tick_ms`
+  plus slowest-subsystem snapshots, anomaly totals/examples, faction
+  legitimacy snapshots, and the `last_economy` block so you can spot systemic
+  shifts between builds. Store the JSON outputs in version control to diff
+  systemic changes over time.
 - Use `--seed` for deterministic comparisons and `--config-root` to point at a
   CI-specific configuration folder (high-pressure, cushioned, and profiling-
   history presets now live under `content/config/sweeps/`).

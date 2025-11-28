@@ -32,6 +32,7 @@ def test_tick_endpoint_advances_state() -> None:
     assert "economy" in first_report
     assert "environment_impact" in first_report
     assert "timings" in first_report
+    assert "anomalies" in first_report
 
 
 def test_state_endpoint_requires_district_id() -> None:
@@ -73,6 +74,7 @@ def test_metrics_endpoint_reports_environment() -> None:
     assert payload["tick"] == engine.state.tick
     assert "environment" in payload
     assert payload["profiling"]
+    assert "slowest_subsystem" in payload["profiling"]
 
 
 def test_tick_endpoint_rejects_large_requests() -> None:

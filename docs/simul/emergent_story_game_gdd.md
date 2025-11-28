@@ -349,18 +349,21 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - Important agents get deeper reasoning passes; background populations are approximated statistically.
 - Safeguards and profiling: `content/config/simulation.yml` configures the LOD
   mode (detailed/balanced/coarse), engine/service tick caps, CLI run/script
-  limits, and the profiling window. The engine now records tick-duration
-  percentiles and subsystem timings into shared metadata so the CLI summary,
-  FastAPI `/metrics`, and headless telemetry all surface the same block without
-  extra tooling. A guardrail regression matrix (documented in the plan/README)
+  limits, and the profiling window. A dedicated TickCoordinator now sequences
+  agents → factions → economy → environment, captures per-subsystem timings,
+  highlights the slowest subsystem, and tags anomalies (subsystem errors or
+  event-budget clamps) in shared metadata so the CLI summary, FastAPI
+  `/metrics`, and headless telemetry all surface the same block without extra
+  tooling. A guardrail regression matrix (documented in the plan/README)
   ties each cap to a pytest so QA can prove safeguards still trigger after any
   tuning passes, while the new `content/config/sweeps/profiling-history/`
   variant (history window = 240 ticks) lets designers sweep long burns to study
   percentile drift without editing the baseline config.
 - Headless regression driver: `scripts/run_headless_sim.py` executes long burns
-  in capped batches, prints batch diagnostics, and emits JSON summaries so
-  designers can compare macro metrics (agent/faction counts, legitimacy shifts,
-  economy tables, environment snapshots) between builds or automated sweeps.
+  in capped batches, prints batch diagnostics, and emits JSON summaries (tick
+  percentiles, slowest subsystem snapshots, anomaly totals/examples, faction
+  legitimacy, economy tables, environment snapshots) so designers can compare
+  macro metrics between builds or automated sweeps.
 
 **LLM Integration:**
 

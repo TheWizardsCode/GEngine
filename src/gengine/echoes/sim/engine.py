@@ -155,8 +155,16 @@ class SimEngine:
             for key, value in reports[-1].timings.items()
             if key != "tick_total_ms"
         }
+        slowest_entry: dict[str, float] | None = None
         if last_subsystems:
             profiling_payload["last_subsystem_ms"] = last_subsystems
+            slowest_name, slowest_value = max(last_subsystems.items(), key=lambda item: item[1])
+            slowest_entry = {
+                "name": slowest_name,
+                "ms": slowest_value,
+            }
+        profiling_payload["slowest_subsystem"] = slowest_entry
+        profiling_payload["anomalies"] = list(reports[-1].anomalies)
         self.state.metadata["profiling"] = profiling_payload
 
     @staticmethod

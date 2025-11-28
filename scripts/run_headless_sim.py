@@ -59,6 +59,11 @@ def run_headless_sim(
         "faction_action_breakdown": _faction_breakdown(reports),
     }
     if reports:
+        summary["anomalies"] = sum(len(report.anomalies) for report in reports)
+        summary["anomaly_examples"] = sorted(
+            {anomaly for report in reports for anomaly in report.anomalies}
+        )[:5]
+    if reports:
         summary["last_environment"] = reports[-1].environment
         summary["faction_legitimacy"] = reports[-1].faction_legitimacy
         summary["last_economy"] = reports[-1].economy
@@ -89,15 +94,25 @@ def _advance_in_batches(
         step = min(remaining, per_call_limit)
         step_reports = engine.advance_ticks(step, seed=active_seed)
         reports.extend(step_reports)
-        batches.append(
-            {
-                "batch": batch_index,
-                "ticks": len(step_reports),
-                "ending_tick": step_reports[-1].tick if step_reports else engine.state.tick,
-                "agent_actions": sum(len(report.agent_actions) for report in step_reports),
-                "faction_actions": sum(len(report.faction_actions) for report in step_reports),
-            }
-        )
+        last_report = step_reports[-1] if step_reports else None
+        batch_payload = {
+            "batch": batch_index,
+            "ticks": len(step_reports),
+            "ending_tick": last_report.tick if last_report else engine.state.tick,
+            "agent_actions": sum(len(report.agent_actions) for report in step_reports),
+            "faction_actions": sum(len(report.faction_actions) for report in step_reports),
+        }
+        if last_report is not None:
+            batch_payload["tick_ms"] = round(
+                last_report.timings.get("tick_total_ms", 0.0), 2
+            )
+            batch_payload["slowest_subsystem"] = _slowest_subsystem(last_report)
+            batch_payload["anomalies"] = list(last_report.anomalies)
+        else:
+            batch_payload["tick_ms"] = 0.0
+            batch_payload["slowest_subsystem"] = None
+            batch_payload["anomalies"] = []
+        batches.append(batch_payload)
         _emit_batch_log(batch_index, step_reports)
         remaining -= step
         batch_index += 1
@@ -144,6 +159,18 @@ def _load_config(config_root: Path | None, lod_mode: str | None) -> SimulationCo
         lod = config.lod.model_copy(update={"mode": lod_mode})
         config = config.model_copy(update={"lod": lod})
     return config
+
+
+def _slowest_subsystem(report: TickReport) -> dict[str, float] | None:
+    candidates = {
+        name: value
+        for name, value in report.timings.items()
+        if name.endswith("_ms") and name != "tick_total_ms"
+    }
+    if not candidates:
+        return None
+    name, value = max(candidates.items(), key=lambda item: item[1])
+    return {"name": name, "ms": round(value, 2)}
 
 
 def main(argv: Sequence[str] | None = None) -> int:

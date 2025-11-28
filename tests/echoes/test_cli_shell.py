@@ -321,6 +321,8 @@ def test_render_summary_surfaces_profiling() -> None:
             "tick_ms_p95": 2.1,
             "tick_ms_max": 2.5,
             "last_subsystem_ms": {"agent_ms": 0.5, "economy_ms": 0.6},
+            "slowest_subsystem": {"name": "economy_ms", "ms": 0.6},
+            "anomalies": ["agent_error"],
         },
     }
 
@@ -328,6 +330,8 @@ def test_render_summary_surfaces_profiling() -> None:
 
     assert "profiling" in rendered
     assert "tick ms" in rendered
+    assert "slowest" in rendered
+    assert "anomalies" in rendered
 
 
 def test_game_state_summary_includes_profiling_metadata() -> None:

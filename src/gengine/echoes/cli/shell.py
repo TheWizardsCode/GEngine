@@ -248,6 +248,17 @@ def _render_summary(summary: dict[str, object]) -> str:
                 for name, value in list(last_subs.items())[:3]
             )
             lines.append(f"    last subsystems: {preview}")
+        slowest = profiling.get("slowest_subsystem")
+        if isinstance(slowest, dict) and slowest.get("name"):
+            lines.append(
+                "    slowest: "
+                f"{slowest['name']} {slowest.get('ms', 0.0):.2f}ms"
+            )
+        anomalies = profiling.get("anomalies") or []
+        if anomalies:
+            lines.append(
+                f"    anomalies: {', '.join(anomalies[:3])}"
+            )
     return "\n".join(lines)
 
 
@@ -280,6 +291,8 @@ def _render_reports(reports: Sequence[TickReport]) -> str:
         if report.events:
             for event in report.events:
                 lines.append(f"  - {event}")
+        if report.anomalies:
+            lines.append(f"  anomalies: {', '.join(report.anomalies)}")
     return "\n".join(lines)
 
 

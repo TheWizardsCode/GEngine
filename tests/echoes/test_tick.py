@@ -88,6 +88,8 @@ def test_profiling_metadata_tracks_percentiles() -> None:
     assert profiling["tick_ms_p50"] > 0
     assert profiling["history_len"] >= 1
     assert profiling["last_subsystem_ms"]
+    assert "slowest_subsystem" in profiling
+    assert "anomalies" in profiling
 
 
 def test_engine_enforces_tick_limit() -> None:

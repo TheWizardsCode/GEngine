@@ -210,6 +210,10 @@ Instrumentation deliverables:
   the balanced baseline while expanding `profiling.history_window` to 240 ticks
   so nightly headless runs can compare short-window versus long-window
   percentile smoothing without editing the default config.
+- TickCoordinator: orchestrates agents → factions → economy → environment in a
+  single module, captures subsystem timings, names the slowest subsystem, and
+  emits anomaly tags (subsystem errors/event-budget hits) that flow into the
+  CLI summary, `/metrics`, and headless telemetry payloads.
 - Guardrail verification matrix:
 
   | Surface / Safeguard      | Config knob                     | Enforcement behavior                   | Regression hook                                                                  |
