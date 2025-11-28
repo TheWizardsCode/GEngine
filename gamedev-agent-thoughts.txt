@@ -111,3 +111,4 @@
 [2025-11-28 17:32 UTC] HEAD af39b9e: Ran `uv run --group dev pytest --cov=gengine --cov-report=term-missing` (79 passed, 95% overall coverage; CLI shell 93%, focus manager 94%) to validate the M4.6 branch post-doc updates.
 [2025-11-28 17:36 UTC] HEAD af39b9e: Captured canonical telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-6-focus-budget-final.json` (stability 1.0, unrest 0.41, pollution 0.58, anomalies 0, tick_p95 0.19ms, suppressed 359) for the M4.6 deliverable.
 [2025-11-28 17:40 UTC] HEAD (pending): Prepared final "Deliver M4.6 focus-aware narration" commit covering focus manager code, docs, tests, configs, and telemetry artifacts.
+[2025-11-28 17:44 UTC] HEAD cb9badc (main): Fast-forwarded main with feature/m4-6-focus-budget after confirming tests (79 green, 95% cov) and capturing telemetry (ticks=200, anomalies=0).
