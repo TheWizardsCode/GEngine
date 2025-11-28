@@ -42,3 +42,4 @@
 [2025-11-28 20:18 UTC] HEAD e9b4e7b: Ran cushioned sweep (content/config/sweeps/cushioned) -> stability/unrest held near 1.0/0.18, pollution settled ~0.08 with higher invest relief (build/sweep-cushioned.json) marking a safe operating range.
 [2025-11-28 20:22 UTC] HEAD 0e72acd: Committed diffusion/faction environment work plus sweep configs (`Link environment impact to factions and add sweeps`) to lock in the latest telemetry + documentation updates.
 [2025-11-28 11:53 UTC] Preparing to merge feature/m4-3-economy back into main per PM request and outline the follow-up prep work for M3.4 safeguards before switching focus.
+[2025-11-28 11:54 UTC] HEAD bd17746 (main): Fast-forward merged feature/m4-3-economy into main so environment + economy upgrades, docs, and sweeps are now on the baseline branch.
