@@ -186,6 +186,21 @@ python src/tools/preview_seed.py --seed blackout-01` to preview story beats.
   environment snapshot) for regression diffs or CI sweeps. Supports snapshot
   bootstrap, seed overrides, and alternate config roots.
 
+#### M3.4 Safeguards & LOD – Refresh Prep
+
+- Audit every guardrail surface (SimEngine caps, CLI `run` guard, service tick
+  limits, headless script batches) against the latest config to confirm the
+  values align with Phase 4 loads and note any deltas that need designer signoff.
+- Extend profiling hooks so the CLI/service/headless summaries capture tick
+  duration percentiles plus subsystem timing, enabling faster detection of
+  runaway scenarios before LOD shifts.
+- Draft a regression matrix that pairs each safeguard with a pytest or scenario
+  test (for example, CLI caps, service HTTP 400 responses, long-run script
+  throttling) so reopening the milestone has a clear verification checklist.
+- Stage documentation updates (README, gameplay guide, Exec Docs) that explain
+  how to tune the guardrails per environment; once the refresh lands, the docs
+  can be merged without scrambling for context.
+
 ### Phase 4 – Agents, Factions, Economy, Environment
 
 - **M4.1 Agent AI** (1-1.5 days): extend agent traits/goals and implement

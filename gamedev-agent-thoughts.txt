@@ -43,3 +43,5 @@
 [2025-11-28 20:22 UTC] HEAD 0e72acd: Committed diffusion/faction environment work plus sweep configs (`Link environment impact to factions and add sweeps`) to lock in the latest telemetry + documentation updates.
 [2025-11-28 11:53 UTC] Preparing to merge feature/m4-3-economy back into main per PM request and outline the follow-up prep work for M3.4 safeguards before switching focus.
 [2025-11-28 11:54 UTC] HEAD bd17746 (main): Fast-forward merged feature/m4-3-economy into main so environment + economy upgrades, docs, and sweeps are now on the baseline branch.
+[2025-11-28 11:54 UTC] Created branch feature/m3-4-prep from main to capture renewed safeguards/LOD work for the requested M3.4 prep cycle.
+[2025-11-28 11:55 UTC] Drafted an M3.4 refresh prep checklist inside docs/simul/emergent_story_game_implementation_plan.md covering guardrail audits, profiling hooks, regression matrix, and doc updates so execution can start immediately once scoped.
