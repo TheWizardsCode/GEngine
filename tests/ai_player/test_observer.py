@@ -1,0 +1,257 @@
+"""Tests for the AI Player Observer module."""
+
+from __future__ import annotations
+
+import pytest
+
+from gengine.ai_player import Observer, ObserverConfig, TrendAnalysis
+from gengine.ai_player.observer import create_observer_from_engine
+from gengine.echoes.sim import SimEngine
+
+
+class TestObserverConfig:
+    """Tests for ObserverConfig dataclass."""
+
+    def test_default_config(self) -> None:
+        config = ObserverConfig()
+        assert config.tick_budget == 100
+        assert config.analysis_interval == 10
+        assert config.stability_alert_threshold == 0.5
+        assert config.legitimacy_swing_threshold == 0.1
+        assert config.log_natural_language is True
+
+    def test_custom_config(self) -> None:
+        config = ObserverConfig(
+            tick_budget=50,
+            analysis_interval=5,
+            stability_alert_threshold=0.3,
+            legitimacy_swing_threshold=0.2,
+            log_natural_language=False,
+        )
+        assert config.tick_budget == 50
+        assert config.analysis_interval == 5
+        assert config.stability_alert_threshold == 0.3
+        assert config.legitimacy_swing_threshold == 0.2
+        assert config.log_natural_language is False
+
+
+class TestTrendAnalysis:
+    """Tests for TrendAnalysis dataclass."""
+
+    def test_to_dict_includes_all_fields(self) -> None:
+        trend = TrendAnalysis(
+            metric_name="stability",
+            start_value=0.8,
+            end_value=0.6,
+            delta=-0.2,
+            trend="decreasing",
+            samples=[0.8, 0.75, 0.7, 0.65, 0.6],
+            alert="stability dropped below 0.7",
+        )
+        result = trend.to_dict()
+        assert result["metric_name"] == "stability"
+        assert result["start_value"] == 0.8
+        assert result["end_value"] == 0.6
+        assert result["delta"] == -0.2
+        assert result["trend"] == "decreasing"
+        assert len(result["samples"]) == 5
+        assert result["alert"] is not None
+
+    def test_to_dict_rounds_values(self) -> None:
+        trend = TrendAnalysis(
+            metric_name="test",
+            start_value=0.123456789,
+            end_value=0.987654321,
+            delta=0.864197532,
+            trend="increasing",
+            samples=[0.123456789, 0.555555555, 0.987654321],
+        )
+        result = trend.to_dict()
+        assert result["start_value"] == 0.1235
+        assert result["end_value"] == 0.9877
+        assert result["delta"] == 0.8642
+
+
+class TestObserver:
+    """Tests for the Observer class."""
+
+    def test_requires_engine_or_client(self) -> None:
+        with pytest.raises(ValueError, match="Must provide either engine or client"):
+            Observer()
+
+    def test_rejects_both_engine_and_client(self) -> None:
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+
+        class FakeClient:
+            pass
+
+        with pytest.raises(ValueError, match="Provide only one of engine or client"):
+            Observer(engine=engine, client=FakeClient())  # type: ignore
+
+    def test_observe_with_local_engine(self) -> None:
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+        config = ObserverConfig(tick_budget=5, analysis_interval=2)
+        observer = Observer(engine=engine, config=config)
+
+        report = observer.observe()
+
+        assert report.ticks_observed == 5
+        assert report.end_tick > report.start_tick
+        assert isinstance(report.stability_trend, TrendAnalysis)
+        assert isinstance(report.faction_swings, dict)
+        assert isinstance(report.alerts, list)
+        assert isinstance(report.commentary, list)
+
+    def test_observe_respects_tick_override(self) -> None:
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+        config = ObserverConfig(tick_budget=100, analysis_interval=5)
+        observer = Observer(engine=engine, config=config)
+
+        report = observer.observe(ticks=3)
+
+        assert report.ticks_observed == 3
+
+    def test_observe_rejects_zero_ticks(self) -> None:
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+        observer = Observer(engine=engine)
+
+        with pytest.raises(ValueError, match="Tick count must be at least 1"):
+            observer.observe(ticks=0)
+
+    def test_report_to_dict_structure(self) -> None:
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+        config = ObserverConfig(tick_budget=3, analysis_interval=1)
+        observer = Observer(engine=engine, config=config)
+
+        report = observer.observe()
+        result = report.to_dict()
+
+        assert "ticks_observed" in result
+        assert "start_tick" in result
+        assert "end_tick" in result
+        assert "stability_trend" in result
+        assert "faction_swings" in result
+        assert "story_seeds_activated" in result
+        assert "alerts" in result
+        assert "commentary" in result
+        assert "environment_summary" in result
+        assert "tick_reports_count" in result
+
+    def test_stability_trend_detection(self) -> None:
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        increasing = observer._analyze_trend("test", [0.3, 0.4, 0.5, 0.6])
+        assert increasing.trend == "increasing"
+        assert increasing.delta > 0
+
+        decreasing = observer._analyze_trend("test", [0.8, 0.7, 0.6, 0.5])
+        assert decreasing.trend == "decreasing"
+        assert decreasing.delta < 0
+
+        stable = observer._analyze_trend("test", [0.5, 0.505, 0.498, 0.502])
+        assert stable.trend == "stable"
+
+    def test_stability_alert_triggered(self) -> None:
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig(stability_alert_threshold=0.5)
+
+        trend = observer._analyze_trend(
+            "stability",
+            [0.6, 0.5, 0.4, 0.3],
+            alert_threshold=0.5,
+            alert_direction="below",
+        )
+
+        assert trend.alert is not None
+        assert "dropped below" in trend.alert
+
+    def test_faction_swing_alert(self) -> None:
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig(legitimacy_swing_threshold=0.1)
+
+        trend = observer._analyze_trend(
+            "faction_test_legitimacy",
+            [0.5, 0.4, 0.3, 0.2],
+            swing_threshold=0.1,
+        )
+
+        assert trend.alert is not None
+        assert "lost" in trend.alert
+
+    def test_empty_samples_handled(self) -> None:
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        trend = observer._analyze_trend("test", [])
+
+        assert trend.start_value == 0.0
+        assert trend.end_value == 0.0
+        assert trend.trend == "stable"
+
+
+class TestObserverDetectsStabilityCrash:
+    """Integration test: Observer detects scripted stability crash."""
+
+    def test_observer_detects_stability_decline(self) -> None:
+        """Observer should detect and alert when stability drops significantly."""
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+
+        engine.state.environment.stability = 0.9
+
+        config = ObserverConfig(
+            tick_budget=20,
+            analysis_interval=5,
+            stability_alert_threshold=0.6,
+        )
+        observer = Observer(engine=engine, config=config)
+
+        report = observer.observe()
+
+        assert report.stability_trend.start_value >= 0.5
+        assert report.stability_trend.end_value <= 1.0
+        assert isinstance(report.stability_trend.delta, float)
+
+        assert any(
+            "stability" in c.lower()
+            for c in report.commentary
+        ), "Commentary should mention stability"
+
+    def test_observer_tracks_faction_legitimacy(self) -> None:
+        """Observer should track faction legitimacy changes."""
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+
+        config = ObserverConfig(tick_budget=10, analysis_interval=5)
+        observer = Observer(engine=engine, config=config)
+
+        report = observer.observe()
+
+        assert len(report.faction_swings) > 0, "Should track at least one faction"
+        for _faction_id, trend in report.faction_swings.items():
+            assert isinstance(trend.start_value, float)
+            assert isinstance(trend.end_value, float)
+            assert trend.metric_name.startswith("faction_")
+
+
+class TestCreateObserverHelpers:
+    """Tests for observer factory functions."""
+
+    def test_create_observer_from_engine(self) -> None:
+        observer = create_observer_from_engine(world="default")
+
+        assert observer._engine is not None
+        assert observer._client is None
+        assert observer._is_local is True
+
+    def test_create_observer_with_custom_config(self) -> None:
+        config = ObserverConfig(tick_budget=25)
+        observer = create_observer_from_engine(world="default", config=config)
+
+        assert observer.config.tick_budget == 25

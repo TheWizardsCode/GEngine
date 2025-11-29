@@ -143,16 +143,24 @@ multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guid
   `build/feature-m5-4-post-mortem.json` capture plus
   `jq '.post_mortem' ...` diff workflow is documented across README/GDD/how-to
   so reviewers can audit end-of-run deltas without replaying ticks.
+- ✅ **Phase 9 M9.1 – AI Player Observer** shipped: deterministic observer
+  implementation at `src/gengine/ai_player/observer.py` connects via local
+  `SimEngine` or remote `SimServiceClient`, advances ticks, analyzes stability
+  trends and faction legitimacy swings, tracks story seed activations, and
+  generates structured JSON reports with natural language commentary. The CLI
+  runner at `scripts/run_ai_observer.py` supports configurable tick budgets,
+  analysis intervals, and alert thresholds.
 
 ## Repository Layout
 
 ```
-content/                 Authored YAML worlds and (future) story seeds
-scripts/                 Developer utilities (state dump, headless drivers, ...)
-src/gengine/echoes/core  Data models and GameState container
-src/gengine/echoes/sim   Tick loop and future subsystems
-src/gengine/echoes/cli   CLI shell + helpers
-tests/                   Pytest suites (content, tick loop, CLI shell)
+content/                  Authored YAML worlds and (future) story seeds
+scripts/                  Developer utilities (state dump, headless drivers, AI observer, ...)
+src/gengine/ai_player/    AI Player testing/validation module
+src/gengine/echoes/core   Data models and GameState container
+src/gengine/echoes/sim    Tick loop and future subsystems
+src/gengine/echoes/cli    CLI shell + helpers
+tests/                    Pytest suites (content, tick loop, CLI shell, AI player)
 ```
 
 ## Prerequisites
@@ -538,6 +546,80 @@ Key flags:
   archive used by the narrator, plus the new `post_mortem` recap that mirrors
   the CLI/service `postmortem` output).
 
+## AI Player Observer
+
+The AI Player Observer (`src/gengine/ai_player/observer.py`) is a testing and
+validation tool that programmatically analyzes simulation dynamics. It connects
+via `SimServiceClient` (remote) or local `SimEngine`, advances ticks, and
+generates structured reports on:
+
+- **Stability trends**: Tracks overall city stability with configurable alert
+  thresholds
+- **Faction legitimacy swings**: Monitors faction influence changes and flags
+  significant shifts
+- **Story seed activations**: Records which narrative seeds trigger during
+  observation
+
+### Running the AI Observer
+
+Basic observation with JSON output:
+
+```bash
+uv run python scripts/run_ai_observer.py --world default --ticks 100 --output build/observation.json
+```
+
+Verbose mode with natural language commentary:
+
+```bash
+uv run python scripts/run_ai_observer.py --world default --ticks 50 --verbose
+```
+
+Connect to a running simulation service:
+
+```bash
+uv run python scripts/run_ai_observer.py --service-url http://localhost:8000 --ticks 50
+```
+
+### Observer Configuration
+
+Key flags:
+
+- `--ticks/-t`: Number of ticks to observe (default: 100)
+- `--analysis-interval`: Ticks between state snapshots (default: 10)
+- `--stability-threshold`: Alert when stability drops below this (default: 0.5)
+- `--legitimacy-threshold`: Alert when faction swings exceed this (default: 0.1)
+- `--output/-o`: Path to write JSON report
+- `--verbose/-v`: Print natural language commentary
+
+### Programmatic Usage
+
+```python
+from gengine.ai_player import Observer, ObserverConfig
+from gengine.ai_player.observer import create_observer_from_engine
+
+# Create observer with custom config
+config = ObserverConfig(
+    tick_budget=50,
+    analysis_interval=10,
+    stability_alert_threshold=0.5,
+)
+observer = create_observer_from_engine(world="default", config=config)
+report = observer.observe()
+
+# Access structured analysis
+print(report.stability_trend.to_dict())
+print(report.commentary)
+```
+
+The Observer output includes:
+
+- `stability_trend`: Start/end values, delta, trend direction, alert status
+- `faction_swings`: Per-faction legitimacy changes with swing detection
+- `story_seeds_activated`: List of triggered narrative seeds with tick numbers
+- `alerts`: Critical warnings (e.g., stability crash)
+- `commentary`: Natural language summary of the observation period
+- `environment_summary`: Final environment metrics
+
 ## Next Steps
 
 1. **Phase 6 M6.1 – Gateway service** – stand up the FastAPI/WebSocket gateway
@@ -546,11 +628,10 @@ Key flags:
 2. **Phase 6 M6.2 – Enhanced ASCII views** – expand CLI/gateway overlays with
    richer district tables and telemetry inspectors that can be reused across
    local shell and remote sessions.
-3. **Phase 9 M9.1 – AI Player Observer** (parallel track) – implement
-   `src/gengine/ai_player/observer.py` plus its CLI runner so automated playtests
-   can analyze stability trends, faction swings, and pacing logs. See the Phase 9
-   section of the implementation plan for the full observer → actor → LLM
-   roadmap.
+3. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
+   heuristic decision logic for automated playtesting (depends on Phase 6
+   action routing). See the Phase 9 section of the implementation plan for the
+   full observer → actor → LLM roadmap.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).
