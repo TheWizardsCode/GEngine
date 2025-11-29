@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Sequence
 from ..core import GameState
 from ..settings import LodSettings, ProfilingSettings
 from .director import DirectorBridge, NarrativeDirector
+from .explanations import ExplanationsManager
 from .focus import FocusBudgetResult, FocusManager, NarrativeEvent
 
 
@@ -54,6 +55,7 @@ class TickCoordinator:
         focus_manager: FocusManager | None = None,
         director_bridge: DirectorBridge | None = None,
         narrative_director: NarrativeDirector | None = None,
+        explanations_manager: ExplanationsManager | None = None,
     ) -> None:
         self._agent_system = agent_system
         self._faction_system = faction_system
@@ -62,6 +64,7 @@ class TickCoordinator:
         self._focus_manager = focus_manager or FocusManager()
         self._director_bridge = director_bridge
         self._narrative_director = narrative_director
+        self._explanations_manager = explanations_manager
 
     def run(
         self,
@@ -93,6 +96,7 @@ class TickCoordinator:
                     focus_manager=self._focus_manager,
                     director_bridge=self._director_bridge,
                     narrative_director=self._narrative_director,
+                    explanations_manager=self._explanations_manager,
                 )
             )
         return reports
@@ -108,6 +112,7 @@ class TickCoordinator:
         focus_manager: FocusManager,
         director_bridge: DirectorBridge | None,
         narrative_director: NarrativeDirector | None,
+        explanations_manager: ExplanationsManager | None,
     ) -> TickReport:
         tick_start = perf_counter()
         timings: Dict[str, float] = {}
@@ -115,6 +120,12 @@ class TickCoordinator:
         anomalies: List[str] = []
         prev_legitimacy = {
             faction_id: faction.legitimacy for faction_id, faction in state.factions.items()
+        }
+        prev_environment = {
+            "stability": state.environment.stability,
+            "unrest": state.environment.unrest,
+            "pollution": state.environment.pollution,
+            "biodiversity": state.environment.biodiversity,
         }
 
         agent_intents = self._invoke_subsystem(
@@ -213,6 +224,25 @@ class TickCoordinator:
             director_analysis = narrative_director.evaluate(state, director_snapshot)
             director_events = list(director_analysis.get("director_events") or [])
 
+        # Record explanations for causal queries
+        faction_deltas = _legitimacy_delta(prev_legitimacy, state)
+        environment_delta = {
+            metric: round(getattr(state.environment, metric) - prev_environment[metric], 4)
+            for metric in prev_environment
+        }
+        if explanations_manager is not None:
+            explanations_manager.record_tick(
+                state,
+                tick=tick_value,
+                environment_delta=environment_delta,
+                faction_deltas=faction_deltas,
+                agent_actions=[action.to_report() for action in agent_intents],
+                faction_actions=[action.to_report() for action in faction_decisions],
+                economy_report=economy_report.to_dict() if economy_report else None,
+                environment_impact=impact_payload,
+                director_events=director_events,
+            )
+
         timings["tick_total_ms"] = (perf_counter() - tick_start) * 1000
         return TickReport(
             tick=tick_value,
@@ -224,7 +254,7 @@ class TickCoordinator:
             agent_actions=[action.to_report() for action in agent_intents],
             faction_actions=[action.to_report() for action in faction_decisions],
             faction_legitimacy=_legitimacy_snapshot(state),
-            faction_legitimacy_delta=_legitimacy_delta(prev_legitimacy, state),
+            faction_legitimacy_delta=faction_deltas,
             economy=economy_report.to_dict() if economy_report else {},
             environment_impact=impact_payload,
             timings=timings,
@@ -274,6 +304,7 @@ def advance_ticks(
     focus_manager: FocusManager | None = None,
     director_bridge: DirectorBridge | None = None,
     narrative_director: NarrativeDirector | None = None,
+    explanations_manager: ExplanationsManager | None = None,
 ) -> List[TickReport]:
     """Advance ``state`` by ``count`` ticks, returning per-tick reports."""
 
@@ -285,6 +316,7 @@ def advance_ticks(
         focus_manager=focus_manager,
         director_bridge=director_bridge,
         narrative_director=narrative_director,
+        explanations_manager=explanations_manager,
     )
     return coordinator.run(
         state,

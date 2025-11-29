@@ -404,6 +404,20 @@ seeds` block that lists which seeds attached, their target districts, and why
   grab an end-of-run epilogue without exporting the entire snapshot. It pulls
   from the same metadata surfaced via FastAPI `/state?detail=post-mortem` and
   headless telemetry.
+- `timeline [count]` – show recent causal events in the simulation. Each tick
+  entry lists key changes (stability shifts, faction actions, story seed
+  activations) along with agent reasoning summaries so testers can trace
+  what happened and why. This is part of the M7.2 explanations system.
+- `explain <type> <id>` – query detailed explanations for a specific entity.
+  Types include `faction`, `agent`, `district`, and `metric`. For example:
+  - `explain faction union-of-flux` shows legitimacy trend, recent actions
+  - `explain agent agent-1` shows reasoning factors, needs, goals
+  - `explain district industrial-tier` shows modifiers, faction activity
+  - `explain metric stability` shows contributing causes and delta history
+- `why <query>` – answer a natural language style query about the simulation.
+  Examples: `why stability`, `why did unrest rise`, `why union-of-flux`.
+  The system searches for matching entities/metrics and returns causal
+  explanations including contributing factors and recent events.
 - `save <path>` – write the current snapshot as JSON.
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot (local engine mode only).

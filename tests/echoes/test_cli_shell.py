@@ -1165,3 +1165,170 @@ def test_shell_rich_map_command() -> None:
     assert result.output
     # Rich map should have visual elements
     assert "City Map" in result.output or "District" in result.output
+
+
+# Tests for M7.2 Explanations CLI commands
+
+def test_timeline_command() -> None:
+    """Test the timeline CLI command."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(5)  # Generate some history
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("timeline")
+    assert result.output
+    assert "Causal timeline" in result.output or "No timeline data" in result.output
+
+
+def test_timeline_command_with_count() -> None:
+    """Test the timeline command with a count argument."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(10)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("timeline 3")
+    assert result.output
+    assert "timeline" in result.output.lower()
+
+
+def test_timeline_command_invalid_count() -> None:
+    """Test the timeline command with invalid count."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("timeline abc")
+    assert "Usage" in result.output
+
+
+def test_explain_command_metric() -> None:
+    """Test the explain command for metrics."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(5)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("explain metric stability")
+    assert result.output
+    assert "stability" in result.output.lower()
+
+
+def test_explain_command_faction() -> None:
+    """Test the explain command for factions."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(5)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("explain faction union-of-flux")
+    assert result.output
+    # Should have faction info or error about unknown faction
+    assert "Faction" in result.output or "Unknown" in result.output
+
+
+def test_explain_command_agent() -> None:
+    """Test the explain command for agents."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(5)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    # Get a valid agent ID from the state
+    agent_ids = list(engine.state.agents.keys())
+    if agent_ids:
+        result = shell.execute(f"explain agent {agent_ids[0]}")
+        assert result.output
+        assert "Agent" in result.output or "Unknown" in result.output
+
+
+def test_explain_command_district() -> None:
+    """Test the explain command for districts."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(5)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("explain district industrial-tier")
+    assert result.output
+    assert "District" in result.output or "Unknown" in result.output
+
+
+def test_explain_command_missing_args() -> None:
+    """Test the explain command with missing arguments."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("explain")
+    assert "Usage" in result.output
+
+
+def test_explain_command_unknown_type() -> None:
+    """Test the explain command with unknown entity type."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("explain unknown xyz")
+    assert "Unknown entity type" in result.output
+
+
+def test_why_command() -> None:
+    """Test the why CLI command."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(5)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("why stability")
+    assert result.output
+    # Should contain analysis or suggestions
+    assert "stability" in result.output.lower() or "Tip" in result.output
+
+
+def test_why_command_faction_query() -> None:
+    """Test the why command with a faction query."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(5)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("why union-of-flux")
+    assert result.output
+
+
+def test_why_command_missing_query() -> None:
+    """Test the why command with no query."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("why")
+    assert "Usage" in result.output
+
+
+def test_help_includes_new_commands() -> None:
+    """Test that help includes the new explanation commands."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    result = shell.execute("help")
+    assert "timeline" in result.output
+    assert "explain" in result.output
+    assert "why" in result.output

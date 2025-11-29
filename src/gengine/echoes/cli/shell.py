@@ -64,6 +64,15 @@ class ShellBackend:
     def post_mortem(self) -> dict[str, object]:  # pragma: no cover
         raise NotImplementedError
 
+    def query_timeline(self, count: int = 10) -> List[dict[str, object]]:  # pragma: no cover
+        raise NotImplementedError
+
+    def explain(self, entity_type: str, entity_id: str) -> dict[str, object]:  # pragma: no cover
+        raise NotImplementedError
+
+    def why(self, query: str) -> dict[str, object]:  # pragma: no cover
+        raise NotImplementedError
+
     def close(self) -> None:  # pragma: no cover - optional cleanup
         """Hook for releasing backend resources (network clients, etc.)."""
         return None
@@ -111,6 +120,23 @@ class LocalBackend(ShellBackend):
 
     def post_mortem(self) -> dict[str, object]:
         return self.engine.query_view("post-mortem")
+
+    def query_timeline(self, count: int = 10) -> List[dict[str, object]]:
+        return self.engine.query_timeline(count)
+
+    def explain(self, entity_type: str, entity_id: str) -> dict[str, object]:
+        if entity_type == "faction":
+            return self.engine.explain_faction(entity_id)
+        if entity_type == "agent":
+            return self.engine.explain_agent(entity_id)
+        if entity_type == "district":
+            return self.engine.explain_district(entity_id)
+        if entity_type == "metric":
+            return self.engine.explain_metric(entity_id)
+        return {"error": f"Unknown entity type '{entity_type}'"}
+
+    def why(self, query: str) -> dict[str, object]:
+        return self.engine.why(query)
 
     def close(self) -> None:  # pragma: no cover - nothing to release
         return None
@@ -164,6 +190,20 @@ class ServiceBackend(ShellBackend):
         payload = self.client.state("post-mortem")
         return payload.get("data", {})
 
+    def query_timeline(self, count: int = 10) -> List[dict[str, object]]:
+        # Timeline data is included in the summary under explanation_timeline_history
+        payload = self.client.state("summary")["data"]
+        history = payload.get("explanation_timeline_history") or []
+        return list(history[-count:])
+
+    def explain(self, entity_type: str, entity_id: str) -> dict[str, object]:
+        # Explanations require local backend for now
+        raise NotImplementedError("Explanations require local backend")
+
+    def why(self, query: str) -> dict[str, object]:
+        # Why queries require local backend for now
+        raise NotImplementedError("Why queries require local backend")
+
     def close(self) -> None:
         self.client.close()
 
@@ -199,7 +239,8 @@ class EchoesShell:
     def _cmd_help(self, _: Sequence[str]) -> CommandResult:
         return CommandResult(
             "Available commands: summary, next [n], run <n>, map [district], focus [district|clear], "
-            "history [count], director [count], postmortem, save <path>, load world <name>|snapshot <path>, help, exit"
+            "history [count], director [count], postmortem, timeline [count], explain <type> <id>, "
+            "why <query>, save <path>, load world <name>|snapshot <path>, help, exit"
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
@@ -291,6 +332,50 @@ class EchoesShell:
         if not payload:
             return CommandResult("Post-mortem summary unavailable; run a few ticks first.")
         return CommandResult(_render_post_mortem(payload))
+
+    def _cmd_timeline(self, args: Sequence[str]) -> CommandResult:
+        limit: int = 10
+        if args:
+            try:
+                limit = max(1, int(args[0]))
+            except ValueError:
+                return CommandResult("Usage: timeline [count]")
+        try:
+            entries = self.backend.query_timeline(limit)
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        if not entries:
+            return CommandResult("No timeline data recorded. Run some ticks first.")
+        return CommandResult(_render_timeline(entries))
+
+    def _cmd_explain(self, args: Sequence[str]) -> CommandResult:
+        if len(args) < 2:
+            return CommandResult(
+                "Usage: explain <type> <id>\n"
+                "Types: faction, agent, district, metric"
+            )
+        entity_type = args[0].lower()
+        entity_id = args[1]
+        try:
+            result = self.backend.explain(entity_type, entity_id)
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        if "error" in result:
+            return CommandResult(str(result["error"]))
+        return CommandResult(_render_explanation(entity_type, result))
+
+    def _cmd_why(self, args: Sequence[str]) -> CommandResult:
+        if not args:
+            return CommandResult(
+                "Usage: why <query>\n"
+                "Examples: why stability, why did unrest rise, why union-of-flux"
+            )
+        query = " ".join(args)
+        try:
+            result = self.backend.why(query)
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        return CommandResult(_render_why_answer(result))
 
     def _cmd_save(self, args: Sequence[str]) -> CommandResult:
         if not args:
@@ -967,6 +1052,225 @@ def _format_coordinates(coords: Any | None) -> str:
     if isinstance(z, (int, float)):
         return f"({float(x):.1f}, {float(y):.1f}, {float(z):.1f})"
     return f"({float(x):.1f}, {float(y):.1f})"
+
+
+def _render_timeline(entries: Sequence[Mapping[str, Any]]) -> str:
+    lines = ["Causal timeline (recent events):"]
+    for entry in reversed(entries[-10:]):
+        tick = entry.get("tick", "?")
+        lines.append(f"  Tick {tick}:")
+        key_changes = entry.get("key_changes") or []
+        if key_changes:
+            for change in key_changes[:3]:
+                lines.append(f"    • {change}")
+        events = entry.get("events") or []
+        if events:
+            for event in events[:5]:
+                desc = event.get("description", "event")
+                category = event.get("category", "")
+                lines.append(f"    [{category}] {desc}")
+        agent_reasoning = entry.get("agent_reasoning") or []
+        if agent_reasoning:
+            for reasoning in agent_reasoning[:2]:
+                name = reasoning.get("agent_name", "Agent")
+                action = reasoning.get("action", "acted")
+                factors = reasoning.get("reasoning_factors") or []
+                text = f"    {name} {action}"
+                if factors:
+                    text = f"{text} (because: {', '.join(factors[:2])})"
+                lines.append(text)
+    if not entries:
+        lines.append("  No events recorded yet.")
+    return "\n".join(lines)
+
+
+def _render_explanation(entity_type: str, result: Mapping[str, Any]) -> str:
+    lines: List[str] = []
+    if entity_type == "faction":
+        name = result.get("faction_name", result.get("faction_id"))
+        lines.append(f"Faction: {name}")
+        lines.append(f"  Legitimacy: {result.get('current_legitimacy', 0):.3f}")
+        trend = result.get("legitimacy_trend", 0)
+        if trend:
+            direction = "↑" if trend > 0 else "↓"
+            lines.append(f"  Trend: {direction} {abs(trend):.3f}")
+        actions = result.get("recent_actions") or []
+        if actions:
+            lines.append("  Recent actions:")
+            for action in actions:
+                tick = action.get("tick", "?")
+                act = action.get("action", "acted")
+                target = action.get("target")
+                desc = f"    tick {tick}: {act}"
+                if target:
+                    desc = f"{desc} → {target}"
+                effects = action.get("effects") or []
+                if effects:
+                    desc = f"{desc} ({', '.join(effects[:2])})"
+                lines.append(desc)
+    elif entity_type == "agent":
+        name = result.get("agent_name", result.get("agent_id"))
+        lines.append(f"Agent: {name}")
+        lines.append(f"  Role: {result.get('role', 'unknown')}")
+        faction = result.get("faction_id")
+        if faction:
+            lines.append(f"  Faction: {faction}")
+        home = result.get("home_district")
+        if home:
+            lines.append(f"  Home: {home}")
+        lines.append(f"  Reasoning: {result.get('reasoning_summary', 'No recent activity')}")
+        needs = result.get("current_needs") or {}
+        if needs:
+            need_strs = [f"{k}:{v:.2f}" for k, v in list(needs.items())[:4]]
+            lines.append(f"  Needs: {', '.join(need_strs)}")
+        goals = result.get("goals") or []
+        if goals:
+            lines.append(f"  Goals: {', '.join(goals[:3])}")
+        actions = result.get("recent_actions") or []
+        if actions:
+            lines.append("  Recent actions:")
+            for action in actions:
+                tick = action.get("tick", "?")
+                act = action.get("action", "acted")
+                target = action.get("target")
+                reasoning = action.get("reasoning") or []
+                desc = f"    tick {tick}: {act}"
+                if target:
+                    desc = f"{desc} → {target}"
+                if reasoning:
+                    desc = f"{desc} (because: {', '.join(reasoning[:2])})"
+                lines.append(desc)
+    elif entity_type == "district":
+        name = result.get("district_name", result.get("district_id"))
+        lines.append(f"District: {name}")
+        lines.append(f"  Population: {result.get('population', 0):,}")
+        mods = result.get("modifiers") or {}
+        if mods:
+            lines.append(
+                f"  Modifiers: unrest={mods.get('unrest', 0):.2f}, "
+                f"pollution={mods.get('pollution', 0):.2f}"
+            )
+        seeds = result.get("story_seeds") or []
+        if seeds:
+            lines.append("  Story seeds:")
+            for seed in seeds:
+                desc = seed.get("description", "event")
+                lines.append(f"    • {desc}")
+        activity = result.get("faction_activity") or []
+        if activity:
+            lines.append("  Faction activity:")
+            for event in activity[:3]:
+                desc = event.get("description", "activity")
+                lines.append(f"    • {desc}")
+    elif entity_type == "metric":
+        metric = result.get("metric", "unknown")
+        lines.append(f"Metric: {metric}")
+        current = result.get("current_value")
+        if current is not None:
+            lines.append(f"  Current: {current:.3f}")
+        delta = result.get("total_delta", 0)
+        if delta:
+            direction = "↑" if delta > 0 else "↓"
+            lines.append(f"  Change: {direction} {abs(delta):.4f}")
+        causes = result.get("causes") or []
+        if causes:
+            lines.append("  Causes:")
+            for cause in causes[:5]:
+                lines.append(f"    • {cause}")
+        events = result.get("events") or []
+        if events:
+            lines.append(f"  Related events: {len(events)}")
+    else:
+        lines.append(f"Unknown entity type: {entity_type}")
+    return "\n".join(lines)
+
+
+def _render_why_answer(result: Mapping[str, Any]) -> str:
+    lines: List[str] = []
+    if not result.get("matched", True):
+        query = result.get("query", "")
+        lines.append(f"Could not find specific information for: '{query}'")
+        suggestion = result.get("suggestion")
+        if suggestion:
+            lines.append(f"  Tip: {suggestion}")
+        changes = result.get("recent_changes") or []
+        if changes:
+            lines.append("  Recent changes in the simulation:")
+            for change in changes[:5]:
+                lines.append(f"    • {change}")
+        return "\n".join(lines)
+
+    # Handle metric explanations
+    metric = result.get("metric")
+    if metric:
+        lines.append(f"Why {metric}?")
+        current = result.get("current_value")
+        if current is not None:
+            lines.append(f"  Current value: {current:.3f}")
+        delta = result.get("total_delta", 0)
+        if delta:
+            direction = "increased" if delta > 0 else "decreased"
+            lines.append(f"  Recently {direction} by {abs(delta):.4f}")
+        causes = result.get("causes") or []
+        if causes:
+            lines.append("  Contributing factors:")
+            for cause in causes[:5]:
+                lines.append(f"    • {cause}")
+        return "\n".join(lines)
+
+    # Handle faction explanations
+    faction_name = result.get("faction_name")
+    if faction_name:
+        lines.append(f"About {faction_name}:")
+        lines.append(f"  Legitimacy: {result.get('current_legitimacy', 0):.3f}")
+        trend = result.get("legitimacy_trend", 0)
+        if trend:
+            direction = "gaining" if trend > 0 else "losing"
+            lines.append(f"  Currently {direction} influence ({abs(trend):.3f})")
+        actions = result.get("recent_actions") or []
+        if actions:
+            lines.append("  Recent actions explain their position:")
+            for action in actions[:3]:
+                act = action.get("action", "acted")
+                target = action.get("target")
+                desc = f"    • {act}"
+                if target:
+                    desc = f"{desc} targeting {target}"
+                lines.append(desc)
+        return "\n".join(lines)
+
+    # Handle agent explanations
+    agent_name = result.get("agent_name")
+    if agent_name:
+        lines.append(f"About {agent_name}:")
+        reasoning = result.get("reasoning_summary")
+        if reasoning:
+            lines.append(f"  {reasoning}")
+        needs = result.get("current_needs") or {}
+        if needs:
+            critical = [f"{k}:{v:.2f}" for k, v in needs.items() if v < 0.4 or v > 0.7]
+            if critical:
+                lines.append(f"  Key needs: {', '.join(critical[:3])}")
+        return "\n".join(lines)
+
+    # Handle district explanations
+    district_name = result.get("district_name")
+    if district_name:
+        lines.append(f"About {district_name}:")
+        mods = result.get("modifiers") or {}
+        if mods:
+            issues = []
+            if mods.get("unrest", 0) > 0.6:
+                issues.append(f"high unrest ({mods['unrest']:.2f})")
+            if mods.get("pollution", 0) > 0.6:
+                issues.append(f"elevated pollution ({mods['pollution']:.2f})")
+            if issues:
+                lines.append(f"  Issues: {', '.join(issues)}")
+        return "\n".join(lines)
+
+    # Fallback
+    lines.append("Analysis complete but no specific insights available.")
+    return "\n".join(lines)
 
 
 def _jsonify(payload: dict[str, Any]) -> str:

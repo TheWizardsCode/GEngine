@@ -15,6 +15,7 @@ from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
 from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem
 from .director import DirectorBridge, NarrativeDirector
+from .explanations import ExplanationsManager
 from .focus import FocusManager
 from .post_mortem import generate_post_mortem_summary
 from .tick import TickReport, advance_ticks as _advance_ticks
@@ -47,6 +48,7 @@ class SimEngine:
         self._focus_manager = FocusManager(settings=self._config.focus)
         self._director_bridge = DirectorBridge(settings=self._config.director)
         self._narrative_director = NarrativeDirector(settings=self._config.director)
+        self._explanations_manager = ExplanationsManager(history_limit=100)
         self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
 
     # ------------------------------------------------------------------
@@ -104,6 +106,7 @@ class SimEngine:
             focus_manager=self._focus_manager,
             director_bridge=self._director_bridge,
             narrative_director=self._narrative_director,
+            explanations_manager=self._explanations_manager,
         )
         duration_ms = (perf_counter() - start) * 1000
         self._record_profiling(reports)
@@ -164,6 +167,40 @@ class SimEngine:
             "analysis": dict(analysis),
             "events": list(self.state.metadata.get("director_events") or []),
         }
+
+    # Explanations API --------------------------------------------------
+    def query_timeline(self, count: int = 10) -> list[dict[str, Any]]:
+        """Get the most recent timeline entries for causal analysis."""
+        entries = self._explanations_manager.query_timeline(count)
+        return [e.to_dict() for e in entries]
+
+    def explain_metric(self, metric: str, *, lookback: int = 10) -> dict[str, Any]:
+        """Explain why a metric changed."""
+        return self._explanations_manager.explain_metric(
+            self.state, metric, lookback=lookback
+        )
+
+    def explain_faction(self, faction_id: str, *, lookback: int = 10) -> dict[str, Any]:
+        """Explain a faction's recent changes and actions."""
+        return self._explanations_manager.explain_faction(
+            self.state, faction_id, lookback=lookback
+        )
+
+    def explain_agent(self, agent_id: str, *, lookback: int = 10) -> dict[str, Any]:
+        """Explain an agent's recent actions and reasoning."""
+        return self._explanations_manager.explain_agent(
+            self.state, agent_id, lookback=lookback
+        )
+
+    def explain_district(self, district_id: str, *, lookback: int = 10) -> dict[str, Any]:
+        """Explain changes in a district."""
+        return self._explanations_manager.explain_district(
+            self.state, district_id, lookback=lookback
+        )
+
+    def why(self, query: str) -> dict[str, Any]:
+        """Answer a 'why' query about the simulation state."""
+        return self._explanations_manager.get_why_summary(self.state, query)
 
     # Internal helpers --------------------------------------------------
     def _record_profiling(self, reports: Sequence[TickReport]) -> None:
