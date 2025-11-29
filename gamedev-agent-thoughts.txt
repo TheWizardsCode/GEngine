@@ -482,3 +482,98 @@ Test Results:
 - Config validation prevents invalid configurations
 
 Ready to commit improvements.
+
+Commit & Push Complete:
+- Committed: 9bfdb2b (feat(ai-observer): enhance Observer with validation, structured commentary, and better error handling)
+- Merged to main via fast-forward
+- Pushed to origin/main successfully
+- 6 files changed, 345 insertions, 55 deletions
+
+AI Observer review and improvements complete!
+
+M6.3 LLM Service Skeleton - Starting Implementation
+====================================================
+Goal: Build LLM service with /parse_intent and /narrate endpoints
+- Provider abstraction layer (OpenAI, Anthropic, stub mode)
+- Configurable via environment variables
+- Offline stub mode for testing without API costs
+- Integration with existing simulation state
+
+Plan:
+1. Create src/gengine/echoes/llm/ module structure
+2. Implement provider abstraction (base class + concrete providers)
+3. Build FastAPI service with /parse_intent and /narrate endpoints
+4. Add stub provider for offline testing
+5. Create configuration system via environment variables
+6. Add tests for provider abstraction and endpoints
+7. Document LLM service setup and usage
+
+[2025-11-29 09:16 UTC] 9bfdb2b: User inquiry on parallel implementation of Phase 7 alongside Phase 6 work.
+[2025-11-29 09:17 UTC] 9bfdb2b: Analyzing phase dependencies from implementation plan:
+  - Phase 6 has M6.1 (gateway, shipped), M6.2 (enhanced ASCII, shipped), M6.3-M6.5 (LLM service skeleton, intents, gateway integration) remaining
+  - Phase 7 has M7.1 (progression systems), M7.2 (explanations), M7.3 (tuning/replayability), M7.4 (campaign UX)
+  - Current branch: feature/m6-3-llm-service with uncommitted LLM service work in progress
+  - Key dependency: Phase 7 progression/explanations/UX work does NOT directly depend on Phase 6 LLM integration
+  - Phase 7 could be implemented in parallel on separate branches, with integration happening later
+  - Risk: If Phase 7 changes core game state or simulation surfaces, coordination with Phase 6 LLM service becomes more complex
+
+M6.3 LLM Service Skeleton - Implementation Complete
+====================================================
+[2025-11-29 09:20 UTC] 9bfdb2b: Decided to complete M6.3 before starting Phase 7 per user agreement
+
+Implementation:
+1. ✅ Created src/gengine/echoes/llm/ module structure
+   - __init__.py: Exports for LLMProvider, LLMSettings, create_provider
+   - settings.py: LLMSettings dataclass with environment variable loading
+   - providers.py: Abstract LLMProvider base + StubProvider implementation
+   - app.py: FastAPI application with /healthz, /parse_intent, /narrate
+   - main.py: Service entry point with uvicorn
+
+2. ✅ Implemented provider abstraction layer
+   - Abstract LLMProvider with async parse_intent() and narrate() methods
+   - IntentParseResult and NarrateResult dataclasses for structured responses
+   - StubProvider with deterministic keyword-based intent detection
+   - Placeholders for OpenAIProvider and AnthropicProvider
+   - Factory function create_provider() for instantiation
+
+3. ✅ Built FastAPI service
+   - GET /healthz for service health checks
+   - POST /parse_intent for converting natural language to game intents
+   - POST /narrate for generating story text from simulation events
+   - Pydantic models for request/response validation
+   - Provider stored in app.state for reuse across requests
+
+4. ✅ Created LLMSettings configuration system
+   - Reads from ECHOES_LLM_* environment variables
+   - Supports provider selection (stub, openai, anthropic)
+   - Configurable API keys, model names, temperature, tokens, timeout
+   - Validation of provider types and required fields
+
+5. ✅ Added CLI entry point
+   - pyproject.toml: echoes-llm-service = gengine.echoes.llm.main:main
+   - uvicorn runner on port 8001
+
+6. ✅ Created comprehensive test suite (31 tests)
+   - tests/echoes/test_llm_settings.py: 11 tests for configuration
+   - tests/echoes/test_llm_providers.py: 12 tests for provider abstraction
+   - tests/echoes/test_llm_app.py: 8 tests for FastAPI endpoints
+   - Fixed async test support with pytestmark = pytest.mark.anyio
+   - Added tests/echoes/conftest.py to force asyncio backend
+
+7. ✅ Fixed async test infrastructure
+   - Changed from @pytest.mark.asyncio to pytest.mark.anyio
+   - Added conftest.py fixture to return "asyncio" backend
+   - Updated pyproject.toml with [tool.pytest.ini_options]
+   - All 31 LLM tests passing (38 collected with parametrization)
+
+Test Results:
+- Full test suite: 243 tests passing (212 → 243 after adding LLM tests)
+- Overall coverage: 94% maintained
+- LLM module coverage: 
+  - settings.py: 100%
+  - providers.py: 94%
+  - app.py: 89%
+  - main.py: 0% (CLI entry point, not tested)
+
+Ready for next steps: documentation and commit.
+

@@ -28,19 +28,24 @@ A staged implementation that builds a solid simulation core, then layers on agen
   FastAPI, and headless telemetry using the documented canonical artifact
   (`build/feature-m5-4-post-mortem.json`) plus `jq '.post_mortem'` diff
   workflow so reviewers can compare runs without replaying ticks.
-- ✅ Phase 6 (CLI Gateway, Visualization, LLM intent layer): **M6.1 gateway
+- ⚙️ Phase 6 (CLI Gateway, Visualization, LLM intent layer): **M6.1 gateway
   service** ships with `gengine.echoes.gateway`, a FastAPI/WebSocket host that
   proxies CLI commands to the simulation service, logs focus/digest/history
   snapshots per session, and exposes the `echoes-gateway-service` runner plus
   an `echoes-gateway-shell` client. Regression tests cover `/ws` round-trips
   and malformed payloads, docs explain the WebSocket contract, and the new
   dependency (`websockets`) is wired through `uv sync --group dev` so local
-  - CI environments can exercise remote sessions immediately. **M6.2 enhanced
+  + CI environments can exercise remote sessions immediately. **M6.2 enhanced
     ASCII views** adds `gengine.echoes.cli.display` with Rich-based rendering
     (styled tables, color-coded panels, formatted story seed/director displays),
     integrated via `--rich` flag in `echoes-shell`, with 9 new regression tests
-    covering display formatting and shell integration.
-- ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
+    covering display formatting and shell integration. **M6.3 LLM service
+    skeleton** ships with `gengine.echoes.llm` module providing `/parse_intent`
+    and `/narrate` endpoints, environment-variable configuration, abstract
+    provider pattern (with `StubProvider` for offline testing), and
+    `echoes-llm-service` CLI entry point. 31 new tests cover settings,
+    providers, and FastAPI endpoints (243 tests total, 94% coverage).
+- ⏳ Phases 7–8: pending (progression systems, explanations, containerization, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
 
@@ -394,9 +399,13 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
   `enable_rich` parameter and `--rich` CLI flag. 9 new regression tests cover
   display formatting and shell integration. All display functions are reusable
   by gateway and future visualization tools.
-- **M6.3 LLM service skeleton** (1-1.5 days): HTTP endpoints for
+- ✅ **M6.3 LLM service skeleton** (1-1.5 days): HTTP endpoints for
   `/parse_intent` and `/narrate`, configurable provider adapter, stub mode for
-  offline tests.
+  offline tests. **Shipped:** `gengine.echoes.llm` module with FastAPI service,
+  environment-variable configuration (`LLMSettings`), abstract provider pattern
+  with `StubProvider` for offline testing, CLI entry point
+  (`echoes-llm-service`), and 31 tests covering settings, providers, and
+  endpoints (243 tests total, 94% coverage maintained).
 - **M6.4 Intent schema + prompts** (1 day): JSON schema + prompt templates with
   function-calling enforcement.
 - **M6.5 Gateway integration** (1-1.5 days): user text -> LLM intents -> sim
