@@ -473,6 +473,36 @@ def _render_summary(summary: dict[str, object]) -> str:
                 lines.append(f"      stakes: {stakes}")
         if len(story_seeds) > 3:
             lines.append(f"    (+{len(story_seeds) - 3} more)")
+    director_events = summary.get("director_events") or []
+    if director_events:
+        lines.append("  director events:")
+        preview = list(reversed(director_events[-2:]))
+        for event in preview:
+            title = event.get("title") or event.get("seed_id", "seed")
+            district = event.get("district_id") or "unset"
+            reason = event.get("reason")
+            line = f"    - {title} @ {district}"
+            if reason:
+                line = f"{line} :: {reason}"
+            lines.append(line)
+            stakes = event.get("stakes")
+            if stakes:
+                lines.append(f"      stakes: {stakes}")
+            participants: List[str] = []
+            agents = event.get("agents") or []
+            for agent in agents:
+                name = agent.get("name")
+                if name:
+                    participants.append(name)
+                    break
+            factions = event.get("factions") or []
+            for faction in factions:
+                name = faction.get("name")
+                if name:
+                    participants.append(name)
+                    break
+            if participants:
+                lines.append(f"      roles: {', '.join(participants)}")
     profiling = summary.get("profiling")
     if isinstance(profiling, dict) and profiling:
         lines.append("  profiling:")
@@ -653,6 +683,32 @@ def _render_director_feed(
                 lines.append(line)
             if len(seeds) > 3:
                 lines.append(f"    (+{len(seeds) - 3} more)")
+        events = analysis.get("director_events") or []
+        if events:
+            lines.append("  director events:")
+            for event in events[:3]:
+                title = event.get("title") or event.get("seed_id", "seed")
+                district = event.get("district_id") or "unset"
+                tick = event.get("tick")
+                snippet = f"    - {title} @ {district}"
+                if isinstance(tick, int):
+                    snippet = f"{snippet} [tick {tick}]"
+                lines.append(snippet)
+                agent = next((agent for agent in event.get("agents", []) if agent.get("name")), None)
+                faction = next(
+                    (faction for faction in event.get("factions", []) if faction.get("name")),
+                    None,
+                )
+                participants: List[str] = []
+                if agent:
+                    participants.append(agent["name"])
+                if faction:
+                    participants.append(faction["name"])
+                if participants:
+                    lines.append(f"      roles: {', '.join(participants)}")
+                stakes = event.get("stakes")
+                if stakes:
+                    lines.append(f"      stakes: {stakes}")
         recommended = analysis.get("recommended_focus")
         if isinstance(recommended, dict) and recommended.get("district_id"):
             travel_time = recommended.get("travel_time")

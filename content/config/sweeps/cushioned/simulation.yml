@@ -35,6 +35,7 @@ director:
   travel_default_distance: 2.0
   travel_max_routes: 4
   story_seed_limit: 2
+  event_history_limit: 8
 economy:
   regen_scale: 0.85
   demand_population_scale: 110000

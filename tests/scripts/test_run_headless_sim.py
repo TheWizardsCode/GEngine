@@ -61,10 +61,12 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert "director_feed" in summary
     assert "director_history" in summary
     assert "director_analysis" in summary
+    assert "director_events" in summary
     assert "last_event_digest" in summary
     assert "ranked_archive" in summary["last_event_digest"]
     assert "last_director_snapshot" in summary
     assert "last_director_analysis" in summary
+    assert "last_director_events" in summary
     for batch in summary["batches"]:
         assert batch["ticks"] <= 2
         assert "tick_ms" in batch
@@ -81,6 +83,8 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert "ranked_archive" in data["last_event_digest"]
     assert "director_analysis" in data
     assert "last_director_analysis" in data
+    assert "director_events" in data
+    assert "last_director_events" in data
 
 
 def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_path: Path) -> None:

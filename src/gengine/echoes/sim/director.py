@@ -176,7 +176,7 @@ class NarrativeDirector:
                 )
                 break
 
-        story_seed_matches = self._match_story_seeds(
+        story_seed_matches, director_events = self._match_story_seeds(
             state,
             feed=feed,
             hotspots=travel_reports,
@@ -189,6 +189,7 @@ class NarrativeDirector:
             "hotspots": travel_reports[: self._settings.travel_max_routes],
             "recommended_focus": recommended,
             "story_seeds": story_seed_matches,
+            "director_events": director_events,
         }
         state.metadata["director_analysis"] = analysis
         return analysis
@@ -331,11 +332,12 @@ class NarrativeDirector:
         *,
         feed: Mapping[str, Any],
         hotspots: Sequence[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
+    ) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         if not state.story_seeds:
             state.metadata.pop("story_seeds_active", None)
             state.metadata.pop("story_seed_cooldowns", None)
-            return []
+            state.metadata.pop("director_events", None)
+            return [], []
 
         ranked = list(feed.get("top_ranked") or [])
         suppressed = int(feed.get("suppressed_count", 0))
@@ -352,6 +354,8 @@ class NarrativeDirector:
             for entry in hotspots
             if entry.get("district_id")
         }
+        district_lookup = {district.id: district.name for district in state.city.districts}
+        new_events: List[Dict[str, Any]] = []
 
         for seed in state.story_seeds.values():
             if not seed.triggers:
@@ -377,7 +381,7 @@ class NarrativeDirector:
                 "seed_id": seed.id,
                 "title": seed.title,
                 "summary": seed.summary,
-                 "stakes": seed.stakes,
+                "stakes": seed.stakes,
                 "district_id": target,
                 "scope": seed.scope,
                 "tags": list(seed.tags),
@@ -392,6 +396,17 @@ class NarrativeDirector:
             if travel_hint:
                 contexts[seed.id]["travel_hint"] = travel_hint
             cooldowns[seed.id] = tick
+            event_payload = self._build_director_event(
+                state,
+                seed=seed,
+                tick=tick,
+                district_id=target,
+                trigger_match=trigger_match,
+                travel=travel,
+                district_lookup=district_lookup,
+            )
+            if event_payload:
+                new_events.append(event_payload)
 
         active_matches: List[Dict[str, Any]] = []
         for seed in state.story_seeds.values():
@@ -439,7 +454,17 @@ class NarrativeDirector:
             state.metadata["story_seed_context"] = contexts
         elif "story_seed_context" in state.metadata:
             state.metadata.pop("story_seed_context")
-        return active_matches
+        if new_events:
+            history = list(state.metadata.get("director_events") or [])
+            history.extend(new_events)
+            limit = getattr(self._settings, "event_history_limit", len(history) or 1)
+            limit = max(1, limit)
+            if len(history) > limit:
+                history = history[-limit:]
+            state.metadata["director_events"] = history
+        elif "director_events" not in state.metadata:
+            state.metadata.pop("director_events", None)
+        return active_matches, new_events
 
     def _match_seed_trigger(
         self,
@@ -486,6 +511,78 @@ class NarrativeDirector:
                 "severity": round(severity, 3),
             }
         return None
+
+    def _build_director_event(
+        self,
+        state: GameState,
+        *,
+        seed: StorySeed,
+        tick: int,
+        district_id: str | None,
+        trigger_match: Mapping[str, Any],
+        travel: Mapping[str, Any] | None,
+        district_lookup: Mapping[str, str],
+    ) -> Dict[str, Any]:
+        travel_payload = dict(travel) if isinstance(travel, dict) else None
+        event = {
+            "tick": tick,
+            "seed_id": seed.id,
+            "title": seed.title,
+            "summary": seed.summary,
+            "stakes": seed.stakes,
+            "scope": seed.scope,
+            "district_id": district_id,
+            "district_name": district_lookup.get(district_id, district_id) if district_id else None,
+            "reason": trigger_match.get("reason"),
+            "score": trigger_match.get("score"),
+            "severity": trigger_match.get("severity"),
+            "cooldown_ticks": seed.cooldown_ticks,
+            "beats": list(seed.beats[:2]),
+            "followups": list(seed.followups),
+            "resolution_templates": seed.resolution_templates.model_dump(),
+            "roles": seed.roles.model_dump(),
+            "agents": self._resolve_agents(state, seed.roles.agents),
+            "factions": self._resolve_factions(state, seed.roles.factions),
+        }
+        if travel_payload:
+            event["travel"] = travel_payload
+        if seed.travel_hint:
+            event["travel_hint"] = seed.travel_hint.model_dump()
+        return event
+
+    def _resolve_agents(self, state: GameState, agent_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        resolved: List[Dict[str, Any]] = []
+        for agent_id in agent_ids[:3]:
+            agent = state.agents.get(agent_id)
+            if agent is None:
+                resolved.append({"id": agent_id})
+                continue
+            resolved.append(
+                {
+                    "id": agent.id,
+                    "name": agent.name,
+                    "role": agent.role,
+                    "faction_id": agent.faction_id,
+                    "home_district": agent.home_district,
+                }
+            )
+        return resolved
+
+    def _resolve_factions(self, state: GameState, faction_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        resolved: List[Dict[str, Any]] = []
+        for faction_id in faction_ids[:3]:
+            faction = state.factions.get(faction_id)
+            if faction is None:
+                resolved.append({"id": faction_id})
+                continue
+            resolved.append(
+                {
+                    "id": faction.id,
+                    "name": faction.name,
+                    "ideology": faction.ideology,
+                }
+            )
+        return resolved
 
 
 __all__ = ["DirectorBridge", "NarrativeDirector"]

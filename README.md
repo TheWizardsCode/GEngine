@@ -84,10 +84,13 @@ run locally.
   seeds against the latest hotspots, caches the most recent payload for each
   seed, and records active matches (with `cooldown_remaining` +
   `last_trigger_tick`) inside the `story_seeds` metadata block plus the
-  CLI/service/headless summaries. Designers can see which authored beats are
-  still live inside their cooldown window, which districts they target, and
-  why they attached to the current conditions without them blinking off between
-  ticks. The schema now requires explicit `stakes`, `resolution_templates`,
+  CLI/service/headless summaries. Whenever a seed fires, the director now emits
+  a structured `director_events` entry that captures the tick, attached agents
+  and factions, stakes, travel hint, and relevant resolution templates. The
+  latest events persist in metadata (and show up in CLI summary, the
+  `director` command, FastAPI `/state?detail=summary`, and headless telemetry)
+  so designers can audit which beats triggered and why without digging through
+  raw logs. The schema now requires explicit `stakes`, `resolution_templates`,
   optional `travel_hint`, and `followups`, and the content loader validates
   every referenced district, agent, faction, and followup id so malformed seeds
   are caught immediately during world import.
@@ -296,6 +299,9 @@ Available in-shell commands:
   narrative director matches authored story seeds, the summary prints a `story
 seeds` block that lists which seeds attached, their target districts, and why
   they fired, mirroring the headless/service summaries for quick debugging.
+  A neighboring `director events` block highlights the latest seeds that
+  actually triggered, including their stakes and the first matching
+  agent/faction so you can see who is on-stage without rerunning ticks.
 - `next` – advance exactly one tick with the inline report (no arguments). Use
   `run` for batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.
@@ -361,6 +367,10 @@ not wedge CI runs.
   loosen the narrator's per-tick budget and proximity bias without editing
   code; the CLI/service focus and history commands immediately reflect the
   updated defaults after a restart.
+- `director`: tunes hotspot filtering (limit + score threshold), travel timing,
+  story seed surfacing limits, and the `event_history_limit` used for the new
+  `director_events` history so designers can control how many recent seed
+  triggers stay visible in CLI/service/headless summaries.
 - `economy`: exposes `regen_scale`, demand weights, shortage thresholds, base
   resource weights, and price tuning values (`base_price`, `price_increase_step`,
   `price_max_boost`, `price_decay`, `price_floor`). Adjust these numbers to
@@ -475,6 +485,13 @@ Key flags:
   (quiet periods, cooldown phases), expose pacing knobs via `simulation.yml`, and
   finish the post-run epilogue tooling so telemetry/CLI reports summarize the
   highest-impact crises at the end of each burn.
+3. **Phase 9 M9.1 – AI Player Observer** (parallel track) – implement
+  `src/gengine/ai_player/observer.py` that analyzes simulation state and
+  generates structured commentary, enabling automated validation and narrative
+  coherence testing before the full action system lands. See
+  `docs/simul/emergent_story_game_implementation_plan.md` Phase 9 for the
+  complete staged plan (observer → rule-based actor → LLM enhancement →
+  tournaments).
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

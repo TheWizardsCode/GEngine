@@ -143,6 +143,7 @@ def _serialize_report(report: TickReport) -> dict[str, Any]:
         "focus_budget": dict(report.focus_budget),
         "director_snapshot": dict(report.director_snapshot),
         "director_analysis": dict(report.director_analysis),
+        "director_events": list(report.director_events),
         "timings": dict(report.timings),
         "anomalies": list(report.anomalies),
     }

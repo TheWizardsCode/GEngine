@@ -42,6 +42,21 @@ def test_summary_includes_active_story_seeds() -> None:
     assert summary["story_seeds"] == [active]
 
 
+def test_summary_includes_director_events_history() -> None:
+    state = load_world_bundle()
+    event = {
+        "seed_id": "energy-quota-crisis",
+        "title": "Energy Quota Fallout",
+        "district_id": "industrial-tier",
+        "reason": "Power rationing hits workshops",
+    }
+    state.metadata["director_events"] = [event]
+
+    summary = state.summary()
+
+    assert summary["director_events"] == [event]
+
+
 def test_narrative_director_matches_story_seed() -> None:
     state = load_world_bundle()
     director = NarrativeDirector()
@@ -69,6 +84,11 @@ def test_narrative_director_matches_story_seed() -> None:
     assert any(seed["seed_id"] == "energy-quota-crisis" for seed in seeds)
     assert state.metadata.get("story_seeds_active")
     assert state.metadata.get("story_seed_cooldowns")
+    events = analysis.get("director_events") or []
+    assert events
+    assert events[0]["seed_id"] == "energy-quota-crisis"
+    assert events[0]["agents"]
+    assert state.metadata.get("director_events")
 
 
 def test_story_seed_persists_during_cooldown_window() -> None:

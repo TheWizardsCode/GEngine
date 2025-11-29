@@ -159,6 +159,7 @@ class SimEngine:
             "latest": dict(feed),
             "history": [dict(entry) for entry in history],
             "analysis": dict(analysis),
+            "events": list(self.state.metadata.get("director_events") or []),
         }
 
     # Internal helpers --------------------------------------------------

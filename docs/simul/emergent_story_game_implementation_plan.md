@@ -295,12 +295,13 @@ single row to validate whenever a guardrail knob changes.
 - **M5.2 Director core** (1-1.5 days): Replace the current scaffolding with a
   fully stateful controller that reads the cached `story_seeds` payloads,
   evaluates triggers against hotspot metrics/travel time, and emits structured
-  `director_events` that reference specific agents/factions. Wire the outcomes
-  into CLI `summary`/`director` commands, `/state?detail=summary`, and headless
-  telemetry so every surface shows which seeds fired, why, and what resolution
-  path they are on. Add focused unit tests for trigger evaluation plus an
-  integration test that asserts deterministic seed activation for the default
-  world/seed combo.
+  `director_events` that reference specific agents/factions plus their
+  resolution templates. Wire the outcomes into CLI `summary`/`director`
+  commands, `/state?detail=summary`, and headless telemetry so every surface
+  shows which seeds fired, why, which participants are attached, and what
+  resolution path they are on. Add focused unit tests for trigger evaluation
+  plus an integration test that asserts deterministic seed activation for the
+  default world/seed combo.
 - **M5.3 Pacing/resolution** (0.5-1 day): Layer deterministic cooldown loops
   (per-seed and global quiet periods), add lifecycle tracking (`primed →
   active → resolving → archived`), and expose pacing controls via
@@ -350,6 +351,112 @@ single row to validate whenever a guardrail knob changes.
   sizing, load smoke tests via `kubectl`.
 - **M8.4 Content pipeline** (1-2 days): `scripts/build_content.py` bundles,
   documentation for designers, validation CI hook.
+
+### Phase 9 – AI Player Testing and Validation
+
+AI player implementation lives under `src/gengine/ai_player/` to distinguish it
+from the in-game agent AI systems (`src/gengine/echoes/systems/agents.py`). The
+AI player is a testing and validation tool that exercises the game APIs
+programmatically, enabling automated balance tuning, edge case discovery, and
+playthrough validation.
+
+- **M9.1 Observer AI foundation** (1-2 days): Implement `ai_player/observer.py`
+  that connects via `SimServiceClient` or local `SimEngine`, advances ticks,
+  analyzes state snapshots, and generates structured commentary or insights.
+  Create `scripts/run_ai_observer.py` to execute AI-observed sessions with
+  configurable tick budgets and output formats (JSON summaries, natural language
+  logs). Add integration tests under `tests/ai_player/` that validate the
+  observer can parse telemetry, detect trends (stability drops, faction swings),
+  and surface narrative coherence metrics. Document observer modes and output
+  schemas in the README.
+
+  **Acceptance Criteria:**
+  - Observer connects to both local and service-mode simulations
+  - Generates tick-by-tick analysis capturing stability trends, faction
+    legitimacy shifts, and story seed activations
+  - Outputs structured JSON plus optional natural language commentary
+  - Integration test asserts observer detects a scripted stability crash
+  - README includes observer invocation examples and use cases
+
+- **M9.2 Rule-based action layer** (1-2 days, depends on Phase 6 action
+  system): Once `apply_action` and intent routing are available, extend
+  `ai_player/strategies.py` with heuristic decision logic (emergency responses
+  for low stability, resource rebalancing, faction support). Implement
+  `ai_player/actor.py` that wraps observer analysis with action selection,
+  submits intents via the action API, and logs decisions for replay. Add
+  regression tests that run 100-tick games with AI interventions and assert
+  deterministic outcomes under fixed seeds. Update telemetry capture to include
+  AI decision logs alongside simulation state.
+
+  **Acceptance Criteria:**
+  - Rule-based strategies (balanced, aggressive, diplomatic) implemented
+  - AI actor submits valid intents and handles API responses/errors
+  - Regression test shows AI can stabilize a failing city
+  - Telemetry captures AI decision rationale alongside game state
+  - Documentation covers strategy tuning and custom rule authoring
+
+- **M9.3 LLM-enhanced decisions** (1-2 days, depends on Phase 6 LLM service):
+  Layer `ai_player/llm_strategy.py` that delegates complex narrative choices to
+  the LLM service when story seeds trigger or critical thresholds are crossed.
+  Implement budget controls (max LLM calls per session) and fallback to
+  rule-based logic when quota exhausted. Add scenario tests comparing
+  rule-only vs. hybrid AI performance across different world configs. Document
+  LLM prompt templates and cost/latency tradeoffs.
+
+  **Acceptance Criteria:**
+  - Hybrid strategy routes routine actions to rules, complex choices to LLM
+  - Budget enforcement prevents runaway API costs
+  - Scenario tests measure win rates and narrative quality differences
+  - Documentation includes prompt engineering guidance
+  - Telemetry distinguishes rule-based vs. LLM-driven decisions
+
+- **M9.4 AI tournaments and balance tooling** (1-2 days): Create
+  `scripts/run_ai_tournament.py` that executes N parallel games with varied AI
+  strategies, world configs, and random seeds. Aggregate results into
+  comparative reports (win rates, average stability curves, story seed coverage,
+  resource efficiency). Add analysis scripts under `scripts/analyze_ai_games.py`
+  that identify dominant strategies, balance outliers, and underutilized content.
+  Document tournament workflow and balance iteration loops in the README.
+
+  **Acceptance Criteria:**
+  - Tournament script runs 100+ games in parallel with configurable strategies
+  - Comparative reports surface win rate deltas and balance anomalies
+  - Analysis identifies unused story seeds or overpowered actions
+  - Documentation guides designers through balance iteration workflow
+  - CI integration runs nightly tournaments and archives results
+
+**Phase 9 Dependencies:**
+- M9.1 (Observer) can start immediately with existing simulation APIs
+- M9.2 (Rule-based actions) requires Phase 6 action routing and intent schema
+- M9.3 (LLM enhancement) requires Phase 6 LLM service integration
+- M9.4 (Tournaments) requires M9.2 at minimum, benefits from M9.3
+
+**Folder Structure:**
+```
+src/gengine/ai_player/
+  __init__.py
+  observer.py       # State analysis and commentary generation
+  actor.py          # Action selection and submission
+  strategies.py     # Rule-based decision heuristics
+  llm_strategy.py   # LLM-enhanced narrative choices
+scripts/
+  run_ai_observer.py   # Execute observer-only sessions
+  run_ai_actor.py      # Run AI player with actions
+  run_ai_tournament.py # Multi-game comparative analysis
+  analyze_ai_games.py  # Balance and coverage reports
+tests/ai_player/
+  test_observer.py
+  test_strategies.py
+  test_actor.py
+  test_llm_strategy.py
+```
+
+**Key Design Principles:**
+- AI player uses the same public APIs as human players (no privileged access)
+- Clear separation from in-game agent AI to avoid confusion
+- Deterministic rule-based core with opt-in LLM enhancement
+- Telemetry captures AI reasoning for debugging and analysis
+- Designed as a development/QA tool, not a shipped game feature
 
 ## 1. Foundations & Data Model
 

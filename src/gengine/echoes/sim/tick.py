@@ -37,6 +37,7 @@ class TickReport:
     focus_budget: Dict[str, Any] = field(default_factory=dict)
     director_snapshot: Dict[str, Any] = field(default_factory=dict)
     director_analysis: Dict[str, Any] = field(default_factory=dict)
+    director_events: List[Dict[str, Any]] = field(default_factory=list)
     anomalies: List[str] = field(default_factory=list)
 
 
@@ -207,8 +208,10 @@ class TickCoordinator:
                 focus_result=focus_result,
             )
         director_analysis: Dict[str, Any] = {}
+        director_events: List[Dict[str, Any]] = []
         if narrative_director is not None:
             director_analysis = narrative_director.evaluate(state, director_snapshot)
+            director_events = list(director_analysis.get("director_events") or [])
 
         timings["tick_total_ms"] = (perf_counter() - tick_start) * 1000
         return TickReport(
@@ -228,6 +231,7 @@ class TickCoordinator:
             focus_budget=focus_result.allocation,
             director_snapshot=director_snapshot,
             director_analysis=director_analysis,
+            director_events=director_events,
             anomalies=anomalies,
         )
 

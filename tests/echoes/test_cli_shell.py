@@ -430,6 +430,34 @@ def test_render_summary_surfaces_story_seeds() -> None:
     assert "industrial-tier" in rendered
 
 
+def test_render_summary_surfaces_director_events() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 8,
+        "districts": 3,
+        "factions": 2,
+        "agents": 4,
+        "stability": 0.88,
+        "director_events": [
+            {
+                "seed_id": "energy-quota-crisis",
+                "title": "Energy Quota Fallout",
+                "district_id": "industrial-tier",
+                "reason": "Power rationing hits workshops",
+                "stakes": "Union walks",
+                "agents": [{"name": "Aria Volt"}],
+                "factions": [{"name": "Union of Flux"}],
+            }
+        ],
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "director events" in rendered
+    assert "Aria Volt" in rendered
+    assert "Union of Flux" in rendered
+
+
 def test_focus_command_reports_state() -> None:
     engine = SimEngine()
     engine.initialize_state(world="default")
@@ -584,6 +612,29 @@ def test_render_director_feed_includes_story_seed_matches() -> None:
     assert "seed matches" in rendered
     assert "Smuggling Lanes Exposed" in rendered
     assert "perimeter-hollow" in rendered
+
+
+def test_render_director_feed_includes_director_events() -> None:
+    feed = {"tick": 20, "focus_center": "industrial-tier", "suppressed_count": 2}
+    analysis = {
+        "director_events": [
+            {
+                "seed_id": "energy-quota-crisis",
+                "title": "Energy Quota Fallout",
+                "district_id": "industrial-tier",
+                "tick": 20,
+                "stakes": "Union walks",
+                "agents": [{"name": "Aria Volt"}],
+                "factions": [{"name": "Union of Flux"}],
+            }
+        ]
+    }
+
+    rendered = _render_director_feed(feed, None, analysis)
+
+    assert "director events" in rendered
+    assert "Energy Quota Fallout" in rendered
+    assert "Aria Volt" in rendered
 
 
 def test_render_history_formats_output() -> None:

@@ -138,6 +138,7 @@ def test_focus_budget_populates_metadata() -> None:
     assert analysis
     assert report.director_analysis
     assert analysis.get("hotspots") is not None
+    assert isinstance(report.director_events, list)
 
 
 def test_narrative_director_builds_travel_routes() -> None:

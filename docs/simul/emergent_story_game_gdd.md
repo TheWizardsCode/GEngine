@@ -271,6 +271,13 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   the block for the duration of their cooldown and expose
   `cooldown_remaining`/`last_trigger_tick` so telemetry still shows the most
   recent beats even if the triggering tick already advanced.
+- Phase 5.2 layers on `director_events`: every time a seed triggers, the
+  director records a structured event that lists the tick, involved agents and
+  factions, stakes, travel hints, and the referenced resolution templates.
+  These events persist in a rolling history surfaced via CLI summary, the
+  `director` command, FastAPI `/state?detail=summary`, and headless telemetry,
+  giving designers a deterministic breadcrumb trail showing which authored
+  beats fired and why without scrubbing logs.
 - Authoring guidelines (Phase 5): every seed carries `id`, `summary`,
   `stakes`, configurable `triggers` (thresholded metrics or boolean flags), a
   `roles` block that lists candidate agents/factions, a `travel_hint` that lets
@@ -466,6 +473,24 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 **Save/Load:**
 
 - Entire simulation state is serializable to support long campaigns and experiment-focused players.
+
+**AI Player for Testing and Validation:**
+
+- A programmatic AI player (distinct from in-game agent AI) exercises the game
+  APIs to validate balance, discover edge cases, and test narrative coherence.
+- Observer mode analyzes simulation state without intervention, generating
+  structured commentary and trend detection for QA workflows.
+- Actor mode (requires Phase 6 action system) applies rule-based or
+  LLM-enhanced strategies to verify that player actions produce meaningful
+  cascading effects.
+- Tournament mode runs parallel games with varied strategies and configs,
+  aggregating win rates, stability curves, and content coverage to guide balance
+  iteration.
+- The AI player uses only public APIs available to human players, ensuring test
+  validity and preventing privileged shortcuts.
+- Implementation lives under `src/gengine/ai_player/` to avoid confusion with
+  in-game agent systems. See Phase 9 in the implementation plan for the staged
+  rollout (observer → rule-based actor → LLM enhancement → tournaments).
 
 ---
 

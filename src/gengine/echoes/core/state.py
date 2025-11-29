@@ -81,6 +81,9 @@ class GameState(BaseModel):
         director_analysis = self.metadata.get("director_analysis") or {}
         if director_analysis:
             summary["director_analysis"] = director_analysis
+        director_events = self.metadata.get("director_events") or []
+        if director_events:
+            summary["director_events"] = director_events
         story_seeds = self.metadata.get("story_seeds_active") or []
         if story_seeds:
             summary["story_seeds"] = story_seeds
