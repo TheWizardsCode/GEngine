@@ -126,6 +126,7 @@ The stub provider generates simple narrative templates based on event count and 
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -138,13 +139,15 @@ Health check endpoint.
 Convert natural language to structured game intent.
 
 **Request:**
+
 ```json
 {
-  "text": "string"  // Natural language command
+  "text": "string" // Natural language command
 }
 ```
 
 **Response:**
+
 ```json
 {
   "intent": "string",      // Detected intent (inspect, stabilize, etc.)
@@ -162,10 +165,12 @@ Convert natural language to structured game intent.
 Generate story text from simulation events.
 
 **Request:**
+
 ```json
 {
-  "events": ["string"],    // List of event descriptions
-  "context": {             // Additional context (optional)
+  "events": ["string"], // List of event descriptions
+  "context": {
+    // Additional context (optional)
     "district": "string",
     "tick": 42,
     "sentiment": "positive"
@@ -174,10 +179,11 @@ Generate story text from simulation events.
 ```
 
 **Response:**
+
 ```json
 {
-  "narration": "string",   // Generated story text
-  "tone": "string"         // Tone/sentiment of narration
+  "narration": "string", // Generated story text
+  "tone": "string" // Tone/sentiment of narration
 }
 ```
 
@@ -198,7 +204,7 @@ async def main():
         print(f"Intent: {intent_result['intent']}")
         print(f"Confidence: {intent_result['confidence']}")
         print(f"Parameters: {intent_result['parameters']}")
-        
+
         # Generate narration
         response = await client.post(
             "http://localhost:8001/narrate",
@@ -240,15 +246,15 @@ Example:
 ```python
 class MyCustomProvider(LLMProvider):
     """Custom LLM provider implementation."""
-    
+
     def __init__(self, api_key: str, model: str, **kwargs):
         self.api_key = api_key
         self.model = model
-        
+
     async def parse_intent(self, text: str) -> IntentParseResult:
         # Your implementation here
         pass
-        
+
     async def narrate(self, events: list[str], context: dict) -> NarrateResult:
         # Your implementation here
         pass
