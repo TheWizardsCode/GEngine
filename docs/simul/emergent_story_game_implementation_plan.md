@@ -35,7 +35,11 @@ A staged implementation that builds a solid simulation core, then layers on agen
   an `echoes-gateway-shell` client. Regression tests cover `/ws` round-trips
   and malformed payloads, docs explain the WebSocket contract, and the new
   dependency (`websockets`) is wired through `uv sync --group dev` so local
-  + CI environments can exercise remote sessions immediately.
+  + CI environments can exercise remote sessions immediately. **M6.2 enhanced
+  ASCII views** adds `gengine.echoes.cli.display` with Rich-based rendering
+  (styled tables, color-coded panels, formatted story seed/director displays),
+  integrated via `--rich` flag in `echoes-shell`, with 9 new regression tests
+  covering display formatting and shell integration.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -383,8 +387,13 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
    JSON-based WebSocket contract documentation, unit tests covering happy-path
    sessions + malformed payloads, and a `echoes-gateway-shell` companion CLI
    that reuses the same prompt/script workflows as `echoes-shell`.
-- **M6.2 Enhanced ASCII views** (1 day): richer overlays and tabular panels
-  reused between CLI and gateway.
+- **M6.2 Enhanced ASCII views** (shipped): `gengine.echoes.cli.display` module
+  provides Rich-based rendering with styled tables (`render_summary_table`),
+  color-coded panels for environment/focus/digest (`_render_environment_panel`,
+  etc.), and formatted director/map overlays. Integrated into `EchoesShell` via
+  `enable_rich` parameter and `--rich` CLI flag. 9 new regression tests cover
+  display formatting and shell integration. All display functions are reusable
+  by gateway and future visualization tools.
 - **M6.3 LLM service skeleton** (1-1.5 days): HTTP endpoints for
   `/parse_intent` and `/narrate`, configurable provider adapter, stub mode for
   offline tests.

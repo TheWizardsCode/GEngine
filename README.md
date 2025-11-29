@@ -27,7 +27,8 @@ run locally.
   `gengine.echoes.client.SimServiceClient` for downstream tooling.
 - CLI shell (`echoes-shell`) that runs the sim in-process, supports
   `summary`, `next`, `run`, `map`, `save`, and `load` commands, and can run in
-  interactive or scripted mode.
+  interactive or scripted mode. Pass `--rich` for enhanced ASCII views with
+  styled tables, color-coded panels, and formatted overlays.
 - Shared simulation config in `content/config/simulation.yml` that sets
   safeguards (CLI run cap, script limits, service tick cap), Level-of-Detail
   mode, profiling toggles, and an `economy` block that exposes regeneration,
@@ -315,6 +316,18 @@ Interactive mode:
 ```bash
 uv run echoes-shell --world default
 ```
+
+**Enhanced ASCII Views** (tables, colors, panels):
+
+```bash
+uv run echoes-shell --world default --rich
+```
+
+The `--rich` flag enables enhanced formatting using the Rich library, providing:
+- Styled tables for world status and performance metrics
+- Color-coded panels for environment impact and focus state
+- Formatted story seed and director event displays
+- Better visual hierarchy and readability
 
 - To target a running FastAPI simulation service, supply
   `--service-url http://localhost:8000`. When this flag is set the CLI routes

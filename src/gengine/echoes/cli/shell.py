@@ -15,6 +15,12 @@ from ..client import SimServiceClient
 from ..settings import SimulationConfig, SimulationLimits, load_simulation_config
 from ..sim import SimEngine, TickReport
 
+try:
+    from . import display
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+
 PROMPT = "(echoes) "
 INTRO_TEXT = "Echoes shell ready. Type 'help' for commands."
 
@@ -170,9 +176,11 @@ class EchoesShell:
         backend: ShellBackend,
         *,
         limits: SimulationLimits | None = None,
+        enable_rich: bool = False,
     ) -> None:
         self.backend = backend
         self._limits = limits
+        self.enable_rich = enable_rich and RICH_AVAILABLE
 
     # Public API ---------------------------------------------------------
     def execute(self, command_line: str) -> CommandResult:
@@ -196,6 +204,8 @@ class EchoesShell:
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
         summary = self.backend.summary()
+        if self.enable_rich:
+            return CommandResult(display.render_summary_table(summary))
         return CommandResult(_render_summary(summary))
 
     def _cmd_next(self, args: Sequence[str]) -> CommandResult:
@@ -223,6 +233,9 @@ class EchoesShell:
         return CommandResult(output)
 
     def _cmd_map(self, args: Sequence[str]) -> CommandResult:
+        if self.enable_rich and not args:
+            summary = self.backend.summary()
+            return CommandResult(display.render_map_overlay(summary))
         district_id = args[0] if args else None
         return CommandResult(self.backend.render_map(district_id))
 
@@ -267,6 +280,8 @@ class EchoesShell:
         if not feed:
             return CommandResult("No director feed recorded.")
         entries = history if limit is None else history[-limit:]
+        if self.enable_rich:
+            return CommandResult(display.render_director_table(feed, entries, analysis))
         return CommandResult(_render_director_feed(feed, entries, analysis))
 
     def _cmd_postmortem(self, args: Sequence[str]) -> CommandResult:
@@ -1031,6 +1046,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="If provided, target a running simulation service instead of local state",
     )
+    parser.add_argument(
+        "--rich",
+        action="store_true",
+        help="Enable enhanced ASCII views with Rich formatting (tables, colors, panels)",
+    )
     args = parser.parse_args(argv)
     config = load_simulation_config()
 
@@ -1041,7 +1061,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         engine = _build_engine(args.world, args.snapshot, config=config)
         backend = LocalBackend(engine)
-    shell = EchoesShell(backend, limits=config.limits)
+    shell = EchoesShell(backend, limits=config.limits, enable_rich=args.rich)
 
     try:
         if args.script:

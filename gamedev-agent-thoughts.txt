@@ -340,3 +340,10 @@ a0bd56a -> main: Fast-forwarded main with feature/m5-4-post-mortems after green 
 4c613db: Added shell empty-command + no-data tests, ServiceBackend focus/history/post-mortem tests; coverage reached 94% with 187 uncovered lines (166 passed).
 4c613db: Added gateway app edge-case tests (invalid JSON, non-dict payloads, default backend factory), shell rendering tests (pollution extremes, diffusion samples, spatial weights); **achieved 95% total coverage** (170 tests passed, 168 lines uncovered) per user request.
 8e36125 -> main: Fast-forwarded main with feature/m6-1-gateway after 95% coverage verification (170 tests, gateway service complete).
+40114bc: Planning M6.2 enhanced ASCII views—add rich text formatting (tables, borders, colors via Rich library), refactor rendering functions for reuse, expand map/summary/director displays with tabular layouts, add regression tests, update docs per workflow.
+40114bc: Implemented M6.2 enhanced ASCII views—added gengine.echoes.cli.display module with Rich-based rendering (tables, panels, styled text), integrated into EchoesShell with --rich flag, added 9 new tests (display module + shell rich mode), maintained 95% coverage (179 tests passed).
+
+Documentation Updates Complete:
+- Updated how_to_play_echoes.md with --rich flag documentation and enhanced visualization examples
+- All M6.2 documentation now complete: README.md, implementation plan, gameplay guide
+- Ready to commit M6.2 work

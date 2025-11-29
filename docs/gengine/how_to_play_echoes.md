@@ -18,9 +18,15 @@ uv run echoes-shell --world default
 - Use `--service-url http://localhost:8000` to target the FastAPI simulation
   service instead of running in-process (world/snapshot loads must then be
   triggered server-side).
+- Use `--rich` to enable enhanced ASCII views with styled tables, color-coded
+  panels, and improved readability (requires Rich library).
 - For scripted runs (handy for CI or quick experiments):
   ```bash
   uv run echoes-shell --world default --script "summary;run 5;map;exit"
+  ```
+- For enhanced visualization during playtesting:
+  ```bash
+  uv run echoes-shell --world default --rich
   ```
 
 On startup the shell prints a world summary and shows the prompt `(echoes)`.

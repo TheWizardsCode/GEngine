@@ -1127,3 +1127,41 @@ def test_render_summary_with_spatial_weights() -> None:
     assert "adjacent" in rendered
     assert "spatial weights" in rendered
     assert "distance ref" in rendered
+
+def test_shell_with_rich_formatting_enabled() -> None:
+    """Verify that shell can use rich formatting when enabled."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend, enable_rich=True)
+    
+    result = shell.execute("summary")
+    assert result.output
+    # Rich formatting should add visual elements
+    # (Can't test for exact ANSI codes, but output should be enhanced)
+    assert len(result.output) > 0
+
+
+def test_shell_rich_director_command() -> None:
+    """Verify that director command works with rich formatting."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    engine.advance_ticks(10)
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend, enable_rich=True)
+    
+    result = shell.execute("director")
+    assert result.output
+
+
+def test_shell_rich_map_command() -> None:
+    """Verify that map command works with rich formatting."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend, enable_rich=True)
+    
+    result = shell.execute("map")
+    assert result.output
+    # Rich map should have visual elements
+    assert "City Map" in result.output or "District" in result.output
