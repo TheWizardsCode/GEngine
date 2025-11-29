@@ -823,3 +823,29 @@ M6.4 Status: ✅ COMPLETE and merged to main
 
 Ready for M6.5: Gateway-LLM integration
 
+
+M6.4 Merge Verification
+========================
+[2025-11-29 10:12 UTC] main branch: Verified clean merge
+
+Git status:
+  - Current branch: main
+  - HEAD: 892c6cc (chore: record M6.4 PR merge)
+  - Origin sync: ✅ up to date with origin/main
+  - Working tree: clean
+
+Test verification:
+  - Ran: pytest tests/echoes/test_llm_intents.py tests/echoes/test_llm_prompts.py
+  - Result: 55 passed in 0.57s
+  - Status: ✅ All M6.4 tests passing on main
+
+Current commit history:
+  892c6cc (HEAD -> main, origin/main) chore: record M6.4 PR merge
+  53ad6f0 Merge pull request #3 from feature/m6-4-intent-schema
+  a36ae37 chore: document M6.4 PR creation
+  55681dd chore: record M6.4 commit hash
+  b1cdc37 feat(llm): implement M6.4 intent schema + prompt templates
+
+M6.4 successfully integrated into main branch.
+Ready to begin next milestone.
+
