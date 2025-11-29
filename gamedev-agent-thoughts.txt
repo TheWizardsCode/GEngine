@@ -849,3 +849,199 @@ Current commit history:
 M6.4 successfully integrated into main branch.
 Ready to begin next milestone.
 
+
+M6.5 Gateway-LLM Integration - Planning
+========================================
+[2025-11-29 10:15 UTC] Starting M6.5: Gateway integration
+
+Milestone Goal:
+  User text -> LLM intents -> sim actions -> narrative response with retry/fallback logic
+
+Current State Analysis:
+  ✅ Gateway service (M6.1) - WebSocket gateway proxies CLI commands to sim service
+  ✅ LLM service (M6.3) - /parse_intent and /narrate endpoints with stub provider
+  ✅ Intent schema (M6.4) - 7 Pydantic intent types with validation
+
+Architecture Overview:
+  Gateway (WS) <-> Gateway Session <-> Shell Backend <-> Sim Service (HTTP)
+  Gateway (WS) <-> LLM Service (HTTP) for intent parsing/narration
+
+Key Integration Points:
+  1. Gateway needs to call LLM service to parse natural language commands
+  2. Gateway needs to convert LLM intents to sim service actions
+  3. Gateway needs to call LLM service to narrate simulation responses
+  4. Need retry/fallback logic for LLM failures
+  5. Need to handle conversation context across multi-turn interactions
+
+Implementation Tasks:
+  1. Add LLM client to gateway (HTTP client for LLM service)
+  2. Create intent-to-action mapper (convert GameIntent to sim actions)
+  3. Add natural language command handler to gateway session
+  4. Implement narration flow (sim events -> LLM narration)
+  5. Add retry/fallback logic with graceful degradation
+  6. Add conversation context management
+  7. Update gateway WebSocket protocol for NL commands
+  8. Add configuration for LLM service URL
+  9. Write comprehensive tests
+  10. Update documentation
+
+Estimated Complexity: 1-1.5 days (per implementation plan)
+
+Next: Create feature branch and begin implementation
+
+
+M6.5 Gateway-LLM Integration - Implementation Progress
+=======================================================
+[2025-11-29 10:30 UTC] feature/m6-5-gateway-llm-integration: Initial implementation
+
+Implemented Components:
+1. ✅ LLMClient (gateway/llm_client.py)
+   - HTTP client for LLM service with retry logic
+   - parse_intent() and narrate() methods
+   - Healthcheck support
+   
+2. ✅ IntentMapper (gateway/intent_mapper.py)
+   - Maps GameIntent objects to shell commands
+   - Supports all 7 intent types
+   - Logs unimplemented actions
+   
+3. ✅ Enhanced GatewaySession (gateway/session.py)
+   - execute_natural_language() method
+   - Context building for LLM
+   - Fallback keyword matching
+   - Conversation history tracking
+   
+4. ✅ Updated GatewayApp (gateway/app.py)
+   - LLM service URL configuration
+   - WebSocket protocol supports NL flag
+   - Manager creates LLM client per session
+
+5. ✅ Tests created (32 tests)
+   - test_gateway_llm_client.py (18 tests)
+   - test_gateway_intent_mapper.py (14 tests)
+
+Test Results: 12 passed, 20 failed
+- LLM client tests: Need to fix intent response parsing
+- Intent mapper tests: Need to provide session_id in test intents
+
+Issues to Fix:
+1. Intent schemas require session_id field
+2. LLM client parse_intent expecting wrong response structure
+3. Some intent fields need adjustment (levers as dict, policy_id, action vs command)
+
+Next: Fix test failures and run full test suite
+
+
+M6.5 Gateway-LLM Integration - Implementation Complete
+=======================================================
+[2025-11-29 11:00 UTC] feature/m6-5-gateway-llm-integration: All tests passing
+
+Final Implementation:
+1. ✅ LLMClient (gateway/llm_client.py) - 75 statements
+   - HTTP client for LLM service
+   - parse_intent() with retry logic (max 2 retries)
+   - narrate() with retry logic
+   - Health checking support
+   - Proper error handling and logging
+
+2. ✅ IntentMapper (gateway/intent_mapper.py) - 67 statements
+   - Maps all 7 GameIntent types to shell commands
+   - INSPECT district -> map <id>
+   - REQUEST_REPORT -> summary/map/director commands
+   - Other intents log and return summary (not yet implemented in CLI)
+
+3. ✅ Enhanced GatewaySession (gateway/session.py) - 123 statements (45% coverage)
+   - execute_natural_language() method
+   - Context building from summary (tick, district, recent_events)
+   - Fallback keyword matching when LLM fails
+   - Conversation history tracking
+   - Try to narrate results (optional enhancement)
+
+4. ✅ Updated GatewayApp (gateway/app.py) - 113 statements (93% coverage)
+   - Added llm_service_url to GatewaySettings
+   - LLM URL read from ECHOES_GATEWAY_LLM_URL env var
+   - Manager creates LLM client if URL configured
+   - WebSocket protocol enhanced:
+     * {"command": "text"} - normal command (backwards compatible)
+     * {"command": "text", "natural_language": true} - NL command
+   - _receive_message() function returns dict format
+   - Empty string commands handled correctly
+
+5. ✅ Module exports updated (gateway/__init__.py)
+   - Exports LLMClient and IntentMapper
+
+Test Results:
+  - Total tests: 330 (298 → 330, +32 new tests)
+  - All passing: ✅
+  - Coverage: 93% overall
+  - New modules:
+    * llm_client.py: 88% (75 statements, 9 miss)
+    * intent_mapper.py: 94% (67 statements, 4 miss)
+    * session.py: 45% (123 statements, 68 miss - NL features not fully tested yet)
+    * app.py: 93% (113 statements, 8 miss)
+
+Test Files Created:
+  - test_gateway_llm_client.py: 18 tests (all passing)
+  - test_gateway_intent_mapper.py: 14 tests (all passing)
+
+Issues Fixed:
+  - Intent schema field names corrected (intent vs intent_type, goal vs goals, etc.)
+  - Session_id added to all test intents
+  - Empty command handling fixed in WebSocket handler
+  - Intent mapper uses correct field names (action, policy_id, target, etc.)
+
+Ready for: Documentation updates, PR creation
+
+
+M6.6 Real LLM Providers - Planning
+===================================
+[2025-11-29 11:15 UTC] Added to implementation plan
+
+Milestone Scope (1-1.5 days):
+  Implement OpenAIProvider and AnthropicProvider to replace stub
+
+Current State:
+  - M6.3 delivered abstract LLMProvider base class + StubProvider
+  - M6.4 delivered intent schemas + prompt templates (OpenAI + Anthropic formats)
+  - M6.5 delivered gateway integration with retry/fallback
+  - Missing: Real API integrations for OpenAI and Anthropic
+
+Implementation Tasks:
+  1. OpenAIProvider class
+     - Use openai Python SDK (add to dependencies)
+     - Implement parse_intent() using function calling API
+     - Use OPENAI_INTENT_FUNCTIONS from prompts.py
+     - Implement narrate() with chat completions
+     - Use NARRATION_SYSTEM_PROMPT
+     - Retry logic for rate limits/errors
+     - Parse responses into GameIntent objects
+
+  2. AnthropicProvider class
+     - Use anthropic Python SDK (add to dependencies)
+     - Implement parse_intent() using structured outputs
+     - Use ANTHROPIC_INTENT_SCHEMA from prompts.py
+     - Implement narrate() with messages API
+     - Use NARRATION_SYSTEM_PROMPT
+     - Retry logic for rate limits/errors
+     - Parse responses into GameIntent objects
+
+  3. Configuration
+     - Add openai/anthropic to pyproject.toml dependencies
+     - Update LLMSettings validation for new providers
+     - Environment variables for API keys
+     - Model selection per provider
+
+  4. Testing
+     - Mock API responses using pytest fixtures
+     - Test parse_intent() with various inputs
+     - Test narrate() with events
+     - Test error handling and retries
+     - Integration tests (optional, may need real API keys)
+
+  5. Documentation
+     - Update README with provider setup instructions
+     - Document API key configuration
+     - Add examples for each provider
+
+Status: Not started (M6.5 must complete first)
+
