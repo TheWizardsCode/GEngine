@@ -6,7 +6,7 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Sequence, Tuple
 
-from ..core import District, GameState
+from ..core import District, EnvironmentState, GameState
 from ..settings import EnvironmentSettings
 from .economy import EconomyReport
 from .factions import FactionAction
@@ -28,6 +28,8 @@ class EnvironmentImpact:
     average_pollution: float = 0.0
     extremes: Dict[str, Dict[str, float]] = field(default_factory=dict)
     diffusion_samples: List[Dict[str, object]] = field(default_factory=list)
+    biodiversity: Dict[str, float] = field(default_factory=dict)
+    stability_effects: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -39,6 +41,8 @@ class EnvironmentImpact:
             "average_pollution": round(self.average_pollution, 4),
             "extremes": self.extremes,
             "diffusion_samples": self.diffusion_samples,
+            "biodiversity": self.biodiversity,
+            "stability_effects": self.stability_effects,
         }
 
 
@@ -59,9 +63,16 @@ class EnvironmentSystem:
         pressure = self._scarcity_pressure(economy_report) if economy_report else 0.0
         district_deltas: Dict[str, Dict[str, float]] = {}
         events: List[str] = []
+        env = state.environment
+        scarcity_biodiversity_delta = 0.0
+        biodiversity_recovery_delta = 0.0
 
         if pressure > 0:
-            self._apply_scarcity_pressure(state, pressure, district_deltas)
+            scarcity_biodiversity_delta = self._apply_scarcity_pressure(
+                state,
+                pressure,
+                district_deltas,
+            )
             if (
                 economy_report
                 and pressure >= self._settings.scarcity_event_threshold
@@ -69,6 +80,9 @@ class EnvironmentSystem:
             ):
                 stressed = ", ".join(sorted(economy_report.shortages.keys()))
                 events.append(f"Scarcity in {stressed} strains the city environment")
+
+        biodiversity_recovery_delta = self._recover_biodiversity(env)
+        stability_delta = self._apply_biodiversity_feedback(env)
 
         (
             diffusion_applied,
@@ -78,6 +92,8 @@ class EnvironmentSystem:
         ) = self._apply_diffusion(state, district_deltas)
         if diffusion_applied:
             events.append("Pollution diffuses toward the citywide baseline")
+        if env.biodiversity < self._settings.biodiversity_alert_threshold:
+            events.append("Biodiversity erosion threatens city stability")
 
         faction_events, faction_effects = self._apply_faction_effects(
             faction_actions or [],
@@ -85,6 +101,17 @@ class EnvironmentSystem:
             district_deltas,
         )
         events.extend(faction_events)
+
+        biodiversity_snapshot = {
+            "value": round(env.biodiversity, 4),
+            "delta": round(scarcity_biodiversity_delta + biodiversity_recovery_delta, 6),
+            "scarcity_delta": round(scarcity_biodiversity_delta, 6),
+            "recovery_delta": round(biodiversity_recovery_delta, 6),
+        }
+        stability_snapshot = {
+            "value": round(env.stability, 4),
+            "biodiversity_delta": round(stability_delta, 6),
+        }
 
         return EnvironmentImpact(
             scarcity_pressure=pressure,
@@ -95,6 +122,8 @@ class EnvironmentSystem:
             diffusion_samples=diffusion_samples,
             faction_effects=faction_effects,
             events=events,
+            biodiversity=biodiversity_snapshot,
+            stability_effects=stability_snapshot,
         )
 
     def _scarcity_pressure(self, report: EconomyReport) -> float:
@@ -109,7 +138,7 @@ class EnvironmentSystem:
         state: GameState,
         pressure: float,
         district_deltas: Dict[str, Dict[str, float]],
-    ) -> None:
+    ) -> float:
         env = state.environment
         env.unrest = _clamp(
             env.unrest + pressure * self._settings.scarcity_unrest_weight
@@ -117,6 +146,11 @@ class EnvironmentSystem:
         env.pollution = _clamp(
             env.pollution + pressure * self._settings.scarcity_pollution_weight
         )
+        before_biodiversity = env.biodiversity
+        biodiversity_delta = -pressure * self._settings.scarcity_biodiversity_weight
+        if biodiversity_delta:
+            env.biodiversity = _clamp(env.biodiversity + biodiversity_delta)
+            biodiversity_delta = env.biodiversity - before_biodiversity
 
         for district in state.city.districts:
             unrest_delta = pressure * self._settings.district_unrest_weight
@@ -129,6 +163,7 @@ class EnvironmentSystem:
                     district.modifiers.pollution + pollution_delta
                 )
                 _record_delta(district_deltas, district.id, "pollution", pollution_delta)
+        return biodiversity_delta
 
     def _apply_diffusion(
         self,
@@ -225,6 +260,25 @@ class EnvironmentSystem:
                 f"{action.faction_name} {descriptor} pollution in {district.name} ({verb})"
             )
         return events, effects
+
+    def _recover_biodiversity(self, env: EnvironmentState) -> float:
+        target = _clamp(self._settings.biodiversity_baseline)
+        delta = (target - env.biodiversity) * self._settings.biodiversity_recovery_rate
+        if abs(delta) < 1e-6:
+            return 0.0
+        before = env.biodiversity
+        env.biodiversity = _clamp(env.biodiversity + delta)
+        return env.biodiversity - before
+
+    def _apply_biodiversity_feedback(self, env: EnvironmentState) -> float:
+        midpoint = _clamp(self._settings.biodiversity_stability_midpoint)
+        deviation = env.biodiversity - midpoint
+        delta = deviation * self._settings.biodiversity_stability_weight
+        if abs(delta) < 1e-6:
+            return 0.0
+        before = env.stability
+        env.stability = _clamp(env.stability + delta)
+        return env.stability - before
 
 
 def _record_delta(

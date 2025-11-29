@@ -407,6 +407,7 @@ def _environment_snapshot(state: GameState) -> dict[str, float]:
         "stability": env.stability,
         "unrest": env.unrest,
         "pollution": env.pollution,
+        "biodiversity": env.biodiversity,
         "climate_risk": env.climate_risk,
         "security": env.security,
     }

@@ -188,17 +188,24 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   should ripple into civic unrest or ecological decline. Pollution also diffuses
   toward a citywide mean each tick, while faction investments/sabotage inject
   relief or spikes that are logged in telemetry so narrative beats remain tied
-  to systemic causes. District modifiers now include a subtle mean-reversion
-  step so long burns do not pin districts at the extremes, and faction AI
-  prioritizes investment whenever unrest/security drift beyond safe margins
-  while only allowing sabotage when a weaker faction has both the legitimacy
-  gap and global stability to justify escalation. Latest tuning biases diffusion
-  toward geographically adjacent neighbors via `diffusion_neighbor_bias`, clamps
-  the per-tick drift with `diffusion_min_delta`/`diffusion_max_delta`, and records
-  every tick's `environment_impact` payload with scarcity pressure, faction
-  deltas, average pollution, the districts holding the current min/max, and the
-  top sampled diffusion deltas so telemetry, CLI summaries, and headless reports
-  all expose the same diagnostics.
+  to systemic causes. A biodiversity gauge now complements pollution: scarcity
+  drains biodiversity based on tunable weights, recovery pulls it toward a
+  configurable baseline, and stability receives a feedback push/pull whenever
+  biodiversity drifts past the midpoint. Falling below the alert threshold
+  triggers warnings in CLI/service/headless surfaces so playtesters can respond
+  before stability collapses. District modifiers now include a subtle
+  mean-reversion step so long burns do not pin districts at the extremes, and
+  faction AI prioritizes investment whenever unrest/security drift beyond safe
+  margins while only allowing sabotage when a weaker faction has both the
+  legitimacy gap and global stability to justify escalation. Latest tuning
+  biases diffusion toward geographically adjacent neighbors via
+  `diffusion_neighbor_bias`, clamps the per-tick drift with
+  `diffusion_min_delta`/`diffusion_max_delta`, and records every tick's
+  `environment_impact` payload with scarcity pressure, biodiversity values and
+  deltas, stability feedback, faction deltas, average pollution, the districts
+  holding the current min/max, and the top sampled diffusion deltas so
+  telemetry, CLI summaries, and headless reports all expose the same
+  diagnostics.
 
 **Emergent Environmental Behaviors:**
 

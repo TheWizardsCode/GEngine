@@ -142,6 +142,7 @@ class EnvironmentState(BaseModel):
     stability: float = Field(0.5, ge=0.0, le=1.0)
     unrest: float = Field(0.5, ge=0.0, le=1.0)
     pollution: float = Field(0.5, ge=0.0, le=1.0)
+    biodiversity: float = Field(0.6, ge=0.0, le=1.0)
     climate_risk: float = Field(0.5, ge=0.0, le=1.0)
     security: float = Field(0.5, ge=0.0, le=1.0)
 

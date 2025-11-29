@@ -99,6 +99,12 @@ class EnvironmentSettings(BaseModel):
     diffusion_max_delta: float = Field(0.02, ge=0.0)
     faction_invest_pollution_relief: float = Field(0.02, ge=0.0)
     faction_sabotage_pollution_spike: float = Field(0.025, ge=0.0)
+    biodiversity_baseline: float = Field(0.65, ge=0.0, le=1.0)
+    biodiversity_recovery_rate: float = Field(0.02, ge=0.0, le=1.0)
+    scarcity_biodiversity_weight: float = Field(0.0004, ge=0.0)
+    biodiversity_stability_weight: float = Field(0.0015, ge=0.0)
+    biodiversity_stability_midpoint: float = Field(0.6, ge=0.0, le=1.0)
+    biodiversity_alert_threshold: float = Field(0.35, ge=0.0, le=1.0)
 
 
 class DirectorSettings(BaseModel):

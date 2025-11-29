@@ -29,19 +29,19 @@ and persist state.
 
 ## 2. Shell Commands
 
-| Command | Description |
-| --- | --- |
-| `help` | Lists all available commands. |
-| `summary` | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
-| `next` | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches. |
-| `run <n>` | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report. |
-| `map [district_id]` | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district. |
-| `focus [district\|clear]` | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation. |
-| `history [count]` | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown. |
-| `save <path>` | Writes the current `GameState` snapshot to disk as JSON. |
-| `load world <name>` | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only). |
-| `load snapshot <path>` | Restores state from a JSON snapshot created via `save` (local engine mode only). |
-| `exit` / `quit` | Leave the shell. |
+| Command                   | Description                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `help`                    | Lists all available commands.                                                                                                                                                                                                                                                                                                                                   |
+| `summary`                 | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, biodiversity value/deltas, stability feedback, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). |
+| `next`                    | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                                                                                                                                                |
+| `run <n>`                 | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                                                                                                                                                        |
+| `map [district_id]`       | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district.                                                                                                                                              |
+| `focus [district\|clear]` | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation.                                                                                                                                             |
+| `history [count]`         | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown.                                                                                                                                               |
+| `save <path>`             | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                                                                                                                                                        |
+| `load world <name>`       | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                                                                                                                                                                                      |
+| `load snapshot <path>`    | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                                                                                                                                                                                |
+| `exit` / `quit`           | Leave the shell.                                                                                                                                                                                                                                                                                                                                                |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
 quotes. The shell ignores blank lines and repeats the prompt after each command.
@@ -91,8 +91,9 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   (e.g., "Industrial Tier pollution spike detected").
 - `summary` mirrors those metrics without advancing time and now includes both
   the `environment_impact` block (scarcity pressure, faction pollution deltas,
-  diffusion state, average pollution, the latest extreme districts, and the top
-  diffusion samples captured during the tick), profiling stats (tick duration percentiles plus the last
+  diffusion state, average pollution, the latest extreme districts, the
+  biodiversity snapshot with scarcity/recovery deltas, and the top diffusion
+  samples captured during the tick), profiling stats (tick duration percentiles plus the last
   subsystem timings), and the focus digest preview (up to six curated events
   plus a suppressed count). Use `focus` to retarget which districts receive the
   larger per-tick budget whenever you need to spotlight a different hotspot.
@@ -175,7 +176,8 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
 - Scarcity signals now feed into the environment loop via `EnvironmentSystem`.
   When the economy subsystem reports sustained shortages, the system applies a
   configurable pressure value that drifts district unrest/pollution and, by
-  extension, global stability.
+  extension, global stability while also draining biodiversity if the pressure
+  persists.
 - Tune the response curve through the `environment` block in
   `content/config/simulation.yml`. The `scarcity_*_weight` fields control how
   strongly shortages push on unrest or pollution, while `scarcity_event_threshold`
@@ -183,7 +185,13 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   steer diffusion with `diffusion_neighbor_bias` (how much more heavily adjacent
   districts are weighted versus the citywide mean) plus
   `diffusion_min_delta`/`diffusion_max_delta` clamps that keep the per-tick drift
-  inside predictable bounds.
+  inside predictable bounds. Biodiversity tuning lives in the same block via
+  `biodiversity_baseline`, `biodiversity_recovery_rate`,
+  `scarcity_biodiversity_weight`, `biodiversity_stability_weight`,
+  `biodiversity_stability_midpoint`, and `biodiversity_alert_threshold`, giving
+  you control over how quickly ecosystems erode, how fast they rebound, when
+  warnings fire, and how hard stability responds once the gauge drifts below
+  the midpoint.
 - Pollution diffuses toward a citywide average each tick when `diffusion_rate`
   is non-zero, and faction actions now feed directly into the loop:
   `faction_invest_pollution_relief` eases pollution whenever a faction invests
@@ -199,8 +207,10 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
 - Every tick writes an `environment_impact` block into the game state's
   metadata. Inspect it via headless telemetry or by dumping the snapshot to see
   the latest pressure, diffusion flag, faction effects, per-district deltas,
-  the average pollution level, which districts held the min/max values, and up
-  to three sampled diffusion deltas while you tune. The `summary` command now prints this block
+  the biodiversity value/deltas with scarcity vs. recovery attribution, the
+  stability feedback applied that tick, the average pollution level, which
+  districts held the min/max values, and up to three sampled diffusion deltas
+  while you tune. The `summary` command now prints this block
   directly, alongside profiling metrics that include tick percentiles, the
   slowest subsystem, and any anomaly tags so designers can spot runaway
   pollution or suspicious subsystem spikes before advancing time.

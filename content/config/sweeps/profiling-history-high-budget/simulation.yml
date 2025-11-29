@@ -69,3 +69,9 @@ environment:
   diffusion_max_delta: 0.02
   faction_invest_pollution_relief: 0.02
   faction_sabotage_pollution_spike: 0.025
+  biodiversity_baseline: 0.68
+  biodiversity_recovery_rate: 0.03
+  scarcity_biodiversity_weight: 0.0006
+  biodiversity_stability_weight: 0.0022
+  biodiversity_stability_midpoint: 0.6
+  biodiversity_alert_threshold: 0.38

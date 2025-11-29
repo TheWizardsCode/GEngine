@@ -311,6 +311,8 @@ def test_render_summary_surfaces_environment_impact() -> None:
                     "pollution_delta": -0.02,
                 }
             ],
+            "biodiversity": {"value": 0.62, "delta": -0.01},
+            "stability_effects": {"biodiversity_delta": -0.002},
         },
         "focus": {
             "district_id": "industrial-tier",
@@ -338,6 +340,7 @@ def test_render_summary_surfaces_environment_impact() -> None:
 
     assert "env impact" in rendered
     assert "faction effects" in rendered
+    assert "biodiversity" in rendered
     assert "focus -> industrial-tier" in rendered
     assert "focus digest" in rendered
     assert "ranked:" in rendered

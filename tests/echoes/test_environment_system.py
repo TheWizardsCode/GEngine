@@ -21,11 +21,15 @@ def test_environment_system_applies_scarcity_pressure() -> None:
         district_pollution_weight=0.005,
         scarcity_event_threshold=0.5,
         diffusion_rate=0.0,
+        scarcity_biodiversity_weight=0.01,
+        biodiversity_stability_weight=0.0,
+        biodiversity_recovery_rate=0.0,
     )
     system = EnvironmentSystem(settings=settings)
     report = EconomyReport(prices={}, shortages={"energy": 4, "water": 2})
     baseline_unrest = state.environment.unrest
     baseline_pollution = state.environment.pollution
+    baseline_biodiversity = state.environment.biodiversity
     target_district = state.city.districts[0]
     district_unrest = target_district.modifiers.unrest
 
@@ -34,9 +38,11 @@ def test_environment_system_applies_scarcity_pressure() -> None:
     assert impact.scarcity_pressure == pytest.approx(1.0)
     assert state.environment.unrest > baseline_unrest
     assert state.environment.pollution > baseline_pollution
+    assert state.environment.biodiversity < baseline_biodiversity
     assert target_district.modifiers.unrest > district_unrest
     assert impact.events and "Scarcity" in impact.events[0]
     assert impact.diffusion_applied is False
+    assert impact.biodiversity["scarcity_delta"] < 0
 
 
 def test_environment_system_noop_without_shortages() -> None:
@@ -48,10 +54,12 @@ def test_environment_system_noop_without_shortages() -> None:
             scarcity_pollution_weight=0.0,
             district_unrest_weight=0.0,
             district_pollution_weight=0.0,
+            biodiversity_recovery_rate=0.05,
         )
     )
     report = EconomyReport(prices={}, shortages={})
     baseline_unrest = state.environment.unrest
+    baseline_biodiversity = state.environment.biodiversity
 
     impact = system.tick(state, rng=random.Random(1), economy_report=report)
 
@@ -59,6 +67,8 @@ def test_environment_system_noop_without_shortages() -> None:
     assert state.environment.unrest == baseline_unrest
     assert not impact.events
     assert impact.diffusion_applied is False
+    assert state.environment.biodiversity > baseline_biodiversity
+    assert impact.biodiversity["recovery_delta"] > 0
 
 
 def test_environment_system_reacts_to_faction_actions() -> None:
@@ -162,3 +172,26 @@ def test_environment_diffusion_reports_extremes_and_samples() -> None:
     )
     assert all(abs(sample["delta"]) <= 0.01 for sample in impact.diffusion_samples)
     assert any(sample.get("neighbor_avg") is not None for sample in impact.diffusion_samples)
+
+
+def test_biodiversity_stability_feedback() -> None:
+    state = load_world_bundle()
+    state.environment.biodiversity = 0.2
+    state.environment.stability = 0.7
+    system = EnvironmentSystem(
+        settings=EnvironmentSettings(
+            diffusion_rate=0.0,
+            scarcity_unrest_weight=0.0,
+            scarcity_pollution_weight=0.0,
+            district_unrest_weight=0.0,
+            district_pollution_weight=0.0,
+            biodiversity_recovery_rate=0.0,
+            biodiversity_stability_weight=0.02,
+            biodiversity_stability_midpoint=0.8,
+        )
+    )
+
+    impact = system.tick(state, rng=random.Random(3), economy_report=EconomyReport(prices={}, shortages={}))
+
+    assert state.environment.stability < 0.7
+    assert impact.stability_effects["biodiversity_delta"] < 0

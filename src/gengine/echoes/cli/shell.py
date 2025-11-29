@@ -325,6 +325,19 @@ def _render_summary(summary: dict[str, object]) -> str:
                 )
             if preview:
                 lines.append(f"    diffusion samples: {', '.join(preview)}")
+        biodiversity = impact.get("biodiversity") or {}
+        if isinstance(biodiversity, dict) and biodiversity.get("value") is not None:
+            value = biodiversity.get("value")
+            if isinstance(value, (int, float)):
+                delta = biodiversity.get("delta")
+                delta_text = ""
+                if isinstance(delta, (int, float)) and abs(delta) >= 1e-4:
+                    delta_text = f" ({delta:+.3f})"
+                lines.append(f"    biodiversity: {value:.3f}{delta_text}")
+                stab = impact.get("stability_effects") or {}
+                stability_delta = stab.get("biodiversity_delta")
+                if isinstance(stability_delta, (int, float)) and abs(stability_delta) >= 1e-4:
+                    lines.append(f"    stability<-bio: {stability_delta:+.3f}")
         faction_effects = impact.get("faction_effects") or []
         if faction_effects:
             preview = []

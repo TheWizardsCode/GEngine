@@ -11,9 +11,9 @@ from typing import Dict, List, Sequence, Tuple
 import matplotlib.pyplot as plt
 
 DEFAULT_RUNS: Dict[str, Path] = {
-    "cushioned": Path("build/feature-m4-8-phase4-deepening-cushioned.json"),
-    "high-pressure": Path("build/feature-m4-8-phase4-deepening-high-pressure.json"),
-    "profiling-history": Path("build/feature-m4-8-phase4-deepening-profiling-history.json"),
+    "cushioned": Path("build/feature-m4-7-biodiversity-cushioned.json"),
+    "high-pressure": Path("build/feature-m4-7-biodiversity-high-pressure.json"),
+    "profiling-history": Path("build/feature-m4-7-biodiversity-profiling-history.json"),
 }
 
 

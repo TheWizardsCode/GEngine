@@ -14,11 +14,12 @@ A staged implementation that builds a solid simulation core, then layers on agen
   shipped; **M4.3 Economy** now includes the subsystem, designer-facing config
   knobs, legitimacy/market telemetry, and expanded tests. **M4.4 Environment**
   now routes scarcity pressure into unrest/pollution, biases diffusion toward
-  adjacent districts with configurable neighbor weights/min/max clamps, and
-  captures richer telemetry (average pollution, extremes, sampled diffusion
-  deltas) that surfaces in CLI/service/headless summaries. Remaining Phase 4 work
-  focuses on long scenario sweeps and biodiversity/LOD follow-ups before merging
-  back to main.
+  adjacent districts with configurable neighbor weights/min/max clamps, tracks
+  biodiversity health (scarcity decay, configurable recovery baseline, stability
+  coupling, alert threshold), and captures richer telemetry (average pollution,
+  extremes, sampled diffusion deltas, biodiversity/stability snapshots) that
+  surfaces in CLI/service/headless summaries. Remaining Phase 4 work focuses on
+  long scenario sweeps plus director UX polish before merging back to main.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -401,19 +402,30 @@ single row to validate whenever a guardrail knob changes.
     economy shortages into district unrest/pollution deltas, drive adjacency-
     aware diffusion (neighbor bias + min/max caps), and translate faction
     investments/sabotage into pollution relief or spikes that appear in
-    telemetry/CLI summaries. Next steps expand into biodiversity health and
-    climate events.
+    telemetry/CLI summaries. Biodiversity health now threads through the same
+    loop: scarcity pressure erodes the new `EnvironmentState.biodiversity`
+    field, recovery pulls it toward a configurable baseline, stability coupling
+    provides feedback when biodiversity dips below the midpoint, and CLI/service
+    summaries alert whenever the value falls beneath the configured threshold.
   - Integrate with LOD settings so coarse mode aggregates environment updates
     while detailed mode runs district-level diffusion (baseline diffusion now
     implemented via EnvironmentSystem; future work tunes per LOD).
   - Extend CLI `summary`/`map` output with new environment indicators and
     warnings plus telemetry surfacing of `environment_impact` (summary block now
-    live with scarcity pressure, faction deltas, average pollution, min/max
-    districts, and sampled diffusion deltas; map warnings pending dedicated
-    environment events).
+    live with scarcity pressure, faction deltas, biodiversity/stability
+    snapshots, average pollution, min/max districts, and sampled diffusion
+    deltas; map warnings pending dedicated environment events).
+  - Config exposure: the shared `environment` block in
+    `content/config/simulation.yml` now includes biodiversity knobs
+    (`biodiversity_baseline`, `biodiversity_recovery_rate`,
+    `scarcity_biodiversity_weight`, `biodiversity_stability_weight`,
+    `biodiversity_stability_midpoint`, `biodiversity_alert_threshold`) so
+    designers can tune how fast ecosystems erode, how quickly they rebound, and
+    how hard they tug on stability without touching code. Document default
+    values in README/gameplay guide and mirror them across sweep configs.
   - Tests: maintain targeted regression/property tests for the coupling and add
-    scenario coverage for pollution emergencies, diffusion telemetry, and CLI
-    messaging as biodiversity features arrive.
+    scenario coverage for pollution emergencies, diffusion telemetry,
+    biodiversity scarcity/recovery loops, stability feedback, and CLI messaging.
 
 - **M4.5 Tick Orchestration & Telemetry (Deliverable: updated `SimEngine.advance_ticks`)**
   - Define subsystem execution order (agents → factions → economy → environment → narrative hooks) with clear contracts and shared context objects.

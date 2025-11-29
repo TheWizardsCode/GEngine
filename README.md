@@ -55,10 +55,13 @@ run locally.
   shortages, diffuses extreme pollution pockets toward a citywide baseline,
   reacts to faction investments/sabotage with pollution relief/spikes, and now
   biases diffusion toward physically adjacent districts with configurable
-  neighbor weight/min/max deltas. The subsystem captures the resulting
-  `environment_impact` metadata (scarcity pressure, faction deltas, diffusion
-  samples, average pollution, and the latest max/min districts) for telemetry +
-  CLI/service summaries.
+  neighbor weight/min/max deltas. The loop also tracks a biodiversity gauge
+  that falls under scarcity pressure, recovers toward a configurable baseline,
+  and feeds stability through a tunable coupling so crashes surface in time.
+  The subsystem captures the resulting `environment_impact` metadata (scarcity
+  pressure, faction deltas, diffusion samples, biodiversity value/delta,
+  stability effects, average pollution, and the latest max/min districts) for
+  telemetry + CLI/service summaries.
 - Focus-aware narrative budgeting (Phase 4, M4.6) with CLI/service `focus`
   commands, a deterministic digest/history, severity-distance ranking, and
   telemetry that records suppressed beats. Phase 4, M4.7 extends the same
@@ -171,12 +174,13 @@ director's recommended focus hand-offs.
 ### Scenario Sweeps
 
 - For environment tuning, dedicated config variants live under
-  `content/config/sweeps/`. Example commands:
+  `content/config/sweeps/`. Example commands that match the Phase 4
+  biodiversity close-out captures:
 
   ```bash
-  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/high-pressure --output build/sweep-high-pressure.json
-  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/cushioned --output build/sweep-cushioned.json
-  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history --output build/sweep-profiling-history.json
+  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/high-pressure --output build/feature-m4-7-biodiversity-high-pressure.json
+  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/cushioned --output build/feature-m4-7-biodiversity-cushioned.json
+  uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod balanced --seed 42 --config-root content/config/sweeps/profiling-history --output build/feature-m4-7-biodiversity-profiling-history.json
   ```
 
 - The high-pressure profile intentionally stress-tests scarcity by increasing
@@ -185,7 +189,10 @@ director's recommended focus hand-offs.
   and environment knobs alone but expands `profiling.history_window` to 240
   ticks so you can compare how longer rolling windows smooth the tick-duration
   percentiles and subsystem timings. Compare their telemetry outputs to map
-  safe ranges before promoting new environment or profiling tweaks.
+  safe ranges before promoting new environment or profiling tweaks. While
+  reviewing the JSON summaries, watch `environment_impact.biodiversity` and the
+  `stability_effects` block to ensure the new eco-health signal stays above the
+  alert threshold you configured.
 - For anomaly-budget investigations, run a longer soak against the profiling-
   history config (history window 240) to see how safeguards behave deep into a
   burn:
@@ -228,11 +235,11 @@ can visualize their pollution/unrest curves with
 capturing if you need a full-length timeline instead of the latest window.
 
 ```bash
-uv run python scripts/plot_environment_trajectories.py --output build/phase4-deepening-trajectories.png
+uv run python scripts/plot_environment_trajectories.py --output build/feature-m4-7-biodiversity-trajectories.png
 ```
 
 - By default, the script looks for the three Phase 4 deepening sweep files under
-  `build/feature-m4-8-phase4-deepening-*.json`. Pass `--run label=/path/to/file`
+  `build/feature-m4-7-biodiversity-*.json`. Pass `--run label=/path/to/file`
   multiple times to compare other telemetry captures.
 - Omit `--output` to open an interactive window; specify it (as above) to save a
   PNG under `build/` for sharing in reviews.
@@ -275,16 +282,17 @@ Available in-shell commands:
 - `help` – list commands and syntax.
 - `summary` – show city, tick, counts, stability, faction legitimacy, latest
   market prices, the `environment_impact` block (now showing average pollution,
-  extremal districts, and the top diffusion samples), and the new profiling payload
-  (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and any
-  anomaly tags) so you can gauge systemic pressure before advancing time again.
-  The summary also surfaces the current focus configuration plus the last
-  digest (up to 6 curated events), a suppressed count, and a severity-ranked
-  preview of archived beats so you know exactly which stories were deferred by
-  the focus manager that tick. When the narrative director matches authored
-  story seeds, the summary prints a `story seeds` block that lists which seeds
-  attached, their target districts, and why they fired, mirroring the
-  headless/service summaries for quick debugging.
+  extremal districts, the top diffusion samples, and the biodiversity snapshot
+  with scarcity/recovery deltas plus the stability feedback it triggered), and
+  the profiling payload (tick ms p50/p95/max, last subsystem timings, the
+  slowest subsystem, and any anomaly tags) so you can gauge systemic pressure
+  before advancing time again. The summary also surfaces the current focus
+  configuration plus the last digest (up to 6 curated events), a suppressed
+  count, and a severity-ranked preview of archived beats so you know exactly
+  which stories were deferred by the focus manager that tick. When the
+  narrative director matches authored story seeds, the summary prints a `story
+seeds` block that lists which seeds attached, their target districts, and why
+  they fired, mirroring the headless/service summaries for quick debugging.
 - `next` – advance exactly one tick with the inline report (no arguments). Use
   `run` for batches.
 - `run <n>` – advance `n` ticks (must be provided) and show the combined report.
@@ -365,9 +373,14 @@ not wedge CI runs.
   hit the max/min pollution extremes, the blended neighbor/global target, and
   how faction investments/sabotage adjusted local pollution via the
   `faction_invest_pollution_relief` and `faction_sabotage_pollution_spike`
-  knobs. The new `diffusion_neighbor_bias`, `diffusion_min_delta`, and
-  `diffusion_max_delta` settings expose how aggressively pollution equalizes
-  between adjacent districts versus the citywide mean.
+  knobs. New biodiversity settings—`biodiversity_baseline`,
+  `biodiversity_recovery_rate`, `scarcity_biodiversity_weight`,
+  `biodiversity_stability_weight`, `biodiversity_stability_midpoint`, and the
+  `biodiversity_alert_threshold`—let you tune how quickly ecosystems erode,
+  rebound, and start dragging stability down when neglected. The new
+  `diffusion_neighbor_bias`, `diffusion_min_delta`, and `diffusion_max_delta`
+  settings expose how aggressively pollution equalizes between adjacent
+  districts versus the citywide mean.
 
 Edit the YAML, rerun the CLI/service, and the new safeguards apply immediately
 without code changes.
@@ -451,12 +464,14 @@ Key flags:
 
 ## Next Steps
 
-- Phase 4: continue deepening the subsystems (environment diffusion + telemetry
-  surfacing refinements, environment diffusion tuning, scenario sweeps) and keep
-  surfacing data so playtesters can see the
-  cause/effect chain.
-- Phase 5+: narrative director, intent gateway, and multiplayer/Gateway
-  services per the implementation plan.
+1. **Phase 4 close-out** – keep deepening the live subsystems by finishing the
+   biodiversity-plus-diffusion tuning pass, refreshing telemetry/plots across
+   the cushioned, high-pressure, and profiling-history sweeps, and backfilling
+   any doc or test gaps so the current branch can merge cleanly.
+2. **Phase 5 kick-off** – start the narrative director, intent gateway, and
+   multiplayer/Gateway service work streams outlined in the implementation plan,
+   including updated GDD beats, service contracts, and regression hooks so the
+   CLI/service/LLM stack evolves in lockstep.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).
