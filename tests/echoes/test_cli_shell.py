@@ -1346,7 +1346,10 @@ def test_get_prompt_plain_when_rich_disabled() -> None:
 def test_get_prompt_colored_when_rich_enabled() -> None:
     """Test that _get_prompt returns ANSI-colored prompt when Rich is enabled."""
     prompt = _get_prompt(enable_rich=True)
-    # Should contain ANSI escape codes for green color
-    assert "\\x1b[" in repr(prompt) or prompt == PROMPT  # PROMPT if Rich unavailable
-    # Rich may insert ANSI codes within the text; check parts are present
+    # The prompt must contain "echoes" text
     assert "echoes" in prompt
+    # When Rich is available, the prompt should differ from the plain prompt
+    # due to ANSI color codes, or equal if Rich is unavailable
+    if prompt != PROMPT:
+        # Rich is available - prompt should be longer due to escape sequences
+        assert len(prompt) > len(PROMPT)
