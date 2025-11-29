@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 from ..core import GameState
@@ -20,8 +20,11 @@ class AgentIntent:
     target: str
     target_name: str
     detail: str
+    reasoning: str = ""
+    options_considered: List[tuple[str, float]] = field(default_factory=list)
+    chosen_score: float = 0.0
 
-    def to_report(self) -> Dict[str, str]:
+    def to_report(self) -> Dict[str, object]:
         return {
             "agent_id": self.agent_id,
             "agent_name": self.agent_name,
@@ -29,6 +32,12 @@ class AgentIntent:
             "target": self.target,
             "target_name": self.target_name,
             "detail": self.detail,
+            "reasoning": self.reasoning,
+            "options_considered": [
+                {"option": opt, "score": round(score, 4)}
+                for opt, score in self.options_considered
+            ],
+            "chosen_score": round(self.chosen_score, 4),
         }
 
 
@@ -106,6 +115,9 @@ class AgentSystem:
             elif intent_name == "SUPPORT_SECURITY":
                 options[index] = (intent_name, base_score + resolve * 0.2)
 
+        # Store all options for reasoning
+        all_options = list(options)
+
         if force_strategic:
             strategic_options = [option for option in options if option[0] in self._STRATEGIC_INTENTS]
             if strategic_options:
@@ -118,14 +130,20 @@ class AgentSystem:
         pick = rng.uniform(0, total)
         cumulative = 0.0
         intent_name = options[-1][0]
+        chosen_score = options[-1][1]
         for name, score in options:
             score = max(score, 0.0)
             cumulative += score
             if pick <= cumulative:
                 intent_name = name
+                chosen_score = score
                 break
 
-        return self._build_intent(intent_name, agent, district, faction)
+        return self._build_intent(
+            intent_name, agent, district, faction,
+            options=all_options,
+            chosen_score=chosen_score,
+        )
 
     # ------------------------------------------------------------------
     def _build_intent(
@@ -134,31 +152,40 @@ class AgentSystem:
         agent: Agent,
         district: District | None,
         faction: Faction | None,
+        *,
+        options: List[tuple[str, float]] | None = None,
+        chosen_score: float = 0.0,
     ) -> AgentIntent:
         if intent_name == "NEGOTIATE_FACTION" and faction is not None:
             detail = f"realigns faction strategy for {faction.name}"
             target = faction.id
             target_name = faction.name
+            reasoning = f"faction legitimacy gap detected ({faction.name})"
         elif intent_name == "SUPPORT_SECURITY" and district is not None:
             detail = f"coordinates volunteer watch in {district.name}"
             target = district.id
             target_name = district.name
+            reasoning = f"security gap in {district.name} (security={district.modifiers.security:.2f})"
         elif intent_name == "STABILIZE_UNREST" and district is not None:
             detail = f"mediates tensions in {district.name}"
             target = district.id
             target_name = district.name
+            reasoning = f"high unrest in {district.name} (unrest={district.modifiers.unrest:.2f})"
         elif intent_name == "INSPECT_DISTRICT" and district is not None:
             detail = f"surveys conditions in {district.name}"
             target = district.id
             target_name = district.name
+            reasoning = f"pollution concern in {district.name} (pollution={district.modifiers.pollution:.2f})"
         elif intent_name == "REQUEST_REPORT" and district is not None:
             detail = f"files situational report on {district.name}"
             target = district.id
             target_name = district.name
+            reasoning = "monitoring city stability"
         else:
             target = district.id if district else (faction.id if faction else "city")
             target_name = district.name if district else (faction.name if faction else "city")
             detail = "gathers intelligence on city status"
+            reasoning = "general situation assessment"
         return AgentIntent(
             agent_id=agent.id,
             agent_name=agent.name,
@@ -166,4 +193,7 @@ class AgentSystem:
             target=target,
             target_name=target_name,
             detail=detail,
+            reasoning=reasoning,
+            options_considered=list(options) if options else [],
+            chosen_score=chosen_score,
         )

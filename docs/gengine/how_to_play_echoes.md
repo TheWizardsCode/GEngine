@@ -68,6 +68,9 @@ ASCII output as the local shell and honors `--script` for CI-friendly runs.
 | `focus [district\|clear]` | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation.                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `history [count]`         | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown.                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `postmortem`              | Prints a deterministic recap: environment trend deltas, the three largest faction legitimacy swings, the latest director events, and the most recent story seed states. Use it before quitting to capture an epilogue without exporting the entire snapshot.                                                                                                                                                                                                                                                                                                                                                                |
+| `timeline [count] [scope]` | Shows the event timeline with optional filters. Provide a count to limit results and optionally filter by scope (agent, faction, environment, economy, district, system). Each event displays tick, message, actor, and reasoning.                                                                                                                                                                                                                                                                                                                                                                                        |
+| `explain <event_id>`      | Generates a causal explanation for a specific event. Shows event details, the causal chain of events that led to it, and actor reasoning if available.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `why <actor_id>`          | Shows reasoning history for an agent or faction. Displays recent decisions, options considered, and the context that influenced each choice.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `save <path>`             | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `load world <name>`       | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `load snapshot <path>`    | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -75,6 +78,39 @@ ASCII output as the local shell and honors `--script` for CI-friendly runs.
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
 quotes. The shell ignores blank lines and repeats the prompt after each command.
+
+### Explanation Commands
+
+The `timeline`, `explain`, and `why` commands provide insight into the simulation's
+decision-making process:
+
+- **timeline**: Shows a chronological list of events with their causes and effects.
+  Filter by scope to focus on specific systems (e.g., `timeline 10 agent` shows
+  the last 10 agent actions).
+
+- **explain**: Given an event ID from the timeline, traces back through the causal
+  chain to show what led to that event. Useful for understanding why a crisis
+  started or how faction conflicts escalated.
+
+- **why**: Shows the reasoning behind an actor's recent decisions. For agents,
+  this includes district conditions and trait influences. For factions, it shows
+  legitimacy gaps, resource pressure, and rival analysis.
+
+Example workflow:
+```
+(echoes) run 10
+(echoes) timeline 5
+  [tick 9] agent-9-1
+    Aria Volt inspects Industrial Tier
+    why: pollution concern in Industrial Tier (pollution=0.65)
+(echoes) why aria-volt
+  [tick 9] Aria Volt (agent)
+    decision: INSPECT_DISTRICT (score: 0.85)
+    options considered:
+      - INSPECT_DISTRICT: 0.85
+      - STABILIZE_UNREST: 0.42
+      - SUPPORT_SECURITY: 0.31
+```
 
 ## 3. Simulation Concepts
 

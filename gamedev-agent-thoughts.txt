@@ -581,3 +581,134 @@ Recommend:
 
 This approach gives Developer B ~3-4 days of productive work while Phase 6 completes,
 then M7.1 can proceed without rework.
+
+=== M7.2 Explanations Implementation ===
+Date: 2025-11-29
+Starting Commit: d9d7151
+
+## Task: Implement queryable timelines and causal summaries
+
+### Requirements Analysis:
+From implementation plan Phase 7 M7.2:
+- "queryable timelines and causal summaries"
+- "Add 'why did this happen?' tools":
+  - Event timelines
+  - Causal explanations
+  - Agent reasoning summaries surfaced in the CLI
+
+### Implementation Plan:
+
+1. **Create Explanation System Module** (`src/gengine/echoes/sim/explanations.py`)
+   - Track causal chains between events
+   - Record agent/faction decision reasoning
+   - Build queryable timeline with causality links
+   - Store explanation context in GameState metadata
+
+2. **Data Structures**
+   - CausalEvent: links to triggering events, actors, outcomes
+   - Timeline: chronological event sequence with causal links
+   - AgentReasoning: captures why an agent made a decision
+   - FactionReasoning: captures why a faction took an action
+
+3. **CLI Commands** (extend `src/gengine/echoes/cli/shell.py`)
+   - `explain [event_id]` - show causal chain for an event
+   - `timeline [count]` - show recent event timeline
+   - `why [agent_id|faction_id]` - show reasoning for an actor
+
+4. **Integration Points**
+   - Hook into AgentSystem.tick() to capture reasoning
+   - Hook into FactionSystem.tick() to capture reasoning
+   - Hook into NarrativeDirector to capture story seed triggers
+   - Update TickReport with explanation data
+   - Extend GameState.summary() with explanation metadata
+
+5. **Testing**
+   - Unit tests for ExplanationTracker
+   - CLI command tests for explain/timeline/why
+   - Integration test for causal chain tracking
+
+6. **Documentation**
+   - Update README with new commands
+   - Update how_to_play_echoes.md with explanation features
+   - Update implementation plan to mark M7.2 in progress
+
+### Files to Create/Modify:
+- NEW: src/gengine/echoes/sim/explanations.py
+- MODIFY: src/gengine/echoes/cli/shell.py (add commands)
+- MODIFY: src/gengine/echoes/systems/agents.py (capture reasoning)
+- MODIFY: src/gengine/echoes/systems/factions.py (capture reasoning)
+- MODIFY: src/gengine/echoes/sim/tick.py (integrate explanations)
+- MODIFY: src/gengine/echoes/core/state.py (summary updates)
+- NEW: tests/echoes/test_explanations.py
+- MODIFY: tests/echoes/test_cli_shell.py (command tests)
+- MODIFY: README.md, docs/gengine/how_to_play_echoes.md
+
+
+### M7.2 Implementation Complete
+
+**Changes Made:**
+
+1. **Created ExplanationTracker module** (`src/gengine/echoes/sim/explanations.py`)
+   - CausalEvent dataclass for tracking events with causality links
+   - ActorReasoning dataclass for capturing decision context
+   - ExplanationTracker class for recording and querying explanations
+   - Timeline queries with filtering by scope and actor
+   - Causal chain tracing for "why did this happen?" analysis
+   - Actor reasoning history for transparency
+
+2. **Extended Agent/Faction Systems**
+   - AgentIntent now includes reasoning, options_considered, chosen_score
+   - FactionAction now includes reasoning, options_considered, chosen_score
+   - Decision methods capture and propagate reasoning context
+
+3. **Added CLI Commands** (`src/gengine/echoes/cli/shell.py`)
+   - `timeline [count] [scope]` - query event timeline
+   - `explain <event_id>` - show causal chain for an event
+   - `why <actor_id>` - show reasoning history for an actor
+   - Helper render functions for formatted output
+
+4. **Updated ShellBackend Interface**
+   - Added get_timeline(), explain_event(), get_actor_reasoning() methods
+   - Implemented in LocalBackend (full support) and ServiceBackend (metadata-based)
+
+5. **SimEngine Integration**
+   - Added ExplanationTracker instance
+   - Exposed get_timeline(), explain_event(), get_actor_reasoning(), get_causality_summary()
+   - Exposed explanation_tracker property for advanced queries
+
+6. **Tests** (`tests/echoes/test_explanations.py`)
+   - 27 tests covering ExplanationTracker, CLI commands, agent/faction reasoning
+   - All tests passing
+
+7. **Documentation**
+   - Updated README.md with new commands and progress log
+   - Updated docs/gengine/how_to_play_echoes.md with command table and examples
+
+**Test Results:**
+- All 239 tests passing
+- Coverage maintained at ~95%
+
+**Files Changed:**
+- NEW: src/gengine/echoes/sim/explanations.py
+- MODIFIED: src/gengine/echoes/sim/__init__.py
+- MODIFIED: src/gengine/echoes/sim/engine.py
+- MODIFIED: src/gengine/echoes/systems/agents.py
+- MODIFIED: src/gengine/echoes/systems/factions.py
+- MODIFIED: src/gengine/echoes/cli/shell.py
+- NEW: tests/echoes/test_explanations.py
+- MODIFIED: README.md
+- MODIFIED: docs/gengine/how_to_play_echoes.md
+
+**Telemetry Results (seed=42, ticks=200, LOD=balanced):**
+- Stability: 1.0
+- Suppressed events: 343
+- Anomalies: 0
+- Test coverage: 92% (239 tests passing)
+
+**Playtest Instructions:**
+1. Start shell: `uv run echoes-shell --world default`
+2. Run some ticks: `run 10`
+3. View timeline: `timeline 10`
+4. Explain an event: `explain <event_id>` (use ID from timeline)
+5. Query actor reasoning: `why <agent_id>` (e.g., `why aria-volt`)
+

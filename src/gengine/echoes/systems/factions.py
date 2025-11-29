@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 from ..core import GameState
@@ -23,6 +23,9 @@ class FactionAction:
     legitimacy_delta: float
     resource_delta: int
     district_id: str | None = None
+    reasoning: str = ""
+    options_considered: List[tuple[str, float]] = field(default_factory=list)
+    chosen_score: float = 0.0
 
     def to_report(self) -> Dict[str, object]:
         return {
@@ -35,6 +38,12 @@ class FactionAction:
             "legitimacy_delta": round(self.legitimacy_delta, 4),
             "resource_delta": self.resource_delta,
             "district_id": self.district_id,
+            "reasoning": self.reasoning,
+            "options_considered": [
+                {"option": opt, "score": round(score, 4)}
+                for opt, score in self.options_considered
+            ],
+            "chosen_score": round(self.chosen_score, 4),
         }
 
 
@@ -93,6 +102,9 @@ class FactionSystem:
         if not options:
             return None
 
+        # Store options for reasoning
+        all_options = list(options)
+
         total = sum(max(score, 0.0) for _, score in options)
         if total <= 0:
             return None
@@ -100,14 +112,20 @@ class FactionSystem:
         pick = rng.uniform(0, total)
         cumulative = 0.0
         action_name = options[-1][0]
+        chosen_score = options[-1][1]
         for name, score in options:
             score = max(score, 0.0)
             cumulative += score
             if pick <= cumulative:
                 action_name = name
+                chosen_score = score
                 break
 
-        return self._execute_action(action_name, faction, districts, rival, state)
+        return self._execute_action(
+            action_name, faction, districts, rival, state,
+            options=all_options,
+            chosen_score=chosen_score,
+        )
 
     # ------------------------------------------------------------------
     def _execute_action(
@@ -117,12 +135,16 @@ class FactionSystem:
         districts: Dict[str, District],
         rival: Faction | None,
         state: GameState,
+        *,
+        options: List[tuple[str, float]] | None = None,
+        chosen_score: float = 0.0,
     ) -> FactionAction | None:
         if action == "LOBBY_COUNCIL":
             delta_leg = min(0.06, 1.0 - faction.legitimacy)
             faction.legitimacy = _clamp(faction.legitimacy + delta_leg)
             resource_delta = self._shift_resource(faction, -2)
             detail = "campaigns for broader mandate"
+            reasoning = f"legitimacy below threshold ({faction.name} at {faction.legitimacy:.2f})"
             return FactionAction(
                 faction_id=faction.id,
                 faction_name=faction.name,
@@ -132,6 +154,9 @@ class FactionSystem:
                 detail=detail,
                 legitimacy_delta=delta_leg,
                 resource_delta=resource_delta,
+                reasoning=reasoning,
+                options_considered=list(options) if options else [],
+                chosen_score=chosen_score,
             )
 
         if action == "RECRUIT_SUPPORT":
@@ -139,6 +164,7 @@ class FactionSystem:
             delta_leg = 0.015
             faction.legitimacy = _clamp(faction.legitimacy + delta_leg)
             detail = "organizes recruitment drive across districts"
+            reasoning = "low resource pressure, expanding influence"
             return FactionAction(
                 faction_id=faction.id,
                 faction_name=faction.name,
@@ -148,6 +174,9 @@ class FactionSystem:
                 detail=detail,
                 legitimacy_delta=delta_leg,
                 resource_delta=resource_delta,
+                reasoning=reasoning,
+                options_considered=list(options) if options else [],
+                chosen_score=chosen_score,
             )
 
         if action == "INVEST_DISTRICT":
@@ -170,6 +199,7 @@ class FactionSystem:
             faction.legitimacy = _clamp(faction.legitimacy + delta_leg)
             resource_delta = self._shift_resource(faction, -3)
             detail = f"injects resources into {district.name}"
+            reasoning = f"stabilizing territory in {district.name} (unrest={district.modifiers.unrest:.2f})"
             return FactionAction(
                 faction_id=faction.id,
                 faction_name=faction.name,
@@ -180,6 +210,9 @@ class FactionSystem:
                 legitimacy_delta=delta_leg,
                 resource_delta=resource_delta,
                 district_id=district.id,
+                reasoning=reasoning,
+                options_considered=list(options) if options else [],
+                chosen_score=chosen_score,
             )
 
         if action == "SABOTAGE_RIVAL" and rival is not None:
@@ -200,6 +233,7 @@ class FactionSystem:
                 district_id = district.id
             else:
                 district_id = None
+            reasoning = f"rival {rival.name} has higher legitimacy ({rival.legitimacy:.2f})"
             return FactionAction(
                 faction_id=faction.id,
                 faction_name=faction.name,
@@ -210,6 +244,9 @@ class FactionSystem:
                 legitimacy_delta=actor_leg_delta,
                 resource_delta=resource_delta,
                 district_id=district_id,
+                reasoning=reasoning,
+                options_considered=list(options) if options else [],
+                chosen_score=chosen_score,
             )
 
         return None

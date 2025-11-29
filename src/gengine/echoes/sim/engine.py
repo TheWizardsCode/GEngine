@@ -7,7 +7,7 @@ from collections import deque
 import math
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Deque, Literal, Sequence
+from typing import Any, Deque, List, Literal, Sequence
 
 from ..content import load_world_bundle
 from ..core import GameState
@@ -15,6 +15,7 @@ from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
 from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem
 from .director import DirectorBridge, NarrativeDirector
+from .explanations import ExplanationTracker
 from .focus import FocusManager
 from .post_mortem import generate_post_mortem_summary
 from .tick import TickReport, advance_ticks as _advance_ticks
@@ -47,6 +48,7 @@ class SimEngine:
         self._focus_manager = FocusManager(settings=self._config.focus)
         self._director_bridge = DirectorBridge(settings=self._config.director)
         self._narrative_director = NarrativeDirector(settings=self._config.director)
+        self._explanation_tracker = ExplanationTracker(history_limit=100)
         self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
 
     # ------------------------------------------------------------------
@@ -164,6 +166,57 @@ class SimEngine:
             "analysis": dict(analysis),
             "events": list(self.state.metadata.get("director_events") or []),
         }
+
+    # Explanation methods -----------------------------------------------
+    def get_timeline(
+        self,
+        *,
+        limit: int | None = None,
+        scope: str | None = None,
+        actor_id: str | None = None,
+    ) -> List[dict[str, Any]]:
+        """Query the event timeline with optional filters."""
+        events = self._explanation_tracker.get_timeline(
+            self.state,
+            limit=limit,
+            scope=scope,
+            actor_id=actor_id,
+        )
+        return [e.to_dict() for e in events]
+
+    def explain_event(self, event_id: str) -> dict[str, Any]:
+        """Generate a causal explanation for an event."""
+        return self._explanation_tracker.explain_event(self.state, event_id)
+
+    def get_actor_reasoning(
+        self,
+        actor_id: str,
+        *,
+        limit: int | None = None,
+    ) -> List[dict[str, Any]]:
+        """Get reasoning history for a specific actor (agent or faction)."""
+        reasoning = self._explanation_tracker.get_actor_reasoning(
+            self.state,
+            actor_id,
+            limit=limit,
+        )
+        return [r.to_dict() for r in reasoning]
+
+    def get_causality_summary(
+        self,
+        *,
+        tick_range: tuple[int, int] | None = None,
+    ) -> dict[str, Any]:
+        """Generate a summary of causal relationships."""
+        return self._explanation_tracker.summarize_causality(
+            self.state,
+            tick_range=tick_range,
+        )
+
+    @property
+    def explanation_tracker(self) -> ExplanationTracker:
+        """Expose the explanation tracker for advanced queries."""
+        return self._explanation_tracker
 
     # Internal helpers --------------------------------------------------
     def _record_profiling(self, reports: Sequence[TickReport]) -> None:

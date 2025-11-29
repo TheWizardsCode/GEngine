@@ -157,6 +157,12 @@ multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guid
   generates structured JSON reports with natural language commentary. The CLI
   runner at `scripts/run_ai_observer.py` supports configurable tick budgets,
   analysis intervals, and alert thresholds.
+- ✅ **Phase 7 M7.2 – Explanations** shipped: queryable timelines and causal
+  summaries now available via `ExplanationTracker` in `gengine.echoes.sim`.
+  New CLI commands `timeline`, `explain`, and `why` let players query event
+  history, trace causal chains, and inspect agent/faction reasoning. Agent
+  and faction systems now capture decision context (options considered,
+  scores, reasoning) in their action reports for transparency.
 
 ## Repository Layout
 
@@ -404,6 +410,16 @@ seeds` block that lists which seeds attached, their target districts, and why
   grab an end-of-run epilogue without exporting the entire snapshot. It pulls
   from the same metadata surfaced via FastAPI `/state?detail=post-mortem` and
   headless telemetry.
+- `timeline [count] [scope]` – show the event timeline with optional filters.
+  Provide a count to limit results and optionally filter by scope (agent,
+  faction, environment, economy, district, system). Each event displays its
+  tick, message, actor, and reasoning.
+- `explain <event_id>` – generate a causal explanation for a specific event.
+  Shows the event details, the causal chain of events that led to it, and
+  the actor's reasoning if available.
+- `why <actor_id>` – show the reasoning history for an agent or faction.
+  Displays recent decisions, the options considered, and the context that
+  influenced each choice.
 - `save <path>` – write the current snapshot as JSON.
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot (local engine mode only).

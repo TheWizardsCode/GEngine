@@ -64,6 +64,26 @@ class ShellBackend:
     def post_mortem(self) -> dict[str, object]:  # pragma: no cover
         raise NotImplementedError
 
+    def get_timeline(
+        self,
+        *,
+        limit: int | None = None,
+        scope: str | None = None,
+        actor_id: str | None = None,
+    ) -> List[dict[str, object]]:  # pragma: no cover
+        raise NotImplementedError
+
+    def explain_event(self, event_id: str) -> dict[str, object]:  # pragma: no cover
+        raise NotImplementedError
+
+    def get_actor_reasoning(
+        self,
+        actor_id: str,
+        *,
+        limit: int | None = None,
+    ) -> List[dict[str, object]]:  # pragma: no cover
+        raise NotImplementedError
+
     def close(self) -> None:  # pragma: no cover - optional cleanup
         """Hook for releasing backend resources (network clients, etc.)."""
         return None
@@ -111,6 +131,26 @@ class LocalBackend(ShellBackend):
 
     def post_mortem(self) -> dict[str, object]:
         return self.engine.query_view("post-mortem")
+
+    def get_timeline(
+        self,
+        *,
+        limit: int | None = None,
+        scope: str | None = None,
+        actor_id: str | None = None,
+    ) -> List[dict[str, object]]:
+        return self.engine.get_timeline(limit=limit, scope=scope, actor_id=actor_id)
+
+    def explain_event(self, event_id: str) -> dict[str, object]:
+        return self.engine.explain_event(event_id)
+
+    def get_actor_reasoning(
+        self,
+        actor_id: str,
+        *,
+        limit: int | None = None,
+    ) -> List[dict[str, object]]:
+        return self.engine.get_actor_reasoning(actor_id, limit=limit)
 
     def close(self) -> None:  # pragma: no cover - nothing to release
         return None
@@ -164,6 +204,46 @@ class ServiceBackend(ShellBackend):
         payload = self.client.state("post-mortem")
         return payload.get("data", {})
 
+    def get_timeline(
+        self,
+        *,
+        limit: int | None = None,
+        scope: str | None = None,
+        actor_id: str | None = None,
+    ) -> List[dict[str, object]]:
+        # For service backend, explanation data is stored in the summary metadata
+        summary = self.summary()
+        timeline = summary.get("explanation_timeline") or []
+        if scope:
+            timeline = [e for e in timeline if e.get("scope") == scope]
+        if actor_id:
+            timeline = [e for e in timeline if e.get("actor_id") == actor_id]
+        if limit and limit > 0:
+            timeline = timeline[-limit:]
+        return list(timeline)
+
+    def explain_event(self, event_id: str) -> dict[str, object]:
+        # For service backend, we search the timeline
+        summary = self.summary()
+        timeline = summary.get("explanation_timeline") or []
+        for event in timeline:
+            if event.get("event_id") == event_id:
+                return {"event": event, "causal_chain": [event], "chain_length": 1}
+        return {"error": f"Event '{event_id}' not found"}
+
+    def get_actor_reasoning(
+        self,
+        actor_id: str,
+        *,
+        limit: int | None = None,
+    ) -> List[dict[str, object]]:
+        summary = self.summary()
+        reasoning = summary.get("explanation_reasoning") or []
+        filtered = [r for r in reasoning if r.get("actor_id") == actor_id]
+        if limit and limit > 0:
+            filtered = filtered[-limit:]
+        return list(filtered)
+
     def close(self) -> None:
         self.client.close()
 
@@ -199,7 +279,8 @@ class EchoesShell:
     def _cmd_help(self, _: Sequence[str]) -> CommandResult:
         return CommandResult(
             "Available commands: summary, next [n], run <n>, map [district], focus [district|clear], "
-            "history [count], director [count], postmortem, save <path>, load world <name>|snapshot <path>, help, exit"
+            "history [count], director [count], postmortem, timeline [count], explain <event_id>, "
+            "why <actor_id>, save <path>, load world <name>|snapshot <path>, help, exit"
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
@@ -319,10 +400,126 @@ class EchoesShell:
                 return CommandResult(str(exc))
         return CommandResult("Usage: load world <name> | load snapshot <path>")
 
+    def _cmd_timeline(self, args: Sequence[str]) -> CommandResult:
+        limit: int | None = None
+        scope: str | None = None
+        for arg in args:
+            if arg.isdigit():
+                limit = max(1, int(arg))
+            elif arg in ("agent", "faction", "environment", "economy", "district", "system"):
+                scope = arg
+        try:
+            timeline = self.backend.get_timeline(limit=limit, scope=scope)
+        except NotImplementedError:
+            return CommandResult("Timeline queries require local backend")
+        if not timeline:
+            return CommandResult("No events recorded in timeline.")
+        return CommandResult(_render_timeline(timeline))
+
+    def _cmd_explain(self, args: Sequence[str]) -> CommandResult:
+        if not args:
+            return CommandResult("Usage: explain <event_id>")
+        event_id = args[0]
+        try:
+            explanation = self.backend.explain_event(event_id)
+        except NotImplementedError:
+            return CommandResult("Event explanations require local backend")
+        if "error" in explanation:
+            return CommandResult(str(explanation["error"]))
+        return CommandResult(_render_explanation(explanation))
+
+    def _cmd_why(self, args: Sequence[str]) -> CommandResult:
+        if not args:
+            return CommandResult("Usage: why <actor_id>")
+        actor_id = args[0]
+        limit = int(args[1]) if len(args) > 1 and args[1].isdigit() else 5
+        try:
+            reasoning = self.backend.get_actor_reasoning(actor_id, limit=limit)
+        except NotImplementedError:
+            return CommandResult("Actor reasoning queries require local backend")
+        if not reasoning:
+            return CommandResult(f"No reasoning found for actor '{actor_id}'.")
+        return CommandResult(_render_reasoning(reasoning))
+
     def _cmd_exit(self, _: Sequence[str]) -> CommandResult:
         return CommandResult("Exiting shell.", should_exit=True)
 
     _cmd_quit = _cmd_exit
+
+
+def _render_timeline(events: Sequence[Mapping[str, Any]]) -> str:
+    """Render the event timeline."""
+    lines = ["Event Timeline (recent first):"]
+    for event in reversed(events[-20:]):
+        tick = event.get("tick", "?")
+        event_id = event.get("event_id", "?")
+        message = event.get("message", "")
+        scope = event.get("scope", "")
+        actor = event.get("actor_name") or event.get("actor_id") or ""
+        lines.append(f"  [tick {tick}] {event_id}")
+        lines.append(f"    {message}")
+        if actor:
+            lines.append(f"    actor: {actor} ({scope})")
+        elif scope:
+            lines.append(f"    scope: {scope}")
+        reasoning = event.get("reasoning")
+        if reasoning:
+            lines.append(f"    why: {reasoning}")
+    return "\n".join(lines)
+
+
+def _render_explanation(explanation: Mapping[str, Any]) -> str:
+    """Render a causal explanation for an event."""
+    lines = ["Causal Explanation:"]
+    event = explanation.get("event") or {}
+    lines.append(f"  Event: {event.get('message', '?')}")
+    lines.append(f"    tick: {event.get('tick', '?')}")
+    lines.append(f"    scope: {event.get('scope', '?')}")
+    if event.get("actor_name"):
+        lines.append(f"    actor: {event.get('actor_name')}")
+    if event.get("reasoning"):
+        lines.append(f"    reasoning: {event.get('reasoning')}")
+
+    chain = explanation.get("causal_chain") or []
+    if len(chain) > 1:
+        lines.append(f"  Causal Chain ({len(chain)} events):")
+        for i, cause in enumerate(chain[1:], 1):
+            lines.append(f"    {i}. [{cause.get('tick', '?')}] {cause.get('message', '?')}")
+
+    actor_reasoning = explanation.get("actor_reasoning")
+    if actor_reasoning:
+        lines.append("  Actor Reasoning:")
+        lines.append(f"    decision: {actor_reasoning.get('decision', '?')}")
+        options = actor_reasoning.get("options_considered") or []
+        if options:
+            lines.append("    options considered:")
+            for opt in options[:5]:
+                lines.append(f"      - {opt.get('option')}: {opt.get('score', 0):.2f}")
+
+    return "\n".join(lines)
+
+
+def _render_reasoning(reasoning: Sequence[Mapping[str, Any]]) -> str:
+    """Render actor reasoning history."""
+    lines = ["Actor Reasoning History (recent first):"]
+    for entry in reversed(reasoning[-10:]):
+        tick = entry.get("tick", "?")
+        actor = entry.get("actor_name", entry.get("actor_id", "?"))
+        actor_type = entry.get("actor_type", "?")
+        decision = entry.get("decision", "?")
+        score = entry.get("score", 0)
+        lines.append(f"  [tick {tick}] {actor} ({actor_type})")
+        lines.append(f"    decision: {decision} (score: {score:.2f})")
+        options = entry.get("options_considered") or []
+        if options:
+            lines.append("    options considered:")
+            for opt in options[:5]:
+                lines.append(f"      - {opt.get('option')}: {opt.get('score', 0):.2f}")
+        context = entry.get("context") or {}
+        if context:
+            context_preview = ", ".join(f"{k}={v}" for k, v in list(context.items())[:3])
+            lines.append(f"    context: {context_preview}")
+    return "\n".join(lines)
 
 
 def _render_summary(summary: dict[str, object]) -> str:
