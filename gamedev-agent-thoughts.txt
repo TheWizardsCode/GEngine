@@ -482,3 +482,102 @@ Test Results:
 - Config validation prevents invalid configurations
 
 Ready to commit improvements.
+
+=== Phase 6/7 Parallel Development Analysis ===
+Date: 2025-11-29
+Commit: 9bfdb2b (M9.1 AI Observer shipped)
+
+## Question: Can Phase 7 be implemented in parallel with Phase 6?
+
+### Current State Assessment:
+
+**Phase 6 Status (partially complete):**
+- ✅ M6.1 Gateway service (shipped)
+- ✅ M6.2 Enhanced ASCII views (shipped)
+- ⏳ M6.3 LLM service skeleton (pending)
+- ⏳ M6.4 Intent schema + prompts (pending)
+- ⏳ M6.5 Gateway integration (pending)
+
+**Phase 7 Milestones:**
+- M7.1 Progression systems (skills, reputation, access tiers)
+- M7.2 Explanations (timelines, causal summaries)
+- M7.3 Tuning + replayability (scenario sweeps, difficulty)
+- M7.4 Campaign UX (autosaves, campaign picker, end-of-run flow)
+
+### Dependency Analysis:
+
+**CRITICAL DEPENDENCIES:**
+1. M7.1 (Progression) - Affects action success rates → needs M6.4/M6.5 (intent schema + action routing)
+2. M7.2 (Explanations) - Timeline queries could work independently
+3. M7.3 (Tuning) - Can work independently with existing simulation
+4. M7.4 (Campaign UX) - Could work independently for CLI, but gateway integration needs M6.5
+
+**SAFE TO PARALLELIZE:**
+- M7.3 (Tuning + replayability) - Uses existing config system, no Phase 6 dependencies
+- M7.2 (Explanations) - Read-only query layer, doesn't need action routing
+- M7.4 (Campaign UX) - CLI portions can be built independently
+
+**CANNOT PARALLELIZE:**
+- M7.1 (Progression systems) - Requires M6.4 intent schema and M6.5 action routing
+  because reputation/skills affect action success rates that need the action API
+
+### Recommendation Matrix:
+
+| Phase 7 Milestone | Can Start Now? | Blocker | Notes |
+|-------------------|----------------|---------|-------|
+| M7.2 Explanations | ✅ YES | None | Timeline queries are read-only |
+| M7.3 Tuning | ✅ YES | None | Uses existing config/telemetry |
+| M7.4 Campaign UX | ⚠️ PARTIAL | M6.5 for gateway | CLI portions safe |
+| M7.1 Progression | ❌ NO | M6.4 + M6.5 | Needs action routing |
+
+### Work Splitting Strategy:
+
+**Developer A (Phase 6 focus):**
+- M6.3 LLM service skeleton
+- M6.4 Intent schema + prompts
+- M6.5 Gateway integration
+
+**Developer B (Phase 7 focus):**
+- M7.2 Explanations (full implementation)
+- M7.3 Tuning + replayability (full implementation)
+- M7.4 Campaign UX (CLI portions only, defer gateway integration)
+- M7.1 prep work: design progression schemas, document data models
+
+**Sequential (after Phase 6 complete):**
+- M7.1 Progression systems (full implementation)
+- M7.4 gateway integration (merge with M6.5)
+
+### Branch Strategy:
+
+Recommend:
+1. Create `feature/phase-7-independent` branch for M7.2, M7.3, M7.4-CLI
+2. Keep Phase 6 work in `feature/phase-6-llm` or similar
+3. Coordinate merge order: Phase 6 first, then Phase 7, then M7.1
+
+### Risk Assessment:
+
+**LOW RISK (parallel work):**
+- Different code surfaces (tuning configs vs LLM service)
+- Different test suites
+- Minimal merge conflicts expected
+
+**MEDIUM RISK (merge conflicts):**
+- README updates (both will touch)
+- Simulation config schema (if M7.3 adds new knobs)
+
+**HIGH RISK (sequential dependency):**
+- M7.1 cannot start until action routing exists
+- Progression affects narrative, so any M7.1 work done prematurely will need rework
+
+### Recommendation:
+
+✅ **YES, Phase 7 can be implemented in parallel, WITH CAVEATS:**
+
+1. Start M7.2 (Explanations) and M7.3 (Tuning) immediately - zero dependencies
+2. Start M7.4 (Campaign UX) CLI portions - gateway integration waits for M6.5
+3. DEFER M7.1 (Progression) until Phase 6 M6.4+M6.5 are merged to main
+4. Coordinate README/doc updates to minimize merge conflicts
+5. Plan merge order: Phase 6 → Phase 7 independent work → M7.1
+
+This approach gives Developer B ~3-4 days of productive work while Phase 6 completes,
+then M7.1 can proceed without rework.
