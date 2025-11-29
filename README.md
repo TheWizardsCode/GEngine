@@ -709,15 +709,18 @@ The `stub` provider is the default and requires no API key. It uses deterministi
 ### API Endpoints
 
 **GET /healthz**
+
 - Health check endpoint
 - Returns `{"status": "ok", "provider": "stub"}`
 
 **POST /parse_intent**
+
 - Converts natural language to game intents
 - Request: `{"text": "stabilize the industrial tier"}`
 - Response: `{"intent": "stabilize", "confidence": 0.9, "parameters": {...}}`
 
 **POST /narrate**
+
 - Generates story text from simulation events
 - Request: `{"events": [...], "context": {...}}`
 - Response: `{"narration": "...", "tone": "neutral"}`
@@ -737,7 +740,7 @@ async with httpx.AsyncClient() as client:
     )
     print(response.json())
     # {"intent": "inspect", "confidence": 0.8, "parameters": {"district": "perimeter hollow"}}
-    
+
     # Generate narration
     response = await client.post(
         "http://localhost:8001/narrate",
@@ -750,13 +753,95 @@ async with httpx.AsyncClient() as client:
     # {"narration": "Recent events unfolded...", "tone": "neutral"}
 ```
 
+### Intent Schema (Phase 6 M6.4)
+
+The LLM service uses structured Pydantic models to represent game intents. All intents inherit from `GameIntent` and include type-safe validation.
+
+#### Intent Types
+
+1. **INSPECT** - Examine simulation entities with optional focus areas
+2. **NEGOTIATE** - Broker deals with factions using levers and goals
+3. **DEPLOY_RESOURCE** - Allocate materials or energy to districts
+4. **PASS_POLICY** - Enact city-wide policies with parameters
+5. **COVERT_ACTION** - Execute hidden operations with risk levels
+6. **INVOKE_AGENT** - Direct agent actions with targets
+7. **REQUEST_REPORT** - Query simulation state with filters
+
+#### Example Intent Usage
+
+```python
+from gengine.echoes.llm import (
+    InspectIntent, NegotiateIntent, DeployResourceIntent,
+    parse_intent, IntentType
+)
+
+# Create typed intents
+inspect = InspectIntent(
+    target_type="district",
+    target_id="industrial-tier",
+    focus_areas=["pollution", "unrest"]
+)
+
+negotiate = NegotiateIntent(
+    targets=["union-of-flux"],
+    levers=["policy_support"],
+    goals=["reduce_unrest"]
+)
+
+deploy = DeployResourceIntent(
+    resource_type="materials",
+    amount=100,
+    target_district="perimeter-hollow"
+)
+
+# Parse from dictionary (used by LLM service)
+intent_data = {
+    "intent_type": "INSPECT",
+    "target_type": "district",
+    "target_id": "industrial-tier"
+}
+intent = parse_intent(intent_data)  # Returns InspectIntent instance
+```
+
+#### Prompt Templates
+
+The `gengine.echoes.llm.prompts` module provides:
+
+- **OpenAI function calling schemas** (`OPENAI_INTENT_FUNCTIONS`) for structured responses
+- **Anthropic structured output schema** (`ANTHROPIC_INTENT_SCHEMA`) for Claude models
+- **System prompts** with game world context and intent descriptions
+- **Dynamic prompt builders** for context injection:
+
+```python
+from gengine.echoes.llm.prompts import (
+    build_intent_parsing_prompt,
+    build_narration_prompt
+)
+
+# Build intent parsing prompt with context
+prompt = build_intent_parsing_prompt(
+    command="stabilize the industrial tier",
+    available_actions=["inspect", "negotiate", "deploy_resource"],
+    district="industrial-tier",
+    tick=42,
+    recent_events=["Pollution increased", "Unrest rising"]
+)
+
+# Build narration prompt from events
+narration_prompt = build_narration_prompt(
+    events=["Agent recruited", "Policy passed"],
+    context={"district": "Perimeter Hollow", "tick": 42}
+)
+```
+
+The intent schemas enable the LLM service to convert natural language into type-safe game actions with validation, while the prompt templates ensure consistent LLM behavior across different providers.
+
 ## Next Steps
 
-1. **Phase 6 M6.4 – LLM intent routing** – wire the `/parse_intent` endpoint
+1. **Phase 6 M6.5 – Gateway-LLM integration** – wire the `/parse_intent` endpoint
    into the gateway so natural language commands can be converted to game
-   actions and routed to the simulation service.
-2. **Phase 6 M6.5 – Gateway-LLM integration** – thread narration prompts from
-   simulation events through `/narrate` and surface the generated story text
+   actions and routed to the simulation service, with narration prompts from
+   simulation events through `/narrate` surfacing the generated story text
    in CLI sessions.
 3. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
    heuristic decision logic for automated playtesting (depends on Phase 6
