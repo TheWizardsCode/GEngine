@@ -16,9 +16,10 @@ from ..settings import SimulationConfig, load_simulation_config
 from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem
 from .director import DirectorBridge, NarrativeDirector
 from .focus import FocusManager
+from .post_mortem import generate_post_mortem_summary
 from .tick import TickReport, advance_ticks as _advance_ticks
 
-ViewName = Literal["summary", "snapshot", "district"]
+ViewName = Literal["summary", "snapshot", "district", "post-mortem"]
 
 
 class EngineNotInitializedError(RuntimeError):
@@ -135,6 +136,8 @@ class SimEngine:
             return self.state.snapshot()
         if view == "district":
             return self._district_view(kwargs.get("district_id"))
+        if view == "post-mortem":
+            return generate_post_mortem_summary(self.state)
         raise ValueError(f"Unknown view '{view}'")
 
     # ------------------------------------------------------------------

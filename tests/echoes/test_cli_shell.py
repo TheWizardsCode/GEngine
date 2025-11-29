@@ -404,6 +404,54 @@ def test_render_summary_surfaces_director_analysis() -> None:
     assert "recommend focus" in rendered
 
 
+def test_shell_postmortem_command_outputs_summary() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+
+    backend.advance_ticks(1)
+    result = shell.execute("postmortem")
+
+    assert "Post-mortem recap" in result.output
+
+
+def test_shell_postmortem_payload_includes_expected_sections() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+
+    backend.advance_ticks(5)
+    payload = backend.post_mortem()
+
+    expected_keys = {
+        "tick",
+        "environment",
+        "environment_trend",
+        "faction_trends",
+        "featured_events",
+        "story_seeds",
+        "notes",
+    }
+    assert expected_keys <= payload.keys()
+
+    trend = payload["environment_trend"]
+    assert set(trend["start"]) == {"stability", "unrest", "pollution"}
+    assert set(trend["end"]) == {"stability", "unrest", "pollution"}
+    assert set(trend["delta"]) == {"stability", "unrest", "pollution"}
+
+    assert isinstance(payload["faction_trends"], list)
+    assert payload["faction_trends"], "expected at least one faction trend"
+    assert isinstance(payload["featured_events"], list)
+    assert payload["featured_events"], "expected at least one director event recap"
+    assert isinstance(payload["story_seeds"], list)
+    assert payload["story_seeds"], "expected at least one seed recap"
+    assert isinstance(payload["notes"], list)
+
+    first_seed = payload["story_seeds"][0]
+    assert "seed_id" in first_seed and "state" in first_seed
+
+
 def test_render_summary_surfaces_story_seeds() -> None:
     summary = {
         "city": "Test",
@@ -636,6 +684,7 @@ def test_render_director_feed_includes_story_seed_matches() -> None:
     analysis = {
         "story_seeds": [
             {
+
                 "seed_id": "hollow-supply-chain",
                 "title": "Smuggling Lanes Exposed",
                 "district_id": "perimeter-hollow",

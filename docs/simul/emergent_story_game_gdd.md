@@ -23,12 +23,16 @@ You are a wanderer in a frontier city-state on the brink of transformation or co
 
 - ✅ **Phase 5 M5.3 – Pacing & lifecycle polish** shipped: the NarrativeDirector
   now enforces deterministic lifecycle states (`primed → active → resolving →
-  archived`), applies per-seed and global quiet timers, records
+archived`), applies per-seed and global quiet timers, records
   `director_pacing` + lifecycle history snapshots, and exposes the new
   telemetry in CLI/service/headless surfaces so designers can audit pacing
   without replaying logs.
-- ⚙️ **Phase 5 M5.4 – Post-mortems** remains underway to translate the archived
-  lifecycle history into deterministic epilogues and CLI/service export paths.
+- ✅ **Phase 5 M5.4 – Post-mortems** shipped: deterministic recaps now flow
+  through the CLI `postmortem` command, service `/state?detail=post-mortem`,
+  and the headless telemetry `post_mortem` block. Reviewer workflows cite the
+  canonical 200-tick artifact (`build/feature-m5-4-post-mortem.json`) and the
+  `jq '.post_mortem'` diff snippet so designers can compare epilogues without
+  re-running the sim.
 
 ## 2. Setting & Tone
 
@@ -291,7 +295,7 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   beats fired and why without scrubbing logs.
 - Phase 5.3 pacing guardrails add a deterministic lifecycle machine and expose
   its telemetry everywhere. Seeds now progress through `primed → active →
-  resolving → archived` with per-seed cooldown windows, per-seed quiet timers,
+resolving → archived` with per-seed cooldown windows, per-seed quiet timers,
   and a global quiet span that caps how many crises overlap. The CLI summary,
   service payloads, and headless JSON each publish a `director_pacing` block
   alongside `story_seed_lifecycle`, `story_seed_lifecycle_history`, and a
@@ -317,11 +321,12 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   followup id (alongside the existing Pydantic checks) so designer errors
   surface before runtime.
 - Lifecycle expectations: seeds move through `primed → active → resolving →
-  archived`. Cooldowns and quiet-period rules throttle how many can be active
+archived`. Cooldowns and quiet-period rules throttle how many can be active
   per focus window, while telemetry/CLI history log each transition so
-  playtesters can trace overlapping crises. Post-mortems (M5.4) will pull from
-  the archived list plus any recorded resolutions to build deterministic end
-  cards for the campaign recap.
+  playtesters can trace overlapping crises. Post-mortems (M5.4) already pull
+  from the archived list plus the recorded director events to build the
+  deterministic recap surfaced via the CLI `postmortem` command,
+  `/state?detail=post-mortem`, and the headless telemetry block.
 
 **Endgame & Outcomes:**
 

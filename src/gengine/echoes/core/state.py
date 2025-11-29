@@ -99,6 +99,9 @@ class GameState(BaseModel):
         lifecycle_history = self.metadata.get("story_seed_lifecycle_history") or []
         if lifecycle_history:
             summary["story_seed_lifecycle_history"] = lifecycle_history
+        post_mortem = self.metadata.get("post_mortem") or {}
+        if post_mortem:
+            summary["post_mortem"] = post_mortem
         return summary
 
     def snapshot(self) -> Dict[str, Any]:

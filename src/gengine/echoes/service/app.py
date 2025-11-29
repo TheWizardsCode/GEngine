@@ -12,7 +12,7 @@ from ..settings import SimulationConfig, load_simulation_config
 from ..sim import SimEngine, TickReport
 from ..sim.engine import EngineNotInitializedError
 
-DetailName = Literal["summary", "snapshot", "district"]
+DetailName = Literal["summary", "snapshot", "district", "post-mortem"]
 
 
 class TickRequest(BaseModel):

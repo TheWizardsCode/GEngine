@@ -54,6 +54,32 @@ def test_state_endpoint_returns_summary() -> None:
     assert "data" in response.json()
 
 
+def test_state_endpoint_returns_post_mortem() -> None:
+    client, engine = _client()
+    engine.advance_ticks(5)
+
+    response = client.get("/state", params={"detail": "post-mortem"})
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    expected_keys = {
+        "tick",
+        "environment",
+        "environment_trend",
+        "faction_trends",
+        "featured_events",
+        "story_seeds",
+        "notes",
+    }
+    assert expected_keys <= payload.keys()
+    assert payload["environment"]
+    assert set(payload["environment_trend"]["delta"]) == {"stability", "unrest", "pollution"}
+    assert isinstance(payload["faction_trends"], list)
+    assert isinstance(payload["featured_events"], list)
+    assert isinstance(payload["story_seeds"], list)
+    assert isinstance(payload["notes"], list)
+
+
 def test_actions_endpoint_returns_receipts() -> None:
     client, _ = _client()
 

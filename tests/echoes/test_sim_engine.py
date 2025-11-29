@@ -85,3 +85,14 @@ def test_engine_focus_history_reports_recent_ticks() -> None:
     history = engine.focus_history()
     assert isinstance(history, list)
     assert history
+
+
+def test_engine_query_post_mortem_view() -> None:
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+
+    engine.advance_ticks(1)
+    payload = engine.query_view("post-mortem")
+
+    assert payload["tick"] >= 0
+    assert "environment" in payload

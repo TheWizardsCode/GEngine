@@ -72,6 +72,7 @@ def run_headless_sim(
     quiet_until = engine.state.metadata.get("director_quiet_until")
     if isinstance(quiet_until, (int, float)):
         summary["director_quiet_until"] = int(quiet_until)
+    summary["post_mortem"] = engine.query_view("post-mortem")
     if reports:
         summary["anomalies"] = sum(len(report.anomalies) for report in reports)
         summary["anomaly_examples"] = sorted(

@@ -7,7 +7,7 @@ import json
 import shlex
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, List, Sequence
+from typing import Any, Iterable, List, Mapping, Sequence
 
 from ..core import GameState
 from ..persistence import save_snapshot
@@ -55,6 +55,9 @@ class ShellBackend:
     def focus_history(self) -> List[dict[str, object]]:  # pragma: no cover
         raise NotImplementedError
 
+    def post_mortem(self) -> dict[str, object]:  # pragma: no cover
+        raise NotImplementedError
+
 
 class LocalBackend(ShellBackend):
     def __init__(self, engine: SimEngine) -> None:
@@ -95,6 +98,9 @@ class LocalBackend(ShellBackend):
 
     def focus_history(self) -> List[dict[str, object]]:
         return self.engine.focus_history()
+
+    def post_mortem(self) -> dict[str, object]:
+        return self.engine.query_view("post-mortem")
 
 
 class ServiceBackend(ShellBackend):
@@ -141,6 +147,10 @@ class ServiceBackend(ShellBackend):
         history = payload.get("history") or []
         return list(history)
 
+    def post_mortem(self) -> dict[str, object]:
+        payload = self.client.state("post-mortem")
+        return payload.get("data", {})
+
 
 class EchoesShell:
     """Minimal command processor for the early CLI shell."""
@@ -171,7 +181,7 @@ class EchoesShell:
     def _cmd_help(self, _: Sequence[str]) -> CommandResult:
         return CommandResult(
             "Available commands: summary, next [n], run <n>, map [district], focus [district|clear], "
-            "history [count], director [count], save <path>, load world <name>|snapshot <path>, help, exit"
+            "history [count], director [count], postmortem, save <path>, load world <name>|snapshot <path>, help, exit"
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
@@ -248,6 +258,14 @@ class EchoesShell:
             return CommandResult("No director feed recorded.")
         entries = history if limit is None else history[-limit:]
         return CommandResult(_render_director_feed(feed, entries, analysis))
+
+    def _cmd_postmortem(self, args: Sequence[str]) -> CommandResult:
+        if args:
+            return CommandResult("Usage: postmortem")
+        payload = self.backend.post_mortem()
+        if not payload:
+            return CommandResult("Post-mortem summary unavailable; run a few ticks first.")
+        return CommandResult(_render_post_mortem(payload))
 
     def _cmd_save(self, args: Sequence[str]) -> CommandResult:
         if not args:
@@ -560,6 +578,56 @@ def _render_summary(summary: dict[str, object]) -> str:
             lines.append(
                 f"    anomalies: {', '.join(anomalies[:3])}"
             )
+    return "\n".join(lines)
+
+def _render_post_mortem(payload: Mapping[str, Any]) -> str:
+    lines = ["Post-mortem recap:"]
+    tick = payload.get("tick")
+    if isinstance(tick, int):
+        lines.append(f"  ticks analyzed: 0 → {tick}")
+    environment_trend = payload.get("environment_trend") or {}
+    delta = environment_trend.get("delta") or {}
+    if delta:
+        stability = float(delta.get("stability", 0.0))
+        unrest = float(delta.get("unrest", 0.0))
+        pollution = float(delta.get("pollution", 0.0))
+        lines.append(
+            "  environment trend: "
+            f"stability {stability:+.3f}, unrest {unrest:+.3f}, pollution {pollution:+.3f}"
+        )
+    factions = payload.get("faction_trends") or []
+    if factions:
+        lines.append("  faction swings:")
+        for entry in factions[:3]:
+            lines.append(
+                "    - "
+                f"{entry['faction_id']}: {entry['start']:.3f} → {entry['end']:.3f} ({entry['delta']:+.3f})"
+            )
+    events = payload.get("featured_events") or []
+    if events:
+        lines.append("  featured events:")
+        for event in events:
+            title = event.get("title") or event.get("seed_id")
+            district = event.get("district_id") or "n/a"
+            tick_label = event.get("tick")
+            tick_text = tick_label if tick_label is not None else "n/a"
+            lines.append(f"    - {title} @ {district} (tick {tick_text})")
+    seeds = payload.get("story_seeds") or []
+    if seeds:
+        lines.append("  story seeds:")
+        for seed in seeds[:3]:
+            title = seed.get("title") or seed.get("seed_id")
+            state = seed.get("state") or "primed"
+            district = seed.get("district_id") or "n/a"
+            lines.append(f"    - {title} [{state}] focus={district}")
+        remaining = max(0, len(seeds) - 3)
+        if remaining:
+            lines.append(f"    (+{remaining} more seeds tracked)")
+    notes = payload.get("notes") or []
+    if notes:
+        lines.append("  notes:")
+        for note in notes[:3]:
+            lines.append(f"    - {note}")
     return "\n".join(lines)
 
 

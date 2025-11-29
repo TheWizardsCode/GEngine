@@ -102,6 +102,13 @@ run locally.
   telemetry each show a `director_pacing` block plus the latest lifecycle
   states so reviewers can see why a beat is blocked, how long a resolving arc
   has left, or when the director will reprime a seed after cooldown.
+- Deterministic post-mortem generator (Phase 5, M5.4) stitches together the
+  latest environment readings, trend deltas, faction legitimacy swings,
+  director events, and story-seed lifecycle history into a shareable recap.
+  The shell exposes it via the new `postmortem` command, the FastAPI service
+  serves the same payload with `/state?detail=post-mortem`, and the headless
+  driver now writes a `post_mortem` block into every telemetry artifact so QA
+  can diff end-of-run summaries without rehydrating snapshots.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions. Summaries now include focus-budget
@@ -130,9 +137,12 @@ multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guid
   CLI/service/headless surfaces show the new `director_pacing` +
   `story_seed_lifecycle` blocks, docs walk through the pacing knobs, and
   regression tests/telemetry guard the lifecycle history + cooldown math.
-- ⚙️ **Phase 5 M5.4 – Post-mortems** remains in progress; upcoming work layers
-  deterministic epilogue generation and golden narrative outputs on top of the
-  archived lifecycle history before opening Phase 6 tooling.
+- ✅ **Phase 5 M5.4 – Post-mortems** shipped: deterministic recaps now flow
+  through the CLI `postmortem` command, service `/state?detail=post-mortem`,
+  and headless telemetry `post_mortem` block. The canonical
+  `build/feature-m5-4-post-mortem.json` capture plus
+  `jq '.post_mortem' ...` diff workflow is documented across README/GDD/how-to
+  so reviewers can audit end-of-run deltas without replaying ticks.
 
 ## Repository Layout
 
@@ -184,11 +194,12 @@ After every full pytest run, capture deterministic telemetry so reviewers can
 diff agent/faction behavior over time:
 
 ```bash
-uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-3-economy-telemetry.json
+uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m5-4-post-mortem.json
 ```
 
-Archive the JSON alongside the test results (commit or attach in review) so the
-canonical seed/tick profile is always available for comparison. The telemetry
+Archive `build/feature-m5-4-post-mortem.json` alongside the test results (commit
+or attach in review) so the canonical seed/tick profile is always available for
+comparison. The telemetry
 now captures agent/faction breakdowns, per-faction legitimacy snapshots/deltas,
 the `last_economy` block (price table + shortage counters), and
 `last_director_analysis` (hotspot travel recommendations) for regression diffs.
@@ -196,6 +207,14 @@ The same JSON also embeds the `director_pacing` snapshot, the full
 `story_seed_lifecycle` table, lifecycle history, and any active global quiet
 timer so reviewers can diff cooldown math between builds without reproducing
 ticks locally.
+Every telemetry file now also includes a `post_mortem` block that mirrors the
+CLI/service recap: environment start/end/delta, the top faction legitimacy
+swings, the last few director events, a ranked story-seed recap, and the
+generated post-mortem notes so endgame comparisons never require loading the
+snapshot back into the sim.
+To diff the post-mortem recap between runs, compare the `post_mortem` object in
+two artifacts directly (for example,
+`jq '.post_mortem' build/feature-m5-4-post-mortem.json`).
 Use `summary` on any saved snapshot to inspect the last tick's
 `environment_impact` block when diagnosing pollution swings or to review the
 director's recommended focus hand-offs.
@@ -346,6 +365,12 @@ seeds` block that lists which seeds attached, their target districts, and why
   ticks (latest first). Each entry shows the focus center, suppressed count,
   and the top scored archived beats so testers can review what the curator
   held back during long burns. Provide an optional count to limit the tail.
+- `postmortem` – dump a deterministic recap of the latest run. The output
+  lists environment trend deltas, the three largest faction legitimacy swings,
+  the last director events, and the most recent story seed outcomes so QA can
+  grab an end-of-run epilogue without exporting the entire snapshot. It pulls
+  from the same metadata surfaced via FastAPI `/state?detail=post-mortem` and
+  headless telemetry.
 - `save <path>` – write the current snapshot as JSON.
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot (local engine mode only).
@@ -469,12 +494,18 @@ with SimServiceClient("http://localhost:8000") as client:
   summary = client.state("summary")
   focus_payload = client.focus_state()  # {"focus": {...}, "digest": {...}, "history": [...]}
   client.set_focus("industrial-tier")
+  post_mortem = client.state("post-mortem")  # deterministic recap for LLM/export flows
 ```
 
 Or, run the CLI shell against the service without restarting:
 
 ```bash
 uv run echoes-shell --service-url http://localhost:8000 --script "summary;run 5;map;exit"
+
+Use `detail=post-mortem` whenever you need the deterministic recap JSON (same
+payload as the CLI `postmortem` command and headless telemetry `post_mortem`
+block). The response pairs the metadata with the current tick so downstream
+tools can archive end-of-run notes without replaying ticks.
 ```
 
 ## Headless Regression Driver
@@ -504,24 +535,22 @@ Key flags:
   profiling block with subsystem timings + slowest/anomaly metadata, and the
   `last_event_digest` payload that documents which events were shown, which
   were archived, how the focus budget was allocated, and the severity-ranked
-  archive used by the narrator).
+  archive used by the narrator, plus the new `post_mortem` recap that mirrors
+  the CLI/service `postmortem` output).
 
 ## Next Steps
 
-1. **Phase 5 M5.3 – Pacing & lifecycle polish** – finish validating the director
-  state machine (quiet spans, cooldown persistence, lifecycle history), keep
-  the README/GDD/how-to docs aligned, and capture the balanced 200-tick
-  telemetry artifact after each regression pass so reviewers can diff pacing
-  metadata without rerunning the sim.
-2. **Phase 5 M5.4 – Post-mortems** – layer deterministic epilogue generation on
-  top of the archived story seeds + faction/environment deltas, surface it via
-  CLI/service/headless endpoints, and add golden outputs tied to the canonical
-  telemetry seed.
+1. **Phase 6 M6.1 – Gateway service** – stand up the FastAPI/WebSocket gateway
+  that proxies CLI sessions to the sim service, logs focus/history payloads,
+  and becomes the staging ground for LLM intent routing.
+2. **Phase 6 M6.2 – Enhanced ASCII views** – expand CLI/gateway overlays with
+  richer district tables and telemetry inspectors that can be reused across
+  local shell and remote sessions.
 3. **Phase 9 M9.1 – AI Player Observer** (parallel track) – implement
-  `src/gengine/ai_player/observer.py` plus its CLI runner so automated playtests
-  can analyze stability trends, faction swings, and pacing logs. See the Phase 9
-  section of the implementation plan for the full observer → actor → LLM
-  roadmap.
+   `src/gengine/ai_player/observer.py` plus its CLI runner so automated playtests
+   can analyze stability trends, faction swings, and pacing logs. See the Phase 9
+   section of the implementation plan for the full observer → actor → LLM
+   roadmap.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

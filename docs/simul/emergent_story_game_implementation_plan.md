@@ -21,12 +21,13 @@ A staged implementation that builds a solid simulation core, then layers on agen
   surfaces in CLI/service/headless summaries. Remaining Phase 4 work focuses on
   long scenario sweeps plus director UX polish before merging back to main.
 - ✅ Phase 5 (Narrative Director & Story Seeds): **M5.1 story seed schema**,
-  **M5.2 director events**, and **M5.3 pacing/lifecycle** are now merged to
-  `main`. The latest milestone shipped deterministic lifecycle states,
-  per-seed/global quiet timers, CLI/service/headless `director_pacing`
-  snapshots, lifecycle history, refreshed docs, and regression tests so pacing
-  guardrails stay observable during long burns while reviewers diff telemetry
-  without replaying runs.
+  **M5.2 director events**, **M5.3 pacing/lifecycle**, and **M5.4 post-mortems**
+  are merged to `main`. Lifecycle guardrails ship with deterministic telemetry
+  (`director_pacing`, lifecycle tables/history, quiet timers), and the
+  post-mortem generator now surfaces identical recaps through the CLI,
+  FastAPI, and headless telemetry using the documented canonical artifact
+  (`build/feature-m5-4-post-mortem.json`) plus `jq '.post_mortem'` diff
+  workflow so reviewers can compare runs without replaying ticks.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -59,8 +60,9 @@ A staged implementation that builds a solid simulation core, then layers on agen
 ## Simulation API Contract (Draft)
 
 - `POST /tick` `{"ticks": 1}` -> `{ "ticks_advanced": 1, "duration_ms": 42 }`.
-- `GET /state/snapshot?detail=city|district|agent` -> trimmed state payloads
-  sized for CLI consumption.
+- `GET /state?detail=summary|snapshot|district|post-mortem` -> trimmed state
+  payloads sized for CLI consumption, including the deterministic post-mortem
+  recap used by the CLI `postmortem` command and headless telemetry.
 - `GET /district/{district_id}` -> snapshot plus recent events for that area.
 - `POST /actions` -> accepts intent array (see schema below) and returns action
   receipts with success, failure, or defer reasons.
@@ -130,9 +132,10 @@ A staged implementation that builds a solid simulation core, then layers on agen
   tests for ASCII renderings, and scenario scripts (`scripts/run_scenario.py`)
   that simulate multi-day campaigns. After every full pytest run, capture the
   canonical telemetry artifact via
-  `scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/m4-3-economy-telemetry.json`
+  `scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m5-4-post-mortem.json`
   so regressions always include a comparable metrics snapshot (now including
-  faction legitimacy snapshots/deltas and the last economy table).
+  faction legitimacy snapshots/deltas, the last economy table, and the new
+  `post_mortem` recap that CLI/service surfaces share).
 - Observability: structured JSON logs with session/tick ids, Prometheus metrics
   for tick latency, agent counts, LLM latency, and intent failure rates, plus
   OpenTelemetry tracing that links CLI requests to LLM calls and simulation
@@ -309,9 +312,8 @@ single row to validate whenever a guardrail knob changes.
   resolution path they are on. Add focused unit tests for trigger evaluation
   plus an integration test that asserts deterministic seed activation for the
   default world/seed combo.
-- **M5.3 Pacing/resolution** (in progress on `feature/m5-3-director-pacing`):
-  implements the lifecycle state machine plus user-facing telemetry so pacing
-  regressions show up immediately.
+- **M5.3 Pacing/resolution** (shipped): implements the lifecycle state machine
+  plus user-facing telemetry so pacing regressions show up immediately.
   - `DirectorSettings` now exposes `max_active_seeds`, `global_quiet_ticks`,
     `seed_active_ticks`, `seed_resolve_ticks`, `seed_quiet_ticks`, and
     `lifecycle_history_limit` knobs in every config variant (baseline and sweep
@@ -340,18 +342,28 @@ single row to validate whenever a guardrail knob changes.
     lifecycle tables/history, and quiet timer), so nightly sweeps can diff
     cooldown math against previous artifacts. Canonical validation remains the
     balanced 200-tick run: `uv run python scripts/run_headless_sim.py --world
-    default --ticks 200 --lod balanced --seed 42 --output
-    build/feature-m5-3-director-pacing.json` after a full
+default --ticks 200 --lod balanced --seed 42 --output
+build/feature-m5-3-director-pacing.json` after a full
     `uv run --group dev pytest` sweep.
-  - Documentation updates (README, GDD, gameplay guide) must explain how to read
+  - Documentation updates (README, GDD, gameplay guide) now explain how to read
     the new `director_pacing` block, where to tune the pacing knobs, and how to
     capture reviewer telemetry so test plans stay reproducible.
-- **M5.4 Post-mortem** (0.5 day): Generate deterministic, referenceable
-  summaries that stitch together the highest-impact seeds, faction swings, and
-  environment trends into a readable epilogue. Provide a CLI command and
-  service endpoint that dump the summary for LLM/gateway consumption, and add
-  golden outputs tied to the canonical 200-tick telemetry to guard against
-  accidental narrative drift.
+- **M5.4 Post-mortem** (shipped): The `generate_post_mortem_summary` helper
+  stitches environment start/end/deltas, top faction legitimacy swings, the
+  most recent director events, and a ranked story-seed recap into a
+  deterministic payload cached under `state.metadata["post_mortem"]`. The CLI
+  exposes it via the `postmortem` command, the FastAPI service returns the same
+  data with `GET /state?detail=post-mortem`, and the headless driver embeds it
+  inside every telemetry JSON so QA/LLM tooling can diff epilogues without
+  rehydrating snapshots. Regression coverage now locks the CLI + service
+  schemas to prevent silent field drift, and all reviewer surfaces cite the
+  canonical balanced capture below.
+  - Canonical telemetry capture mirrors the README instruction: `uv run python
+    scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
+    --seed 42 --output build/feature-m5-4-post-mortem.json`. Reviewers diff the
+    `.post_mortem` sections between runs (for example,
+    `jq '.post_mortem' build/feature-m5-4-post-mortem.json`) to isolate recap
+    deltas without the rest of the telemetry noise.
 
 ### Phase 6 – CLI Gateway, Visualization, LLM Intent Layer
 
@@ -408,6 +420,7 @@ playthrough validation.
   schemas in the README.
 
   **Acceptance Criteria:**
+
   - Observer connects to both local and service-mode simulations
   - Generates tick-by-tick analysis capturing stability trends, faction
     legitimacy shifts, and story seed activations
@@ -426,6 +439,7 @@ playthrough validation.
   AI decision logs alongside simulation state.
 
   **Acceptance Criteria:**
+
   - Rule-based strategies (balanced, aggressive, diplomatic) implemented
   - AI actor submits valid intents and handles API responses/errors
   - Regression test shows AI can stabilize a failing city
@@ -441,6 +455,7 @@ playthrough validation.
   LLM prompt templates and cost/latency tradeoffs.
 
   **Acceptance Criteria:**
+
   - Hybrid strategy routes routine actions to rules, complex choices to LLM
   - Budget enforcement prevents runaway API costs
   - Scenario tests measure win rates and narrative quality differences
@@ -456,6 +471,7 @@ playthrough validation.
   Document tournament workflow and balance iteration loops in the README.
 
   **Acceptance Criteria:**
+
   - Tournament script runs 100+ games in parallel with configurable strategies
   - Comparative reports surface win rate deltas and balance anomalies
   - Analysis identifies unused story seeds or overpowered actions
@@ -463,12 +479,14 @@ playthrough validation.
   - CI integration runs nightly tournaments and archives results
 
 **Phase 9 Dependencies:**
+
 - M9.1 (Observer) can start immediately with existing simulation APIs
 - M9.2 (Rule-based actions) requires Phase 6 action routing and intent schema
 - M9.3 (LLM enhancement) requires Phase 6 LLM service integration
 - M9.4 (Tournaments) requires M9.2 at minimum, benefits from M9.3
 
 **Folder Structure:**
+
 ```
 src/gengine/ai_player/
   __init__.py
@@ -489,6 +507,7 @@ tests/ai_player/
 ```
 
 **Key Design Principles:**
+
 - AI player uses the same public APIs as human players (no privileged access)
 - Clear separation from in-game agent AI to avoid confusion
 - Deterministic rule-based core with opt-in LLM enhancement
