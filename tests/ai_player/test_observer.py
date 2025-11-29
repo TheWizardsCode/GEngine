@@ -34,6 +34,28 @@ class TestObserverConfig:
         assert config.legitimacy_swing_threshold == 0.2
         assert config.log_natural_language is False
 
+    def test_config_validates_tick_budget(self) -> None:
+        with pytest.raises(ValueError, match="tick_budget must be at least 1"):
+            ObserverConfig(tick_budget=0)
+
+    def test_config_validates_analysis_interval_minimum(self) -> None:
+        with pytest.raises(ValueError, match="analysis_interval must be at least 1"):
+            ObserverConfig(analysis_interval=0)
+
+    def test_config_validates_analysis_interval_vs_budget(self) -> None:
+        with pytest.raises(ValueError, match="analysis_interval.*cannot exceed"):
+            ObserverConfig(tick_budget=10, analysis_interval=20)
+
+    def test_config_validates_stability_threshold_range(self) -> None:
+        with pytest.raises(ValueError, match="stability_alert_threshold must be between"):
+            ObserverConfig(stability_alert_threshold=1.5)
+        with pytest.raises(ValueError, match="stability_alert_threshold must be between"):
+            ObserverConfig(stability_alert_threshold=-0.1)
+
+    def test_config_validates_legitimacy_threshold(self) -> None:
+        with pytest.raises(ValueError, match="legitimacy_swing_threshold must be non-negative"):
+            ObserverConfig(legitimacy_swing_threshold=-0.1)
+
 
 class TestTrendAnalysis:
     """Tests for TrendAnalysis dataclass."""
@@ -309,7 +331,7 @@ class TestObserverAlertAndCommentaryEdgeCases:
 
         comments = observer._generate_commentary(stability_trend, {}, [])
 
-        assert any("declined significantly" in c for c in comments)
+        assert any("[STABILITY]" in c and "Declined significantly" in c for c in comments)
         assert any("0.90" in c and "0.60" in c for c in comments)
 
     def test_commentary_stability_stable(self) -> None:
@@ -327,7 +349,7 @@ class TestObserverAlertAndCommentaryEdgeCases:
 
         comments = observer._generate_commentary(stability_trend, {}, [])
 
-        assert any("remained steady" in c for c in comments)
+        assert any("[STABILITY]" in c and "Remained steady" in c for c in comments)
 
     def test_commentary_faction_losing_influence(self) -> None:
         """Test commentary for faction losing legitimacy."""
@@ -355,7 +377,7 @@ class TestObserverAlertAndCommentaryEdgeCases:
 
         comments = observer._generate_commentary(stability_trend, faction_swings, [])
 
-        assert any("lost influence" in c for c in comments)
+        assert any("[FACTION]" in c and "lost influence" in c for c in comments)
         assert any("-0.20 legitimacy" in c for c in comments)
 
     def test_check_story_seeds_handles_id_variants(self) -> None:
@@ -378,6 +400,79 @@ class TestObserverAlertAndCommentaryEdgeCases:
         seed_ids = [s["seed_id"] for s in activated]
         assert "crisis-a" in seed_ids
         assert "crisis-b" in seed_ids
+
+    def test_commentary_includes_structured_labels(self) -> None:
+        """Test that commentary uses structured labels for clarity."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        stability_trend = TrendAnalysis(
+            metric_name="stability",
+            start_value=0.7,
+            end_value=0.64,
+            delta=-0.06,
+            trend="decreasing",
+        )
+
+        comments = observer._generate_commentary(stability_trend, {}, [])
+
+        assert any("[STABILITY]" in c for c in comments)
+        # Delta of -0.06 triggers moderate decrease path
+        assert any("Decreased moderately" in c for c in comments)
+
+    def test_commentary_moderate_faction_changes_included(self) -> None:
+        """Test that moderate faction changes (>=0.05) are included in commentary."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        stability_trend = TrendAnalysis(
+            metric_name="stability",
+            start_value=0.7,
+            end_value=0.7,
+            delta=0.0,
+            trend="stable",
+        )
+
+        faction_swings = {
+            "test_faction": TrendAnalysis(
+                metric_name="faction_test_faction_legitimacy",
+                start_value=0.5,
+                end_value=0.56,
+                delta=0.06,
+                trend="increasing",
+                alert=None,  # No alert, but should still appear
+            )
+        }
+
+        comments = observer._generate_commentary(stability_trend, faction_swings, [])
+
+        assert any("[FACTION]" in c for c in comments)
+        assert any("Test Faction" in c for c in comments)
+        assert any("moderately" in c.lower() for c in comments)
+
+    def test_extract_environment_captures_economy_metrics(self) -> None:
+        """Test that environment extraction includes economy metrics."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        state = {
+            "stability": 0.7,
+            "economy": {
+                "wealth_ratio": 0.8,
+                "supply_demand_ratio": 1.2,
+                "avg_capacity": 0.6,
+            },
+            "agent_count": 150,
+        }
+
+        env = observer._extract_environment(state)
+
+        assert "stability" in env
+        assert "economy_wealth_ratio" in env
+        assert "economy_supply_demand_ratio" in env
+        assert "economy_avg_capacity" in env
+        assert "agent_count" in env
+        assert env["economy_wealth_ratio"] == 0.8
 
 
 class TestCreateObserverHelpers:

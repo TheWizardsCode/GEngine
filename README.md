@@ -150,7 +150,6 @@ multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guid
   `/ws` endpoint plus health checks, and ships with the
   `echoes-gateway-service` runner and `echoes-gateway-shell` client so remote
   reviewers can drive the sim without local access.
-  
 - ✅ **Phase 9 M9.1 – AI Player Observer** shipped: deterministic observer
   implementation at `src/gengine/ai_player/observer.py` connects via local
   `SimEngine` or remote `SimServiceClient`, advances ticks, analyzes stability
@@ -334,6 +333,7 @@ uv run echoes-shell --world default --rich
 ```
 
 The `--rich` flag enables enhanced formatting using the Rich library, providing:
+
 - Styled tables for world status and performance metrics
 - Color-coded panels for environment impact and focus state
 - Formatted story seed and director event displays
@@ -345,7 +345,7 @@ The `--rich` flag enables enhanced formatting using the Rich library, providing:
   guidance because content swaps must happen server-side.
 - To connect through the new gateway service instead of hitting the simulation
   service directly, run `uv run echoes-gateway-shell --gateway-url
-  ws://localhost:8100/ws` (pass `--script` for non-interactive workflows). The
+ws://localhost:8100/ws` (pass `--script` for non-interactive workflows). The
   gateway client speaks the same WebSocket protocol that other tools can use by
   sending JSON messages with a `command` field.
 
@@ -681,20 +681,18 @@ The Observer output includes:
 
 ## Next Steps
 
-
 1. **Phase 6 M6.2 – Enhanced ASCII views** – share the richer district tables
-  and telemetry inspectors between the local CLI and the new gateway so remote
-  sessions can browse the same overlays (`map`, `summary`, profiling panels)
-  without screen-sharing.
+   and telemetry inspectors between the local CLI and the new gateway so remote
+   sessions can browse the same overlays (`map`, `summary`, profiling panels)
+   without screen-sharing.
 2. **Phase 6 M6.3 – LLM service skeleton** – stand up `/parse_intent` and
-  `/narrate` endpoints plus a provider adapter, then thread their prompts and
-  responses through the gateway so user text rides the same session plumbing
-  now handling CLI commands.
+   `/narrate` endpoints plus a provider adapter, then thread their prompts and
+   responses through the gateway so user text rides the same session plumbing
+   now handling CLI commands.
 3. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
    heuristic decision logic for automated playtesting (depends on Phase 6
    action routing). See the Phase 9 section of the implementation plan for the
    full observer → actor → LLM roadmap.
-
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

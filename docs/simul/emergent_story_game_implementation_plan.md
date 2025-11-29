@@ -35,11 +35,11 @@ A staged implementation that builds a solid simulation core, then layers on agen
   an `echoes-gateway-shell` client. Regression tests cover `/ws` round-trips
   and malformed payloads, docs explain the WebSocket contract, and the new
   dependency (`websockets`) is wired through `uv sync --group dev` so local
-  + CI environments can exercise remote sessions immediately. **M6.2 enhanced
-  ASCII views** adds `gengine.echoes.cli.display` with Rich-based rendering
-  (styled tables, color-coded panels, formatted story seed/director displays),
-  integrated via `--rich` flag in `echoes-shell`, with 9 new regression tests
-  covering display formatting and shell integration.
+  - CI environments can exercise remote sessions immediately. **M6.2 enhanced
+    ASCII views** adds `gengine.echoes.cli.display` with Rich-based rendering
+    (styled tables, color-coded panels, formatted story seed/director displays),
+    integrated via `--rich` flag in `echoes-shell`, with 9 new regression tests
+    covering display formatting and shell integration.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -379,14 +379,14 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
 
 ### Phase 6 – CLI Gateway, Visualization, LLM Intent Layer
 
- - **M6.1 Gateway service** (shipped): FastAPI/WebSocket host (`/ws` +
-   `/healthz`) that provisions an `EchoesShell` per connection, proxies each
-   command to the simulation service via `SimServiceClient`, streams rendered
-   output back to the client, and logs focus/digest/history snapshots through
-   `gengine.echoes.gateway`. Ships with the `echoes-gateway-service` runner,
-   JSON-based WebSocket contract documentation, unit tests covering happy-path
-   sessions + malformed payloads, and a `echoes-gateway-shell` companion CLI
-   that reuses the same prompt/script workflows as `echoes-shell`.
+- **M6.1 Gateway service** (shipped): FastAPI/WebSocket host (`/ws` +
+  `/healthz`) that provisions an `EchoesShell` per connection, proxies each
+  command to the simulation service via `SimServiceClient`, streams rendered
+  output back to the client, and logs focus/digest/history snapshots through
+  `gengine.echoes.gateway`. Ships with the `echoes-gateway-service` runner,
+  JSON-based WebSocket contract documentation, unit tests covering happy-path
+  sessions + malformed payloads, and a `echoes-gateway-shell` companion CLI
+  that reuses the same prompt/script workflows as `echoes-shell`.
 - **M6.2 Enhanced ASCII views** (shipped): `gengine.echoes.cli.display` module
   provides Rich-based rendering with styled tables (`render_summary_table`),
   color-coded panels for environment/focus/digest (`_render_environment_panel`,

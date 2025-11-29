@@ -30,6 +30,22 @@ class ObserverConfig:
     legitimacy_swing_threshold: float = 0.1
     log_natural_language: bool = True
 
+    def __post_init__(self) -> None:
+        """Validate configuration parameters."""
+        if self.tick_budget < 1:
+            raise ValueError("tick_budget must be at least 1")
+        if self.analysis_interval < 1:
+            raise ValueError("analysis_interval must be at least 1")
+        if self.analysis_interval > self.tick_budget:
+            raise ValueError(
+                f"analysis_interval ({self.analysis_interval}) cannot exceed "
+                f"tick_budget ({self.tick_budget})"
+            )
+        if not 0.0 <= self.stability_alert_threshold <= 1.0:
+            raise ValueError("stability_alert_threshold must be between 0.0 and 1.0")
+        if self.legitimacy_swing_threshold < 0.0:
+            raise ValueError("legitimacy_swing_threshold must be non-negative")
+
 
 @dataclass
 class TrendAnalysis:
@@ -240,23 +256,51 @@ class Observer:
         )
 
     def _get_state(self) -> dict[str, Any]:
-        """Fetch current simulation state."""
+        """Fetch current simulation state.
+        
+        For remote connections, will raise an exception if connection fails.
+        Callers should handle connection errors appropriately.
+        """
         if self._is_local:
             assert self._engine is not None
             return self._engine.query_view("summary")
         else:
             assert self._client is not None
-            return self._client.state("summary")
+            try:
+                return self._client.state("summary")
+            except Exception as e:
+                logger.error(f"Failed to fetch state from remote service: {e}")
+                raise ConnectionError(
+                    f"Unable to connect to simulation service: {e}"
+                ) from e
 
     def _advance_ticks(self, count: int) -> dict[str, Any]:
-        """Advance simulation by count ticks."""
+        """Advance simulation by count ticks.
+        
+        Parameters
+        ----------
+        count
+            Number of ticks to advance.
+            
+        Returns
+        -------
+        dict
+            Dictionary containing 'ticks_advanced' key with actual tick count.
+            For remote connections, may raise ConnectionError if service unavailable.
+        """
         if self._is_local:
             assert self._engine is not None
             reports = self._engine.advance_ticks(count)
             return {"ticks_advanced": len(reports)}
         else:
             assert self._client is not None
-            return self._client.tick(count)
+            try:
+                return self._client.tick(count)
+            except Exception as e:
+                logger.error(f"Failed to advance ticks on remote service: {e}")
+                raise ConnectionError(
+                    f"Unable to advance simulation: {e}"
+                ) from e
 
     def _analyze_trend(
         self,
@@ -357,16 +401,37 @@ class Observer:
                 alerts.append(alert)
 
     def _extract_environment(self, state: dict[str, Any]) -> dict[str, float]:
-        """Extract environment metrics from state."""
+        """Extract environment and system metrics from state.
+        
+        Captures stability, environment impact, economy metrics, and agent counts
+        to provide a comprehensive view of simulation health.
+        """
         env = {}
+        # Core stability metrics
         for key in ["stability", "unrest", "pollution", "biodiversity", "security"]:
             if key in state:
                 env[key] = state[key]
+        
+        # Environment impact metrics
         env_impact = state.get("environment_impact", {})
         if isinstance(env_impact, dict):
             for key in ["avg_pollution", "biodiversity", "scarcity_pressure"]:
                 if key in env_impact:
                     env[f"impact_{key}"] = env_impact[key]
+        
+        # Economy metrics
+        economy = state.get("economy", {})
+        if isinstance(economy, dict):
+            for key in ["wealth_ratio", "supply_demand_ratio", "avg_capacity"]:
+                if key in economy:
+                    env[f"economy_{key}"] = economy[key]
+        
+        # Agent system metrics
+        if "agent_count" in state:
+            env["agent_count"] = state["agent_count"]
+        if "agent_satisfaction_avg" in state:
+            env["agent_satisfaction_avg"] = state["agent_satisfaction_avg"]
+        
         return env
 
     def _generate_commentary(
@@ -375,48 +440,76 @@ class Observer:
         faction_swings: dict[str, TrendAnalysis],
         story_seeds: list[dict[str, Any]],
     ) -> list[str]:
-        """Generate natural language commentary on the observation."""
+        """Generate structured natural language commentary on the observation.
+        
+        Produces human-readable analysis of stability trends, faction dynamics,
+        and narrative events with varying detail based on magnitude of changes.
+        """
         comments: list[str] = []
 
-        if stability_trend.trend == "decreasing" and stability_trend.delta < -0.1:
+        # Stability commentary with multiple severity levels
+        if stability_trend.trend == "decreasing":
             start_val = stability_trend.start_value
             end_val = stability_trend.end_value
-            comments.append(
-                f"Stability declined significantly from {start_val:.2f} "
-                f"to {end_val:.2f} over the observation period."
-            )
-        elif stability_trend.trend == "increasing" and stability_trend.delta > 0.1:
-            comments.append(
-                f"Stability improved from {stability_trend.start_value:.2f} "
-                f"to {stability_trend.end_value:.2f}, indicating recovering governance."
-            )
-        elif stability_trend.trend == "stable":
-            comments.append(
-                f"Stability remained steady around {stability_trend.end_value:.2f}."
-            )
-        else:
+            if stability_trend.delta < -0.1:
+                comments.append(
+                    f"[STABILITY] Declined significantly from {start_val:.2f} "
+                    f"to {end_val:.2f} over the observation period."
+                )
+            elif stability_trend.delta < -0.05:
+                comments.append(
+                    f"[STABILITY] Decreased moderately from {start_val:.2f} "
+                    f"to {end_val:.2f}, worth monitoring."
+                )
+            else:
+                comments.append(
+                    f"[STABILITY] Minor decline from {start_val:.2f} to {end_val:.2f}."
+                )
+        elif stability_trend.trend == "increasing":
+            start_val = stability_trend.start_value
             end_val = stability_trend.end_value
+            if stability_trend.delta > 0.1:
+                comments.append(
+                    f"[STABILITY] Improved significantly from {start_val:.2f} "
+                    f"to {end_val:.2f}, indicating recovering governance."
+                )
+            elif stability_trend.delta > 0.05:
+                comments.append(
+                    f"[STABILITY] Moderate improvement from {start_val:.2f} "
+                    f"to {end_val:.2f}."
+                )
+            else:
+                comments.append(
+                    f"[STABILITY] Minor increase from {start_val:.2f} to {end_val:.2f}."
+                )
+        else:
             comments.append(
-                f"Stability showed minor fluctuations, ending at {end_val:.2f}."
+                f"[STABILITY] Remained steady around {stability_trend.end_value:.2f}."
             )
 
+        # Faction commentary with impact assessment
+        faction_changes = []
         for fid, trend in faction_swings.items():
-            if trend.alert:
+            if trend.alert or abs(trend.delta) >= 0.05:  # Include moderate changes
                 faction_name = fid.replace("_", " ").title()
+                magnitude = "significantly" if abs(trend.delta) >= 0.1 else "moderately"
                 if trend.delta > 0:
-                    comments.append(
-                        f"{faction_name} gained influence "
+                    faction_changes.append(
+                        f"[FACTION] {faction_name} {magnitude} gained influence "
                         f"(+{trend.delta:.2f} legitimacy)."
                     )
                 else:
-                    comments.append(
-                        f"{faction_name} lost influence ({trend.delta:.2f} legitimacy)."
+                    faction_changes.append(
+                        f"[FACTION] {faction_name} {magnitude} lost influence "
+                        f"({trend.delta:.2f} legitimacy)."
                     )
+        comments.extend(sorted(faction_changes))  # Sort for consistent ordering
 
+        # Story seed commentary
         if story_seeds:
             seed_names = [s.get("seed_id", "unknown") for s in story_seeds]
             comments.append(
-                f"Story seeds activated during observation: {', '.join(seed_names)}."
+                f"[NARRATIVE] Story seeds activated: {', '.join(seed_names)}."
             )
 
         return comments

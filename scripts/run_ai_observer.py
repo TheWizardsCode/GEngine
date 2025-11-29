@@ -94,9 +94,18 @@ def run_ai_observer(
 
     try:
         report = observer.observe()
+    except ConnectionError as e:
+        if verbose:
+            print(f"\nConnection error during observation: {e}")
+        raise
     finally:
+        # Only close the client if we created one for remote mode
         if service_url and hasattr(observer, "_client") and observer._client:
-            observer._client.close()
+            try:
+                observer._client.close()
+            except Exception as e:
+                if verbose:
+                    print(f"Warning: Error closing client connection: {e}")
 
     result = report.to_dict()
     result["mode"] = mode
