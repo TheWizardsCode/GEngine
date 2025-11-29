@@ -416,6 +416,11 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
   new modules at 100%).
 - **M6.5 Gateway integration** (1-1.5 days): user text -> LLM intents -> sim
   actions -> narrative response with retry/fallback logic.
+- **M6.6 Real LLM providers** (1-1.5 days): Implement `OpenAIProvider` and
+  `AnthropicProvider` with function calling/structured outputs, integrate with
+  intent schemas and prompt templates from M6.4, add configuration for API
+  keys and model selection, include retry logic and error handling, write
+  integration tests with mocked API responses.
 
 ### Phase 7 – Player Experience, Progression, Polish
 

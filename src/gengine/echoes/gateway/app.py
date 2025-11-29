@@ -15,6 +15,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from ..cli.shell import PROMPT, ShellBackend, ServiceBackend
 from ..client import SimServiceClient
 from ..settings import SimulationConfig, load_simulation_config
+from .llm_client import LLMClient
 from .session import GatewaySession
 
 LOGGER = logging.getLogger("gengine.echoes.gateway")
@@ -26,6 +27,7 @@ class GatewaySettings:
     """Configuration for the gateway service."""
 
     service_url: str = "http://localhost:8000"
+    llm_service_url: str | None = None
     host: str = "0.0.0.0"
     port: int = 8100
 
@@ -33,6 +35,7 @@ class GatewaySettings:
     def from_env(cls) -> "GatewaySettings":
         return cls(
             service_url=os.environ.get("ECHOES_GATEWAY_SERVICE_URL", "http://localhost:8000"),
+            llm_service_url=os.environ.get("ECHOES_GATEWAY_LLM_URL"),
             host=os.environ.get("ECHOES_GATEWAY_HOST", "0.0.0.0"),
             port=int(os.environ.get("ECHOES_GATEWAY_PORT", "8100")),
         )
@@ -53,15 +56,22 @@ def create_gateway_app(
         backend_factory = _service_backend_factory(active_settings.service_url)
 
     app = FastAPI(title="Echoes Gateway Service", version="0.1.0")
-    manager = _GatewayManager(backend_factory, active_config)
+    manager = _GatewayManager(
+        backend_factory,
+        active_config,
+        llm_service_url=active_settings.llm_service_url,
+    )
     app.state.gateway_settings = active_settings
 
     @app.get("/healthz")
     def healthcheck() -> dict[str, str]:  # pragma: no cover - trivial
-        return {
+        health = {
             "status": "ok",
             "service_url": active_settings.service_url,
         }
+        if active_settings.llm_service_url:
+            health["llm_service_url"] = active_settings.llm_service_url
+        return health
 
     @app.websocket("/ws")
     async def websocket_handler(websocket: WebSocket) -> None:
@@ -86,10 +96,10 @@ def create_gateway_app(
             )
             while True:
                 try:
-                    command = await _receive_command(websocket)
+                    message_data = await _receive_message(websocket)
                 except WebSocketDisconnect:
                     break
-                if command is None:
+                if message_data is None:
                     await websocket.send_json(
                         {
                             "type": "error",
@@ -97,8 +107,25 @@ def create_gateway_app(
                         }
                     )
                     continue
+                
+                # Check if this is a natural language command
+                command = message_data.get("command")
+                is_nl = message_data.get("natural_language", False)
+                
+                if command is None:
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "error": "Command field required.",
+                        }
+                    )
+                    continue
+                
                 try:
-                    result = await asyncio.to_thread(session.execute, command)
+                    if is_nl and session.llm_client:
+                        result = await asyncio.to_thread(session.execute_natural_language, command)
+                    else:
+                        result = await asyncio.to_thread(session.execute, command)
                 except Exception as exc:  # pragma: no cover - unexpected failure
                     LOGGER.exception("Gateway session crashed: %s", exc)
                     await websocket.send_json(
@@ -138,30 +165,50 @@ def _service_backend_factory(service_url: str) -> BackendFactory:
 
 
 class _GatewayManager:
-    def __init__(self, backend_factory: BackendFactory, config: SimulationConfig) -> None:
+    def __init__(
+        self,
+        backend_factory: BackendFactory,
+        config: SimulationConfig,
+        llm_service_url: str | None = None,
+    ) -> None:
         self._backend_factory = backend_factory
         self._config = config
+        self._llm_service_url = llm_service_url
 
     def open_session(self) -> GatewaySession:
         backend = self._backend_factory()
-        return GatewaySession(backend, limits=self._config.limits)
+        llm_client = None
+        if self._llm_service_url:
+            llm_client = LLMClient(self._llm_service_url)
+            # Check LLM service health
+            if not llm_client.healthcheck():
+                LOGGER.warning("LLM service unhealthy at %s", self._llm_service_url)
+        return GatewaySession(backend, limits=self._config.limits, llm_client=llm_client)
 
 
-async def _receive_command(websocket: WebSocket) -> str | None:
+async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None:
+    """Receive and parse message from WebSocket.
+    
+    Returns dict with 'command' and optional 'natural_language' flag,
+    or None if message is invalid.
+    """
     try:
         message = await websocket.receive()
     except RuntimeError as exc:  # starlette raises RuntimeError after disconnect
         raise WebSocketDisconnect(code=1000) from exc
+    
     text = message.get("text")
     data = None
+    
     if text is not None:
         text = text.strip()
         if not text:
-            return ""
+            return {"command": ""}
         try:
             data = json.loads(text)
         except json.JSONDecodeError:
-            return text
+            # Plain text command (backwards compatible)
+            return {"command": text, "natural_language": False}
     else:
         payload = message.get("bytes")
         if payload is None:
@@ -169,9 +216,13 @@ async def _receive_command(websocket: WebSocket) -> str | None:
         try:
             data = json.loads(payload.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
-            return payload.decode("utf-8", errors="ignore")
+            # Binary decoded as text command
+            return {"command": payload.decode("utf-8", errors="ignore"), "natural_language": False}
+    
     if isinstance(data, dict):
         command = data.get("command")
         if isinstance(command, str):
-            return command
+            is_nl = data.get("natural_language", False)
+            return {"command": command, "natural_language": bool(is_nl)}
+    
     return None
