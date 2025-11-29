@@ -695,16 +695,170 @@ The Observer output includes:
 - `commentary`: Natural language summary of the observation period
 - `environment_summary`: Final environment metrics
 
+## LLM Service (Phase 6 M6.3)
+
+The LLM service provides natural language processing for intent parsing and narrative generation. It runs as a separate FastAPI service and communicates with the gateway/CLI.
+
+### Running the LLM Service
+
+Start the service (defaults to port 8001):
+
+```bash
+uv run echoes-llm-service
+```
+
+### Configuration
+
+Configure via environment variables:
+
+```bash
+export ECHOES_LLM_PROVIDER=stub          # Provider: stub, openai, anthropic
+export ECHOES_LLM_API_KEY=your-key-here  # Required for openai/anthropic
+export ECHOES_LLM_MODEL=gpt-4            # Model name (provider-specific)
+export ECHOES_LLM_TEMPERATURE=0.7        # Sampling temperature (0.0-1.0)
+export ECHOES_LLM_MAX_TOKENS=500         # Max tokens in response
+export ECHOES_LLM_TIMEOUT_SECONDS=30     # Request timeout
+```
+
+The `stub` provider is the default and requires no API key. It uses deterministic keyword matching for testing without API costs.
+
+### API Endpoints
+
+**GET /healthz**
+
+- Health check endpoint
+- Returns `{"status": "ok", "provider": "stub"}`
+
+**POST /parse_intent**
+
+- Converts natural language to game intents
+- Request: `{"text": "stabilize the industrial tier"}`
+- Response: `{"intent": "stabilize", "confidence": 0.9, "parameters": {...}}`
+
+**POST /narrate**
+
+- Generates story text from simulation events
+- Request: `{"events": [...], "context": {...}}`
+- Response: `{"narration": "...", "tone": "neutral"}`
+
+### Testing with Stub Provider
+
+The stub provider uses keyword matching for deterministic testing:
+
+```python
+import httpx
+
+async with httpx.AsyncClient() as client:
+    # Parse intent
+    response = await client.post(
+        "http://localhost:8001/parse_intent",
+        json={"text": "inspect the perimeter hollow district"}
+    )
+    print(response.json())
+    # {"intent": "inspect", "confidence": 0.8, "parameters": {"district": "perimeter hollow"}}
+
+    # Generate narration
+    response = await client.post(
+        "http://localhost:8001/narrate",
+        json={
+            "events": ["Agent recruited", "Pollution increased"],
+            "context": {"district": "Industrial Tier"}
+        }
+    )
+    print(response.json())
+    # {"narration": "Recent events unfolded...", "tone": "neutral"}
+```
+
+### Intent Schema (Phase 6 M6.4)
+
+The LLM service uses structured Pydantic models to represent game intents. All intents inherit from `GameIntent` and include type-safe validation.
+
+#### Intent Types
+
+1. **INSPECT** - Examine simulation entities with optional focus areas
+2. **NEGOTIATE** - Broker deals with factions using levers and goals
+3. **DEPLOY_RESOURCE** - Allocate materials or energy to districts
+4. **PASS_POLICY** - Enact city-wide policies with parameters
+5. **COVERT_ACTION** - Execute hidden operations with risk levels
+6. **INVOKE_AGENT** - Direct agent actions with targets
+7. **REQUEST_REPORT** - Query simulation state with filters
+
+#### Example Intent Usage
+
+```python
+from gengine.echoes.llm import (
+    InspectIntent, NegotiateIntent, DeployResourceIntent,
+    parse_intent, IntentType
+)
+
+# Create typed intents
+inspect = InspectIntent(
+    target_type="district",
+    target_id="industrial-tier",
+    focus_areas=["pollution", "unrest"]
+)
+
+negotiate = NegotiateIntent(
+    targets=["union-of-flux"],
+    levers=["policy_support"],
+    goals=["reduce_unrest"]
+)
+
+deploy = DeployResourceIntent(
+    resource_type="materials",
+    amount=100,
+    target_district="perimeter-hollow"
+)
+
+# Parse from dictionary (used by LLM service)
+intent_data = {
+    "intent_type": "INSPECT",
+    "target_type": "district",
+    "target_id": "industrial-tier"
+}
+intent = parse_intent(intent_data)  # Returns InspectIntent instance
+```
+
+#### Prompt Templates
+
+The `gengine.echoes.llm.prompts` module provides:
+
+- **OpenAI function calling schemas** (`OPENAI_INTENT_FUNCTIONS`) for structured responses
+- **Anthropic structured output schema** (`ANTHROPIC_INTENT_SCHEMA`) for Claude models
+- **System prompts** with game world context and intent descriptions
+- **Dynamic prompt builders** for context injection:
+
+```python
+from gengine.echoes.llm.prompts import (
+    build_intent_parsing_prompt,
+    build_narration_prompt
+)
+
+# Build intent parsing prompt with context
+prompt = build_intent_parsing_prompt(
+    command="stabilize the industrial tier",
+    available_actions=["inspect", "negotiate", "deploy_resource"],
+    district="industrial-tier",
+    tick=42,
+    recent_events=["Pollution increased", "Unrest rising"]
+)
+
+# Build narration prompt from events
+narration_prompt = build_narration_prompt(
+    events=["Agent recruited", "Policy passed"],
+    context={"district": "Perimeter Hollow", "tick": 42}
+)
+```
+
+The intent schemas enable the LLM service to convert natural language into type-safe game actions with validation, while the prompt templates ensure consistent LLM behavior across different providers.
+
 ## Next Steps
 
-1. **Phase 6 M6.2 – Enhanced ASCII views** – share the richer district tables
-   and telemetry inspectors between the local CLI and the new gateway so remote
-   sessions can browse the same overlays (`map`, `summary`, profiling panels)
-   without screen-sharing.
-2. **Phase 6 M6.3 – LLM service skeleton** – stand up `/parse_intent` and
-   `/narrate` endpoints plus a provider adapter, then thread their prompts and
-   responses through the gateway so user text rides the same session plumbing
-   now handling CLI commands.
+1. **Phase 6 M6.5 – Gateway-LLM integration** – wire the `/parse_intent` endpoint
+   into the gateway so natural language commands can be converted to game
+   actions and routed to the simulation service, with narration prompts from
+   simulation events through `/narrate` surfacing the generated story text
+   in CLI sessions.
 3. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
    heuristic decision logic for automated playtesting (depends on Phase 6
    action routing). See the Phase 9 section of the implementation plan for the
