@@ -16,6 +16,9 @@ from gengine.echoes.sim import SimEngine
 
 logger = logging.getLogger("gengine.ai_player.observer")
 
+# Minimum delta threshold to detect a trend (below this is considered "stable")
+_TREND_STABLE_THRESHOLD = 0.01
+
 
 @dataclass
 class ObserverConfig:
@@ -279,7 +282,7 @@ class Observer:
         end = samples[-1]
         delta = end - start
 
-        if abs(delta) < 0.01:
+        if abs(delta) < _TREND_STABLE_THRESHOLD:
             trend = "stable"
         elif delta > 0:
             trend = "increasing"
