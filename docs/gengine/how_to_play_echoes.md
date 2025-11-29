@@ -27,6 +27,29 @@ On startup the shell prints a world summary and shows the prompt `(echoes)`.
 Type commands listed in the next section to explore the world, advance time,
 and persist state.
 
+### Remote Sessions via the Gateway Service
+
+Phase 6 introduces a WebSocket gateway so remote testers can drive the CLI
+without SSH access. Launch the gateway alongside the FastAPI simulation
+service:
+
+```bash
+uv run echoes-gateway-service
+```
+
+Then connect with the bundled client (or any WebSocket tool that sends JSON
+`{"command": "..."}` frames):
+
+```bash
+uv run echoes-gateway-shell --gateway-url ws://localhost:8100/ws --script "summary;run 3;exit"
+```
+
+Each connection provisions a dedicated `EchoesShell`, proxies commands to the
+simulation service configured via `ECHOES_GATEWAY_SERVICE_URL`, and logs
+focus/digest/history snapshots via the `gengine.echoes.gateway` logger whenever
+`summary`, `focus`, `history`, or `director` runs. The client prints the same
+ASCII output as the local shell and honors `--script` for CI-friendly runs.
+
 ## 2. Shell Commands
 
 | Command                   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -56,7 +79,8 @@ remote clients receive.
 
 Run `uv run python -m gengine.echoes.service.main` to host the service locally
 and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
-`curl`. The CLI gateway planned for Phase 3 will sit on top of this API. Use
+`curl`. Phase 6's `echoes-gateway-service` sits on top of the same API,
+forwarding every WebSocket command through `SimServiceClient`. Use
 `GET /state?detail=post-mortem` (or the CLI `postmortem` command) whenever you
 need the deterministic recap JSON that also appears in headless telemetry.
 
@@ -531,12 +555,15 @@ and story-seed recaps stayed deterministic without replaying ticks.
 
 ## 9. What Comes Next
 
-The shell currently operates entirely in-process. Upcoming phases of the plan
-will:
+The local shell now has three front-ends—direct in-process state, HTTP service
+mode, and the Phase 6 WebSocket gateway. Upcoming phases will:
 
-- Extract the tick engine into a FastAPI simulation service.
+- Extend the gateway/UI layer with richer ASCII overlays (shared `summary`
+  tables, enhanced `map`/`director` panels) so remote sessions match the local
+  CLI presentation exactly.
 - Introduce deeper agent/faction/economy subsystems feeding the tick loop.
-- Add a gateway service plus LLM-driven intent parsing for richer interaction.
+- Layer an LLM intent service on top of the gateway so free-form text can be
+  parsed into structured actions before the simulation executes them.
 
 As those milestones land, this guide will expand with new sections covering
 service endpoints, intent schemas, and multi-service orchestration.

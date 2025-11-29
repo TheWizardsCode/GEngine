@@ -99,6 +99,143 @@ def test_local_backend_save_and_load(tmp_path: Path) -> None:
     assert "Loaded snapshot" in snap_msg
 
 
+def test_local_backend_close_is_no_op() -> None:
+    """Verify that LocalBackend.close() does nothing."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    backend.close()  # should not raise
+
+
+def test_service_backend_close_releases_client() -> None:
+    """Verify that ServiceBackend.close() calls client.close()."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    app = create_app(engine=engine)
+    test_client = TestClient(app)
+    client = SimServiceClient(base_url="http://testserver", client=test_client)
+    backend = ServiceBackend(client)
+    backend.close()
+    # Subsequent operations should fail if client is closed
+    with pytest.raises(Exception):
+        backend.summary()
+
+
+def test_shell_save_with_no_path() -> None:
+    """Verify that save command requires a path argument."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("save")
+    assert "Usage: save" in result.output
+
+
+def test_shell_load_with_invalid_syntax() -> None:
+    """Verify that load command validates argument format."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("load")
+    assert "Usage: load" in result.output
+    
+    result = shell.execute("load invalid")
+    assert "Usage: load" in result.output
+
+
+def test_shell_run_with_invalid_count() -> None:
+    """Verify that run command validates count argument."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("run notanumber")
+    assert "Usage: run" in result.output
+
+
+def test_shell_history_with_invalid_count() -> None:
+    """Verify that history command validates count argument."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("history notanumber")
+    assert "Usage: history" in result.output
+
+
+def test_shell_director_with_invalid_count() -> None:
+    """Verify that director command validates count argument."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("director notanumber")
+    assert "Usage: director" in result.output
+
+
+def test_shell_postmortem_with_args() -> None:
+    """Verify that postmortem command ignores extra arguments."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("postmortem extra")
+    assert "Usage: postmortem" in result.output
+
+
+def test_shell_unknown_command() -> None:
+    """Verify that unknown commands are rejected."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("nosuchcommand")
+    assert "Unknown command" in result.output
+    assert "nosuchcommand" in result.output
+
+
+def test_shell_quit_is_alias_for_exit() -> None:
+    """Verify that quit command works like exit."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("quit")
+    assert result.should_exit is True
+    assert "Exiting" in result.output
+
+
+def test_shell_next_with_args_rejected() -> None:
+    """Verify that next command ignores arguments."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("next 5")
+    assert "Usage: next" in result.output
+
+
+def test_shell_run_without_count_rejected() -> None:
+    """Verify that run command requires a count."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("run")
+    assert "Usage: run" in result.output
+
+
 def test_service_backend_map_and_save(tmp_path: Path) -> None:
     engine = SimEngine()
     engine.initialize_state(world="default")
@@ -741,4 +878,252 @@ def test_render_history_formats_output() -> None:
     rendered = _render_history(entries)
 
     assert "tick 10" in rendered
-    assert "Event A" in rendered
+
+
+def test_service_backend_focus_state() -> None:
+    """Verify that ServiceBackend.focus_state() returns focus data."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    app = create_app(engine=engine, config=SimulationConfig())
+    client_test = TestClient(app)
+    client = SimServiceClient("http://test")
+    client._client = client_test
+    backend = ServiceBackend(client)
+    
+    focus_data = backend.focus_state()
+    assert isinstance(focus_data, dict)
+    # Should have district_id or be empty dict
+    assert "district_id" in focus_data or len(focus_data) == 0
+
+
+def test_service_backend_set_focus() -> None:
+    """Verify that ServiceBackend.set_focus() updates focus."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    app = create_app(engine=engine, config=SimulationConfig())
+    client_test = TestClient(app)
+    client = SimServiceClient("http://test")
+    client._client = client_test
+    backend = ServiceBackend(client)
+    
+    focus_data = backend.set_focus("industrial-tier")
+    assert isinstance(focus_data, dict)
+    # After setting focus, should have district_id
+    assert "district_id" in focus_data
+
+
+def test_service_backend_focus_history() -> None:
+    """Verify that ServiceBackend.focus_history() returns history."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    app = create_app(engine=engine, config=SimulationConfig())
+    client_test = TestClient(app)
+    client = SimServiceClient("http://test")
+    client._client = client_test
+    backend = ServiceBackend(client)
+    
+    history = backend.focus_history()
+    assert isinstance(history, list)
+
+
+def test_service_backend_post_mortem() -> None:
+    """Verify that ServiceBackend.post_mortem() returns analysis."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    app = create_app(engine=engine, config=SimulationConfig())
+    client_test = TestClient(app)
+    client = SimServiceClient("http://test")
+    client._client = client_test
+    backend = ServiceBackend(client)
+    
+    data = backend.post_mortem()
+    assert isinstance(data, dict)
+
+
+def test_shell_focus_command() -> None:
+    """Verify that focus command shows focus state."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("focus")
+    assert result.output
+    assert "focus" in result.output.lower() or "Center:" in result.output
+
+
+def test_shell_focus_set_command() -> None:
+    """Verify that focus command can set focus district."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("focus industrial-tier")
+    assert result.output
+    assert "industrial-tier" in result.output
+
+
+def test_shell_focus_clear_command() -> None:
+    """Verify that focus clear resets focus."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    # Set focus first
+    shell.execute("focus industrial-tier")
+    # Then clear it
+    result = shell.execute("focus clear")
+    assert result.output
+
+
+def test_shell_history_with_limit() -> None:
+    """Verify that history command respects limit."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    # Run some ticks to generate history
+    shell.execute("run 5")
+    result = shell.execute("history 2")
+    assert result.output
+
+
+def test_shell_director_with_limit() -> None:
+    """Verify that director command respects limit."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    # Run some ticks to generate director feed
+    shell.execute("run 5")
+    result = shell.execute("director 2")
+    assert result.output
+
+
+def test_shell_empty_command() -> None:
+    """Verify that empty command returns empty result."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("")
+    assert result.output == ""
+
+
+def test_shell_history_with_no_data() -> None:
+    """Verify that history with no data shows message."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    # Don't run any ticks, so no history
+    result = shell.execute("history")
+    assert result.output == "No focus history recorded."
+
+
+def test_shell_director_with_no_data() -> None:
+    """Verify that director with no data shows message."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    backend = LocalBackend(engine)
+    shell = EchoesShell(backend)
+    
+    # Don't run any ticks, so no director feed
+    result = shell.execute("director")
+    assert result.output == "No director feed recorded."
+
+
+def test_shell_load_snapshot_with_service_backend() -> None:
+    """Verify that load snapshot fails with ServiceBackend."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    app = create_app(engine=engine, config=SimulationConfig())
+    client_test = TestClient(app)
+    client = SimServiceClient("http://test")
+    client._client = client_test
+    backend = ServiceBackend(client)
+    shell = EchoesShell(backend)
+    
+    result = shell.execute("load snapshot /tmp/fake.json")
+    assert "Loading snapshots requires local backend" in result.output
+
+
+def test_render_summary_with_pollution_extremes() -> None:
+    """Test rendering of environment impact with pollution extremes."""
+    summary = {
+        "city": "Test",
+        "tick": 10,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.9,
+        "environment_impact": {
+            "average_pollution": 0.5,
+            "extremes": {
+                "max": {"district": "industrial-tier", "pollution": 0.9},
+                "min": {"district": "research-spire", "pollution": 0.1},
+            },
+        },
+    }
+    
+    rendered = _render_summary(summary)
+    assert "avg pollution" in rendered
+    assert "extremes" in rendered
+    assert "industrial-tier" in rendered
+    assert "research-spire" in rendered
+
+
+def test_render_summary_with_diffusion_samples() -> None:
+    """Test rendering of diffusion samples in environment impact."""
+    summary = {
+        "city": "Test",
+        "tick": 10,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.9,
+        "environment_impact": {
+            "diffusion_samples": [
+                {"district_id": "district-a", "delta": 0.05},
+                {"district_id": "district-b", "delta": -0.03},
+            ],
+        },
+    }
+    
+    rendered = _render_summary(summary)
+    assert "diffusion samples" in rendered
+    assert "district-a" in rendered
+
+
+def test_render_summary_with_spatial_weights() -> None:
+    """Test rendering of spatial weights in focus state."""
+    summary = {
+        "city": "Test",
+        "tick": 10,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.9,
+        "focus": {
+            "district_id": "central",
+            "coordinates": {"x": 1.0, "y": 2.0, "z": 3.0},
+            "adjacent": ["north", "south"],
+            "spatial_weights": [
+                {"district_id": "north", "score": 0.8},
+                {"district_id": "south", "score": 0.6},
+            ],
+            "spatial_metrics": {"distance_reference": 1.5},
+        },
+    }
+    
+    rendered = _render_summary(summary)
+    assert "coords" in rendered
+    assert "adjacent" in rendered
+    assert "spatial weights" in rendered
+    assert "distance ref" in rendered

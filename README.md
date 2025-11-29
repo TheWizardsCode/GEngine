@@ -137,12 +137,17 @@ multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guid
   CLI/service/headless surfaces show the new `director_pacing` +
   `story_seed_lifecycle` blocks, docs walk through the pacing knobs, and
   regression tests/telemetry guard the lifecycle history + cooldown math.
-- ✅ **Phase 5 M5.4 – Post-mortems** shipped: deterministic recaps now flow
   through the CLI `postmortem` command, service `/state?detail=post-mortem`,
   and headless telemetry `post_mortem` block. The canonical
   `build/feature-m5-4-post-mortem.json` capture plus
   `jq '.post_mortem' ...` diff workflow is documented across README/GDD/how-to
   so reviewers can audit end-of-run deltas without replaying ticks.
+- ✅ **Phase 6 M6.1 – Gateway service** shipped: `gengine.echoes.gateway`
+  introduces a FastAPI/WebSocket host that proxies shell commands to the
+  simulation service, logs focus/history payloads per session, exposes a
+  `/ws` endpoint plus health checks, and ships with the
+  `echoes-gateway-service` runner and `echoes-gateway-shell` client so remote
+  reviewers can drive the sim without local access.
 
 ## Repository Layout
 
@@ -315,6 +320,11 @@ uv run echoes-shell --world default
   `--service-url http://localhost:8000`. When this flag is set the CLI routes
   through HTTP using `SimServiceClient`; `load world`/`load snapshot` will emit
   guidance because content swaps must happen server-side.
+- To connect through the new gateway service instead of hitting the simulation
+  service directly, run `uv run echoes-gateway-shell --gateway-url
+  ws://localhost:8100/ws` (pass `--script` for non-interactive workflows). The
+  gateway client speaks the same WebSocket protocol that other tools can use by
+  sending JSON messages with a `command` field.
 
 Scripted mode (useful for CI/tests):
 
@@ -508,6 +518,40 @@ block). The response pairs the metadata with the current tick so downstream
 tools can archive end-of-run notes without replaying ticks.
 ```
 
+## Gateway Service
+
+Phase 6 M6.1 adds a WebSocket gateway that hosts remote CLI sessions and
+proxies every command to the FastAPI simulation service via
+`SimServiceClient`. Launch it with:
+
+```bash
+uv run echoes-gateway-service
+```
+
+Environment variables:
+
+- `ECHOES_GATEWAY_SERVICE_URL` – base URL for the simulation service the
+  gateway should proxy to (default `http://localhost:8000`).
+- `ECHOES_GATEWAY_HOST` / `ECHOES_GATEWAY_PORT` – bind settings for the
+  gateway itself (default `0.0.0.0:8100`).
+
+The gateway exposes `/healthz` plus a `/ws` endpoint. Each WebSocket session
+creates a dedicated `ServiceBackend` + `EchoesShell`, logs a welcome summary,
+and records focus/digest/history telemetry to the `gengine.echoes.gateway`
+logger every time a client runs `summary`, `focus`, `history`, or `director`.
+Clients send JSON messages like `{"command": "summary"}` and receive the
+rendered shell output plus a `should_exit` flag mirroring the local CLI.
+
+You can interact with the gateway using the bundled client:
+
+```bash
+uv run echoes-gateway-shell --gateway-url ws://localhost:8100/ws --script "summary;run 3;exit"
+```
+
+The client prints the same ASCII output as `echoes-shell`, making it easy to
+drive a remote sim session without SSH access. Any WebSocket tool can connect
+as long as it sends UTF-8 JSON with a `command` field.
+
 ## Headless Regression Driver
 
 `scripts/run_headless_sim.py` advances long simulations without interactive
@@ -540,17 +584,18 @@ Key flags:
 
 ## Next Steps
 
-1. **Phase 6 M6.1 – Gateway service** – stand up the FastAPI/WebSocket gateway
-   that proxies CLI sessions to the sim service, logs focus/history payloads,
-   and becomes the staging ground for LLM intent routing.
-2. **Phase 6 M6.2 – Enhanced ASCII views** – expand CLI/gateway overlays with
-   richer district tables and telemetry inspectors that can be reused across
-   local shell and remote sessions.
+1. **Phase 6 M6.2 – Enhanced ASCII views** – share the richer district tables
+  and telemetry inspectors between the local CLI and the new gateway so remote
+  sessions can browse the same overlays (`map`, `summary`, profiling panels)
+  without screen-sharing.
+2. **Phase 6 M6.3 – LLM service skeleton** – stand up `/parse_intent` and
+  `/narrate` endpoints plus a provider adapter, then thread their prompts and
+  responses through the gateway so user text rides the same session plumbing
+  now handling CLI commands.
 3. **Phase 9 M9.1 – AI Player Observer** (parallel track) – implement
-   `src/gengine/ai_player/observer.py` plus its CLI runner so automated playtests
-   can analyze stability trends, faction swings, and pacing logs. See the Phase 9
-   section of the implementation plan for the full observer → actor → LLM
-   roadmap.
+  `src/gengine/ai_player/observer.py` and its runner so automated playtests can
+  connect via the service/gateway stack, advance ticks, and emit structured
+  commentary about stability trends, faction swings, and pacing logs.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

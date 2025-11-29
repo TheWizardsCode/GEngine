@@ -28,6 +28,14 @@ A staged implementation that builds a solid simulation core, then layers on agen
   FastAPI, and headless telemetry using the documented canonical artifact
   (`build/feature-m5-4-post-mortem.json`) plus `jq '.post_mortem'` diff
   workflow so reviewers can compare runs without replaying ticks.
+- ✅ Phase 6 (CLI Gateway, Visualization, LLM intent layer): **M6.1 gateway
+  service** ships with `gengine.echoes.gateway`, a FastAPI/WebSocket host that
+  proxies CLI commands to the simulation service, logs focus/digest/history
+  snapshots per session, and exposes the `echoes-gateway-service` runner plus
+  an `echoes-gateway-shell` client. Regression tests cover `/ws` round-trips
+  and malformed payloads, docs explain the WebSocket contract, and the new
+  dependency (`websockets`) is wired through `uv sync --group dev` so local
+  + CI environments can exercise remote sessions immediately.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -367,8 +375,14 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
 
 ### Phase 6 – CLI Gateway, Visualization, LLM Intent Layer
 
-- **M6.1 Gateway service** (1 day): FastAPI/WS service that hosts terminal
-  sessions and proxies requests to sim service.
+ - **M6.1 Gateway service** (shipped): FastAPI/WebSocket host (`/ws` +
+   `/healthz`) that provisions an `EchoesShell` per connection, proxies each
+   command to the simulation service via `SimServiceClient`, streams rendered
+   output back to the client, and logs focus/digest/history snapshots through
+   `gengine.echoes.gateway`. Ships with the `echoes-gateway-service` runner,
+   JSON-based WebSocket contract documentation, unit tests covering happy-path
+   sessions + malformed payloads, and a `echoes-gateway-shell` companion CLI
+   that reuses the same prompt/script workflows as `echoes-shell`.
 - **M6.2 Enhanced ASCII views** (1 day): richer overlays and tabular panels
   reused between CLI and gateway.
 - **M6.3 LLM service skeleton** (1-1.5 days): HTTP endpoints for
@@ -651,10 +665,22 @@ tests/ai_player/
 
 ## 6. CLI Gateway Service, ASCII Visualization, and LLM Intent Layer
 
-- Implement a **CLI gateway service** that:
-  - Hosts the text-based player session, reading and writing to a terminal/TTY.
-  - Calls the LLM service to interpret player input.
-  - Calls the simulation service API to query state and submit structured actions.
+- Implement a **CLI gateway service** that now ships as
+  `gengine.echoes.gateway`:
+  - FastAPI/WebSocket host with `/ws` + `/healthz`, provisioning an
+    `EchoesShell` per session and proxying each command to the simulation
+    service via `SimServiceClient` (default target `ECHOES_GATEWAY_SERVICE_URL`).
+  - Streams rendered CLI output + `should_exit` flags back to clients that send
+    JSON `{"command": "..."}` frames, enabling any WebSocket tooling (or the
+    bundled `echoes-gateway-shell`) to replay the deterministic terminal
+    experience.
+  - Logs `focus` / `focus_digest` / `focus_history` snapshots via the
+    `gengine.echoes.gateway` logger whenever players issue `summary`, `focus`,
+    `history`, or `director` commands, creating an audit trail for remote QA.
+  - Ships with regression tests (`tests/echoes/test_gateway_service.py`) that
+    cover WebSocket round-trips and malformed payload handling, plus updated
+    documentation (README + gameplay guide) describing the WebSocket contract
+    and new console scripts (`echoes-gateway-service`, `echoes-gateway-shell`).
 - Add ASCII rendering in the CLI gateway for city and district maps plus textual overlays:
   - District grids, control zones, and environmental heatmaps.
   - Tables for resources, faction influence, and key agents.

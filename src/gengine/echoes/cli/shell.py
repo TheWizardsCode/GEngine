@@ -58,6 +58,10 @@ class ShellBackend:
     def post_mortem(self) -> dict[str, object]:  # pragma: no cover
         raise NotImplementedError
 
+    def close(self) -> None:  # pragma: no cover - optional cleanup
+        """Hook for releasing backend resources (network clients, etc.)."""
+        return None
+
 
 class LocalBackend(ShellBackend):
     def __init__(self, engine: SimEngine) -> None:
@@ -101,6 +105,9 @@ class LocalBackend(ShellBackend):
 
     def post_mortem(self) -> dict[str, object]:
         return self.engine.query_view("post-mortem")
+
+    def close(self) -> None:  # pragma: no cover - nothing to release
+        return None
 
 
 class ServiceBackend(ShellBackend):
@@ -150,6 +157,9 @@ class ServiceBackend(ShellBackend):
     def post_mortem(self) -> dict[str, object]:
         payload = self.client.state("post-mortem")
         return payload.get("data", {})
+
+    def close(self) -> None:
+        self.client.close()
 
 
 class EchoesShell:

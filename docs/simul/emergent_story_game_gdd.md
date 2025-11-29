@@ -372,6 +372,12 @@ archived`. Cooldowns and quiet-period rules throttle how many can be active
   stays legible even when dozens of subsystems emit events per tick. The
   narrator now ranks archived beats by severity plus focus distance and keeps
   a rolling history so UX surfaces can spotlight what was suppressed.
+- **Gateway Sessions:** Phase 6 introduces `gengine.echoes.gateway`, a
+  FastAPI/WebSocket host that mirrors the CLI shell experience for remote
+  testers. The bundled `echoes-gateway-shell` connects over `/ws`, streams
+  rendered output, and relies on the gateway’s session logger to capture
+  focus/digest/history snapshots for QA without requiring terminal access to
+  the simulation host.
 
 **Legibility & Feedback:**
 
@@ -459,6 +465,12 @@ archived`. Cooldowns and quiet-period rules throttle how many can be active
   - Economy
   - Environment
   - Narrative Director
+- Presentation tier now includes the **gateway service**: `gengine.echoes.gateway`
+  fronts the simulation service with a WebSocket endpoint, provisions
+  `EchoesShell` instances per session, proxies commands via `SimServiceClient`,
+  and streams ASCII output plus exit flags back to clients. It runs alongside
+  the existing FastAPI simulation service and shares the same safeguards and
+  config roots via `ECHOES_GATEWAY_SERVICE_URL`.
 
 **Data-Driven Content:**
 
