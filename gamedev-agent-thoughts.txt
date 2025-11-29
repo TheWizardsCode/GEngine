@@ -1149,3 +1149,24 @@ Next Steps:
   - Test with gateway integration
   - Commit and create PR
 
+
+M6.6 Commit Complete
+====================
+[2025-11-29 11:30 UTC] Commit: b1b29d5
+
+Files committed:
+  - pyproject.toml (added openai + anthropic dependencies)
+  - src/gengine/echoes/llm/openai_provider.py (NEW, 274 lines)
+  - src/gengine/echoes/llm/anthropic_provider.py (NEW, 209 lines)
+  - src/gengine/echoes/llm/providers.py (updated factory)
+  - src/gengine/echoes/llm/settings.py (added max_retries)
+  - tests/echoes/test_openai_provider.py (NEW, 7 tests)
+  - tests/echoes/test_anthropic_provider.py (NEW, 9 tests)
+  - tests/echoes/test_llm_providers.py (updated for real providers)
+  - README.md (provider configuration + gateway-LLM docs)
+  - gamedev-agent-thoughts.txt (M6.6 planning + progress)
+
+Test Status: 346 passing, 92% coverage
+
+Next: Push branch and create PR
+
