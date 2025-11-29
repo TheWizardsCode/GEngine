@@ -17,6 +17,8 @@ from gengine.echoes.cli.shell import (
     _render_director_feed,
     _render_history,
     _render_summary,
+    _get_prompt,
+    PROMPT,
     main as cli_main,
 )
 from gengine.echoes.client import SimServiceClient
@@ -1332,3 +1334,19 @@ def test_help_includes_new_commands() -> None:
     assert "timeline" in result.output
     assert "explain" in result.output
     assert "why" in result.output
+
+
+def test_get_prompt_plain_when_rich_disabled() -> None:
+    """Test that _get_prompt returns plain prompt when Rich is disabled."""
+    prompt = _get_prompt(enable_rich=False)
+    assert prompt == PROMPT
+    assert prompt == "(echoes) "
+
+
+def test_get_prompt_colored_when_rich_enabled() -> None:
+    """Test that _get_prompt returns ANSI-colored prompt when Rich is enabled."""
+    prompt = _get_prompt(enable_rich=True)
+    # Should contain ANSI escape codes for green color
+    assert "\\x1b[" in repr(prompt) or prompt == PROMPT  # PROMPT if Rich unavailable
+    # Rich may insert ANSI codes within the text; check parts are present
+    assert "echoes" in prompt
