@@ -228,3 +228,4 @@ d3f33a4: Refocused README Next Steps on M5.1/M5.2 deliverables so the branch cha
 [2025-11-28 22:46 UTC] HEAD 8092966: Captured canonical telemetry via `uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m5-1-story-seeds.json` (stability 1.0, unrest ≈0.41, pollution ≈0.58, anomalies 0, two active story seeds with cooldown metadata).
 [2025-11-28 22:48 UTC] HEAD 8092966: Updated README next steps to focus on M5.2 director core and M5.3–M5.4 pacing/post-mortems now that the story seed schema milestone is complete.
 [2025-11-28 22:50 UTC] HEAD 536d913: Committed "Complete M5.1 story seed schema" capturing loader validations, docs, tests, and telemetry references for the new story seed contract.
+[2025-11-28 22:52 UTC] HEAD 09ba2fd: Fast-forwarded main with feature/m5-1-story-seeds after verifying pytest (101 passed, 93% cov) and canonical telemetry so the enriched story seed schema is baseline.
