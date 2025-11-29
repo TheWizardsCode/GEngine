@@ -359,8 +359,8 @@ build/feature-m5-3-director-pacing.json` after a full
   schemas to prevent silent field drift, and all reviewer surfaces cite the
   canonical balanced capture below.
   - Canonical telemetry capture mirrors the README instruction: `uv run python
-    scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
-    --seed 42 --output build/feature-m5-4-post-mortem.json`. Reviewers diff the
+scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
+--seed 42 --output build/feature-m5-4-post-mortem.json`. Reviewers diff the
     `.post_mortem` sections between runs (for example,
     `jq '.post_mortem' build/feature-m5-4-post-mortem.json`) to isolate recap
     deltas without the rest of the telemetry noise.

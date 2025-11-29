@@ -541,11 +541,11 @@ Key flags:
 ## Next Steps
 
 1. **Phase 6 M6.1 – Gateway service** – stand up the FastAPI/WebSocket gateway
-  that proxies CLI sessions to the sim service, logs focus/history payloads,
-  and becomes the staging ground for LLM intent routing.
+   that proxies CLI sessions to the sim service, logs focus/history payloads,
+   and becomes the staging ground for LLM intent routing.
 2. **Phase 6 M6.2 – Enhanced ASCII views** – expand CLI/gateway overlays with
-  richer district tables and telemetry inspectors that can be reused across
-  local shell and remote sessions.
+   richer district tables and telemetry inspectors that can be reused across
+   local shell and remote sessions.
 3. **Phase 9 M9.1 – AI Player Observer** (parallel track) – implement
    `src/gengine/ai_player/observer.py` plus its CLI runner so automated playtests
    can analyze stability trends, faction swings, and pacing logs. See the Phase 9
