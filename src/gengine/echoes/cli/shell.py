@@ -23,6 +23,8 @@ except ImportError:
 
 PROMPT = "(echoes) "
 INTRO_TEXT = "Echoes shell ready. Type 'help' for commands."
+# Default limit for timeline display
+TIMELINE_DISPLAY_LIMIT = 20
 
 
 @dataclass
@@ -450,7 +452,7 @@ class EchoesShell:
 def _render_timeline(events: Sequence[Mapping[str, Any]]) -> str:
     """Render the event timeline."""
     lines = ["Event Timeline (recent first):"]
-    for event in reversed(events[-20:]):
+    for event in reversed(events[-TIMELINE_DISPLAY_LIMIT:]):
         tick = event.get("tick", "?")
         event_id = event.get("event_id", "?")
         message = event.get("message", "")
