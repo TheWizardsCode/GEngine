@@ -800,3 +800,26 @@ WORKFLOW CHECKPOINT: Following proper PR workflow this time!
 - ⏳ Approval from PM
 - ⏳ Merge to main
 
+
+M6.4 PR Merged to Main
+======================
+[2025-11-29 10:10 UTC] PR #3 merged: feature/m6-4-intent-schema → main
+
+Merge commit: 53ad6f0
+Branch: main (synced from origin/main)
+
+Merged changes:
+  - 9 files changed
+  - 1526 insertions, 19 deletions
+  - New modules: intents.py (205 lines), prompts.py (359 lines)
+  - New tests: test_llm_intents.py (379 lines), test_llm_prompts.py (260 lines)
+  - Updated documentation: README.md, implementation plan, llm_service_usage.md
+
+M6.4 Status: ✅ COMPLETE and merged to main
+  - Intent schema with 7 Pydantic types
+  - Prompt templates for OpenAI + Anthropic
+  - 55 new tests (298 total, 94% coverage)
+  - Full documentation updated
+
+Ready for M6.5: Gateway-LLM integration
+
