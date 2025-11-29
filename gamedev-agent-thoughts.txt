@@ -212,3 +212,5 @@
 8a5b00f: Captured profiling-history sweep (400 ticks) via `uv run python scripts/run_headless_sim.py --config-root content/config/sweeps/profiling-history --output build/feature-m4-7-biodiversity-profiling-history.json` (stability 1.0, unrest ≈0.006, pollution ≈0.36, biodiversity ≈0.70, suppressed events 290, anomalies 0, profiling history window 240 ticks).
 8a5b00f: Preparing to stage the biodiversity wrap-up (docs/tests/config updates + telemetry artifacts), run branch-final checks, and commit before fast-forwarding main per Phase 4 close-out instructions.
 8a5b00f: Re-ran `uv run --group dev pytest --cov=gengine --cov-report=term-missing` (94 passed, 93% coverage; CLI shell 90%, EnvironmentSystem 96%) to document the final verification pass ahead of the biodiversity commit.
+da19aa7: Committed the Phase 4 biodiversity wrap-up (`Finalize biodiversity telemetry close-out`) covering config/doc refresh, CLI/tests, plotting utility defaults, and the latest telemetry captures.
+da19aa7 -> main: Fast-forwarded main with feature/m4-7-biodiversity after verifying tests + telemetry so Phase 4 close-out artifacts are baseline.
