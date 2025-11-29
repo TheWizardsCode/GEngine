@@ -577,3 +577,45 @@ Test Results:
 
 Ready for next steps: documentation and commit.
 
+
+M6.3 LLM Service Skeleton - Merge Complete
+===========================================
+[2025-11-29 09:30 UTC] 10279b1: Committed M6.3 LLM service skeleton to feature/m6-3-llm-service
+- 13 files changed: 1,118 insertions, 14 deletions
+- New modules: llm/__init__.py, app.py, main.py, providers.py, settings.py
+- New tests: test_llm_settings.py (11 tests), test_llm_providers.py (12 tests), test_llm_app.py (8 tests)
+- Added conftest.py to fix async test infrastructure
+- Updated README.md with LLM service documentation
+- Updated implementation plan to mark M6.3 as shipped
+
+[2025-11-29 09:30 UTC] 10279b1 -> main: Fast-forward merged feature/m6-3-llm-service to main
+- All 243 tests passing (212 → 243 after LLM tests added)
+- Overall coverage: 94% maintained
+- LLM module coverage: settings 100%, providers 94%, app 89%
+
+[2025-11-29 09:31 UTC] 10279b1: Successfully pushed to origin/main
+- GitHub: 23 objects written, 13.02 KiB transferred
+- Phase 6 progress: M6.1 (Gateway) ✅, M6.2 (Enhanced Views) ✅, M6.3 (LLM Service) ✅
+- Remaining Phase 6: M6.4 (Intent routing), M6.5 (Gateway-LLM integration)
+
+M6.3 LLM Service Implementation Summary:
+=========================================
+Module Structure:
+- src/gengine/echoes/llm/__init__.py: Public exports (LLMProvider, LLMSettings, create_provider)
+- src/gengine/echoes/llm/settings.py: Configuration via environment variables
+- src/gengine/echoes/llm/providers.py: Abstract provider + StubProvider + placeholders for OpenAI/Anthropic
+- src/gengine/echoes/llm/app.py: FastAPI application with 3 endpoints
+- src/gengine/echoes/llm/main.py: CLI entry point (echoes-llm-service)
+
+Key Features:
+- Offline-first: StubProvider uses deterministic keyword matching (no API costs)
+- Extensible: Abstract LLMProvider base class for easy provider additions
+- Configurable: All settings via ECHOES_LLM_* environment variables
+- Testable: 31 new tests with 94% coverage for providers/app, 100% for settings
+- Production-ready: FastAPI with Pydantic validation, async/await throughout
+
+Next Steps:
+- M6.4: Define intent schema and add OpenAI/Anthropic provider implementations
+- M6.5: Wire /parse_intent into gateway for natural language command routing
+- Phase 7: Begin progression systems and player experience work
+
