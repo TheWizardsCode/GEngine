@@ -1063,3 +1063,89 @@ Changes committed:
 
 Test Status: 330 passing, 93% coverage
 
+
+M6.6 Real LLM Providers - Implementation Start
+===============================================
+[2025-11-29 11:20 UTC] Branch: feature/m6-6-real-llm-providers
+
+Current Architecture Review:
+  - LLMProvider abstract base class with parse_intent() and narrate() methods
+  - StubProvider implements basic keyword matching
+  - create_provider() factory raises NotImplementedError for openai/anthropic
+  - OPENAI_INTENT_FUNCTIONS defined (7 function schemas for function calling)
+  - ANTHROPIC_INTENT_SCHEMA defined (structured output schema)
+  - Intent schemas use Pydantic models (7 GameIntent types)
+  
+Implementation Plan:
+  1. Add openai and anthropic SDK dependencies to pyproject.toml
+  2. Implement OpenAIProvider using function calling API
+  3. Implement AnthropicProvider using structured outputs
+  4. Update create_provider() factory to instantiate real providers
+  5. Write integration tests with mocked API responses
+  6. Test with gateway integration
+
+Starting with dependency updates and OpenAIProvider...
+
+M6.6 Implementation Progress
+=============================
+[2025-11-29 11:25 UTC] Providers implemented and tested
+
+Changes Made:
+  1. Dependencies
+     - Added openai>=1.0.0,<2.0.0 to pyproject.toml
+     - Added anthropic>=0.39.0,<1.0.0 to pyproject.toml
+     - Installed via uv pip install
+
+  2. LLMSettings Enhancement
+     - Added max_retries field (default: 2)
+     - Updated from_env() to read ECHOES_LLM_MAX_RETRIES
+
+  3. OpenAIProvider (openai_provider.py)
+     - Uses AsyncOpenAI client with function calling API
+     - parse_intent(): Calls chat.completions.create with OPENAI_INTENT_FUNCTIONS
+     - _function_call_to_intent(): Converts function calls to GameIntent dicts
+     - narrate(): Uses chat completions for narrative generation
+     - Maps all 7 function types to intent types
+     - 69 statements, 83% coverage (12 uncovered in parameter mapping)
+
+  4. AnthropicProvider (anthropic_provider.py)
+     - Uses Anthropic Messages API with structured outputs
+     - parse_intent(): Includes ANTHROPIC_INTENT_SCHEMA in prompt
+     - _structured_output_to_intent(): Extracts JSON from response
+     - narrate(): Uses messages API for narrative generation
+     - Handles JSON parsing errors gracefully
+     - 63 statements, 97% coverage (2 uncovered)
+
+  5. Updated create_provider() Factory
+     - Removed NotImplementedError for openai/anthropic
+     - Now imports and instantiates real providers
+
+  6. Tests Updated
+     - Changed test_create_openai_provider_not_implemented to test provider creation
+     - Changed test_create_anthropic_provider_not_implemented to test provider creation
+     - Both now verify provider settings are passed correctly
+
+  7. New Integration Tests
+     - test_openai_provider.py: 7 tests (all passing)
+       * parse_intent with inspect/negotiate
+       * parse_intent with no function call
+       * parse_intent with API error
+       * narrate with events/no events/API error
+     - test_anthropic_provider.py: 9 tests (all passing)
+       * parse_intent with inspect/deploy_resource
+       * parse_intent with invalid JSON/no JSON/missing intent_type
+       * parse_intent with API error
+       * narrate with events/no events/API error
+     
+Test Results:
+  - 346 tests passing (330 → 346, +16 new)
+  - 92% overall coverage (93% → 92%, -1% due to new code)
+  - All provider tests using mocked API responses
+  - Both providers handle errors gracefully
+
+Next Steps:
+  - Update README with provider configuration
+  - Document API key setup
+  - Test with gateway integration
+  - Commit and create PR
+

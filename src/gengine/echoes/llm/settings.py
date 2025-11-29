@@ -32,6 +32,7 @@ class LLMSettings:
     temperature: float = 0.7
     max_tokens: int = 1000
     timeout_seconds: int = 30
+    max_retries: int = 2
 
     @classmethod
     def from_env(cls) -> LLMSettings:
@@ -59,6 +60,7 @@ class LLMSettings:
         temperature = float(os.getenv("ECHOES_LLM_TEMPERATURE", "0.7"))
         max_tokens = int(os.getenv("ECHOES_LLM_MAX_TOKENS", "1000"))
         timeout_seconds = int(os.getenv("ECHOES_LLM_TIMEOUT", "30"))
+        max_retries = int(os.getenv("ECHOES_LLM_MAX_RETRIES", "2"))
 
         return cls(
             provider=provider,
@@ -67,6 +69,7 @@ class LLMSettings:
             temperature=temperature,
             max_tokens=max_tokens,
             timeout_seconds=timeout_seconds,
+            max_retries=max_retries,
         )
 
     def validate(self) -> None:
