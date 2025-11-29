@@ -196,10 +196,10 @@ def create_provider(settings: LLMSettings) -> LLMProvider:
     if settings.provider == "stub":
         return StubProvider(settings)
     elif settings.provider == "openai":
-        # Placeholder for OpenAI provider (M6.4)
-        raise NotImplementedError("OpenAI provider not yet implemented")
+        from .openai_provider import OpenAIProvider
+        return OpenAIProvider(settings)
     elif settings.provider == "anthropic":
-        # Placeholder for Anthropic provider (M6.4)
-        raise NotImplementedError("Anthropic provider not yet implemented")
+        from .anthropic_provider import AnthropicProvider
+        return AnthropicProvider(settings)
     else:
         raise ValueError(f"Unsupported provider: {settings.provider}")

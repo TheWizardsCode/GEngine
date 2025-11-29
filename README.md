@@ -589,6 +589,38 @@ The client prints the same ASCII output as `echoes-shell`, making it easy to
 drive a remote sim session without SSH access. Any WebSocket tool can connect
 as long as it sends UTF-8 JSON with a `command` field.
 
+### Gateway-LLM Integration (Phase 6 M6.5)
+
+The gateway now supports natural language commands through integration with the LLM service:
+
+```bash
+# Configure gateway to use LLM service
+export ECHOES_GATEWAY_LLM_URL=http://localhost:8001
+uv run echoes-gateway-service
+```
+
+When configured, the gateway enhances WebSocket messages with natural language processing:
+
+**Enhanced WebSocket Protocol:**
+```json
+{"command": "show me unrest in the industrial district", "natural_language": true}
+```
+
+The gateway:
+1. Builds context from current simulation state (tick, district, recent events)
+2. Calls LLM service `/parse_intent` to convert text to structured GameIntent
+3. Maps intent to shell command using IntentMapper
+4. Executes command through EchoesShell
+5. Optionally narrates result using `/narrate` endpoint
+6. Returns formatted output to client
+
+**Fallback Behavior:**
+- If LLM service is unavailable, falls back to keyword-based command matching
+- Regular commands (without `natural_language: true`) work as before
+- All commands track conversation history for context
+
+The integration uses HTTP retry logic (2 retries by default) and handles LLM service health checks on session creation. This enables conversational gameplay where players use natural language instead of memorizing CLI commands.
+
 ## Headless Regression Driver
 
 `scripts/run_headless_sim.py` advances long simulations without interactive
@@ -715,10 +747,37 @@ export ECHOES_LLM_API_KEY=your-key-here  # Required for openai/anthropic
 export ECHOES_LLM_MODEL=gpt-4            # Model name (provider-specific)
 export ECHOES_LLM_TEMPERATURE=0.7        # Sampling temperature (0.0-1.0)
 export ECHOES_LLM_MAX_TOKENS=500         # Max tokens in response
-export ECHOES_LLM_TIMEOUT_SECONDS=30     # Request timeout
+export ECHOES_LLM_TIMEOUT=30             # Request timeout in seconds
+export ECHOES_LLM_MAX_RETRIES=2          # Number of retries on API errors
 ```
 
 The `stub` provider is the default and requires no API key. It uses deterministic keyword matching for testing without API costs.
+
+#### Provider Configuration
+
+**Stub Provider** (default, no API key required):
+```bash
+export ECHOES_LLM_PROVIDER=stub
+```
+Uses keyword-based intent detection for offline testing without API costs.
+
+**OpenAI Provider** (Phase 6 M6.6):
+```bash
+export ECHOES_LLM_PROVIDER=openai
+export ECHOES_LLM_API_KEY=sk-...                  # Your OpenAI API key
+export ECHOES_LLM_MODEL=gpt-4-turbo-preview       # Or gpt-4, gpt-3.5-turbo
+```
+Uses OpenAI function calling API for structured intent parsing. The provider sends game context and available actions as function definitions, allowing the model to return type-safe intent objects.
+
+**Anthropic Provider** (Phase 6 M6.6):
+```bash
+export ECHOES_LLM_PROVIDER=anthropic
+export ECHOES_LLM_API_KEY=sk-ant-...              # Your Anthropic API key
+export ECHOES_LLM_MODEL=claude-3-5-sonnet-20241022  # Or other Claude models
+```
+Uses Anthropic Messages API with structured outputs. The provider includes intent schemas in prompts and parses JSON responses into validated intent objects.
+
+Both real providers include retry logic for rate limits and transient errors, with configurable `max_retries` (default: 2).
 
 ### API Endpoints
 
@@ -852,12 +911,8 @@ The intent schemas enable the LLM service to convert natural language into type-
 
 ## Next Steps
 
-1. **Phase 6 M6.5 – Gateway-LLM integration** – wire the `/parse_intent` endpoint
-   into the gateway so natural language commands can be converted to game
-   actions and routed to the simulation service, with narration prompts from
-   simulation events through `/narrate` surfacing the generated story text
-   in CLI sessions.
-3. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
+1. **Phase 7 – Kubernetes Deployment** – containerize services (simulation, gateway, LLM) and create manifests for local minikube deployment, enabling multi-container orchestration and service discovery.
+2. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
    heuristic decision logic for automated playtesting (depends on Phase 6
    action routing). See the Phase 9 section of the implementation plan for the
    full observer → actor → LLM roadmap.
