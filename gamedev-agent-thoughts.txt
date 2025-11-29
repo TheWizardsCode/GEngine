@@ -311,4 +311,4 @@ a0bd56a -> main: Fast-forwarded main with feature/m5-4-post-mortems after green 
 [74f1703] git push origin main failed: Repository not found (likely no access to private repo TheWizardsCode/GEngine).
 74f1703: Received request to publish local main to remote; verifying repo state and workflow steps before pushing.
 74f1703: Detected uncommitted changes in README/docs/log; need user guidance on whether to commit, stash, or exclude before pushing remote.
-cd6da6c: Committed README/doc formatting cleanup and workflow log updates so the worktree is clean for the initial push.
+827978d: Committed README/doc formatting cleanup and workflow log updates so the worktree is clean for the initial push.
