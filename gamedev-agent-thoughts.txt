@@ -339,3 +339,4 @@ a0bd56a -> main: Fast-forwarded main with feature/m5-4-post-mortems after green 
 4c613db: Fixed syntax error in test_cli_shell.py (escaped docstring quotes), added gateway settings + ServiceBackend method tests; reran pytest (158 passed, 94% coverage, 189 uncovered).
 4c613db: Added shell empty-command + no-data tests, ServiceBackend focus/history/post-mortem tests; coverage reached 94% with 187 uncovered lines (166 passed).
 4c613db: Added gateway app edge-case tests (invalid JSON, non-dict payloads, default backend factory), shell rendering tests (pollution extremes, diffusion samples, spatial weights); **achieved 95% total coverage** (170 tests passed, 168 lines uncovered) per user request.
+8e36125 -> main: Fast-forwarded main with feature/m6-1-gateway after 95% coverage verification (170 tests, gateway service complete).
