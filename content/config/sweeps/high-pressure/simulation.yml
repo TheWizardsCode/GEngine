@@ -36,6 +36,12 @@ director:
   travel_max_routes: 4
   story_seed_limit: 2
   event_history_limit: 8
+  max_active_seeds: 1
+  global_quiet_ticks: 4
+  seed_active_ticks: 6
+  seed_resolve_ticks: 4
+  seed_quiet_ticks: 6
+  lifecycle_history_limit: 12
 economy:
   regen_scale: 0.8
   demand_population_scale: 100000

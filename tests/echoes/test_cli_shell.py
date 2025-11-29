@@ -430,6 +430,44 @@ def test_render_summary_surfaces_story_seeds() -> None:
     assert "industrial-tier" in rendered
 
 
+def test_render_summary_includes_pacing_details() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 42,
+        "districts": 3,
+        "factions": 2,
+        "agents": 4,
+        "stability": 0.9,
+        "director_pacing": {
+            "tick": 42,
+            "active": 1,
+            "resolving": 1,
+            "max_active": 1,
+            "global_quiet_until": 44,
+            "global_quiet_remaining": 2,
+            "blocked_reasons": ["global_quiet", "max_active"],
+        },
+        "story_seeds": [
+            {
+                "seed_id": "test-seed",
+                "title": "Test Seed",
+                "district_id": "industrial-tier",
+                "state": "resolving",
+                "state_remaining": 3,
+                "cooldown_remaining": 5,
+            }
+        ],
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "director pacing" in rendered
+    assert "quiet until tick 44" in rendered
+    assert "blocked" in rendered
+    assert "Test Seed" in rendered
+    assert "<resolving|3t>" in rendered
+
+
 def test_render_summary_surfaces_director_events() -> None:
     summary = {
         "city": "Test",

@@ -1,0 +1,4452 @@
+{
+  "agent_actions": 600,
+  "agent_intent_breakdown": {
+    "INSPECT_DISTRICT": 249,
+    "NEGOTIATE_FACTION": 93,
+    "REQUEST_REPORT": 27,
+    "STABILIZE_UNREST": 132,
+    "SUPPORT_SECURITY": 99
+  },
+  "anomalies": 0,
+  "anomaly_examples": [],
+  "batches": [
+    {
+      "agent_actions": 600,
+      "anomalies": [],
+      "batch": 1,
+      "ending_tick": 200,
+      "faction_actions": 100,
+      "slowest_subsystem": {
+        "ms": 0.04,
+        "name": "environment_system_ms"
+      },
+      "tick_ms": 0.22,
+      "ticks": 200
+    }
+  ],
+  "director_analysis": {
+    "director_events": [],
+    "focus_center": "industrial-tier",
+    "hotspots": [
+      {
+        "district_id": "perimeter-hollow",
+        "focus_distance": 1,
+        "in_focus_ring": true,
+        "message": "Cassian Mire inspects Perimeter Hollow",
+        "scope": "agent",
+        "score": 0.51,
+        "severity": 0.6,
+        "travel": {
+          "adjacent": true,
+          "distance": 6.519,
+          "hops": 1,
+          "origin": "industrial-tier",
+          "path": [
+            "industrial-tier",
+            "perimeter-hollow"
+          ],
+          "reachable": true,
+          "target": "perimeter-hollow",
+          "travel_time": 3.13
+        }
+      }
+    ],
+    "recommended_focus": null,
+    "story_seeds": [
+      {
+        "beats": [
+          "Encrypted telemetry shows anomalous packet loss on the spire's uplink lattice.",
+          "Dr. Lyra Keel requests escorts to inspect the Industrial Tier emitters feeding the climate array."
+        ],
+        "cooldown_remaining": 37,
+        "district_id": "research-spire",
+        "followups": [],
+        "last_trigger_tick": 192,
+        "reason": "Dr. Lyra Keel eases unrest in Research Spire",
+        "resolution_templates": {
+          "failure": "Saboteurs crash the uplink and terraforming cascades into failure.",
+          "partial": "Telemetry traces point to the Industrial Tier, but the culprit slips away.",
+          "success": "Security purges the leak and climate models return to trusted hands."
+        },
+        "roles": {
+          "agents": [
+            "dr-lyra-keel"
+          ],
+          "factions": []
+        },
+        "scope": "agent",
+        "score": 0.476,
+        "seed_id": "spire-data-leak",
+        "stakes": "Leaked terraforming telemetry could destabilize the perimeter climate nets.",
+        "state": "resolving",
+        "state_remaining": 2,
+        "summary": "Stolen climate models hint at sabotage inside the spire.",
+        "tags": [
+          "intel",
+          "climate"
+        ],
+        "title": "Research Spire Data Leak",
+        "travel": {
+          "adjacent": true,
+          "distance": 7.211,
+          "hops": 1,
+          "origin": "industrial-tier",
+          "path": [
+            "industrial-tier",
+            "research-spire"
+          ],
+          "reachable": true,
+          "target": "research-spire",
+          "travel_time": 3.303
+        },
+        "travel_hint": {
+          "district_id": "research-spire",
+          "max_focus_distance": 5
+        }
+      }
+    ],
+    "suppressed_pressure": 1,
+    "tick": 200
+  },
+  "director_events": [
+    {
+      "agents": [
+        {
+          "faction_id": "cartel_of_mist",
+          "home_district": "perimeter-hollow",
+          "id": "cassian-mire",
+          "name": "Cassian Mire",
+          "role": "Fixer"
+        }
+      ],
+      "beats": [
+        "Cartel couriers report drones shadowing every cargo convoy leaving the Hollow.",
+        "Cassian Mire proposes bribing Union of Flux stewards to reopen maintenance tunnels."
+      ],
+      "cooldown_ticks": 35,
+      "district_id": "perimeter-hollow",
+      "district_name": "Perimeter Hollow",
+      "factions": [
+        {
+          "id": "cartel_of_mist",
+          "ideology": "Shadow brokers monetizing scarcity.",
+          "name": "Cartel of Mist"
+        }
+      ],
+      "followups": [
+        "spire-data-leak"
+      ],
+      "reason": "Cassian Mire inspects Perimeter Hollow",
+      "resolution_templates": {
+        "failure": "Security drones seize the lanes and the Cartel loses leverage.",
+        "partial": "Bribes buy a few quiet nights, but patrols stay on edge.",
+        "success": "Cartel escorts broker a truce and reopen the maintenance tunnels."
+      },
+      "roles": {
+        "agents": [
+          "cassian-mire"
+        ],
+        "factions": [
+          "cartel_of_mist"
+        ]
+      },
+      "scope": "faction",
+      "score": 0.51,
+      "seed_id": "hollow-supply-chain",
+      "severity": 0.6,
+      "stakes": "If the lanes close, Perimeter Hollow starves and unrest spikes citywide.",
+      "summary": "Cartel of Mist couriers lose safe passage through Perimeter Hollow.",
+      "tick": 91,
+      "title": "Smuggling Lanes Exposed",
+      "travel_hint": {
+        "district_id": "perimeter-hollow",
+        "max_focus_distance": 4
+      }
+    },
+    {
+      "agents": [
+        {
+          "faction_id": "union_of_flux",
+          "home_district": "industrial-tier",
+          "id": "aria-volt",
+          "name": "Aria Volt",
+          "role": "Mediator"
+        }
+      ],
+      "beats": [
+        "Union of Flux leaders threaten a walkout unless worker grids receive priority amperage.",
+        "Aria Volt drafts an emergency ration plan that would divert power from research labs."
+      ],
+      "cooldown_ticks": 40,
+      "district_id": "industrial-tier",
+      "district_name": "Industrial Tier",
+      "factions": [
+        {
+          "id": "union_of_flux",
+          "ideology": "Labor futurists seeking equitable automation.",
+          "name": "Union of Flux"
+        }
+      ],
+      "followups": [
+        "hollow-supply-chain"
+      ],
+      "reason": "Scarcity in energy, materials strains the city environment",
+      "resolution_templates": {
+        "failure": "Workshops go dark, strikers spread, and council legitimacy crashes.",
+        "partial": "Convoys buy time but sabotage rumors keep tensions high.",
+        "success": "Emergency rationing shares power fairly and the Union backs down."
+      },
+      "roles": {
+        "agents": [
+          "aria-volt"
+        ],
+        "factions": [
+          "union_of_flux"
+        ]
+      },
+      "scope": "environment",
+      "score": 0.55,
+      "seed_id": "energy-quota-crisis",
+      "severity": 1.0,
+      "stakes": "Union of Flux stewards threaten to abandon the grid if outages spread.",
+      "summary": "Rolling brownouts push the Industrial Tier toward a credibility crisis.",
+      "tick": 121,
+      "title": "Energy Quota Fallout",
+      "travel": {
+        "adjacent": true,
+        "distance": 0.0,
+        "hops": 0,
+        "origin": "industrial-tier",
+        "path": [
+          "industrial-tier"
+        ],
+        "reachable": true,
+        "target": "industrial-tier",
+        "travel_time": 0.0
+      },
+      "travel_hint": {
+        "district_id": "industrial-tier",
+        "max_focus_distance": 3
+      }
+    },
+    {
+      "agents": [
+        {
+          "faction_id": "cartel_of_mist",
+          "home_district": "perimeter-hollow",
+          "id": "cassian-mire",
+          "name": "Cassian Mire",
+          "role": "Fixer"
+        }
+      ],
+      "beats": [
+        "Cartel couriers report drones shadowing every cargo convoy leaving the Hollow.",
+        "Cassian Mire proposes bribing Union of Flux stewards to reopen maintenance tunnels."
+      ],
+      "cooldown_ticks": 35,
+      "district_id": "perimeter-hollow",
+      "district_name": "Perimeter Hollow",
+      "factions": [
+        {
+          "id": "cartel_of_mist",
+          "ideology": "Shadow brokers monetizing scarcity.",
+          "name": "Cartel of Mist"
+        }
+      ],
+      "followups": [
+        "spire-data-leak"
+      ],
+      "reason": "Cassian Mire reinforces security in Perimeter Hollow",
+      "resolution_templates": {
+        "failure": "Security drones seize the lanes and the Cartel loses leverage.",
+        "partial": "Bribes buy a few quiet nights, but patrols stay on edge.",
+        "success": "Cartel escorts broker a truce and reopen the maintenance tunnels."
+      },
+      "roles": {
+        "agents": [
+          "cassian-mire"
+        ],
+        "factions": [
+          "cartel_of_mist"
+        ]
+      },
+      "scope": "faction",
+      "score": 0.51,
+      "seed_id": "hollow-supply-chain",
+      "severity": 0.6,
+      "stakes": "If the lanes close, Perimeter Hollow starves and unrest spikes citywide.",
+      "summary": "Cartel of Mist couriers lose safe passage through Perimeter Hollow.",
+      "tick": 131,
+      "title": "Smuggling Lanes Exposed",
+      "travel_hint": {
+        "district_id": "perimeter-hollow",
+        "max_focus_distance": 4
+      }
+    },
+    {
+      "agents": [
+        {
+          "faction_id": "union_of_flux",
+          "home_district": "industrial-tier",
+          "id": "aria-volt",
+          "name": "Aria Volt",
+          "role": "Mediator"
+        }
+      ],
+      "beats": [
+        "Union of Flux leaders threaten a walkout unless worker grids receive priority amperage.",
+        "Aria Volt drafts an emergency ration plan that would divert power from research labs."
+      ],
+      "cooldown_ticks": 40,
+      "district_id": "industrial-tier",
+      "district_name": "Industrial Tier",
+      "factions": [
+        {
+          "id": "union_of_flux",
+          "ideology": "Labor futurists seeking equitable automation.",
+          "name": "Union of Flux"
+        }
+      ],
+      "followups": [
+        "hollow-supply-chain"
+      ],
+      "reason": "Scarcity in energy, materials strains the city environment",
+      "resolution_templates": {
+        "failure": "Workshops go dark, strikers spread, and council legitimacy crashes.",
+        "partial": "Convoys buy time but sabotage rumors keep tensions high.",
+        "success": "Emergency rationing shares power fairly and the Union backs down."
+      },
+      "roles": {
+        "agents": [
+          "aria-volt"
+        ],
+        "factions": [
+          "union_of_flux"
+        ]
+      },
+      "scope": "environment",
+      "score": 0.55,
+      "seed_id": "energy-quota-crisis",
+      "severity": 1.0,
+      "stakes": "Union of Flux stewards threaten to abandon the grid if outages spread.",
+      "summary": "Rolling brownouts push the Industrial Tier toward a credibility crisis.",
+      "tick": 161,
+      "title": "Energy Quota Fallout",
+      "travel": {
+        "adjacent": true,
+        "distance": 0.0,
+        "hops": 0,
+        "origin": "industrial-tier",
+        "path": [
+          "industrial-tier"
+        ],
+        "reachable": true,
+        "target": "industrial-tier",
+        "travel_time": 0.0
+      },
+      "travel_hint": {
+        "district_id": "industrial-tier",
+        "max_focus_distance": 3
+      }
+    },
+    {
+      "agents": [
+        {
+          "faction_id": "cartel_of_mist",
+          "home_district": "perimeter-hollow",
+          "id": "cassian-mire",
+          "name": "Cassian Mire",
+          "role": "Fixer"
+        }
+      ],
+      "beats": [
+        "Cartel couriers report drones shadowing every cargo convoy leaving the Hollow.",
+        "Cassian Mire proposes bribing Union of Flux stewards to reopen maintenance tunnels."
+      ],
+      "cooldown_ticks": 35,
+      "district_id": "perimeter-hollow",
+      "district_name": "Perimeter Hollow",
+      "factions": [
+        {
+          "id": "cartel_of_mist",
+          "ideology": "Shadow brokers monetizing scarcity.",
+          "name": "Cartel of Mist"
+        }
+      ],
+      "followups": [
+        "spire-data-leak"
+      ],
+      "reason": "Cassian Mire inspects Perimeter Hollow",
+      "resolution_templates": {
+        "failure": "Security drones seize the lanes and the Cartel loses leverage.",
+        "partial": "Bribes buy a few quiet nights, but patrols stay on edge.",
+        "success": "Cartel escorts broker a truce and reopen the maintenance tunnels."
+      },
+      "roles": {
+        "agents": [
+          "cassian-mire"
+        ],
+        "factions": [
+          "cartel_of_mist"
+        ]
+      },
+      "scope": "faction",
+      "score": 0.51,
+      "seed_id": "hollow-supply-chain",
+      "severity": 0.6,
+      "stakes": "If the lanes close, Perimeter Hollow starves and unrest spikes citywide.",
+      "summary": "Cartel of Mist couriers lose safe passage through Perimeter Hollow.",
+      "tick": 171,
+      "title": "Smuggling Lanes Exposed",
+      "travel_hint": {
+        "district_id": "perimeter-hollow",
+        "max_focus_distance": 4
+      }
+    },
+    {
+      "agents": [
+        {
+          "faction_id": null,
+          "home_district": "research-spire",
+          "id": "dr-lyra-keel",
+          "name": "Dr. Lyra Keel",
+          "role": "Systems Ecologist"
+        }
+      ],
+      "beats": [
+        "Encrypted telemetry shows anomalous packet loss on the spire's uplink lattice.",
+        "Dr. Lyra Keel requests escorts to inspect the Industrial Tier emitters feeding the climate array."
+      ],
+      "cooldown_ticks": 45,
+      "district_id": "research-spire",
+      "district_name": "Research Spire",
+      "factions": [],
+      "followups": [],
+      "reason": "Dr. Lyra Keel eases unrest in Research Spire",
+      "resolution_templates": {
+        "failure": "Saboteurs crash the uplink and terraforming cascades into failure.",
+        "partial": "Telemetry traces point to the Industrial Tier, but the culprit slips away.",
+        "success": "Security purges the leak and climate models return to trusted hands."
+      },
+      "roles": {
+        "agents": [
+          "dr-lyra-keel"
+        ],
+        "factions": []
+      },
+      "scope": "agent",
+      "score": 0.476,
+      "seed_id": "spire-data-leak",
+      "severity": 0.68,
+      "stakes": "Leaked terraforming telemetry could destabilize the perimeter climate nets.",
+      "summary": "Stolen climate models hint at sabotage inside the spire.",
+      "tick": 192,
+      "title": "Research Spire Data Leak",
+      "travel": {
+        "adjacent": true,
+        "distance": 7.211,
+        "hops": 1,
+        "origin": "industrial-tier",
+        "path": [
+          "industrial-tier",
+          "research-spire"
+        ],
+        "reachable": true,
+        "target": "research-spire",
+        "travel_time": 3.303
+      },
+      "travel_hint": {
+        "district_id": "research-spire",
+        "max_focus_distance": 5
+      }
+    }
+  ],
+  "director_feed": {
+    "allocation": {
+      "focus_center": "industrial-tier",
+      "focus_reserved": 4,
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "focus_used": 2,
+      "global_reserved": 2,
+      "global_used": 4,
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed": 1,
+      "total_budget": 6
+    },
+    "environment": {
+      "pollution": 0.5818965094576427,
+      "stability": 1.0,
+      "unrest": 0.4097967394926844
+    },
+    "faction_legitimacy": {
+      "cartel_of_mist": 1.0,
+      "union_of_flux": 1.0
+    },
+    "focus_center": "industrial-tier",
+    "focus_coordinates": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": null
+    },
+    "focus_ring": [
+      "industrial-tier",
+      "perimeter-hollow",
+      "research-spire"
+    ],
+    "market_prices": {
+      "capital": 1.0,
+      "data": 1.0,
+      "energy": 1.5,
+      "food": 1.0,
+      "materials": 1.5,
+      "water": 1.0
+    },
+    "spatial_metrics": {
+      "adjacency_bonus": 0.1,
+      "distance_reference": 7.211102550927978,
+      "distance_weight": 0.4,
+      "fallback_distance": null,
+      "population_weight": 0.6
+    },
+    "spatial_weights": [
+      {
+        "adjacent": false,
+        "distance": 0.0,
+        "distance_score": 1.0,
+        "district_id": "industrial-tier",
+        "population_rank": 1.0,
+        "score": 1.0
+      },
+      {
+        "adjacent": true,
+        "distance": 6.5192,
+        "distance_score": 0.0959,
+        "district_id": "perimeter-hollow",
+        "population_rank": 0.6667,
+        "score": 0.5384
+      },
+      {
+        "adjacent": true,
+        "distance": 7.2111,
+        "distance_score": 0.0,
+        "district_id": "research-spire",
+        "population_rank": 0.3333,
+        "score": 0.3
+      }
+    ],
+    "suppressed_count": 1,
+    "tick": 200,
+    "top_ranked": [
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Scarcity in energy, materials strains the city environment",
+        "scope": "environment",
+        "score": 0.55,
+        "severity": 1.0
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Pollution diffuses toward the citywide baseline",
+        "scope": "environment",
+        "score": 0.55,
+        "severity": 1.0
+      },
+      {
+        "district_id": "perimeter-hollow",
+        "focus_distance": 1,
+        "in_focus_ring": true,
+        "message": "Cassian Mire inspects Perimeter Hollow",
+        "scope": "agent",
+        "score": 0.51,
+        "severity": 0.6
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Economy alert: energy shortage persists for 187 ticks",
+        "scope": "economy",
+        "score": 0.479,
+        "severity": 0.87
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Economy alert: materials shortage persists for 191 ticks",
+        "scope": "economy",
+        "score": 0.479,
+        "severity": 0.87
+      }
+    ]
+  },
+  "director_history": [
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 4,
+        "global_reserved": 2,
+        "global_used": 2,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 4,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.6032414637600225,
+        "stability": 1.0,
+        "unrest": 0.39370600448354265
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.97,
+        "union_of_flux": 0.995
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 4,
+      "tick": 181,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Union of Flux invests in Industrial Tier",
+          "scope": "faction",
+          "score": 0.75,
+          "severity": 0.75
+        },
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Union of Flux mitigates pollution in Industrial Tier (relief)",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5965620938431136,
+        "stability": 1.0,
+        "unrest": 0.394228199281686
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.97,
+        "union_of_flux": 0.995
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 182,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire reinforces security in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 169 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5863721561929973,
+        "stability": 1.0,
+        "unrest": 0.39667271697496054
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.97,
+        "union_of_flux": 0.995
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 183,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire reinforces security in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 170 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5819921923573325,
+        "stability": 1.0,
+        "unrest": 0.40467281566017116
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.97,
+        "union_of_flux": 0.995
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 184,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire eases unrest in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.578,
+          "severity": 0.68
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 171 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 3,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5921895579074119,
+        "stability": 1.0,
+        "unrest": 0.40077466612547424
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.985,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 3,
+      "tick": 185,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire files a report on Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 172 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 2,
+        "global_reserved": 2,
+        "global_used": 4,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5888916422797253,
+        "stability": 1.0,
+        "unrest": 0.40711072514474317
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.985,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 186,
+      "top_ranked": [
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire eases unrest in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.578,
+          "severity": 0.68
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 173 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 177 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5880479339095324,
+        "stability": 1.0,
+        "unrest": 0.40043238033389683
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.985,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 187,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire eases unrest in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.578,
+          "severity": 0.68
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 174 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5979212239703948,
+        "stability": 1.0,
+        "unrest": 0.4023779212016073
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 0.985,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 188,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire reinforces security in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 175 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 5,
+        "global_reserved": 2,
+        "global_used": 2,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 4,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.6051683499178385,
+        "stability": 1.0,
+        "unrest": 0.3994038572234606
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 4,
+      "tick": 189,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Union of Flux invests in Industrial Tier",
+          "scope": "faction",
+          "score": 0.75,
+          "severity": 0.75
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cartel of Mist invests in Perimeter Hollow",
+          "scope": "faction",
+          "score": 0.637,
+          "severity": 0.75
+        },
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.6141397713227055,
+        "stability": 1.0,
+        "unrest": 0.4036733431663143
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 190,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire reinforces security in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 177 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 2,
+        "global_reserved": 2,
+        "global_used": 4,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.6043109823133455,
+        "stability": 1.0,
+        "unrest": 0.40402431197836214
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 191,
+      "top_ranked": [
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire reinforces security in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 178 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 182 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 1,
+        "global_reserved": 2,
+        "global_used": 5,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.6028655343113898,
+        "stability": 1.0,
+        "unrest": 0.40372354121669046
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 192,
+      "top_ranked": [
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 179 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 183 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": "research-spire",
+          "focus_distance": 2,
+          "in_focus_ring": true,
+          "message": "Dr. Lyra Keel eases unrest in Research Spire",
+          "scope": "agent",
+          "score": 0.476,
+          "severity": 0.68
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 4,
+        "global_reserved": 2,
+        "global_used": 2,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 5,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5945633793930001,
+        "stability": 1.0,
+        "unrest": 0.4054250971498145
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 5,
+      "tick": 193,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Union of Flux invests in Industrial Tier",
+          "scope": "faction",
+          "score": 0.75,
+          "severity": 0.75
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cartel of Mist invests in Perimeter Hollow",
+          "scope": "faction",
+          "score": 0.637,
+          "severity": 0.75
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Union of Flux mitigates pollution in Industrial Tier (relief)",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 2,
+        "global_reserved": 2,
+        "global_used": 4,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5839417956047244,
+        "stability": 1.0,
+        "unrest": 0.4019737213269418
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 194,
+      "top_ranked": [
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire files a report on Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 181 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 185 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 3,
+        "global_reserved": 2,
+        "global_used": 3,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 2,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5788035339180222,
+        "stability": 1.0,
+        "unrest": 0.4063203206640719
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 2,
+      "tick": 195,
+      "top_ranked": [
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire reinforces security in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Industrial Tier energy adjusted to 3 units",
+          "scope": "resources",
+          "score": 0.5,
+          "severity": 0.5
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 182 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 2,
+        "global_reserved": 2,
+        "global_used": 4,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5799034751387558,
+        "stability": 1.0,
+        "unrest": 0.4098463601961894
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 196,
+      "top_ranked": [
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire eases unrest in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.578,
+          "severity": 0.68
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 183 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 187 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 4,
+        "global_reserved": 2,
+        "global_used": 2,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 4,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5764831927041986,
+        "stability": 1.0,
+        "unrest": 0.4046112885427018
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 4,
+      "tick": 197,
+      "top_ranked": [
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Union of Flux invests in Industrial Tier",
+          "scope": "faction",
+          "score": 0.75,
+          "severity": 0.75
+        },
+        {
+          "district_id": "industrial-tier",
+          "focus_distance": 0,
+          "in_focus_ring": true,
+          "message": "Aria Volt inspects Industrial Tier",
+          "scope": "agent",
+          "score": 0.6,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Union of Flux mitigates pollution in Industrial Tier (relief)",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 2,
+        "global_reserved": 2,
+        "global_used": 4,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.587380420924938,
+        "stability": 1.0,
+        "unrest": 0.40550459060172933
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 198,
+      "top_ranked": [
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire inspects Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 185 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 189 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 2,
+        "global_reserved": 2,
+        "global_used": 4,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5801580020734389,
+        "stability": 1.0,
+        "unrest": 0.40510015476155364
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 199,
+      "top_ranked": [
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire reinforces security in Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 186 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 190 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    },
+    {
+      "allocation": {
+        "focus_center": "industrial-tier",
+        "focus_reserved": 4,
+        "focus_ring": [
+          "industrial-tier",
+          "perimeter-hollow",
+          "research-spire"
+        ],
+        "focus_used": 2,
+        "global_reserved": 2,
+        "global_used": 4,
+        "spatial_metrics": {
+          "adjacency_bonus": 0.1,
+          "distance_reference": 7.211102550927978,
+          "distance_weight": 0.4,
+          "fallback_distance": null,
+          "population_weight": 0.6
+        },
+        "spatial_weights": [
+          {
+            "adjacent": false,
+            "distance": 0.0,
+            "distance_score": 1.0,
+            "district_id": "industrial-tier",
+            "population_rank": 1.0,
+            "score": 1.0
+          },
+          {
+            "adjacent": true,
+            "distance": 6.5192,
+            "distance_score": 0.0959,
+            "district_id": "perimeter-hollow",
+            "population_rank": 0.6667,
+            "score": 0.5384
+          },
+          {
+            "adjacent": true,
+            "distance": 7.2111,
+            "distance_score": 0.0,
+            "district_id": "research-spire",
+            "population_rank": 0.3333,
+            "score": 0.3
+          }
+        ],
+        "suppressed": 1,
+        "total_budget": 6
+      },
+      "environment": {
+        "pollution": 0.5818965094576427,
+        "stability": 1.0,
+        "unrest": 0.4097967394926844
+      },
+      "faction_legitimacy": {
+        "cartel_of_mist": 1.0,
+        "union_of_flux": 1.0
+      },
+      "focus_center": "industrial-tier",
+      "focus_coordinates": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "market_prices": {
+        "capital": 1.0,
+        "data": 1.0,
+        "energy": 1.5,
+        "food": 1.0,
+        "materials": 1.5,
+        "water": 1.0
+      },
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed_count": 1,
+      "tick": 200,
+      "top_ranked": [
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Scarcity in energy, materials strains the city environment",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Pollution diffuses toward the citywide baseline",
+          "scope": "environment",
+          "score": 0.55,
+          "severity": 1.0
+        },
+        {
+          "district_id": "perimeter-hollow",
+          "focus_distance": 1,
+          "in_focus_ring": true,
+          "message": "Cassian Mire inspects Perimeter Hollow",
+          "scope": "agent",
+          "score": 0.51,
+          "severity": 0.6
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: energy shortage persists for 187 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        },
+        {
+          "district_id": null,
+          "focus_distance": 3,
+          "in_focus_ring": false,
+          "message": "Economy alert: materials shortage persists for 191 ticks",
+          "scope": "economy",
+          "score": 0.479,
+          "severity": 0.87
+        }
+      ]
+    }
+  ],
+  "director_pacing": {
+    "active": 0,
+    "global_quiet_remaining": 0,
+    "global_quiet_until": 0,
+    "max_active": 1,
+    "resolving": 1,
+    "tick": 200
+  },
+  "duration_ms": 62.34,
+  "end_tick": 200,
+  "events_emitted": 1190,
+  "faction_action_breakdown": {
+    "INVEST_DISTRICT": 37,
+    "LOBBY_COUNCIL": 13,
+    "RECRUIT_SUPPORT": 33,
+    "SABOTAGE_RIVAL": 17
+  },
+  "faction_actions": 100,
+  "faction_legitimacy": {
+    "cartel_of_mist": 1.0,
+    "union_of_flux": 1.0
+  },
+  "last_director_analysis": {
+    "director_events": [],
+    "focus_center": "industrial-tier",
+    "hotspots": [
+      {
+        "district_id": "perimeter-hollow",
+        "focus_distance": 1,
+        "in_focus_ring": true,
+        "message": "Cassian Mire inspects Perimeter Hollow",
+        "scope": "agent",
+        "score": 0.51,
+        "severity": 0.6,
+        "travel": {
+          "adjacent": true,
+          "distance": 6.519,
+          "hops": 1,
+          "origin": "industrial-tier",
+          "path": [
+            "industrial-tier",
+            "perimeter-hollow"
+          ],
+          "reachable": true,
+          "target": "perimeter-hollow",
+          "travel_time": 3.13
+        }
+      }
+    ],
+    "recommended_focus": null,
+    "story_seeds": [
+      {
+        "beats": [
+          "Encrypted telemetry shows anomalous packet loss on the spire's uplink lattice.",
+          "Dr. Lyra Keel requests escorts to inspect the Industrial Tier emitters feeding the climate array."
+        ],
+        "cooldown_remaining": 37,
+        "district_id": "research-spire",
+        "followups": [],
+        "last_trigger_tick": 192,
+        "reason": "Dr. Lyra Keel eases unrest in Research Spire",
+        "resolution_templates": {
+          "failure": "Saboteurs crash the uplink and terraforming cascades into failure.",
+          "partial": "Telemetry traces point to the Industrial Tier, but the culprit slips away.",
+          "success": "Security purges the leak and climate models return to trusted hands."
+        },
+        "roles": {
+          "agents": [
+            "dr-lyra-keel"
+          ],
+          "factions": []
+        },
+        "scope": "agent",
+        "score": 0.476,
+        "seed_id": "spire-data-leak",
+        "stakes": "Leaked terraforming telemetry could destabilize the perimeter climate nets.",
+        "state": "resolving",
+        "state_remaining": 2,
+        "summary": "Stolen climate models hint at sabotage inside the spire.",
+        "tags": [
+          "intel",
+          "climate"
+        ],
+        "title": "Research Spire Data Leak",
+        "travel": {
+          "adjacent": true,
+          "distance": 7.211,
+          "hops": 1,
+          "origin": "industrial-tier",
+          "path": [
+            "industrial-tier",
+            "research-spire"
+          ],
+          "reachable": true,
+          "target": "research-spire",
+          "travel_time": 3.303
+        },
+        "travel_hint": {
+          "district_id": "research-spire",
+          "max_focus_distance": 5
+        }
+      }
+    ],
+    "suppressed_pressure": 1,
+    "tick": 200
+  },
+  "last_director_events": [],
+  "last_director_snapshot": {
+    "allocation": {
+      "focus_center": "industrial-tier",
+      "focus_reserved": 4,
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "focus_used": 2,
+      "global_reserved": 2,
+      "global_used": 4,
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed": 1,
+      "total_budget": 6
+    },
+    "environment": {
+      "pollution": 0.5818965094576427,
+      "stability": 1.0,
+      "unrest": 0.4097967394926844
+    },
+    "faction_legitimacy": {
+      "cartel_of_mist": 1.0,
+      "union_of_flux": 1.0
+    },
+    "focus_center": "industrial-tier",
+    "focus_coordinates": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": null
+    },
+    "focus_ring": [
+      "industrial-tier",
+      "perimeter-hollow",
+      "research-spire"
+    ],
+    "market_prices": {
+      "capital": 1.0,
+      "data": 1.0,
+      "energy": 1.5,
+      "food": 1.0,
+      "materials": 1.5,
+      "water": 1.0
+    },
+    "spatial_metrics": {
+      "adjacency_bonus": 0.1,
+      "distance_reference": 7.211102550927978,
+      "distance_weight": 0.4,
+      "fallback_distance": null,
+      "population_weight": 0.6
+    },
+    "spatial_weights": [
+      {
+        "adjacent": false,
+        "distance": 0.0,
+        "distance_score": 1.0,
+        "district_id": "industrial-tier",
+        "population_rank": 1.0,
+        "score": 1.0
+      },
+      {
+        "adjacent": true,
+        "distance": 6.5192,
+        "distance_score": 0.0959,
+        "district_id": "perimeter-hollow",
+        "population_rank": 0.6667,
+        "score": 0.5384
+      },
+      {
+        "adjacent": true,
+        "distance": 7.2111,
+        "distance_score": 0.0,
+        "district_id": "research-spire",
+        "population_rank": 0.3333,
+        "score": 0.3
+      }
+    ],
+    "suppressed_count": 1,
+    "tick": 200,
+    "top_ranked": [
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Scarcity in energy, materials strains the city environment",
+        "scope": "environment",
+        "score": 0.55,
+        "severity": 1.0
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Pollution diffuses toward the citywide baseline",
+        "scope": "environment",
+        "score": 0.55,
+        "severity": 1.0
+      },
+      {
+        "district_id": "perimeter-hollow",
+        "focus_distance": 1,
+        "in_focus_ring": true,
+        "message": "Cassian Mire inspects Perimeter Hollow",
+        "scope": "agent",
+        "score": 0.51,
+        "severity": 0.6
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Economy alert: energy shortage persists for 187 ticks",
+        "scope": "economy",
+        "score": 0.479,
+        "severity": 0.87
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Economy alert: materials shortage persists for 191 ticks",
+        "scope": "economy",
+        "score": 0.479,
+        "severity": 0.87
+      }
+    ]
+  },
+  "last_economy": {
+    "prices": {
+      "capital": 1.0,
+      "data": 1.0,
+      "energy": 1.5,
+      "food": 1.0,
+      "materials": 1.5,
+      "water": 1.0
+    },
+    "shortages": {
+      "energy": 187,
+      "materials": 191
+    }
+  },
+  "last_environment": {
+    "biodiversity": 0.6108364209868168,
+    "climate_risk": 0.47,
+    "pollution": 0.5818965094576427,
+    "security": 0.09998728301688854,
+    "stability": 1.0,
+    "unrest": 0.4097967394926844
+  },
+  "last_event_digest": {
+    "archive": [
+      "Aria Volt negotiates with Union of Flux",
+      "Cassian Mire inspects Perimeter Hollow",
+      "Dr. Lyra Keel eases unrest in Research Spire",
+      "Economy alert: energy shortage persists for 187 ticks",
+      "Economy alert: materials shortage persists for 191 ticks",
+      "Scarcity in energy, materials strains the city environment",
+      "Pollution diffuses toward the citywide baseline"
+    ],
+    "focus_budget": {
+      "focus_center": "industrial-tier",
+      "focus_reserved": 4,
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "focus_used": 2,
+      "global_reserved": 2,
+      "global_used": 4,
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed": 1,
+      "total_budget": 6
+    },
+    "ranked_archive": [
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Scarcity in energy, materials strains the city environment",
+        "scope": "environment",
+        "score": 0.55,
+        "severity": 1.0
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Pollution diffuses toward the citywide baseline",
+        "scope": "environment",
+        "score": 0.55,
+        "severity": 1.0
+      },
+      {
+        "district_id": "perimeter-hollow",
+        "focus_distance": 1,
+        "in_focus_ring": true,
+        "message": "Cassian Mire inspects Perimeter Hollow",
+        "scope": "agent",
+        "score": 0.51,
+        "severity": 0.6
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Economy alert: energy shortage persists for 187 ticks",
+        "scope": "economy",
+        "score": 0.479,
+        "severity": 0.87
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Economy alert: materials shortage persists for 191 ticks",
+        "scope": "economy",
+        "score": 0.479,
+        "severity": 0.87
+      },
+      {
+        "district_id": "research-spire",
+        "focus_distance": 2,
+        "in_focus_ring": true,
+        "message": "Dr. Lyra Keel eases unrest in Research Spire",
+        "scope": "agent",
+        "score": 0.476,
+        "severity": 0.68
+      },
+      {
+        "district_id": null,
+        "focus_distance": 3,
+        "in_focus_ring": false,
+        "message": "Aria Volt negotiates with Union of Flux",
+        "scope": "agent",
+        "score": 0.33,
+        "severity": 0.6
+      }
+    ],
+    "suppressed": [
+      "Pollution diffuses toward the citywide baseline"
+    ],
+    "visible": [
+      "Aria Volt negotiates with Union of Flux",
+      "Cassian Mire inspects Perimeter Hollow",
+      "Dr. Lyra Keel eases unrest in Research Spire",
+      "Economy alert: energy shortage persists for 187 ticks",
+      "Economy alert: materials shortage persists for 191 ticks",
+      "Scarcity in energy, materials strains the city environment"
+    ]
+  },
+  "lod_mode": "balanced",
+  "profiling": {
+    "anomalies": [],
+    "focus_budget": {
+      "focus_center": "industrial-tier",
+      "focus_reserved": 4,
+      "focus_ring": [
+        "industrial-tier",
+        "perimeter-hollow",
+        "research-spire"
+      ],
+      "focus_used": 2,
+      "global_reserved": 2,
+      "global_used": 4,
+      "spatial_metrics": {
+        "adjacency_bonus": 0.1,
+        "distance_reference": 7.211102550927978,
+        "distance_weight": 0.4,
+        "fallback_distance": null,
+        "population_weight": 0.6
+      },
+      "spatial_weights": [
+        {
+          "adjacent": false,
+          "distance": 0.0,
+          "distance_score": 1.0,
+          "district_id": "industrial-tier",
+          "population_rank": 1.0,
+          "score": 1.0
+        },
+        {
+          "adjacent": true,
+          "distance": 6.5192,
+          "distance_score": 0.0959,
+          "district_id": "perimeter-hollow",
+          "population_rank": 0.6667,
+          "score": 0.5384
+        },
+        {
+          "adjacent": true,
+          "distance": 7.2111,
+          "distance_score": 0.0,
+          "district_id": "research-spire",
+          "population_rank": 0.3333,
+          "score": 0.3
+        }
+      ],
+      "suppressed": 1,
+      "total_budget": 6
+    },
+    "history_len": 50,
+    "last_subsystem_ms": {
+      "agent_ms": 0.02,
+      "district_ms": 0.02,
+      "economy_ms": 0.03,
+      "environment_ms": 0.01,
+      "environment_system_ms": 0.04,
+      "faction_ms": 0.0,
+      "resources_ms": 0.01
+    },
+    "last_tick_ms": 0.22,
+    "slowest_subsystem": {
+      "ms": 0.04,
+      "name": "environment_system_ms"
+    },
+    "tick_ms_max": 6.66,
+    "tick_ms_p50": 0.25,
+    "tick_ms_p95": 0.54
+  },
+  "seed": 42,
+  "start_tick": 0,
+  "story_seed_lifecycle": {
+    "energy-quota-crisis": {
+      "cooldown_until": 201,
+      "entered_tick": 171,
+      "quiet_until": 177,
+      "seed_id": "energy-quota-crisis",
+      "state": "archived"
+    },
+    "hollow-supply-chain": {
+      "cooldown_until": 206,
+      "entered_tick": 181,
+      "quiet_until": 187,
+      "seed_id": "hollow-supply-chain",
+      "state": "archived"
+    },
+    "spire-data-leak": {
+      "cooldown_until": 237,
+      "entered_tick": 198,
+      "seed_id": "spire-data-leak",
+      "state": "resolving",
+      "state_expires": 202
+    }
+  },
+  "story_seed_lifecycle_history": [
+    {
+      "from": "active",
+      "seed_id": "hollow-supply-chain",
+      "tick": 137,
+      "to": "resolving"
+    },
+    {
+      "from": "resolving",
+      "seed_id": "hollow-supply-chain",
+      "tick": 141,
+      "to": "archived"
+    },
+    {
+      "from": "archived",
+      "seed_id": "energy-quota-crisis",
+      "tick": 161,
+      "to": "primed"
+    },
+    {
+      "from": "primed",
+      "seed_id": "energy-quota-crisis",
+      "tick": 161,
+      "to": "active"
+    },
+    {
+      "from": "archived",
+      "seed_id": "hollow-supply-chain",
+      "tick": 166,
+      "to": "primed"
+    },
+    {
+      "from": "active",
+      "seed_id": "energy-quota-crisis",
+      "tick": 167,
+      "to": "resolving"
+    },
+    {
+      "from": "resolving",
+      "seed_id": "energy-quota-crisis",
+      "tick": 171,
+      "to": "archived"
+    },
+    {
+      "from": "primed",
+      "seed_id": "hollow-supply-chain",
+      "tick": 171,
+      "to": "active"
+    },
+    {
+      "from": "active",
+      "seed_id": "hollow-supply-chain",
+      "tick": 177,
+      "to": "resolving"
+    },
+    {
+      "from": "resolving",
+      "seed_id": "hollow-supply-chain",
+      "tick": 181,
+      "to": "archived"
+    },
+    {
+      "from": "primed",
+      "seed_id": "spire-data-leak",
+      "tick": 192,
+      "to": "active"
+    },
+    {
+      "from": "active",
+      "seed_id": "spire-data-leak",
+      "tick": 198,
+      "to": "resolving"
+    }
+  ],
+  "story_seeds": [
+    {
+      "beats": [
+        "Encrypted telemetry shows anomalous packet loss on the spire's uplink lattice.",
+        "Dr. Lyra Keel requests escorts to inspect the Industrial Tier emitters feeding the climate array."
+      ],
+      "cooldown_remaining": 37,
+      "district_id": "research-spire",
+      "followups": [],
+      "last_trigger_tick": 192,
+      "reason": "Dr. Lyra Keel eases unrest in Research Spire",
+      "resolution_templates": {
+        "failure": "Saboteurs crash the uplink and terraforming cascades into failure.",
+        "partial": "Telemetry traces point to the Industrial Tier, but the culprit slips away.",
+        "success": "Security purges the leak and climate models return to trusted hands."
+      },
+      "roles": {
+        "agents": [
+          "dr-lyra-keel"
+        ],
+        "factions": []
+      },
+      "scope": "agent",
+      "score": 0.476,
+      "seed_id": "spire-data-leak",
+      "stakes": "Leaked terraforming telemetry could destabilize the perimeter climate nets.",
+      "state": "resolving",
+      "state_remaining": 2,
+      "summary": "Stolen climate models hint at sabotage inside the spire.",
+      "tags": [
+        "intel",
+        "climate"
+      ],
+      "title": "Research Spire Data Leak",
+      "travel": {
+        "adjacent": true,
+        "distance": 7.211,
+        "hops": 1,
+        "origin": "industrial-tier",
+        "path": [
+          "industrial-tier",
+          "research-spire"
+        ],
+        "reachable": true,
+        "target": "research-spire",
+        "travel_time": 3.303
+      },
+      "travel_hint": {
+        "district_id": "research-spire",
+        "max_focus_distance": 5
+      }
+    }
+  ],
+  "suppressed_events": 343,
+  "ticks_executed": 200,
+  "ticks_requested": 200,
+  "world": "default"
+}

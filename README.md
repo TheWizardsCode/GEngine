@@ -94,6 +94,14 @@ run locally.
   optional `travel_hint`, and `followups`, and the content loader validates
   every referenced district, agent, faction, and followup id so malformed seeds
   are caught immediately during world import.
+- Director pacing + lifecycle tracking (Phase 5, M5.3 prototype) adds
+  configurable guardrails to the `NarrativeDirector`. Seeds now progress
+  deterministically through `primed → active → resolving → archived`, with
+  per-seed cooldowns, per-seed quiet timers, and a global quiet span that caps
+  how many crises overlap. The CLI summary, FastAPI summaries, and headless
+  telemetry each show a `director_pacing` block plus the latest lifecycle
+  states so reviewers can see why a beat is blocked, how long a resolving arc
+  has left, or when the director will reprime a seed after cooldown.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions. Summaries now include focus-budget
@@ -173,6 +181,10 @@ canonical seed/tick profile is always available for comparison. The telemetry
 now captures agent/faction breakdowns, per-faction legitimacy snapshots/deltas,
 the `last_economy` block (price table + shortage counters), and
 `last_director_analysis` (hotspot travel recommendations) for regression diffs.
+The same JSON also embeds the `director_pacing` snapshot, the full
+`story_seed_lifecycle` table, lifecycle history, and any active global quiet
+timer so reviewers can diff cooldown math between builds without reproducing
+ticks locally.
 Use `summary` on any saved snapshot to inspect the last tick's
 `environment_impact` block when diagnosing pollution swings or to review the
 director's recommended focus hand-offs.
@@ -298,7 +310,12 @@ Available in-shell commands:
   which stories were deferred by the focus manager that tick. When the
   narrative director matches authored story seeds, the summary prints a `story
 seeds` block that lists which seeds attached, their target districts, and why
-  they fired, mirroring the headless/service summaries for quick debugging.
+  they fired, mirroring the headless/service summaries for quick debugging. A
+  neighboring `director pacing` block shows how many seeds are active versus
+  resolving, how long remains on the global quiet timer, and which pacing
+  guardrails blocked new matches, while the augmented seed entries include
+  lifecycle states (`primed/active/resolving/archived`) plus their remaining
+  durations and cooldowns.
   A neighboring `director events` block highlights the latest seeds that
   actually triggered, including their stakes and the first matching
   agent/faction so you can see who is on-stage without rerunning ticks.
@@ -368,9 +385,12 @@ not wedge CI runs.
   code; the CLI/service focus and history commands immediately reflect the
   updated defaults after a restart.
 - `director`: tunes hotspot filtering (limit + score threshold), travel timing,
-  story seed surfacing limits, and the `event_history_limit` used for the new
-  `director_events` history so designers can control how many recent seed
-  triggers stay visible in CLI/service/headless summaries.
+  story seed surfacing limits, and the pacing knobs (`max_active_seeds`,
+  `global_quiet_ticks`, `seed_active_ticks`, `seed_resolve_ticks`,
+  `seed_quiet_ticks`, `lifecycle_history_limit`) that govern the lifecycle
+  state machine. Adjust these to dial how many crises can overlap, how long a
+  seed stays active/resolving, and how noisy the lifecycle history should be in
+  CLI/service/headless summaries.
 - `economy`: exposes `regen_scale`, demand weights, shortage thresholds, base
   resource weights, and price tuning values (`base_price`, `price_increase_step`,
   `price_max_boost`, `price_decay`, `price_floor`). Adjust these numbers to
@@ -477,21 +497,20 @@ Key flags:
 
 ## Next Steps
 
-1. **Phase 5 M5.2 – Director core** – evolve the NarrativeDirector so it
-  evaluates triggers against hotspot metrics + travel time, emits structured
-  `director_events`, and threads those beats through CLI/service/headless
-  surfaces with deterministic tests for the default world.
-2. **Phase 5 M5.3–M5.4 – Pacing & post-mortems** – add lifecycle/pacing controls
-  (quiet periods, cooldown phases), expose pacing knobs via `simulation.yml`, and
-  finish the post-run epilogue tooling so telemetry/CLI reports summarize the
-  highest-impact crises at the end of each burn.
+1. **Phase 5 M5.3 – Pacing & lifecycle polish** – finish validating the director
+  state machine (quiet spans, cooldown persistence, lifecycle history), keep
+  the README/GDD/how-to docs aligned, and capture the balanced 200-tick
+  telemetry artifact after each regression pass so reviewers can diff pacing
+  metadata without rerunning the sim.
+2. **Phase 5 M5.4 – Post-mortems** – layer deterministic epilogue generation on
+  top of the archived story seeds + faction/environment deltas, surface it via
+  CLI/service/headless endpoints, and add golden outputs tied to the canonical
+  telemetry seed.
 3. **Phase 9 M9.1 – AI Player Observer** (parallel track) – implement
-  `src/gengine/ai_player/observer.py` that analyzes simulation state and
-  generates structured commentary, enabling automated validation and narrative
-  coherence testing before the full action system lands. See
-  `docs/simul/emergent_story_game_implementation_plan.md` Phase 9 for the
-  complete staged plan (observer → rule-based actor → LLM enhancement →
-  tournaments).
+  `src/gengine/ai_player/observer.py` plus its CLI runner so automated playtests
+  can analyze stability trends, faction swings, and pacing logs. See the Phase 9
+  section of the implementation plan for the full observer → actor → LLM
+  roadmap.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

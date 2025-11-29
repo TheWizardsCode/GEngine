@@ -325,6 +325,194 @@ class NarrativeDirector:
             return None
         return total
 
+    def _load_lifecycle(self, state: GameState) -> Dict[str, Dict[str, Any]]:
+        raw = state.metadata.get("story_seed_lifecycle") or {}
+        lifecycle: Dict[str, Dict[str, Any]] = {}
+        if isinstance(raw, dict):
+            for seed_id, payload in raw.items():
+                if isinstance(payload, dict):
+                    entry = dict(payload)
+                    entry["seed_id"] = seed_id
+                    lifecycle[seed_id] = entry
+        return lifecycle
+
+    def _save_lifecycle(self, state: GameState, lifecycle: Dict[str, Dict[str, Any]]) -> None:
+        if lifecycle:
+            state.metadata["story_seed_lifecycle"] = {
+                seed_id: dict(entry) for seed_id, entry in lifecycle.items()
+            }
+        else:
+            state.metadata.pop("story_seed_lifecycle", None)
+
+    def _transition_state(
+        self,
+        state: GameState,
+        lifecycle: Dict[str, Dict[str, Any]],
+        seed_id: str,
+        new_state: str,
+        tick: int,
+        *,
+        updates: Dict[str, Any] | None = None,
+        record: bool = True,
+    ) -> Dict[str, Any]:
+        entry = lifecycle.setdefault(
+            seed_id,
+            {"seed_id": seed_id, "state": "primed", "entered_tick": tick},
+        )
+        prev_state = entry.get("state", "primed")
+        if record and prev_state != new_state:
+            self._record_lifecycle_history(state, seed_id, prev_state, new_state, tick)
+        entry["state"] = new_state
+        entry["entered_tick"] = tick
+        if updates:
+            for key, value in updates.items():
+                if value is None:
+                    entry.pop(key, None)
+                else:
+                    entry[key] = value
+        return entry
+
+    def _record_lifecycle_history(
+        self,
+        state: GameState,
+        seed_id: str,
+        previous: str,
+        new_state: str,
+        tick: int,
+    ) -> None:
+        history = list(state.metadata.get("story_seed_lifecycle_history") or [])
+        history.append({"tick": tick, "seed_id": seed_id, "from": previous, "to": new_state})
+        limit = getattr(self._settings, "lifecycle_history_limit", 10)
+        if len(history) > limit:
+            history = history[-limit:]
+        state.metadata["story_seed_lifecycle_history"] = history
+
+    def _advance_lifecycle_states(
+        self,
+        state: GameState,
+        lifecycle: Dict[str, Dict[str, Any]],
+        tick: int,
+    ) -> None:
+        for seed_id in list(lifecycle.keys()):
+            entry = lifecycle[seed_id]
+            current = entry.get("state", "primed")
+            if current == "active":
+                expires = entry.get("state_expires")
+                duration = max(0, getattr(self._settings, "seed_active_ticks", 0))
+                if duration == 0 or (isinstance(expires, (int, float)) and tick >= int(expires)):
+                    resolve_duration = max(0, getattr(self._settings, "seed_resolve_ticks", 0))
+                    resolve_expires = tick + resolve_duration if resolve_duration else None
+                    self._transition_state(
+                        state,
+                        lifecycle,
+                        seed_id,
+                        "resolving",
+                        tick,
+                        updates={"state_expires": resolve_expires},
+                    )
+            elif current == "resolving":
+                expires = entry.get("state_expires")
+                duration = max(0, getattr(self._settings, "seed_resolve_ticks", 0))
+                if duration == 0 or (isinstance(expires, (int, float)) and tick >= int(expires)):
+                    quiet_span = max(0, getattr(self._settings, "seed_quiet_ticks", 0))
+                    quiet_until = tick + quiet_span if quiet_span else None
+                    self._transition_state(
+                        state,
+                        lifecycle,
+                        seed_id,
+                        "archived",
+                        tick,
+                        updates={"state_expires": None, "quiet_until": quiet_until},
+                    )
+            elif current == "archived":
+                quiet_until = entry.get("quiet_until")
+                cooldown_until = entry.get("cooldown_until")
+                ready_tick = tick
+                if isinstance(quiet_until, (int, float)):
+                    ready_tick = max(ready_tick, int(quiet_until))
+                if isinstance(cooldown_until, (int, float)):
+                    ready_tick = max(ready_tick, int(cooldown_until))
+                if tick >= ready_tick:
+                    self._transition_state(
+                        state,
+                        lifecycle,
+                        seed_id,
+                        "primed",
+                        tick,
+                        updates={"state_expires": None, "quiet_until": None, "cooldown_until": None},
+                    )
+
+        for seed_id in list(lifecycle.keys()):
+            if seed_id not in state.story_seeds:
+                lifecycle.pop(seed_id, None)
+
+    @staticmethod
+    def _state_remaining(entry: Mapping[str, Any], tick: int) -> int | None:
+        expires = entry.get("state_expires")
+        if not isinstance(expires, (int, float)):
+            return None
+        return max(int(expires) - tick, 0)
+
+    @staticmethod
+    def _sync_contexts_with_lifecycle(
+        contexts: Dict[str, Dict[str, Any]],
+        lifecycle: Mapping[str, Mapping[str, Any]],
+    ) -> None:
+        for seed_id in list(contexts.keys()):
+            state_name = lifecycle.get(seed_id, {}).get("state")
+            if state_name not in {"active", "resolving"}:
+                contexts.pop(seed_id, None)
+
+    def _normalize_quiet_timer(self, state: GameState, tick: int) -> int:
+        quiet_until = state.metadata.get("director_quiet_until")
+        if isinstance(quiet_until, (int, float)):
+            quiet_value = int(quiet_until)
+        else:
+            quiet_value = 0
+        if quiet_value and tick >= quiet_value:
+            state.metadata.pop("director_quiet_until", None)
+            return 0
+        return quiet_value
+
+    def _store_pacing_summary(
+        self,
+        state: GameState,
+        *,
+        tick: int,
+        lifecycle: Mapping[str, Mapping[str, Any]],
+        quiet_until: int,
+        blocked: Sequence[str],
+    ) -> None:
+        active = 0
+        resolving = 0
+        for entry in lifecycle.values():
+            current = entry.get("state")
+            if current == "active":
+                active += 1
+            elif current == "resolving":
+                resolving += 1
+        summary = {
+            "tick": tick,
+            "active": active,
+            "resolving": resolving,
+            "max_active": getattr(self._settings, "max_active_seeds", 1),
+            "global_quiet_until": quiet_until,
+            "global_quiet_remaining": max(quiet_until - tick, 0) if quiet_until else 0,
+        }
+        if blocked:
+            summary["blocked_reasons"] = sorted(set(blocked))
+        if any(
+            (
+                summary["active"],
+                summary["resolving"],
+                summary["global_quiet_until"],
+                summary.get("blocked_reasons"),
+            )
+        ):
+            state.metadata["director_pacing"] = summary
+        else:
+            state.metadata.pop("director_pacing", None)
+
     # ------------------------------------------------------------------
     def _match_story_seeds(
         self,
@@ -336,12 +524,19 @@ class NarrativeDirector:
         if not state.story_seeds:
             state.metadata.pop("story_seeds_active", None)
             state.metadata.pop("story_seed_cooldowns", None)
+            state.metadata.pop("story_seed_context", None)
+            state.metadata.pop("story_seed_lifecycle", None)
+            state.metadata.pop("story_seed_lifecycle_history", None)
+            state.metadata.pop("director_pacing", None)
             state.metadata.pop("director_events", None)
+            state.metadata.pop("director_quiet_until", None)
             return [], []
 
         ranked = list(feed.get("top_ranked") or [])
         suppressed = int(feed.get("suppressed_count", 0))
         tick = int(feed.get("tick") or state.tick)
+        lifecycle = self._load_lifecycle(state)
+        self._advance_lifecycle_states(state, lifecycle, tick)
         cooldowns = dict(state.metadata.get("story_seed_cooldowns") or {})
         raw_contexts = state.metadata.get("story_seed_context") or {}
         contexts: Dict[str, Dict[str, Any]] = {}
@@ -356,9 +551,32 @@ class NarrativeDirector:
         }
         district_lookup = {district.id: district.name for district in state.city.districts}
         new_events: List[Dict[str, Any]] = []
+        quiet_until = self._normalize_quiet_timer(state, tick)
+        blocked_reasons: List[str] = []
+        max_active = max(1, getattr(self._settings, "max_active_seeds", 1))
+        active_count = sum(
+            1 for entry in lifecycle.values() if entry.get("state") in {"active", "resolving"}
+        )
+        self._sync_contexts_with_lifecycle(contexts, lifecycle)
 
         for seed in state.story_seeds.values():
             if not seed.triggers:
+                continue
+            entry = lifecycle.setdefault(
+                seed.id,
+                {"seed_id": seed.id, "state": "primed", "entered_tick": tick},
+            )
+            if entry.get("state") != "primed":
+                continue
+            if quiet_until and tick < quiet_until:
+                blocked_reasons.append("global_quiet")
+                break
+            if active_count >= max_active:
+                blocked_reasons.append("max_active")
+                break
+            seed_quiet_until = entry.get("quiet_until")
+            if isinstance(seed_quiet_until, (int, float)) and tick < int(seed_quiet_until):
+                blocked_reasons.append("seed_quiet")
                 continue
             last_tick = cooldowns.get(seed.id)
             cooldown_window = max(1, seed.cooldown_ticks or 0)
@@ -392,6 +610,7 @@ class NarrativeDirector:
                 "reason": trigger_match.get("reason"),
                 "score": trigger_match.get("score"),
                 "travel": dict(travel) if isinstance(travel, dict) else travel,
+                "last_trigger_tick": tick,
             }
             if travel_hint:
                 contexts[seed.id]["travel_hint"] = travel_hint
@@ -407,26 +626,44 @@ class NarrativeDirector:
             )
             if event_payload:
                 new_events.append(event_payload)
+            active_duration = max(0, getattr(self._settings, "seed_active_ticks", 0))
+            active_expires = tick + active_duration if active_duration else None
+            entry = self._transition_state(
+                state,
+                lifecycle,
+                seed.id,
+                "active",
+                tick,
+                updates={"state_expires": active_expires, "quiet_until": None},
+            )
+            entry["cooldown_until"] = tick + cooldown_window
+            active_count += 1
+            quiet_span = max(0, getattr(self._settings, "global_quiet_ticks", 0))
+            if quiet_span:
+                quiet_until = tick + quiet_span
+                state.metadata["director_quiet_until"] = quiet_until
+            else:
+                quiet_until = 0
+                state.metadata.pop("director_quiet_until", None)
 
         active_matches: List[Dict[str, Any]] = []
         for seed in state.story_seeds.values():
-            last_tick = cooldowns.get(seed.id)
-            if last_tick is None:
-                contexts.pop(seed.id, None)
-                continue
-            cooldown_window = max(1, seed.cooldown_ticks or 0)
-            elapsed = tick - last_tick
-            if cooldown_window and elapsed >= cooldown_window:
-                cooldowns.pop(seed.id, None)
-                contexts.pop(seed.id, None)
+            entry = lifecycle.get(seed.id)
+            if not entry or entry.get("state") not in {"active", "resolving"}:
                 continue
             payload = contexts.get(seed.id)
             if not payload:
                 continue
             enriched = dict(payload)
-            enriched["last_trigger_tick"] = last_tick
-            remaining = max(cooldown_window - elapsed, 0)
-            enriched["cooldown_remaining"] = remaining
+            enriched["state"] = entry.get("state")
+            remaining = self._state_remaining(entry, tick)
+            if remaining is not None:
+                enriched["state_remaining"] = remaining
+            cooldown_until = entry.get("cooldown_until")
+            if isinstance(cooldown_until, (int, float)):
+                enriched["cooldown_remaining"] = max(int(cooldown_until) - tick, 0)
+            else:
+                enriched["cooldown_remaining"] = 0
             active_matches.append(enriched)
 
         active_matches.sort(
@@ -448,12 +685,14 @@ class NarrativeDirector:
             state.metadata.pop("story_seeds_active", None)
         if cooldowns:
             state.metadata["story_seed_cooldowns"] = cooldowns
-        elif "story_seed_cooldowns" in state.metadata:
+        else:
             state.metadata.pop("story_seed_cooldowns", None)
         if contexts:
             state.metadata["story_seed_context"] = contexts
-        elif "story_seed_context" in state.metadata:
-            state.metadata.pop("story_seed_context")
+        else:
+            state.metadata.pop("story_seed_context", None)
+        self._save_lifecycle(state, lifecycle)
+
         if new_events:
             history = list(state.metadata.get("director_events") or [])
             history.extend(new_events)
@@ -462,8 +701,15 @@ class NarrativeDirector:
             if len(history) > limit:
                 history = history[-limit:]
             state.metadata["director_events"] = history
-        elif "director_events" not in state.metadata:
-            state.metadata.pop("director_events", None)
+
+        self._store_pacing_summary(
+            state,
+            tick=tick,
+            lifecycle=lifecycle,
+            quiet_until=quiet_until,
+            blocked=blocked_reasons,
+        )
+
         return active_matches, new_events
 
     def _match_seed_trigger(

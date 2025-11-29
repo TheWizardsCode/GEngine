@@ -121,6 +121,12 @@ class DirectorSettings(BaseModel):
     travel_max_routes: int = Field(4, ge=1)
     story_seed_limit: int = Field(2, ge=1)
     event_history_limit: int = Field(6, ge=1)
+    max_active_seeds: int = Field(1, ge=1)
+    global_quiet_ticks: int = Field(4, ge=0)
+    seed_active_ticks: int = Field(6, ge=0)
+    seed_resolve_ticks: int = Field(4, ge=0)
+    seed_quiet_ticks: int = Field(6, ge=0)
+    lifecycle_history_limit: int = Field(12, ge=1)
 
 
 class SimulationConfig(BaseModel):

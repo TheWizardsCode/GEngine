@@ -63,7 +63,15 @@ def run_headless_sim(
     summary["director_history"] = list(engine.state.metadata.get("director_history") or [])
     summary["director_analysis"] = dict(engine.state.metadata.get("director_analysis") or {})
     summary["director_events"] = list(engine.state.metadata.get("director_events") or [])
+    summary["director_pacing"] = dict(engine.state.metadata.get("director_pacing") or {})
     summary["story_seeds"] = list(engine.state.metadata.get("story_seeds_active") or [])
+    summary["story_seed_lifecycle"] = dict(engine.state.metadata.get("story_seed_lifecycle") or {})
+    summary["story_seed_lifecycle_history"] = list(
+        engine.state.metadata.get("story_seed_lifecycle_history") or []
+    )
+    quiet_until = engine.state.metadata.get("director_quiet_until")
+    if isinstance(quiet_until, (int, float)):
+        summary["director_quiet_until"] = int(quiet_until)
     if reports:
         summary["anomalies"] = sum(len(report.anomalies) for report in reports)
         summary["anomaly_examples"] = sorted(

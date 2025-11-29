@@ -84,9 +84,21 @@ class GameState(BaseModel):
         director_events = self.metadata.get("director_events") or []
         if director_events:
             summary["director_events"] = director_events
+        director_pacing = self.metadata.get("director_pacing") or {}
+        if director_pacing:
+            summary["director_pacing"] = director_pacing
+        quiet_until = self.metadata.get("director_quiet_until")
+        if isinstance(quiet_until, (int, float)) and quiet_until > self.tick:
+            summary["director_quiet_until"] = int(quiet_until)
         story_seeds = self.metadata.get("story_seeds_active") or []
         if story_seeds:
             summary["story_seeds"] = story_seeds
+        lifecycle = self.metadata.get("story_seed_lifecycle") or {}
+        if lifecycle:
+            summary["story_seed_lifecycle"] = lifecycle
+        lifecycle_history = self.metadata.get("story_seed_lifecycle_history") or []
+        if lifecycle_history:
+            summary["story_seed_lifecycle_history"] = lifecycle_history
         return summary
 
     def snapshot(self) -> Dict[str, Any]:

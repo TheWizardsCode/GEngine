@@ -20,6 +20,12 @@ A staged implementation that builds a solid simulation core, then layers on agen
   extremes, sampled diffusion deltas, biodiversity/stability snapshots) that
   surfaces in CLI/service/headless summaries. Remaining Phase 4 work focuses on
   long scenario sweeps plus director UX polish before merging back to main.
+- ⚙️ Phase 5 (Narrative Director & Story Seeds): **M5.1 story seed schema** and
+  **M5.2 director events** shipped; **M5.3 pacing/lifecycle** work is active on
+  `feature/m5-3-director-pacing`, adding deterministic lifecycle states,
+  per-seed/global quiet timers, CLI/service/headless `director_pacing`
+  snapshots, lifecycle history, and regression tests so pacing guardrails stay
+  observable during long burns.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -302,13 +308,43 @@ single row to validate whenever a guardrail knob changes.
   resolution path they are on. Add focused unit tests for trigger evaluation
   plus an integration test that asserts deterministic seed activation for the
   default world/seed combo.
-- **M5.3 Pacing/resolution** (0.5-1 day): Layer deterministic cooldown loops
-  (per-seed and global quiet periods), add lifecycle tracking (`primed →
-  active → resolving → archived`), and expose pacing controls via
-  `simulation.yml`. Telemetry and CLI history should capture lifecycle changes
-  so long burns prove that crises do not overlap excessively. Extend tests to
-  ensure cooldown math survives save/load and that quiet-period enforcement is
-  observable via the ranked archive.
+- **M5.3 Pacing/resolution** (in progress on `feature/m5-3-director-pacing`):
+  implements the lifecycle state machine plus user-facing telemetry so pacing
+  regressions show up immediately.
+  - `DirectorSettings` now exposes `max_active_seeds`, `global_quiet_ticks`,
+    `seed_active_ticks`, `seed_resolve_ticks`, `seed_quiet_ticks`, and
+    `lifecycle_history_limit` knobs in every config variant (baseline and sweep
+    folders) so designers can dial overlap, dwell time, and history depth
+    without touching code.
+  - `NarrativeDirector` records lifecycle state per seed, enforces per-seed
+    cooldowns and quiet timers, respects the global quiet span, and writes the
+    resulting metadata to `story_seed_lifecycle`, `story_seed_lifecycle_history`,
+    `director_pacing`, and `director_quiet_until`. CLI summary, the `director`
+    command, FastAPI `/state?detail=summary`, and headless telemetry inherit the
+    new payloads so playtesters see why a seed is blocked (max-active,
+    seed quiet, global quiet) alongside remaining durations.
+  - The `director_pacing` payload spells out `active_count`, `resolving_count`,
+    `blocked_reasons`, and `quiet_remaining_ticks` so reviewers can diff pacing
+    regressions between telemetry captures without replaying the run. The
+    companion `story_seed_lifecycle` table lists each seed id, lifecycle state,
+    ticks remaining in that state, cooldown timers, and the last trigger tick,
+    matching what the CLI renders for rapid troubleshooting.
+  - Regression coverage now includes
+    `tests/echoes/test_story_seeds.py::test_summary_includes_pacing_and_lifecycle_metadata`
+    for summary rendering plus
+    `tests/echoes/test_story_seeds.py::test_story_seed_lifecycle_transitions_and_persists`
+    to assert `primed → active → resolving → archived` transitions survive
+    snapshot save/load.
+  - `scripts/run_headless_sim.py` emits the same pacing data (`director_pacing`,
+    lifecycle tables/history, and quiet timer), so nightly sweeps can diff
+    cooldown math against previous artifacts. Canonical validation remains the
+    balanced 200-tick run: `uv run python scripts/run_headless_sim.py --world
+    default --ticks 200 --lod balanced --seed 42 --output
+    build/feature-m5-3-director-pacing.json` after a full
+    `uv run --group dev pytest` sweep.
+  - Documentation updates (README, GDD, gameplay guide) must explain how to read
+    the new `director_pacing` block, where to tune the pacing knobs, and how to
+    capture reviewer telemetry so test plans stay reproducible.
 - **M5.4 Post-mortem** (0.5 day): Generate deterministic, referenceable
   summaries that stitch together the highest-impact seeds, faction swings, and
   environment trends into a readable epilogue. Provide a CLI command and

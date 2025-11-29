@@ -32,7 +32,7 @@ and persist state.
 | Command                   | Description                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `help`                    | Lists all available commands.                                                                                                                                                                                                                                                                                                                                   |
-| `summary`                 | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, biodiversity value/deltas, stability feedback, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). Also surfaces `story_seeds` and `director_events` so you can spot which authored beats are live. |
+| `summary`                 | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, biodiversity value/deltas, stability feedback, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). Also surfaces `story_seeds`, `director_events`, and a `director pacing` block that lists how many seeds are active versus resolving, whether a quiet timer is in effect, and which guardrails (max-active, seed quiet, global quiet) blocked fresh matches. |
 | `next`                    | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                                                                                                                                                |
 | `run <n>`                 | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                                                                                                                                                        |
 | `map [district_id]`       | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district.                                                                                                                                              |
@@ -282,6 +282,36 @@ and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
   suppressed counts in longer sweeps. The JSON payload also exposes a
   top-level `story_seeds` array with the most recent matches so telemetry
   captures which authored beats were live at the end of the run.
+
+### Director Pacing & Lifecycles
+
+- The director now runs a pacing state machine that moves each seed through
+  `primed → active → resolving → archived`, tracking per-seed cooldowns, per-seed
+  quiet timers, and a global quiet span. When pacing guardrails trip, the
+  director defers new matches until either the max-active limit relaxes or the
+  quiet timer expires.
+- CLI and service summaries include a `director pacing` block plus rich seed
+  entries so you can see how many crises are active versus resolving, how long
+  remains on the global quiet timer, and whether the latest tick was blocked by
+  `max_active`, `seed_quiet`, or `global_quiet`. Each visible seed lists its
+  lifecycle state, remaining active/resolving duration, and `cooldown_remaining`
+  so you know when it can fire again.
+- The adjacent `story_seed_lifecycle` table mirrors the telemetry payload: per
+  row you get the seed id, lifecycle state, ticks remaining in that state,
+  cooldown remaining, and the `last_trigger_tick`. Use this view to explain why
+  a beat is still resolving or why it dropped back to `primed` even if the
+  director is quiet.
+- Headless telemetry mirrors the same data via the `director_pacing`,
+  `story_seed_lifecycle`, `story_seed_lifecycle_history`, and
+  `director_quiet_until` keys. Diff these blocks between telemetry captures to
+  reason about pacing regressions without replaying the session.
+- Tune pacing under the `director` block in `content/config/simulation.yml`
+  (and every sweep preset). `max_active_seeds` limits overlapping crises,
+  `global_quiet_ticks` enforces a buffer after each activation, and the
+  `seed_*` durations (`seed_active_ticks`, `seed_resolve_ticks`,
+  `seed_quiet_ticks`) define how long a beat stays on stage before returning to
+  `primed`. `lifecycle_history_limit` controls how much history stays in CLI and
+  telemetry outputs for after-action reviews.
 
 ## 4. World and District Parameters
 

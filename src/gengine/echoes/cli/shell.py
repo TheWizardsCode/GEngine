@@ -444,6 +444,28 @@ def _render_summary(summary: dict[str, object]) -> str:
                     preview.append(f"{hotspot.get('district_id', 'n/a')}:pending")
             if preview:
                 lines.append(f"    travel: {', '.join(preview)}")
+    pacing = summary.get("director_pacing")
+    if isinstance(pacing, dict) and pacing:
+        lines.append("  director pacing:")
+        lines.append(
+            "    active/resolving -> "
+            f"{pacing.get('active', 0)}/{pacing.get('resolving', 0)} (max {pacing.get('max_active', 0)})"
+        )
+        quiet_until = pacing.get("global_quiet_until")
+        quiet_remaining = pacing.get("global_quiet_remaining")
+        if isinstance(quiet_until, (int, float)) and quiet_until > 0:
+            if isinstance(quiet_remaining, (int, float)) and quiet_remaining > 0:
+                lines.append(
+                    f"    quiet until tick {int(quiet_until)} ({int(quiet_remaining)} ticks)"
+                )
+            else:
+                lines.append(f"    quiet until tick {int(quiet_until)}")
+        blocked = pacing.get("blocked_reasons") or []
+        if blocked:
+            lines.append(f"    blocked: {', '.join(blocked)}")
+        tick = pacing.get("tick")
+        if isinstance(tick, (int, float)):
+            lines.append(f"    tick: {int(tick)}")
     story_seeds = summary.get("story_seeds") or []
     if story_seeds:
         lines.append("  story seeds:")
@@ -458,6 +480,15 @@ def _render_summary(summary: dict[str, object]) -> str:
             reason = seed.get("reason")
             if reason:
                 prefix = f"{prefix} :: {reason}"
+            lifecycle_bits: List[str] = []
+            state_name = seed.get("state")
+            if state_name:
+                lifecycle_bits.append(state_name)
+            state_remaining = seed.get("state_remaining")
+            if isinstance(state_remaining, (int, float)) and state_remaining > 0:
+                lifecycle_bits.append(f"{int(state_remaining)}t")
+            if lifecycle_bits:
+                prefix = f"{prefix} <{'|'.join(lifecycle_bits)}>"
             cooldown_bits: List[str] = []
             remaining = seed.get("cooldown_remaining")
             if isinstance(remaining, (int, float)):

@@ -278,6 +278,24 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   `director` command, FastAPI `/state?detail=summary`, and headless telemetry,
   giving designers a deterministic breadcrumb trail showing which authored
   beats fired and why without scrubbing logs.
+- Phase 5.3 pacing guardrails add a deterministic lifecycle machine and expose
+  its telemetry everywhere. Seeds now progress through `primed → active →
+  resolving → archived` with per-seed cooldown windows, per-seed quiet timers,
+  and a global quiet span that caps how many crises overlap. The CLI summary,
+  service payloads, and headless JSON each publish a `director_pacing` block
+  alongside `story_seed_lifecycle`, `story_seed_lifecycle_history`, and a
+  `director_quiet_until` timer so reviewers instantly see whether a beat is
+  blocked by the max-active limit, a quiet period, or a lingering cooldown. The
+  same block lists how many seeds are resolving versus active plus any blocked
+  reasons, making pacing regressions visible without spelunking logs, and the
+  values are tunable via the `director` section of `simulation.yml`.
+  - `director_pacing` highlights `active_count`, `resolving_count`,
+    `quiet_remaining_ticks`, and a `blocked_reasons` array so designers can tell
+    whether overlap caps, per-seed quiet timers, or a global cool-down caused a
+    lull. The rolling `story_seed_lifecycle` table mirrors the CLI display with
+    columns for lifecycle state, ticks remaining, cooldown remaining, and the
+    last trigger tick, giving authors a deterministic audit trail for every
+    seed without digging through logs.
 - Authoring guidelines (Phase 5): every seed carries `id`, `summary`,
   `stakes`, configurable `triggers` (thresholded metrics or boolean flags), a
   `roles` block that lists candidate agents/factions, a `travel_hint` that lets
