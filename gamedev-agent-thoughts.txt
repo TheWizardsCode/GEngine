@@ -301,3 +301,4 @@ a0bd56a: Finalize M5.4 closure—flip README/GDD/plan progress logs to ✅, refr
 a0bd56a: Marked M5.4 as shipped across README, GDD, implementation plan (progress logs, milestone sections, Next Steps) so the branch is ready to commit/merge.
 a0bd56a: Ran `uv run --group dev pytest tests/echoes/test_post_mortem.py tests/echoes/test_cli_shell.py tests/echoes/test_service_api.py tests/scripts/test_run_headless_sim.py` (43 passed) to confirm the recap surfaces stay green before committing.
 a0bd56a: Committed "Complete M5.4 post-mortem milestone" covering generator, CLI/service/headless surfacing, regression tests, docs, workflow log, and canonical telemetry guidance.
+a0bd56a -> main: Fast-forwarded main with feature/m5-4-post-mortems after green targeted pytest sweep to close the milestone.
