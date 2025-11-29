@@ -240,6 +240,146 @@ class TestObserverDetectsStabilityCrash:
             assert trend.metric_name.startswith("faction_")
 
 
+class TestObserverAlertAndCommentaryEdgeCases:
+    """Additional tests for coverage of alert and commentary edge cases."""
+
+    def test_alert_direction_above_threshold(self) -> None:
+        """Test alert triggered when metric exceeds threshold from above."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        trend = observer._analyze_trend(
+            "pollution",
+            [0.5, 0.7, 0.9],
+            alert_threshold=0.8,
+            alert_direction="above",
+        )
+
+        assert trend.alert is not None
+        assert "exceeded" in trend.alert
+
+    def test_check_alerts_stability_critical_with_logging(self) -> None:
+        """Test stability critical alert is logged and added."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig(
+            stability_alert_threshold=0.5,
+            log_natural_language=True,
+        )
+
+        alerts: list[str] = []
+        commentary: list[str] = []
+        state = {"stability": 0.3, "tick": 50}
+
+        observer._check_alerts(state, alerts, commentary)
+
+        assert len(alerts) == 1
+        assert "ALERT: Stability critical" in alerts[0]
+        assert "0.300" in alerts[0]
+
+    def test_check_alerts_multiple_crises(self) -> None:
+        """Test multiple crises alert is triggered."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        alerts: list[str] = []
+        commentary: list[str] = []
+        state = {
+            "stability": 0.8,
+            "tick": 100,
+            "director_pacing": {"active_count": 4},
+        }
+
+        observer._check_alerts(state, alerts, commentary)
+
+        assert len(alerts) == 1
+        assert "Multiple crises active (4)" in alerts[0]
+
+    def test_commentary_stability_declining_significantly(self) -> None:
+        """Test commentary for significant stability decline."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        stability_trend = TrendAnalysis(
+            metric_name="stability",
+            start_value=0.9,
+            end_value=0.6,
+            delta=-0.3,
+            trend="decreasing",
+        )
+
+        comments = observer._generate_commentary(stability_trend, {}, [])
+
+        assert any("declined significantly" in c for c in comments)
+        assert any("0.90" in c and "0.60" in c for c in comments)
+
+    def test_commentary_stability_stable(self) -> None:
+        """Test commentary for stable stability."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        stability_trend = TrendAnalysis(
+            metric_name="stability",
+            start_value=0.7,
+            end_value=0.71,
+            delta=0.01,
+            trend="stable",
+        )
+
+        comments = observer._generate_commentary(stability_trend, {}, [])
+
+        assert any("remained steady" in c for c in comments)
+
+    def test_commentary_faction_losing_influence(self) -> None:
+        """Test commentary for faction losing legitimacy."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        stability_trend = TrendAnalysis(
+            metric_name="stability",
+            start_value=0.8,
+            end_value=0.82,
+            delta=0.02,
+            trend="stable",
+        )
+
+        faction_swings = {
+            "rebel_alliance": TrendAnalysis(
+                metric_name="faction_rebel_alliance_legitimacy",
+                start_value=0.7,
+                end_value=0.5,
+                delta=-0.2,
+                trend="decreasing",
+                alert="faction_rebel_alliance_legitimacy lost 0.200 over observation period",
+            )
+        }
+
+        comments = observer._generate_commentary(stability_trend, faction_swings, [])
+
+        assert any("lost influence" in c for c in comments)
+        assert any("-0.20 legitimacy" in c for c in comments)
+
+    def test_check_story_seeds_handles_id_variants(self) -> None:
+        """Test story seed tracking handles both 'seed_id' and 'id' fields."""
+        observer = Observer.__new__(Observer)
+        observer._config = ObserverConfig()
+
+        activated: list[dict] = []
+        state = {
+            "tick": 50,
+            "story_seeds": [
+                {"seed_id": "crisis-a", "target_district": "district-1"},
+                {"id": "crisis-b", "district": "district-2"},
+            ],
+        }
+
+        observer._check_story_seeds(state, activated)
+
+        assert len(activated) == 2
+        seed_ids = [s["seed_id"] for s in activated]
+        assert "crisis-a" in seed_ids
+        assert "crisis-b" in seed_ids
+
+
 class TestCreateObserverHelpers:
     """Tests for observer factory functions."""
 
