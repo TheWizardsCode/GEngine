@@ -271,6 +271,19 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   the block for the duration of their cooldown and expose
   `cooldown_remaining`/`last_trigger_tick` so telemetry still shows the most
   recent beats even if the triggering tick already advanced.
+- Authoring guidelines (Phase 5): every seed carries `id`, `summary`,
+  `stakes`, configurable `triggers` (thresholded metrics or boolean flags), a
+  `roles` block that lists candidate agents/factions, a `travel_hint` that lets
+  the director bias toward reachable districts, and `resolution_templates`
+  describing success/failure/partial paths. Optional `followups` allow chained
+  beats once the pacing system (M5.3) lands. These fields will be validated via
+  Pydantic + schema tests so designer errors surface before runtime.
+- Lifecycle expectations: seeds move through `primed → active → resolving →
+  archived`. Cooldowns and quiet-period rules throttle how many can be active
+  per focus window, while telemetry/CLI history log each transition so
+  playtesters can trace overlapping crises. Post-mortems (M5.4) will pull from
+  the archived list plus any recorded resolutions to build deterministic end
+  cards for the campaign recap.
 
 **Endgame & Outcomes:**
 

@@ -284,14 +284,36 @@ single row to validate whenever a guardrail knob changes.
 
 ### Phase 5 – Narrative Director and Story Seeds
 
-- **M5.1 Seed schema** (0.5 day): YAML format + validator under
-  `content/worlds/<name>/story_seeds.yml`.
-- **M5.2 Director core** (1-1.5 days): monitors metrics, activates seeds, logs
-  timeline events.
-- **M5.3 Pacing/resolution** (0.5-1 day): cooldowns, quiet periods, event
-  lifecycle tracking so crises do not overlap chaotically.
-- **M5.4 Post-mortem** (0.5 day): deterministic text summaries callable from
-  CLI and gateway.
+- **M5.1 Seed schema** (0.5 day): Formalize the YAML contract in
+  `content/worlds/<name>/story_seeds.yml`, including trigger expressions,
+  tagging, cooldown defaults, travel hints, and resolution templates. Extend
+  the loader plus `StorySeed` model validations so malformed seeds are caught
+  at import time, and add regression fixtures in `tests/content` that cover
+  both happy-path and failure cases. Refresh the GDD/README with an explicit
+  authoring checklist and bake the canonical seeds into the default world so
+  telemetry immediately shows populated entries during balanced 200-tick runs.
+- **M5.2 Director core** (1-1.5 days): Replace the current scaffolding with a
+  fully stateful controller that reads the cached `story_seeds` payloads,
+  evaluates triggers against hotspot metrics/travel time, and emits structured
+  `director_events` that reference specific agents/factions. Wire the outcomes
+  into CLI `summary`/`director` commands, `/state?detail=summary`, and headless
+  telemetry so every surface shows which seeds fired, why, and what resolution
+  path they are on. Add focused unit tests for trigger evaluation plus an
+  integration test that asserts deterministic seed activation for the default
+  world/seed combo.
+- **M5.3 Pacing/resolution** (0.5-1 day): Layer deterministic cooldown loops
+  (per-seed and global quiet periods), add lifecycle tracking (`primed →
+  active → resolving → archived`), and expose pacing controls via
+  `simulation.yml`. Telemetry and CLI history should capture lifecycle changes
+  so long burns prove that crises do not overlap excessively. Extend tests to
+  ensure cooldown math survives save/load and that quiet-period enforcement is
+  observable via the ranked archive.
+- **M5.4 Post-mortem** (0.5 day): Generate deterministic, referenceable
+  summaries that stitch together the highest-impact seeds, faction swings, and
+  environment trends into a readable epilogue. Provide a CLI command and
+  service endpoint that dump the summary for LLM/gateway consumption, and add
+  golden outputs tied to the canonical 200-tick telemetry to guard against
+  accidental narrative drift.
 
 ### Phase 6 – CLI Gateway, Visualization, LLM Intent Layer
 

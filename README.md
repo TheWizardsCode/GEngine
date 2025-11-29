@@ -464,14 +464,14 @@ Key flags:
 
 ## Next Steps
 
-1. **Phase 4 close-out** – keep deepening the live subsystems by finishing the
-   biodiversity-plus-diffusion tuning pass, refreshing telemetry/plots across
-   the cushioned, high-pressure, and profiling-history sweeps, and backfilling
-   any doc or test gaps so the current branch can merge cleanly.
-2. **Phase 5 kick-off** – start the narrative director, intent gateway, and
-   multiplayer/Gateway service work streams outlined in the implementation plan,
-   including updated GDD beats, service contracts, and regression hooks so the
-   CLI/service/LLM stack evolves in lockstep.
+1. **Phase 5 M5.1 – Story seed schema** – lock the YAML contract
+  (`content/worlds/<world>/story_seeds.yml`), extend the loader validations,
+  upgrade tests/docs, and ship a refreshed default seed set so every balanced
+  200-tick telemetry capture shows populated `story_seeds` blocks by default.
+2. **Phase 5 M5.2–M5.4 – Director + pacing** – evolve the NarrativeDirector to
+  evaluate triggers + travel time, add deterministic pacing/cooldowns, and
+  surface post-mortem summaries across CLI/service/headless outputs per the
+  implementation plan.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).
