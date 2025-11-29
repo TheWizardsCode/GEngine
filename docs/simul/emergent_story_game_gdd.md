@@ -33,6 +33,13 @@ archived`), applies per-seed and global quiet timers, records
   canonical 200-tick artifact (`build/feature-m5-4-post-mortem.json`) and the
   `jq '.post_mortem'` diff snippet so designers can compare epilogues without
   re-running the sim.
+- ✅ **Phase 7 M7.2 – Explanations** shipped: queryable timelines and causal
+  summaries are now available via the `ExplanationsManager`. New CLI commands
+  (`timeline`, `explain`, `why`) surface event causality, agent reasoning
+  summaries (e.g., "Joined protest because rent ↑, trust in Council ↓"), and
+  metric explanations (e.g., "stability dropped due to high unrest, pollution").
+  The system tracks causal chains between events each tick and persists them
+  to game state metadata for querying.
 
 ## 2. Setting & Tone
 

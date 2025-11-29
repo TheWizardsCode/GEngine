@@ -849,3 +849,104 @@ Current commit history:
 M6.4 successfully integrated into main branch.
 Ready to begin next milestone.
 
+
+M7.2 Explanations - Timeline/Causal Queries
+============================================
+[2025-11-29 10:27 UTC] b3fe603: Starting M7.2 implementation (explanations system)
+
+Requirements from GDD/Implementation Plan:
+- M7.2 Explanations (0.5-1 day): queryable timelines and causal summaries
+- Event timelines showing key causes and effects
+- Inspectable agents with summarized reasoning
+- Causal explanations surfaced in the CLI
+
+Current Event Tracking Analysis:
+1. director_events: story seed activations with tick, agents, factions, stakes
+2. director_history: narrator feed snapshots per tick
+3. focus_history: focus manager history
+4. story_seed_lifecycle_history: lifecycle transitions
+5. faction_legitimacy_delta: per-tick faction changes
+6. environment_impact: environmental changes per tick
+7. agent_actions/faction_actions: tracked in tick reports
+
+Implementation Plan:
+1. Create src/gengine/echoes/sim/explanations.py:
+   - CausalEvent model for events with cause/effect links
+   - AgentReasoningSummary model for agent decision summaries
+   - ExplanationsManager to track and query causal chains
+   - Timeline query interface
+
+2. Integrate with tick.py to capture causal links during simulation
+
+3. Add CLI commands in shell.py:
+   - `explain <entity>` - explain why something changed
+   - `timeline [count]` - show recent causal timeline
+   - `why <metric>` - explain metric changes
+
+4. Add comprehensive tests
+
+5. Update documentation
+
+Starting implementation...
+
+[2025-11-29 10:30 UTC] b3fe603: Created src/gengine/echoes/sim/explanations.py with:
+- CausalCategory enum for event categorization
+- CausalEvent dataclass for tracking events with causes/effects
+- AgentReasoningSummary dataclass for agent decision summaries
+- TimelineEntry dataclass for per-tick event grouping
+- ExplanationsManager class with:
+  - record_tick() to capture causal events during simulation
+  - query_timeline() for recent timeline queries
+  - explain_metric/faction/agent/district() for entity-specific explanations
+  - get_why_summary() for natural language style queries
+  - _infer_stability_causes() for inferring causes from state
+
+[2025-11-29 10:35 UTC] b3fe603: Integrated explanations into tick.py:
+- Added ExplanationsManager to TickCoordinator constructor
+- Record environment deltas, faction changes, agent/faction actions per tick
+- Persist explanation data to game state metadata
+
+[2025-11-29 10:40 UTC] b3fe603: Updated SimEngine to create and use ExplanationsManager:
+- Added query_timeline(), explain_metric/faction/agent/district(), why() methods
+- Integrated with advance_ticks() to pass explanations_manager
+
+[2025-11-29 10:45 UTC] b3fe603: Added CLI commands to shell.py:
+- timeline [count] - show causal timeline
+- explain <type> <id> - query entity explanations
+- why <query> - natural language causal queries
+- Updated help text and help command
+- Added rendering functions for timeline, explanations, and why answers
+
+[2025-11-29 10:50 UTC] b3fe603: Added tests:
+- tests/echoes/test_explanations.py with 26 tests covering all ExplanationsManager functionality
+- 12 new CLI tests for timeline, explain, and why commands
+- All 337 tests passing
+- 93% overall coverage, 96% for explanations module
+
+[2025-11-29 10:55 UTC] b3fe603: Updated documentation:
+- README.md: Added timeline, explain, why commands to CLI section
+- docs/simul/emergent_story_game_implementation_plan.md: Marked M7.2 as complete, updated progress log
+- docs/simul/emergent_story_game_gdd.md: Added M7.2 to progress log
+- docs/gengine/how_to_play_echoes.md: Added new commands to command table
+
+[2025-11-29 10:58 UTC] b3fe603: Captured telemetry:
+- uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m7-2-explanations.json
+- Telemetry shows: stability 1.0, unrest 0.41, pollution 0.58, 343 suppressed events, 0 anomalies
+
+M7.2 Implementation Complete
+============================
+- ExplanationsManager tracks causal chains between events
+- Agent reasoning summaries capture decision factors
+- CLI commands (timeline, explain, why) surface causal data
+- 337 tests passing, 93% coverage (96% for new module)
+- Documentation updated across README, implementation plan, GDD, gameplay guide
+- Canonical telemetry captured in build/feature-m7-2-explanations.json
+
+Playtest Instructions:
+1. Start shell: `uv run echoes-shell --world default`
+2. Run simulation: `run 20`
+3. Query timeline: `timeline 5`
+4. Explain stability: `explain metric stability`
+5. Query why: `why stability dropped`
+6. Exit: `exit`
+

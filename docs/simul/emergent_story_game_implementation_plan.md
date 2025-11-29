@@ -45,7 +45,11 @@ A staged implementation that builds a solid simulation core, then layers on agen
     provider pattern (with `StubProvider` for offline testing), and
     `echoes-llm-service` CLI entry point. 31 new tests cover settings,
     providers, and FastAPI endpoints (243 tests total, 94% coverage).
-- ⏳ Phases 7–8: pending (progression systems, explanations, containerization, Kubernetes).
+- ⚙️ Phase 7 (Player Experience): **M7.2 Explanations** shipped with
+  `ExplanationsManager`, CLI commands (`timeline`, `explain`, `why`), causal
+  chain tracking, and agent reasoning summaries. Remaining: M7.1 progression,
+  M7.3 tuning, M7.4 campaign UX.
+- ⏳ Phase 8: pending (containerization, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
 
@@ -421,7 +425,14 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
 
 - **M7.1 Progression systems** (1-1.5 days): skills, access tiers, reputation
   influencing success rates and dialogue.
-- **M7.2 Explanations** (0.5-1 day): queryable timelines and causal summaries.
+- ✅ **M7.2 Explanations** (0.5-1 day): queryable timelines and causal summaries.
+  Implemented via `ExplanationsManager` in `gengine.echoes.sim.explanations`
+  which tracks causal chains between events, builds agent reasoning summaries,
+  and provides query interfaces for metrics/factions/agents/districts. CLI
+  commands `timeline`, `explain`, and `why` surface this data to testers. The
+  system captures per-tick environment deltas, faction legitimacy changes, agent
+  actions with inferred reasoning factors, and story seed activations into a
+  rolling timeline that persists in game state metadata.
 - **M7.3 Tuning + replayability** (1-2 days): scenario sweeps, difficulty
   modifiers, config exposure.
 - **M7.4 Campaign UX** (0.5-1 day): autosaves, campaign picker, clean

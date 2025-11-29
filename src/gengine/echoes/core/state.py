@@ -102,6 +102,13 @@ class GameState(BaseModel):
         post_mortem = self.metadata.get("post_mortem") or {}
         if post_mortem:
             summary["post_mortem"] = post_mortem
+        # M7.2 Explanations data
+        explanation_timeline = self.metadata.get("explanation_timeline_history") or []
+        if explanation_timeline:
+            summary["explanation_timeline_history"] = explanation_timeline[-10:]
+        agent_reasoning = self.metadata.get("explanation_agent_reasoning") or []
+        if agent_reasoning:
+            summary["explanation_agent_reasoning"] = agent_reasoning
         return summary
 
     def snapshot(self) -> Dict[str, Any]:
