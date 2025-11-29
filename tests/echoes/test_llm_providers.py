@@ -121,25 +121,29 @@ class TestCreateProvider:
         assert isinstance(provider, StubProvider)
         assert provider.settings.provider == "stub"
 
-    def test_create_openai_provider_not_implemented(self) -> None:
+    def test_create_openai_provider(self) -> None:
         settings = LLMSettings(
             provider="openai",
             api_key="test-key",
             model="gpt-4",
         )
 
-        with pytest.raises(NotImplementedError, match="OpenAI provider"):
-            create_provider(settings)
+        provider = create_provider(settings)
+        assert provider.settings.provider == "openai"
+        assert provider.settings.api_key == "test-key"
+        assert provider.settings.model == "gpt-4"
 
-    def test_create_anthropic_provider_not_implemented(self) -> None:
+    def test_create_anthropic_provider(self) -> None:
         settings = LLMSettings(
             provider="anthropic",
             api_key="test-key",
             model="claude-3-sonnet-20240229",
         )
 
-        with pytest.raises(NotImplementedError, match="Anthropic provider"):
-            create_provider(settings)
+        provider = create_provider(settings)
+        assert provider.settings.provider == "anthropic"
+        assert provider.settings.api_key == "test-key"
+        assert provider.settings.model == "claude-3-sonnet-20240229"
 
     def test_create_invalid_provider(self) -> None:
         settings = LLMSettings(provider="invalid")
