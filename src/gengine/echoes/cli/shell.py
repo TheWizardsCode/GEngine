@@ -468,6 +468,9 @@ def _render_summary(summary: dict[str, object]) -> str:
             if cooldown_bits:
                 prefix = f"{prefix} [{' | '.join(cooldown_bits)}]"
             lines.append(prefix)
+            stakes = seed.get("stakes")
+            if stakes:
+                lines.append(f"      stakes: {stakes}")
         if len(story_seeds) > 3:
             lines.append(f"    (+{len(story_seeds) - 3} more)")
     profiling = summary.get("profiling")

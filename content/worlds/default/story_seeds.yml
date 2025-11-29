@@ -2,10 +2,14 @@ story_seeds:
   - id: energy-quota-crisis
     title: "Energy Quota Fallout"
     summary: "Rolling brownouts push the Industrial Tier toward a credibility crisis."
+    stakes: "Union of Flux stewards threaten to abandon the grid if outages spread."
     scope: environment
     tags: [energy, labor, crisis]
     preferred_districts: [industrial-tier]
     cooldown_ticks: 40
+    travel_hint:
+      district_id: industrial-tier
+      max_focus_distance: 3
     roles:
       agents: [aria-volt]
       factions: [union_of_flux]
@@ -21,13 +25,22 @@ story_seeds:
         min_score: 0.45
         min_severity: 0.65
         max_focus_distance: 4
+    resolution_templates:
+      success: "Emergency rationing shares power fairly and the Union backs down."
+      failure: "Workshops go dark, strikers spread, and council legitimacy crashes."
+      partial: "Convoys buy time but sabotage rumors keep tensions high."
+    followups: [hollow-supply-chain]
   - id: hollow-supply-chain
     title: "Smuggling Lanes Exposed"
     summary: "Cartel of Mist couriers lose safe passage through Perimeter Hollow."
+    stakes: "If the lanes close, Perimeter Hollow starves and unrest spikes citywide."
     scope: faction
     tags: [smuggling, security]
     preferred_districts: [perimeter-hollow]
     cooldown_ticks: 35
+    travel_hint:
+      district_id: perimeter-hollow
+      max_focus_distance: 4
     roles:
       agents: [cassian-mire]
       factions: [cartel_of_mist]
@@ -45,13 +58,22 @@ story_seeds:
         min_score: 0.45
         min_severity: 0.5
         max_focus_distance: 4
+    resolution_templates:
+      success: "Cartel escorts broker a truce and reopen the maintenance tunnels."
+      failure: "Security drones seize the lanes and the Cartel loses leverage."
+      partial: "Bribes buy a few quiet nights, but patrols stay on edge."
+    followups: [spire-data-leak]
   - id: spire-data-leak
     title: "Research Spire Data Leak"
     summary: "Stolen climate models hint at sabotage inside the spire."
+    stakes: "Leaked terraforming telemetry could destabilize the perimeter climate nets."
     scope: agent
     tags: [intel, climate]
     preferred_districts: [research-spire]
     cooldown_ticks: 45
+    travel_hint:
+      district_id: research-spire
+      max_focus_distance: 5
     roles:
       agents: [dr-lyra-keel]
       factions: []
@@ -69,3 +91,8 @@ story_seeds:
         min_score: 0.45
         min_severity: 0.6
         max_focus_distance: 5
+    resolution_templates:
+      success: "Security purges the leak and climate models return to trusted hands."
+      failure: "Saboteurs crash the uplink and terraforming cascades into failure."
+      partial: "Telemetry traces point to the Industrial Tier, but the culprit slips away."
+    followups: []

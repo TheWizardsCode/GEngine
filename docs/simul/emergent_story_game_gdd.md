@@ -276,8 +276,10 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
   `roles` block that lists candidate agents/factions, a `travel_hint` that lets
   the director bias toward reachable districts, and `resolution_templates`
   describing success/failure/partial paths. Optional `followups` allow chained
-  beats once the pacing system (M5.3) lands. These fields will be validated via
-  Pydantic + schema tests so designer errors surface before runtime.
+  beats once the pacing system (M5.3) lands. These fields are now enforced by
+  the loader, which validates every referenced district, agent, faction, and
+  followup id (alongside the existing Pydantic checks) so designer errors
+  surface before runtime.
 - Lifecycle expectations: seeds move through `primed → active → resolving →
   archived`. Cooldowns and quiet-period rules throttle how many can be active
   per focus window, while telemetry/CLI history log each transition so

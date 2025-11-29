@@ -82,19 +82,57 @@ class StorySeedTrigger(BaseModel):
     model_config = {"validate_assignment": True}
 
 
+class StorySeedRoles(BaseModel):
+    """Lists of authored participants a seed prefers to attach to."""
+
+    agents: List[str] = Field(default_factory=list)
+    factions: List[str] = Field(default_factory=list)
+
+    model_config = {"validate_assignment": True}
+
+
+class StorySeedResolutionTemplates(BaseModel):
+    """Text snippets describing possible outcomes for a seed."""
+
+    success: str
+    failure: str
+    partial: str | None = None
+
+    model_config = {"validate_assignment": True}
+
+
+class StorySeedTravelHint(BaseModel):
+    """Optional pointer that helps the director bias travel costs."""
+
+    district_id: str | None = None
+    max_focus_distance: int | None = Field(default=None, ge=0)
+
+    model_config = {"validate_assignment": True}
+
+    @model_validator(mode="after")
+    def _ensure_target(self) -> "StorySeedTravelHint":
+        if self.district_id is None and self.max_focus_distance is None:
+            raise ValueError("travel hint must set district_id or max_focus_distance")
+        return self
+
+
 class StorySeed(BaseModel):
     """Authored narrative seed triggered by hotspot conditions."""
 
     id: str = Field(..., min_length=1)
     title: str
     summary: str
+    stakes: str
     scope: str = "district"
     tags: List[str] = Field(default_factory=list)
     preferred_districts: List[str] = Field(default_factory=list)
     cooldown_ticks: int = Field(30, ge=0)
     triggers: List[StorySeedTrigger] = Field(default_factory=list)
-    roles: Dict[str, List[str]] = Field(default_factory=dict)
+    roles: StorySeedRoles = Field(default_factory=StorySeedRoles)
     beats: List[str] = Field(default_factory=list)
+    resolution_templates: StorySeedResolutionTemplates
+    travel_hint: StorySeedTravelHint | None = None
+    followups: List[str] = Field(default_factory=list)
 
     model_config = {"validate_assignment": True}
 

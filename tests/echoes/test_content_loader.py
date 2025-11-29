@@ -132,3 +132,128 @@ def test_geometry_enrichment_derives_adjacency(tmp_path: Path) -> None:
     assert adjacency["alpha"] == {"beta", "gamma"}
     assert adjacency["beta"] == {"alpha", "gamma"}
     assert adjacency["gamma"] == {"alpha", "beta"}
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"preferred_districts": ["unknown"]}, "unknown district 'unknown'"),
+        (
+            {
+                "triggers": [
+                    {
+                        "scope": "environment",
+                        "district_id": "unknown",
+                        "min_score": 0.5,
+                        "min_severity": 0.5,
+                    }
+                ]
+            },
+            "unknown district 'unknown'",
+        ),
+        ({"travel_hint": {"district_id": "unknown"}}, "unknown district 'unknown'"),
+        (
+            {"roles": {"agents": ["ghost"], "factions": ["union-of-flux"]}},
+            "unknown agent 'ghost'",
+        ),
+        (
+            {"roles": {"agents": ["aria-volt"], "factions": ["ghost"]}},
+            "unknown faction 'ghost'",
+        ),
+    ],
+)
+def test_story_seed_loader_validates_entity_references(tmp_path: Path, overrides: dict, message: str) -> None:
+    world_root = _write_story_seed_world(tmp_path, world_name="seed-refs")
+    _write_story_seeds_file(world_root, [_story_seed_payload(**overrides)])
+
+    with pytest.raises(ValueError, match=message):
+        load_world_bundle(world_root.name, content_root=tmp_path)
+
+
+def test_story_seed_loader_validates_followups(tmp_path: Path) -> None:
+    world_root = _write_story_seed_world(tmp_path, world_name="seed-followups")
+    seeds = [_story_seed_payload(id="alpha", followups=["beta"])]
+    _write_story_seeds_file(world_root, seeds)
+
+    with pytest.raises(ValueError, match="unknown followup 'beta'"):
+        load_world_bundle(world_root.name, content_root=tmp_path)
+
+
+def _write_story_seed_world(tmp_path: Path, *, world_name: str) -> Path:
+    world_root = tmp_path / world_name
+    world_root.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "city": {
+            "id": "test-city",
+            "name": "Test City",
+            "districts": [
+                {
+                    "id": "core",
+                    "name": "Core",
+                    "population": 10_000,
+                },
+                {
+                    "id": "spire",
+                    "name": "Spire",
+                    "population": 8_000,
+                },
+            ],
+        },
+        "factions": [
+            {
+                "id": "union-of-flux",
+                "name": "Union of Flux",
+            }
+        ],
+        "agents": [
+            {
+                "id": "aria-volt",
+                "name": "Aria Volt",
+                "role": "Advocate",
+            }
+        ],
+    }
+    (world_root / "world.yml").write_text(yaml.safe_dump(payload), encoding="utf-8")
+    return world_root
+
+
+def _story_seed_payload(**overrides):
+    seed_id = overrides.get("id", "seed-a")
+    payload = {
+        "id": seed_id,
+        "title": "Test Seed",
+        "summary": "Test summary",
+        "stakes": "Citywide unrest rises",
+        "scope": "environment",
+        "preferred_districts": ["core"],
+        "cooldown_ticks": 5,
+        "tags": ["test"],
+        "triggers": [
+            {
+                "scope": "environment",
+                "district_id": "core",
+                "min_score": 0.5,
+                "min_severity": 0.5,
+            }
+        ],
+        "roles": {
+            "agents": ["aria-volt"],
+            "factions": ["union-of-flux"],
+        },
+        "beats": ["Test beat"],
+        "resolution_templates": {
+            "success": "Stability recovered",
+            "failure": "Faction unrest worsens",
+        },
+        "travel_hint": {"district_id": "core"},
+        "followups": [],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _write_story_seeds_file(world_root: Path, seeds: list[dict]) -> None:
+    (world_root / "story_seeds.yml").write_text(
+        yaml.safe_dump({"story_seeds": seeds}),
+        encoding="utf-8",
+    )

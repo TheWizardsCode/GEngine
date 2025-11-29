@@ -87,7 +87,10 @@ run locally.
   CLI/service/headless summaries. Designers can see which authored beats are
   still live inside their cooldown window, which districts they target, and
   why they attached to the current conditions without them blinking off between
-  ticks.
+  ticks. The schema now requires explicit `stakes`, `resolution_templates`,
+  optional `travel_hint`, and `followups`, and the content loader validates
+  every referenced district, agent, faction, and followup id so malformed seeds
+  are caught immediately during world import.
 - Headless regression driver (`scripts/run_headless_sim.py`) that advances
   batches of ticks, emits per-batch diagnostics, and writes JSON summaries for
   automated sweeps or CI regressions. Summaries now include focus-budget
@@ -464,14 +467,14 @@ Key flags:
 
 ## Next Steps
 
-1. **Phase 5 M5.1 – Story seed schema** – lock the YAML contract
-  (`content/worlds/<world>/story_seeds.yml`), extend the loader validations,
-  upgrade tests/docs, and ship a refreshed default seed set so every balanced
-  200-tick telemetry capture shows populated `story_seeds` blocks by default.
-2. **Phase 5 M5.2–M5.4 – Director + pacing** – evolve the NarrativeDirector to
-  evaluate triggers + travel time, add deterministic pacing/cooldowns, and
-  surface post-mortem summaries across CLI/service/headless outputs per the
-  implementation plan.
+1. **Phase 5 M5.2 – Director core** – evolve the NarrativeDirector so it
+  evaluates triggers against hotspot metrics + travel time, emits structured
+  `director_events`, and threads those beats through CLI/service/headless
+  surfaces with deterministic tests for the default world.
+2. **Phase 5 M5.3–M5.4 – Pacing & post-mortems** – add lifecycle/pacing controls
+  (quiet periods, cooldown phases), expose pacing knobs via `simulation.yml`, and
+  finish the post-run epilogue tooling so telemetry/CLI reports summarize the
+  highest-impact crises at the end of each burn.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

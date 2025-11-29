@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import random
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 
 import yaml
 from pydantic import ValidationError
@@ -65,8 +65,6 @@ def load_world_bundle(
     agents_raw = raw.get("agents", []) or []
     env_raw = raw.get("environment", {}) or {}
     metadata = raw.get("metadata", {}) or {}
-    seed_path = root / world_name / "story_seeds.yml"
-    story_seeds = _load_story_seeds(seed_path)
 
     factions = {
         faction.id: faction
@@ -81,6 +79,14 @@ def load_world_bundle(
         )
     }
     environment = EnvironmentState.model_validate(env_raw)
+
+    seed_path = root / world_name / "story_seeds.yml"
+    story_seeds = _load_story_seeds(
+        seed_path,
+        city=city,
+        agent_ids=set(agents),
+        faction_ids=set(factions),
+    )
 
     seed = seed_override if seed_override is not None else metadata.get("seed")
     if seed is None:
@@ -144,7 +150,13 @@ def _distance(a: DistrictCoordinates, b: DistrictCoordinates) -> float:
     return (dx * dx + dy * dy + dz * dz) ** 0.5
 
 
-def _load_story_seeds(path: Path) -> Dict[str, StorySeed]:
+def _load_story_seeds(
+    path: Path,
+    *,
+    city: City,
+    agent_ids: Set[str],
+    faction_ids: Set[str],
+) -> Dict[str, StorySeed]:
     if not path.exists():
         return {}
     raw = _load_yaml(path)
@@ -156,7 +168,52 @@ def _load_story_seeds(path: Path) -> Dict[str, StorySeed]:
     if not isinstance(entries, list):
         raise ValueError("story seeds file must contain a list under 'story_seeds'")
     seeds: Dict[str, StorySeed] = {}
+    known_districts = {district.id for district in city.districts}
     for entry in entries:
         seed = StorySeed.model_validate(entry)
+        _validate_story_seed_references(
+            seed,
+            districts=known_districts,
+            agent_ids=agent_ids,
+            faction_ids=faction_ids,
+        )
         seeds[seed.id] = seed
+    _validate_story_seed_followups(seeds)
     return seeds
+
+
+def _validate_story_seed_references(
+    seed: StorySeed,
+    *,
+    districts: Set[str],
+    agent_ids: Set[str],
+    faction_ids: Set[str],
+) -> None:
+    errors: list[str] = []
+    for district_id in seed.preferred_districts:
+        if district_id not in districts:
+            errors.append(f"unknown district '{district_id}' in preferred_districts")
+    for trigger in seed.triggers:
+        if trigger.district_id and trigger.district_id not in districts:
+            errors.append(f"unknown district '{trigger.district_id}' in trigger")
+    if seed.travel_hint and seed.travel_hint.district_id:
+        if seed.travel_hint.district_id not in districts:
+            errors.append(f"unknown district '{seed.travel_hint.district_id}' in travel_hint")
+    for agent_id in seed.roles.agents:
+        if agent_id not in agent_ids:
+            errors.append(f"unknown agent '{agent_id}' in roles")
+    for faction_id in seed.roles.factions:
+        if faction_id not in faction_ids:
+            errors.append(f"unknown faction '{faction_id}' in roles")
+    if errors:
+        raise ValueError(f"Invalid story seed '{seed.id}': " + "; ".join(errors))
+
+
+def _validate_story_seed_followups(seeds: Dict[str, StorySeed]) -> None:
+    errors: list[str] = []
+    for seed in seeds.values():
+        for followup_id in seed.followups:
+            if followup_id not in seeds:
+                errors.append(f"{seed.id} references unknown followup '{followup_id}'")
+    if errors:
+        raise ValueError("Invalid story seed followups: " + "; ".join(errors))

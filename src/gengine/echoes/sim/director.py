@@ -365,21 +365,32 @@ class NarrativeDirector:
                 continue
             target = trigger_match.get("district_id")
             if not target:
-                target = seed.preferred_districts[0] if seed.preferred_districts else feed.get("focus_center")
+                if seed.travel_hint and seed.travel_hint.district_id:
+                    target = seed.travel_hint.district_id
+                elif seed.preferred_districts:
+                    target = seed.preferred_districts[0]
+                else:
+                    target = feed.get("focus_center")
             travel = travel_lookup.get(target)
+            travel_hint = seed.travel_hint.model_dump() if seed.travel_hint else None
             contexts[seed.id] = {
                 "seed_id": seed.id,
                 "title": seed.title,
                 "summary": seed.summary,
+                 "stakes": seed.stakes,
                 "district_id": target,
                 "scope": seed.scope,
                 "tags": list(seed.tags),
-                "roles": {role: list(values) for role, values in seed.roles.items()},
+                "roles": seed.roles.model_dump(),
+                "resolution_templates": seed.resolution_templates.model_dump(),
+                "followups": list(seed.followups),
                 "beats": list(seed.beats[:2]),
                 "reason": trigger_match.get("reason"),
                 "score": trigger_match.get("score"),
                 "travel": dict(travel) if isinstance(travel, dict) else travel,
             }
+            if travel_hint:
+                contexts[seed.id]["travel_hint"] = travel_hint
             cooldowns[seed.id] = tick
 
         active_matches: List[Dict[str, Any]] = []

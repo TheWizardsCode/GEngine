@@ -14,6 +14,18 @@ def test_world_loader_populates_story_seeds() -> None:
     assert state.story_seeds["energy-quota-crisis"].triggers
 
 
+def test_story_seed_schema_fields_are_loaded() -> None:
+    state = load_world_bundle()
+
+    seed = state.story_seeds["energy-quota-crisis"]
+
+    assert seed.stakes
+    assert seed.resolution_templates.success
+    assert seed.resolution_templates.failure
+    assert seed.travel_hint is not None
+    assert seed.followups == ["hollow-supply-chain"]
+
+
 def test_summary_includes_active_story_seeds() -> None:
     state = load_world_bundle()
     active = {
