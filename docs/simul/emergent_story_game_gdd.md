@@ -19,6 +19,17 @@ You are a wanderer in a frontier city-state on the brink of transformation or co
 
 ---
 
+## Progress Log (Updated 2025-11-29)
+
+- ✅ **Phase 5 M5.3 – Pacing & lifecycle polish** shipped: the NarrativeDirector
+  now enforces deterministic lifecycle states (`primed → active → resolving →
+  archived`), applies per-seed and global quiet timers, records
+  `director_pacing` + lifecycle history snapshots, and exposes the new
+  telemetry in CLI/service/headless surfaces so designers can audit pacing
+  without replaying logs.
+- ⚙️ **Phase 5 M5.4 – Post-mortems** remains underway to translate the archived
+  lifecycle history into deterministic epilogues and CLI/service export paths.
+
 ## 2. Setting & Tone
 
 **World:**  

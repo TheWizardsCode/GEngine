@@ -2,7 +2,7 @@
 
 A staged implementation that builds a solid simulation core, then layers on agents and factions, narrative, and finally the CLI + LLM conversational interface with ASCII visualization. The runtime architecture is microservice-based and designed to run on Kubernetes from the outset. This plan is informed by and should be read alongside the game design document in `docs/simul/emergent_story_game_gdd.md`. Each phase should be testable in isolation via minimal scripts before integrating, with data-driven content and full save/load from the start.
 
-## Progress Log (Updated 2025-11-28)
+## Progress Log (Updated 2025-11-29)
 
 - ✅ Phase 1 (Foundations & Data Model): core models, YAML loader, snapshots, smoke tests.
 - ✅ Phase 2 (Early CLI Shell & Tick Loop): in-process `echoes-shell` CLI with summary/next/run/map/save/load commands plus a deterministic tick engine.
@@ -20,12 +20,13 @@ A staged implementation that builds a solid simulation core, then layers on agen
   extremes, sampled diffusion deltas, biodiversity/stability snapshots) that
   surfaces in CLI/service/headless summaries. Remaining Phase 4 work focuses on
   long scenario sweeps plus director UX polish before merging back to main.
-- ⚙️ Phase 5 (Narrative Director & Story Seeds): **M5.1 story seed schema** and
-  **M5.2 director events** shipped; **M5.3 pacing/lifecycle** work is active on
-  `feature/m5-3-director-pacing`, adding deterministic lifecycle states,
+- ✅ Phase 5 (Narrative Director & Story Seeds): **M5.1 story seed schema**,
+  **M5.2 director events**, and **M5.3 pacing/lifecycle** are now merged to
+  `main`. The latest milestone shipped deterministic lifecycle states,
   per-seed/global quiet timers, CLI/service/headless `director_pacing`
-  snapshots, lifecycle history, and regression tests so pacing guardrails stay
-  observable during long burns.
+  snapshots, lifecycle history, refreshed docs, and regression tests so pacing
+  guardrails stay observable during long burns while reviewers diff telemetry
+  without replaying runs.
 - ⏳ Phases 3–8: pending (simulation service, subsystems, narrative, LLM gateway, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions

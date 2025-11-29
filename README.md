@@ -123,6 +123,17 @@ run locally.
 See `docs/simul/emergent_story_game_implementation_plan.md` for the full
 multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guide.
 
+## Progress Log (Updated 2025-11-29)
+
+- ✅ **Phase 5 M5.3 – Pacing & lifecycle polish** shipped: deterministic
+  lifecycle states with per-seed/global quiet timers now gate director overlap,
+  CLI/service/headless surfaces show the new `director_pacing` +
+  `story_seed_lifecycle` blocks, docs walk through the pacing knobs, and
+  regression tests/telemetry guard the lifecycle history + cooldown math.
+- ⚙️ **Phase 5 M5.4 – Post-mortems** remains in progress; upcoming work layers
+  deterministic epilogue generation and golden narrative outputs on top of the
+  archived lifecycle history before opening Phase 6 tooling.
+
 ## Repository Layout
 
 ```
