@@ -1,24 +1,28 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-11-30T22:30:00Z
+**Last Updated:** 2025-11-30T23:02:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
+
+- 🎉 **Phase 7 COMPLETE** - All player experience features shipped!
+  - ✅ Task 7.4.1 (Campaign UX) completed and merged via PR #14
+  - ✅ Task 7.1.1 (Progression Systems) completed and merged via PR #12
+  - ✅ Task 7.3.1 (Tuning & Replayability) completed
+  - ✅ Task 7.2.1 (Explanations) completed
+  - 📋 Issues #11, #13 closed
+- 🆕 **Phase 8 initiated** - Task 8.1.1 (Containerization) created
+  - 📋 GitHub Issue [#15](https://github.com/TheWizardsCode/GEngine/issues/15) created
+  - Status: Not started, awaiting assignment
+
+**Previous Updates:**
 
 - ✅ Task 7.4.1 (Campaign UX Flows) **COMPLETED** by gamedev-agent (2025-11-30)
   - Campaign module with create/list/resume/end/autosave functionality
   - CLI commands: campaign new/list/resume/end/status plus --campaign flag
   - 23 comprehensive tests (all passing), configuration in simulation.yml
   - Documentation updated in GDD, implementation plan, and gameplay guide
-  - GitHub Issue [#13](https://github.com/TheWizardsCode/GEngine/issues/13) ready to close
-- ✅ Task 7.1.1 (Progression Systems) **VERIFIED COMPLETE**
-  - 48 progression tests pass, implementation fully functional
-  - GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) ready to close
-- 🆕 Task 7.1.2 (Per-Agent Progression) remains not-started (priority: Low)
-
-**Previous Updates:**
-
 - ✅ Task 7.1.1 (Progression Systems) **COMPLETED** by gamedev-agent (2025-11-30)
   - Core progression module with skills, access tiers, reputation implemented
   - ProgressionSystem integrated with SimEngine tick loop
@@ -28,19 +32,18 @@
   - 5 difficulty presets created (easy, normal, hard, brutal, tutorial)
   - Sweep runner and analysis scripts implemented with full test coverage
   - Documentation updated in gameplay guide
-- 📋 GitHub Issue [#9](https://github.com/TheWizardsCode/GEngine/issues/9) completed
 
 **Current Priorities:**
 
-1. ✅ **Phase 7 COMPLETE** (M7.1-M7.4 all done)
-2. 🚀 **Phase 8 Deployment** - No active development on containerization/K8s
-3. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer waiting
+1. 🚀 **Phase 8 Deployment** - Just initiated with Task 8.1.1 (Issue #15)
+2. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer waiting
+3. 🔧 **Optional Polish** - Task 7.1.2 (Per-Agent Progression) marked Low priority
 
 **Key Risks:**
 
-- ⚠️ **Phase 7 complete, but no Phase 8 work started** - Deployment infrastructure blocks wider distribution
-- ⚠️ **No clear ownership for Phase 8-9 tasks** - Need Ross to assign or deprioritize
-- ✅ **Phase 7 delivery completed** - All player experience features shipped
+- ⚠️ **Phase 8 requires ownership assignment** - Who handles Docker/K8s work? (Ross to assign)
+- ⚠️ **No parallel Phase 9 work** - Could start AI testing while Phase 8 progresses
+- ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -65,7 +68,7 @@
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
-| 8.1.1 | Containerization (Docker + compose) (M8.1) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 8.1.1 | Containerization (Docker + compose) (M8.1) | not-started | High | TBD (ask Ross) | 2025-11-30 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -357,18 +360,22 @@
 - **Last Updated:** 2025-11-30
 
 ### 8.1.1 — Containerization (Docker + Compose) (M8.1)
+- **GitHub Issue:** [#15](https://github.com/TheWizardsCode/GEngine/issues/15)
 - **Description:** Create Dockerfiles and docker-compose configuration for simulation, gateway, and LLM services.
 - **Acceptance Criteria:** All three services can be built and run via Docker/compose; basic README instructions exist; environment configuration is shared via env vars.
-- **Priority:** Medium
+- **Priority:** High
 - **Responsible:** TBD (ask Ross)
-- **Dependencies:** Reasonably stable service boundaries and configuration contracts.
+- **Dependencies:** Stable service boundaries (✅ Phase 6 complete), configuration contracts (✅ complete).
 - **Risks & Mitigations:**
   - Risk: Divergence between local and container configs. Mitigation: Use shared env var contracts and sample env files.
+  - Risk: Port conflicts or networking issues. Mitigation: Use docker-compose networking with service names.
 - **Next Steps:**
-  1. Draft Dockerfiles for each service.
-  2. Add docker-compose orchestration.
-  3. Document usage.
-- **Last Updated:** 2025-11-29
+  1. Assign owner for Docker/DevOps work.
+  2. Draft Dockerfiles for each service (simulation, gateway, LLM).
+  3. Add docker-compose orchestration with networking.
+  4. Test multi-service startup and inter-service communication.
+  5. Document usage in README.
+- **Last Updated:** 2025-11-30
 
 ### 8.2.1 — Kubernetes Manifests & Docs (M8.2)
 - **Description:** Define Kubernetes Deployments/Services/ConfigMaps/Ingress for simulation, gateway, and LLM services, plus supporting documentation.
