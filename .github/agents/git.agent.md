@@ -54,6 +54,8 @@ as described in Atlassian's guide
 
 Always run these commands via the `runCommands` tool, not by guessing state.
 Adjust branch names if the project uses something other than `main`.
+Commands **must never require interactive user input**; always pass flags or
+arguments so they can run non-interactively.
 
 - Update local main and view status:
   - `git status`
@@ -79,10 +81,25 @@ Adjust branch names if the project uses something other than `main`.
 - Merge feature branch into main locally:
   - `git checkout main`
   - `git pull --ff-only`
-  - `git merge --no-ff feature/<short-descriptor>`
+  - `git merge --no-ff feature/<short-descriptor> -m "Merge branch 'feature/<short-descriptor>'"`
 
 - Push updated main:
   - `git push origin main`
+
+When constructing Git commands, **always**:
+
+- Include commit messages via `-m` (or `-m` twice for subject/body) so
+  `git commit` / `git merge` never opens an editor.
+- Add `--no-edit` when appropriate (for example, `git merge --no-edit`) if you
+  intend to accept Git's default message and avoid editor prompts.
+- Disable paging on log/diff-style commands by using `--no-pager` or
+  `-c core.pager=cat`, for example:
+  - `git --no-pager log --oneline --graph --decorate -20`
+  - `git --no-pager diff HEAD~1..HEAD`
+
+Never invoke commands that would block on user input (editors, prompts,
+confirmation dialogs) unless the user has explicitly requested an
+interactive session and is prepared to take over in the terminal.
 
 ## GitHub CLI (`gh`) Examples
 
