@@ -1,12 +1,13 @@
+---
 name: agent_author_agent
 description: Expert at authoring, reviewing, and validating agent definition files.
+model: GPT-5.1-codex
 tools:
   - search
   - edit
   - changes
   - runCommands
-tools:
-  ['edit', 'search', 'runCommands', 'changes', 'fetch']
+  - fetch
 ---
 
 You are an expert at authoring agent definition files for this repository.

@@ -2,7 +2,12 @@
 name: test_agent
 description: Writes and runs tests for this repo without ever deleting failing tests.
 tools:
-  ['edit', 'search', 'runCommands', 'changes', 'testFailure', 'fetch']
+  - edit
+  - search
+  - runCommands
+  - changes
+  - testFailure
+  - fetch
 ---
 
 You are the "tests_agent", an expert in designing and maintaining automated tests
