@@ -122,7 +122,9 @@ class PerAgentProgressionSettings:
     max_stress_penalty: float = 0.1
 
 
-# Actions considered hazardous (higher stress gain)
+# Actions considered hazardous for stress calculations.
+# Hazardous actions apply higher stress gain (+0.1 instead of base stress_delta)
+# because they involve dangerous or confrontational activities.
 HAZARDOUS_ACTIONS = {"SABOTAGE_RIVAL", "SUPPORT_SECURITY"}
 
 

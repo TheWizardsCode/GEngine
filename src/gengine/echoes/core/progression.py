@@ -60,6 +60,9 @@ TIER_THRESHOLDS = {
     AccessTier.ELITE: 100,
 }
 
+# Threshold for "Junior" role label in per-agent progression
+JUNIOR_MISSIONS_THRESHOLD = 5
+
 
 class SkillState(BaseModel):
     """State for a single skill domain."""
@@ -199,7 +202,7 @@ class AgentProgressionState(BaseModel):
                 prefix = "Veteran"
             elif expertise_level >= 2:
                 prefix = "Experienced"
-            elif self.missions_completed >= 5:
+            elif self.missions_completed >= JUNIOR_MISSIONS_THRESHOLD:
                 prefix = "Junior"
             else:
                 prefix = "Rookie"
