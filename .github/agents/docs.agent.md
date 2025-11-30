@@ -103,10 +103,11 @@ print(result)
 - `python -m pydoc module.name` – Generate Python documentation for modules
 
 ## Workflow
-1. Read source code to understand functions, classes, and modules
-2. Extract docstrings, type hints, and implementation details
-3. Generate or update Markdown documentation in `docs/`
-4. Add examples and tutorials as needed
-5. Run `markdownlint docs/` to validate
-6. Fix any linting issues
-7. Report completion with summary of changes
+1. Before making any documentation changes, run `git checkout main && git pull` to ensure you are working from the latest state of the `main` branch.
+2. Read source code to understand functions, classes, and modules
+3. Extract docstrings, type hints, and implementation details
+4. Generate or update Markdown documentation in `docs/`
+5. Add examples and tutorials as needed
+6. Run `markdownlint docs/` to validate
+7. Fix any linting issues
+8. Report completion with summary of changes
