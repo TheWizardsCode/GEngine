@@ -118,9 +118,9 @@ networks:
     name: echoes-network
 
 # =============================================================================
-# Development Override (use with docker compose -f docker-compose.yml -f docker-compose.dev.yml)
+# Development Override Example
 # =============================================================================
-# For development, create docker-compose.dev.yml to mount source code:
+# For development, create a docker-compose.dev.yml file with the following:
 #
 # services:
 #   simulation:
@@ -129,13 +129,19 @@ networks:
 #     volumes:
 #       - ./src:/app/src:ro
 #       - ./content:/app/content:ro
+#
 #   gateway:
 #     build:
 #       target: development
 #     volumes:
 #       - ./src:/app/src:ro
+#       - ./content:/app/content:ro
+#
 #   llm:
 #     build:
 #       target: development
 #     volumes:
 #       - ./src:/app/src:ro
+#       - ./content:/app/content:ro
+#
+# Then run: docker compose -f docker-compose.yml -f docker-compose.dev.yml up

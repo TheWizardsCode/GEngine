@@ -80,11 +80,11 @@ case "${SERVICE}" in
     ;;
   gateway)
     echo "Starting Gateway Service on port ${ECHOES_GATEWAY_PORT:-8100}..."
-    exec python -c "from gengine.echoes.gateway.main import main; main()"
+    exec python -m gengine.echoes.gateway.main
     ;;
   llm)
     echo "Starting LLM Service on port 8001..."
-    exec python -c "from gengine.echoes.llm.main import main; main()"
+    exec python -m gengine.echoes.llm.main
     ;;
   *)
     echo "Unknown service: ${SERVICE}"

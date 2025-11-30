@@ -1001,19 +1001,11 @@ uv run echoes-shell --service-url http://localhost:8000
 
 ### Development Mode
 
-For development with hot-reload of source code, mount the source directory:
-
-```bash
-# Build with dev dependencies
-docker compose build --build-arg TARGET=development
-
-# Run with source mounted
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
-```
-
-Or create a `docker-compose.dev.yml` override:
+For development with hot-reload of source code, create a `docker-compose.dev.yml`
+file to mount the source directory and use dev dependencies:
 
 ```yaml
+# docker-compose.dev.yml - Development overrides
 services:
   simulation:
     build:
@@ -1021,6 +1013,30 @@ services:
     volumes:
       - ./src:/app/src:ro
       - ./content:/app/content:ro
+
+  gateway:
+    build:
+      target: development
+    volumes:
+      - ./src:/app/src:ro
+      - ./content:/app/content:ro
+
+  llm:
+    build:
+      target: development
+    volumes:
+      - ./src:/app/src:ro
+      - ./content:/app/content:ro
+```
+
+Then run with the override file:
+
+```bash
+# Build with dev dependencies
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+
+# Run with source mounted
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
 ### Health Checks
