@@ -1259,3 +1259,68 @@ Test Status: 346 passing, 92% coverage
 
 Next: Push branch and create PR
 
+
+## Task 3.4.1 - Safeguards & LOD Refresh Follow-Ups (2025-11-30)
+=====================================================================
+
+### Initial Assessment
+- Working from branch: copilot/payable-emu
+- All 5 guardrail regression tests PASS:
+  * test_engine_enforces_tick_limit
+  * test_shell_run_command_is_clamped
+  * test_run_commands_respects_script_cap
+  * test_tick_endpoint_rejects_large_requests
+  * test_run_headless_sim_supports_batches
+
+### Config Audit
+Current content/config/simulation.yml values:
+- limits.engine_max_ticks: 200
+- limits.cli_run_cap: 50
+- limits.cli_script_command_cap: 200
+- limits.service_tick_cap: 100
+
+These values align with Phase 4 loads:
+- Engine max 200 allows full baseline captures
+- CLI run cap 50 reasonable for interactive sessions
+- Script cap 200 allows comprehensive scripted tests
+- Service cap 100 balanced for load protection
+
+### Profiling Block Consistency Check
+Verifying profiling metadata appears consistently:
+1. CLI summary - _render_summary shows tick_ms p50/p95/max + subsystems
+2. Service /metrics - returns profiling from state.metadata
+3. Headless JSON - summary["profiling"] captures same block
+
+
+### Verification Complete
+Ran full pytest suite: 385 tests passed
+
+Tested profiling block consistency across surfaces:
+1. CLI: `uv run echoes-shell --script "run 5;summary;exit"` shows:
+   - tick ms -> p50 0.43 | p95 0.68 | max 0.73
+   - last subsystems: agent_ms, faction_ms, economy_ms, etc.
+   - slowest: environment_system_ms
+
+2. Service `/metrics`: Returns same block with:
+   - tick_ms_p50, tick_ms_p95, tick_ms_max
+   - slowest_subsystem: {name, ms}
+   - anomalies: []
+   - last_subsystem_ms: {detailed breakdown}
+
+3. Headless JSON: `summary["profiling"]` includes:
+   - tick_ms_p50, tick_ms_p95, tick_ms_max
+   - slowest_subsystem, anomalies
+   - Same format as CLI/service
+
+### Documentation Audit
+- README.md: "Simulation Config and Safeguards" section (lines 445-502) covers all limits
+- README.md: "Guardrail Regression Matrix" (lines 504-515) lists all 5 tests
+- docs/gengine/how_to_play_echoes.md: "Safeguards and Level of Detail" section (lines 96-118)
+- All documentation accurately describes tuning per environment via ECHOES_CONFIG_ROOT
+
+### Task 3.4.1 Status: COMPLETED
+All acceptance criteria met:
+✅ Guardrail audit completed and documented
+✅ Profiling block consistent across CLI/service/headless
+✅ Regression matrix entries exist with passing tests (5/5)
+✅ README/gameplay docs describe guardrails and tuning
