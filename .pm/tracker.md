@@ -277,6 +277,7 @@
 - **Last Updated:** 2025-11-30
 
 ### 7.1.2 — Implement Per-Agent Progression Layer (M7.1.x)
+- **GitHub Issue:** [#17](https://github.com/TheWizardsCode/GEngine/issues/17)
 - **Description:** Implement the per-agent progression layer described in GDD §4.1.1 and the implementation plan (M7.1.x), adding a lightweight `AgentProgressionState` keyed by `agent_id` on top of the existing global `ProgressionState`. Wire it into `GameState`, `ProgressionSystem.tick(...)`, configuration, and minimal CLI/service surfaces while keeping effects bounded and optional.
 - **Acceptance Criteria:**
   - `AgentProgressionState` model exists with specialization, expertise pips, reliability, stress, and mission counters.
