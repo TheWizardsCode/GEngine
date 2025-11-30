@@ -1,11 +1,11 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-11-29
+**Last Updated:** 2025-11-30
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
 | 1.1.1 | Create Tracker Agent | completed | High | Ross (PM) | 2025-11-29 |
-| 3.4.1 | Safeguards & LOD refresh follow-ups | not-started | High | TBD (ask Ross) | 2025-11-29 |
+| 3.4.1 | Safeguards & LOD refresh follow-ups | completed | High | Gamedev Agent | 2025-11-30 |
 | 4.1.1 | Implement Agent AI subsystem (M4.1) | not-started | High | TBD (ask Ross) | 2025-11-29 |
 | 4.2.1 | Implement Faction AI subsystem (M4.2) | not-started | High | TBD (ask Ross) | 2025-11-29 |
 | 4.3.1 | Finalize Economy subsystem & tests (M4.3) | not-started | High | TBD (ask Ross) | 2025-11-29 |
@@ -46,17 +46,26 @@
 - **Description:** Complete the remaining M3.4 safeguard and LOD refresh work: audit all guardrail surfaces against current config, extend profiling hooks so CLI/service/headless share a common performance block, maintain the guardrail verification matrix, and ensure docs explain tuning per environment.
 - **Acceptance Criteria:** Guardrail audit completed and documented; profiling block with tick percentiles + subsystem timings appears consistently in CLI/service/headless summaries; regression matrix entries exist with passing tests; README/gameplay docs describe guardrails and tuning.
 - **Priority:** High
-- **Responsible:** TBD (ask Ross)
-- **Dependencies:** Existing SimEngine, headless driver, and config files; test infrastructure in place.
-- **Risks & Mitigations:**
-  - Risk: Guardrail behavior diverges between surfaces. Mitigation: Maintain a single source-of-truth config and verification matrix.
-  - Risk: Profiling overhead impacts performance. Mitigation: Make profiling window/config adjustable and validate via sweeps.
-- **Next Steps:**
-  1. Review current `simulation.yml` limits and corresponding code paths.
-  2. Implement shared profiling/performance block and extend summaries.
-  3. Fill in or update regression matrix and associated tests.
-  4. Update docs with guardrail tuning guidance.
-- **Last Updated:** 2025-11-29
+- **Responsible:** Gamedev Agent
+- **Status:** ✅ COMPLETED
+- **Completion Notes:**
+  - **Config Audit:** Verified `content/config/simulation.yml` limits align with Phase 4 loads:
+    - `limits.engine_max_ticks`: 200 (allows full baseline captures)
+    - `limits.cli_run_cap`: 50 (reasonable for interactive sessions)
+    - `limits.cli_script_command_cap`: 200 (supports comprehensive scripted tests)
+    - `limits.service_tick_cap`: 100 (balanced for load protection)
+  - **Profiling Block Consistency:** Verified that tick percentiles (p50/p95/max), subsystem timings, slowest_subsystem, and anomalies appear consistently in:
+    - CLI summary via `_render_summary()`
+    - Service `/metrics` endpoint
+    - Headless JSON output via `summary["profiling"]`
+  - **Regression Matrix:** All 5 guardrail regression tests pass:
+    - `test_engine_enforces_tick_limit`
+    - `test_shell_run_command_is_clamped`
+    - `test_run_commands_respects_script_cap`
+    - `test_tick_endpoint_rejects_large_requests`
+    - `test_run_headless_sim_supports_batches`
+  - **Documentation:** README.md and `docs/gengine/how_to_play_echoes.md` describe guardrails and tuning per environment.
+- **Last Updated:** 2025-11-30
 
 ### 4.1.1 — Implement Agent AI Subsystem (M4.1)
 - **Description:** Deliver Phase 4 agent AI: extend content schema for needs/goals/memory, implement a deterministic agent brain that emits per-tick intents, guarantee at least one strategic action per tick, and surface aggregate agent telemetry in headless summaries.
