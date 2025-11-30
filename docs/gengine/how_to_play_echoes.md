@@ -562,7 +562,89 @@ build/feature-m5-4-post-mortem.json` (or diff two captures by piping both
 through `jq`) to confirm environment deltas, faction swings, director events,
 and story-seed recaps stayed deterministic without replaying ticks.
 
-## 9. What Comes Next
+## 9. Difficulty Presets and Tuning
+
+The simulation includes five difficulty presets that adjust resource regeneration,
+demand pressure, scarcity effects, and narrative pacing to create measurably
+distinct gameplay experiences. Each preset lives in
+`content/config/sweeps/difficulty-{preset}/simulation.yml`.
+
+### Available Difficulty Levels
+
+| Preset   | Description                                    | Stability | Pacing    |
+| -------- | ---------------------------------------------- | --------- | --------- |
+| Tutorial | Very forgiving, maximum regen, minimal demand  | High      | Slow      |
+| Easy     | Relaxed settings for learning core systems     | High      | Moderate  |
+| Normal   | Balanced challenge, intended gameplay          | Moderate  | Balanced  |
+| Hard     | Reduced regen, increased demand pressure       | Low       | Fast      |
+| Brutal   | Maximum challenge, overlapping crises          | Very Low  | Relentless|
+
+### Running Difficulty Sweeps
+
+To compare all difficulty levels programmatically:
+
+```bash
+uv run python scripts/run_difficulty_sweeps.py --ticks 200 --seed 42 --output-dir build
+```
+
+The sweep runner:
+- Executes simulations for each difficulty preset
+- Captures telemetry to `build/difficulty-{preset}-sweep.json`
+- Outputs a comparison table showing stability, unrest, pollution, and anomalies
+
+Key flags:
+- `--ticks/-t`: Number of ticks per preset (default: 200)
+- `--seed`: RNG seed for deterministic comparisons (default: 42)
+- `--preset/-p`: Specific preset(s) to run (can be repeated)
+- `--json`: Output results as JSON instead of a table
+
+### Analyzing Difficulty Profiles
+
+After capturing sweep telemetry, analyze and compare the profiles:
+
+```bash
+uv run python scripts/analyze_difficulty_profiles.py --telemetry-dir build
+```
+
+The analysis script:
+- Loads telemetry from each difficulty capture
+- Compares stability trends, faction balance, economic pressure, and narrative density
+- Generates findings about difficulty progression and potential tuning issues
+
+Example analysis output identifies:
+- Whether stability decreases correctly with difficulty
+- If unrest/pollution scale as expected
+- Adjacent difficulties that need more differentiation
+- Presets where stability collapses (may need tuning)
+
+### Tuning Difficulty Presets
+
+Each difficulty config adjusts several key parameters:
+
+**Economy block:**
+- `regen_scale`: Resource regeneration multiplier (higher = easier)
+- `demand_*_weight`: Consumption pressure (lower = easier)
+- `shortage_threshold`: When shortages register (higher = more forgiving)
+
+**Environment block:**
+- `scarcity_*_weight`: How scarcity affects unrest/pollution (lower = gentler)
+- `biodiversity_recovery_rate`: Ecosystem bounce-back (higher = more resilient)
+- `faction_sabotage_pollution_spike`: Sabotage severity (lower = less punishing)
+
+**Director block:**
+- `max_active_seeds`: Overlapping crises (fewer = calmer)
+- `global_quiet_ticks`: Buffer between crises (more = breathing room)
+- `seed_*_ticks`: How long story arcs stay active (longer = more deliberate)
+
+### Recommended Playtesting Workflow
+
+1. Run the tutorial preset to verify systems work as expected
+2. Progress through easy → normal to confirm intended challenge curve
+3. Run hard/brutal to stress-test failure cascades
+4. Use the analysis script to identify gaps in difficulty progression
+5. Adjust config values and re-run sweeps to validate changes
+
+## 10. What Comes Next
 
 The local shell now has three front-ends—direct in-process state, HTTP service
 mode, and the Phase 6 WebSocket gateway. Upcoming phases will:

@@ -15,7 +15,7 @@
 | 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | not-started | High | TBD (ask Ross) | 2025-11-29 |
 | 6.6.1 | Implement real LLM providers (M6.6) | not-started | High | TBD (ask Ross) | 2025-11-29 |
 | 7.1.1 | Design & build progression systems (M7.1) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 7.3.1 | Tuning & replayability sweeps (M7.3) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
+| 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | Medium | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
 | 8.1.1 | Containerization (Docker + compose) (M8.1) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
@@ -200,15 +200,29 @@
 - **Description:** Implement scenario sweeps, difficulty modifiers, and config exposure to tune pacing, difficulty, and replayability.
 - **Acceptance Criteria:** Sweep scripts/configs exist; difficulty presets produce distinct experiences; analysis scripts compare difficulty profiles.
 - **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
+- **Responsible:** Gamedev Agent
+- **Status:** ✅ COMPLETED
+- **Completion Notes:**
+  - **Difficulty Presets:** Created 5 difficulty configs in `content/config/sweeps/difficulty-{preset}/`:
+    - `tutorial`: Very forgiving, max regen (1.2x), minimal demand, slow pacing
+    - `easy`: Relaxed settings, strong regen (1.0x), moderate pacing
+    - `normal`: Balanced challenge, standard regen (0.8x), intended gameplay
+    - `hard`: Reduced regen (0.7x), increased demand, fast pacing, 2 active seeds
+    - `brutal`: Minimal regen (0.6x), maximum demand, relentless pacing, 3 active seeds
+  - **Sweep Runner Script:** `scripts/run_difficulty_sweeps.py` executes all presets
+    and captures telemetry to `build/difficulty-{preset}-sweep.json`
+  - **Analysis Script:** `scripts/analyze_difficulty_profiles.py` compares profiles:
+    - Stability trends, faction balance, economic pressure, narrative density
+    - Generates findings about difficulty progression and tuning issues
+    - Identifies gaps in differentiation between adjacent difficulties
+  - **Telemetry Captures:** All 5 difficulty levels captured with seed=42, 200 ticks
+  - **Test Coverage:** 17 new tests for sweep runner and analysis scripts
+  - **Documentation:** Updated `docs/gengine/how_to_play_echoes.md` with difficulty
+    guidance, tuning workflow, and recommended playtesting steps
 - **Dependencies:** Stable core systems, story seeds, and telemetry.
 - **Risks & Mitigations:**
   - Risk: Large sweep runs slow. Mitigation: Stage runs (smoke vs deep sweeps).
-- **Next Steps:**
-  1. Define difficulty presets and sweep configs.
-  2. Implement sweep scripts.
-  3. Add basic analysis tooling.
-- **Last Updated:** 2025-11-29
+- **Last Updated:** 2025-11-30
 
 ### 7.4.1 — Campaign UX Flows (M7.4)
 - **Description:** Refine UX flows for campaigns, autosaves, campaign picker, and end-of-run summaries in both CLI and gateway.

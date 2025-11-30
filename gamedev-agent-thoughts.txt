@@ -1324,3 +1324,100 @@ All acceptance criteria met:
 ✅ Profiling block consistent across CLI/service/headless
 ✅ Regression matrix entries exist with passing tests (5/5)
 ✅ README/gameplay docs describe guardrails and tuning
+
+## Task 7.3.1 - Tuning & Replayability Sweeps (M7.3) (2025-11-30)
+=====================================================================
+
+### Implementation Complete
+
+#### Difficulty Presets Created
+Created 5 difficulty preset configurations in `content/config/sweeps/difficulty-{preset}/`:
+
+1. **Tutorial** (difficulty-tutorial/simulation.yml)
+   - regen_scale: 1.2 (maximum regeneration)
+   - demand weights: minimal (0.1 unrest, 0.05 prosperity)
+   - scarcity_unrest_weight: 0.0001 (very gentle)
+   - max_active_seeds: 1, global_quiet_ticks: 8 (slow pacing)
+   - Result: Stability 1.0, Unrest 0.20, Pollution 0.44
+
+2. **Easy** (difficulty-easy/simulation.yml)
+   - regen_scale: 1.0 (strong regeneration)
+   - demand weights: low (0.15 unrest, 0.1 prosperity)
+   - scarcity_unrest_weight: 0.0002
+   - max_active_seeds: 1, global_quiet_ticks: 6
+   - Result: Stability 1.0, Unrest 0.24, Pollution 0.46
+
+3. **Normal** (difficulty-normal/simulation.yml)
+   - regen_scale: 0.8 (standard regeneration)
+   - demand weights: moderate (0.3 unrest, 0.2 prosperity)
+   - scarcity_unrest_weight: 0.00005
+   - max_active_seeds: 1, global_quiet_ticks: 4
+   - Result: Stability 1.0, Unrest 0.20, Pollution 0.49
+
+4. **Hard** (difficulty-hard/simulation.yml)
+   - regen_scale: 0.7 (reduced regeneration)
+   - demand weights: high (0.4 unrest, 0.3 prosperity)
+   - scarcity_unrest_weight: 0.0015 (strong pressure)
+   - max_active_seeds: 2, global_quiet_ticks: 3 (faster pacing)
+   - Result: Stability 0.0 (collapsed), Unrest 1.0, Pollution 0.99
+
+5. **Brutal** (difficulty-brutal/simulation.yml)
+   - regen_scale: 0.6 (minimal regeneration)
+   - demand weights: maximum (0.5 unrest, 0.35 prosperity)
+   - scarcity_unrest_weight: 0.003 (harsh pressure)
+   - max_active_seeds: 3, global_quiet_ticks: 2 (relentless pacing)
+   - Result: Stability 0.0 (collapsed), Unrest 1.0, Pollution 1.0
+
+#### Scripts Implemented
+
+1. **scripts/run_difficulty_sweeps.py**
+   - Runs simulations for each difficulty preset
+   - Captures telemetry to build/difficulty-{preset}-sweep.json
+   - Outputs comparison table with key metrics
+   - Supports --preset flag for selective runs, --json for JSON output
+
+2. **scripts/analyze_difficulty_profiles.py**
+   - Loads telemetry from difficulty captures
+   - Extracts DifficultyProfile with metrics:
+     * Stability start/end/delta/trend
+     * Unrest, pollution, anomalies, suppressed events
+     * Faction balance, economic pressure, narrative density
+   - Compares profiles and generates findings:
+     * Validates difficulty progression (stability decreases with difficulty)
+     * Identifies collapsed stability (may be too harsh)
+     * Flags minimal differentiation between adjacent difficulties
+
+#### Test Coverage
+- tests/scripts/test_run_difficulty_sweeps.py: 6 tests
+- tests/scripts/test_analyze_difficulty_profiles.py: 11 tests
+- All 402 tests pass (385 existing + 17 new)
+
+#### Telemetry Captures
+Generated telemetry for all 5 difficulty levels:
+- build/difficulty-tutorial-sweep.json
+- build/difficulty-easy-sweep.json
+- build/difficulty-normal-sweep.json
+- build/difficulty-hard-sweep.json
+- build/difficulty-brutal-sweep.json
+
+#### Documentation Updates
+- Updated docs/gengine/how_to_play_echoes.md with:
+  * Section 9: Difficulty Presets and Tuning
+  * Difficulty level table with descriptions
+  * Sweep runner and analysis script usage
+  * Tuning parameters explanation
+  * Recommended playtesting workflow
+
+- Updated .pm/tracker.md:
+  * Task 7.3.1 status: completed
+  * Added completion notes with deliverables
+
+### Analysis Findings
+The sweep comparison shows:
+✓ Stability correctly decreases with difficulty (harder = less stable)
+⚠ Hard/Brutal presets may be too aggressive (stability collapses to 0)
+⚠ Tutorial/Easy/Normal have minimal stability differentiation (all at 1.0)
+
+Recommended tuning:
+- Lower scarcity weights in hard/brutal to prevent full collapse
+- Widen parameter gaps between tutorial/easy/normal for clearer progression
