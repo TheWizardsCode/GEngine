@@ -48,22 +48,28 @@ A staged implementation that builds a solid simulation core, then layers on agen
 - ⚙️ Phase 7 (Player Experience): **M7.1 Progression** shipped with
   `ProgressionState` models (skills, access tiers, reputation),
   `ProgressionSystem` for per-tick updates, configuration in `simulation.yml`,
-  and 48 new tests. **M7.2 Explanations** shipped with
+  and 48 new tests. **M7.1.2 Per-Agent Progression** shipped with
+  `AgentProgressionState` model (specialization, expertise pips, reliability,
+  stress, mission counters), GameState integration with `ensure_agent_progression()`
+  and `get_agent_progression()` helpers, per-agent tick processing in
+  `ProgressionSystem`, configuration via `per_agent_progression` block with
+  `enable_per_agent_modifiers` toggle, `calculate_agent_modifier()` success
+  wrapper, and 43 new tests. **M7.2 Explanations** shipped with
   `ExplanationsManager`, CLI commands (`timeline`, `explain`, `why`), causal
   chain tracking, and agent reasoning summaries. **M7.4 Campaign UX** shipped
   with `gengine.echoes.campaign` module providing campaign creation, autosave,
   resume, and end-of-campaign flows with post-mortem integration. Remaining:
   M7.3 tuning.
 
-#### M7.1.x – Per-Agent Progression Layer (on top of global progression)
+#### M7.1.x – Per-Agent Progression Layer (shipped)
 
 Design reference: GDD §4.1.1 "Per-Agent Progression & Traits".
 
 Objective: add a lightweight, bounded **per-agent progression** state keyed by `agent_id` that layers on top of the existing global `ProgressionState` without changing public APIs or overwhelming players with micromanagement.
 
-Implementation checklist (for a future code-focused agent):
+Implementation checklist (completed):
 
-1. **Core model: `AgentProgressionState`**
+1. ✅ **Core model: `AgentProgressionState`**
    - Add a new Pydantic model in `src/gengine/echoes/core/progression.py` or a sibling module, representing:
      - `agent_id: str`
      - `specialization: Literal[...]` or `Enum` aligned to the existing `SkillDomain` families (e.g., negotiator/investigator/operator/influencer).
@@ -72,14 +78,14 @@ Implementation checklist (for a future code-focused agent):
      - `missions_completed: int`, `missions_failed: int` counters.
    - Include a `summary()` method that returns a compact dict suitable for CLI/service displays (role label, expertise pips, stress word, history snapshot).
 
-2. **GameState integration**
+2. ✅ **GameState integration**
    - Extend `GameState` in `src/gengine/echoes/core/__init__.py` (or appropriate module) to include:
      - `agent_progression: Dict[str, AgentProgressionState] = {}` (optional, defaults to empty).
    - Add a helper `ensure_agent_progression(agent_id: str) -> AgentProgressionState` that:
      - Returns an existing state if present, otherwise creates a new one with a default specialization and neutral stats.
    - Ensure snapshot serialization/deserialization persists `agent_progression` without breaking backward compatibility (old snapshots should treat it as absent/empty).
 
-3. **Wire into `ProgressionSystem.tick(...)`**
+3. ✅ **Wire into `ProgressionSystem.tick(...)`**
    - Update `ProgressionSystem` in `src/gengine/echoes/systems/progression.py` to optionally handle per-agent updates:
      - **Do not change** the existing signature or behavior of global `ProgressionState` updates.
      - In `_process_agent_action(...)`, after applying global skill XP:
@@ -89,7 +95,7 @@ Implementation checklist (for a future code-focused agent):
        - Increment expertise pips and adjust reliability/stress according to the GDD rules (bounded, small deltas).
      - Append an `agent_progression` event into metadata/telemetry, mirroring how `progression_history` works today (keep last N entries).
 
-4. **Config surface and safe defaults**
+4. ✅ **Config surface and safe defaults**
    - Add a new `per_agent_progression` section under `content/config/simulation.yml` with knobs such as:
      - `expertise_max_pips`, `expertise_gain_per_success`.
      - `stress_gain_per_failure`, `stress_recovery_per_rest_tick`.
@@ -97,19 +103,19 @@ Implementation checklist (for a future code-focused agent):
      - `max_expertise_bonus`, `max_stress_penalty` for success modifiers.
    - Wire these into a small `PerAgentProgressionSettings` dataclass used by `ProgressionSystem`, defaulting to very conservative values so turning the feature on has minimal balance impact initially.
 
-5. **Success modifier integration (optional, behind a flag)**
+5. ✅ **Success modifier integration (optional, behind a flag)**
    - Introduce a helper (e.g., `calculate_agent_modifier(global_progression, agent_progression, skill_domain, faction_id, settings) -> float`) that:
      - Wraps the existing `calculate_success_modifier` and then applies a limited agent-specific tweak within the configured bounds.
    - Gate usage of this helper behind a config flag (`enable_per_agent_modifiers`) so early experiments can be run without destabilizing existing tests/scenarios.
 
-6. **Surfaces: CLI/service/explanations**
+6. ✅ **Surfaces: CLI/service/explanations**
    - Extend existing summary/detail endpoints and CLI views to optionally show per-agent:
      - Specialization/role label.
      - Expertise pips per domain family.
      - Stress state word and very short history blurb.
    - Feed one- or two-sentence agent progression notes into the explanations/post-mortem surfaces when relevant (e.g., “agent burnout slightly reduced odds here”).
 
-7. **Tests and telemetry**
+7. ✅ **Tests and telemetry**
    - Add unit tests for `AgentProgressionState` (creation, clamping, expertise growth, stress/reliability updates) alongside existing progression tests in `tests/echoes/test_progression.py`.
    - Add scenario tests that:
      - Run a small number of ticks with repeated agent actions and assert that agent expertise/stress move in the expected direction while global progression still behaves as before.

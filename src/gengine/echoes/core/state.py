@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
 from .models import Agent, City, EnvironmentState, Faction, StorySeed
-from .progression import ProgressionState
+from .progression import AgentProgressionState, AgentSpecialization, ProgressionState
 
 
 class GameState(BaseModel):
@@ -20,6 +20,7 @@ class GameState(BaseModel):
     story_seeds: Dict[str, StorySeed] = Field(default_factory=dict)
     environment: EnvironmentState = Field(default_factory=EnvironmentState)
     progression: Optional[ProgressionState] = Field(default=None)
+    agent_progression: Dict[str, AgentProgressionState] = Field(default_factory=dict)
     tick: int = Field(default=0, ge=0)
     seed: int = Field(default=0, ge=0)
     version: str = Field(default="0.1.0")
@@ -45,6 +46,37 @@ class GameState(BaseModel):
             self.progression = ProgressionState()
         return self.progression
 
+    def ensure_agent_progression(
+        self,
+        agent_id: str,
+        specialization: AgentSpecialization | None = None,
+    ) -> AgentProgressionState:
+        """Ensure per-agent progression state exists and return it.
+
+        If no specialization is provided and a new state needs to be created,
+        defaults to INVESTIGATOR.
+        """
+        if agent_id not in self.agent_progression:
+            spec = specialization or AgentSpecialization.INVESTIGATOR
+            self.agent_progression[agent_id] = AgentProgressionState(
+                agent_id=agent_id,
+                specialization=spec,
+            )
+        return self.agent_progression[agent_id]
+
+    def get_agent_progression(
+        self, agent_id: str
+    ) -> Optional[AgentProgressionState]:
+        """Get per-agent progression state if it exists, otherwise None."""
+        return self.agent_progression.get(agent_id)
+
+    def agent_progression_summary(self) -> Dict[str, object]:
+        """Return a summary of all agent progression states."""
+        return {
+            agent_id: state.summary()
+            for agent_id, state in self.agent_progression.items()
+        }
+
     def summary(self) -> Dict[str, Any]:
         """Return a lightweight summary useful for CLI/debug output."""
 
@@ -63,6 +95,9 @@ class GameState(BaseModel):
         # Include progression summary if it exists
         if self.progression is not None:
             summary["progression"] = self.progression.summary()
+        # Include agent progression summaries if any exist
+        if self.agent_progression:
+            summary["agent_progression"] = self.agent_progression_summary()
         market = self.metadata.get("market_prices") or {}
         if market:
             summary["market_prices"] = {

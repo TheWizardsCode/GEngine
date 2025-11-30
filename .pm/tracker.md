@@ -64,7 +64,7 @@
 | 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | completed | High | Team | 2025-11-30 |
 | 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
 | 7.1.1 | Design & build progression systems (M7.1) | completed | High | gamedev-agent | 2025-11-30 |
-| 7.1.2 | Implement per-agent progression layer (M7.1.x) | not-started | Low | gamedev-agent | 2025-11-30 |
+| 7.1.2 | Implement per-agent progression layer (M7.1.x) | completed | Low | gamedev-agent | 2025-11-30 |
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |

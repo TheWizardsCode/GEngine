@@ -1602,3 +1602,115 @@ uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod bala
 **GitHub Issues:**
 - Issue #11 (Task 7.1.1 - Progression): Ready to close
 - Issue #13 (Task 7.4.1 - Campaign UX): Ready to close
+
+
+## Issue #17: Per-Agent Progression Layer (M7.1.2) - Implementation
+=====================================================================
+[2025-11-30T23:08 UTC]
+
+### Initial Assessment
+- Working branch: copilot/effective-rat
+- 476 tests pass (from prior Task 7.4.1 work)
+- Repository clean and synced
+
+### Implementation Plan
+
+**Phase 1: Core Model (AgentProgressionState)**
+- Create AgentSpecialization enum aligned with SkillDomain families
+- Create AgentProgressionState model with:
+  - agent_id: str
+  - specialization: AgentSpecialization  
+  - expertise: Dict[str, int] (0-5 pips per domain family)
+  - reliability: float (0.0-1.0)
+  - stress: float (0.0-1.0)
+  - missions_completed: int
+  - missions_failed: int
+- Add summary() method for CLI/service display
+
+**Phase 2: GameState Integration**
+- Add agent_progression: Dict[str, AgentProgressionState] to GameState
+- Add ensure_agent_progression(agent_id) helper
+- Ensure backward compatibility with old snapshots
+
+**Phase 3: ProgressionSystem Extension**
+- Add per_agent_progression config section
+- Extend tick() to update per-agent state from agent_actions
+- Add telemetry events for agent progression changes
+
+**Phase 4: Success Modifier**
+- Create calculate_agent_modifier() helper
+- Gate behind enable_per_agent_modifiers config flag
+
+**Phase 5: CLI/Service Surfaces**
+- Add agent progression info to explain command
+- Add roster command for listing agent states
+
+**Phase 6: Tests**
+- Unit tests for AgentProgressionState
+- Integration tests for GameState persistence
+- System tests for tick updates
+
+### Starting Implementation...
+
+
+
+### Completed Implementation Steps (2025-11-30T23:XX UTC)
+
+1. ✅ Created AgentProgressionState model with:
+   - AgentSpecialization enum (NEGOTIATOR, INVESTIGATOR, ANALYST, OPERATOR, INFLUENCER)
+   - SPECIALIZATION_DOMAIN_MAP mapping
+   - agent_id, specialization, expertise (0-5 pips), reliability (0-1), stress (0-1)
+   - missions_completed, missions_failed counters
+   - summary(), stress_label(), role_label() methods
+
+2. ✅ Updated GameState with:
+   - agent_progression: Dict[str, AgentProgressionState] field
+   - ensure_agent_progression() helper
+   - get_agent_progression() helper
+   - agent_progression_summary() method
+   - Summary includes agent_progression block
+
+3. ✅ Added PerAgentProgressionSettings config:
+   - enable_per_agent_modifiers (default False)
+   - expertise_max_pips, expertise_gain_per_success
+   - reliability_gain_per_success, reliability_loss_per_failure
+   - stress_gain_per_failure, stress_gain_per_hazardous, stress_recovery_per_tick
+   - max_expertise_bonus, max_stress_penalty
+
+4. ✅ Extended ProgressionSystem:
+   - Added PerAgentProgressionSettings parameter
+   - _process_per_agent_action() method
+   - _apply_stress_recovery() method
+   - calculate_action_success_chance_with_agent() method
+   - agent_roster_summary() method
+
+5. ✅ Updated SimEngine:
+   - _create_per_agent_settings() method
+   - calculate_success_chance_with_agent() API
+   - agent_roster_summary() API
+
+6. ✅ Added calculate_agent_modifier() function combining global and per-agent modifiers
+
+7. ✅ Updated content/config/simulation.yml with per_agent_progression section
+
+8. ✅ Added 43 new tests covering all acceptance criteria
+
+9. ✅ Updated documentation:
+   - docs/gengine/how_to_play_echoes.md - Section 11 with per-agent details
+   - docs/simul/emergent_story_game_implementation_plan.md - M7.1.2 marked shipped
+
+10. ✅ Captured telemetry: build/feature-m7-1-2-per-agent-progression.json
+
+### Test Results
+- All 519 tests pass (91 progression tests, 43 new)
+- Telemetry shows agent_progression with 3 agents tracked after 200 ticks
+
+### Playtest Instructions
+1. Start shell: uv run echoes-shell --world default
+2. Run ticks: run 20
+3. Check summary - should show agent_progression section
+4. Agents gain expertise in domains matching their actions
+5. To enable per-agent success modifiers, edit simulation.yml:
+   per_agent_progression:
+     enable_per_agent_modifiers: true
+

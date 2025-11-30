@@ -155,6 +155,30 @@ class ProgressionSettings(BaseModel):
     elite_threshold: int = Field(100, ge=1)
 
 
+class PerAgentProgressionSettings(BaseModel):
+    """Settings for per-agent progression (layered on global progression)."""
+
+    # Feature toggle
+    enable_per_agent_modifiers: bool = Field(False)
+
+    # Expertise settings
+    expertise_max_pips: int = Field(5, ge=1, le=10)
+    expertise_gain_per_success: int = Field(1, ge=0, le=5)
+
+    # Reliability settings
+    reliability_gain_per_success: float = Field(0.05, ge=0.0, le=0.5)
+    reliability_loss_per_failure: float = Field(0.08, ge=0.0, le=0.5)
+
+    # Stress settings
+    stress_gain_per_failure: float = Field(0.1, ge=0.0, le=0.5)
+    stress_gain_per_hazardous: float = Field(0.05, ge=0.0, le=0.3)
+    stress_recovery_per_tick: float = Field(0.02, ge=0.0, le=0.2)
+
+    # Success modifier bounds (keep small to avoid destabilizing difficulty)
+    max_expertise_bonus: float = Field(0.1, ge=0.0, le=0.25)
+    max_stress_penalty: float = Field(0.1, ge=0.0, le=0.25)
+
+
 class CampaignSettings(BaseModel):
     """Settings for campaign management and autosave."""
 
@@ -173,6 +197,9 @@ class SimulationConfig(BaseModel):
     economy: EconomySettings = Field(default_factory=EconomySettings)
     environment: EnvironmentSettings = Field(default_factory=EnvironmentSettings)
     progression: ProgressionSettings = Field(default_factory=ProgressionSettings)
+    per_agent_progression: PerAgentProgressionSettings = Field(
+        default_factory=PerAgentProgressionSettings
+    )
     campaign: CampaignSettings = Field(default_factory=CampaignSettings)
 
 
@@ -209,6 +236,7 @@ __all__ = [
     "FocusSettings",
     "EnvironmentSettings",
     "ProgressionSettings",
+    "PerAgentProgressionSettings",
     "CampaignSettings",
     "load_simulation_config",
 ]
