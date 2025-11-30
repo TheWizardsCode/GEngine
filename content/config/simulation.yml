@@ -82,3 +82,18 @@ environment:
   biodiversity_stability_weight: 0.002
   biodiversity_stability_midpoint: 0.62
   biodiversity_alert_threshold: 0.4
+progression:
+  base_experience_rate: 1.0
+  experience_per_action: 10.0
+  experience_per_inspection: 5.0
+  experience_per_negotiation: 15.0
+  diplomacy_multiplier: 1.0
+  investigation_multiplier: 1.0
+  economics_multiplier: 1.0
+  tactical_multiplier: 1.0
+  influence_multiplier: 1.0
+  reputation_gain_rate: 0.05
+  reputation_loss_rate: 0.03
+  skill_cap: 100
+  established_threshold: 50
+  elite_threshold: 100

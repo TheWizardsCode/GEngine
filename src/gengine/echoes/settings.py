@@ -129,6 +129,32 @@ class DirectorSettings(BaseModel):
     lifecycle_history_limit: int = Field(12, ge=1)
 
 
+class ProgressionSettings(BaseModel):
+    """Tunable parameters for player progression systems."""
+
+    # Base experience rates
+    base_experience_rate: float = Field(1.0, ge=0.0)
+    experience_per_action: float = Field(10.0, ge=0.0)
+    experience_per_inspection: float = Field(5.0, ge=0.0)
+    experience_per_negotiation: float = Field(15.0, ge=0.0)
+
+    # Skill domain multipliers
+    diplomacy_multiplier: float = Field(1.0, ge=0.0)
+    investigation_multiplier: float = Field(1.0, ge=0.0)
+    economics_multiplier: float = Field(1.0, ge=0.0)
+    tactical_multiplier: float = Field(1.0, ge=0.0)
+    influence_multiplier: float = Field(1.0, ge=0.0)
+
+    # Reputation change rates
+    reputation_gain_rate: float = Field(0.05, ge=0.0)
+    reputation_loss_rate: float = Field(0.03, ge=0.0)
+
+    # Level and tier thresholds
+    skill_cap: int = Field(100, ge=1)
+    established_threshold: int = Field(50, ge=1)
+    elite_threshold: int = Field(100, ge=1)
+
+
 class SimulationConfig(BaseModel):
     limits: SimulationLimits = Field(default_factory=SimulationLimits)
     lod: LodSettings = Field(default_factory=LodSettings)
@@ -137,6 +163,7 @@ class SimulationConfig(BaseModel):
     director: DirectorSettings = Field(default_factory=DirectorSettings)
     economy: EconomySettings = Field(default_factory=EconomySettings)
     environment: EnvironmentSettings = Field(default_factory=EnvironmentSettings)
+    progression: ProgressionSettings = Field(default_factory=ProgressionSettings)
 
 
 def _default_config_root() -> Path:
@@ -171,5 +198,6 @@ __all__ = [
     "EconomySettings",
     "FocusSettings",
     "EnvironmentSettings",
+    "ProgressionSettings",
     "load_simulation_config",
 ]

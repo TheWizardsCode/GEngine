@@ -707,6 +707,31 @@ def _render_summary(summary: dict[str, object]) -> str:
             lines.append(
                 f"    anomalies: {', '.join(anomalies[:3])}"
             )
+    # Render progression summary if present
+    progression = summary.get("progression")
+    if isinstance(progression, dict) and progression:
+        lines.append("  progression:")
+        tier = progression.get("access_tier", "novice")
+        avg_level = progression.get("average_level", 1.0)
+        actions = progression.get("actions_taken", 0)
+        total_exp = progression.get("total_experience", 0.0)
+        lines.append(f"    tier: {tier} | avg level: {avg_level:.1f} | exp: {total_exp:.0f}")
+        lines.append(f"    actions taken: {actions}")
+        skills = progression.get("skills") or {}
+        if skills:
+            skill_bits = []
+            for name, data in list(skills.items())[:3]:
+                level = data.get("level", 1)
+                skill_bits.append(f"{name}:{level}")
+            lines.append(f"    skills: {', '.join(skill_bits)}")
+        reputation = progression.get("reputation") or {}
+        if reputation:
+            rep_bits = []
+            for faction_id, data in list(reputation.items())[:2]:
+                value = data.get("value", 0.0)
+                rel = data.get("relationship", "neutral")
+                rep_bits.append(f"{faction_id}:{value:+.2f}({rel})")
+            lines.append(f"    reputation: {', '.join(rep_bits)}")
     return "\n".join(lines)
 
 def _render_post_mortem(payload: Mapping[str, Any]) -> str:

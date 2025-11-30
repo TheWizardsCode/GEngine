@@ -4,6 +4,7 @@ from .agents import AgentIntent, AgentSystem
 from .economy import EconomySystem, EconomyReport
 from .factions import FactionAction, FactionSystem
 from .environment import EnvironmentImpact, EnvironmentSystem
+from .progression import ProgressionEvent, ProgressionSettings, ProgressionSystem
 
 __all__ = [
 	"AgentIntent",
@@ -14,4 +15,7 @@ __all__ = [
     "EconomyReport",
     "EnvironmentImpact",
     "EnvironmentSystem",
+    "ProgressionEvent",
+    "ProgressionSettings",
+    "ProgressionSystem",
 ]

@@ -658,3 +658,99 @@ mode, and the Phase 6 WebSocket gateway. Upcoming phases will:
 
 As those milestones land, this guide will expand with new sections covering
 service endpoints, intent schemas, and multi-service orchestration.
+
+## 11. Player Progression System
+
+The progression system (Phase 7, M7.1) tracks player growth across five skill
+domains, manages access tier unlocks, and monitors reputation with each faction.
+These metrics influence action success rates and unlock new gameplay options.
+
+### Skill Domains
+
+Players develop expertise in five core skill domains:
+
+| Domain        | Description                                         | Key Actions                     |
+| ------------- | --------------------------------------------------- | ------------------------------- |
+| Diplomacy     | Faction negotiations and dialogue effectiveness    | Negotiate, lobby                |
+| Investigation | District inspections and information gathering     | Inspect, request reports        |
+| Economics     | Resource management and trade optimization         | Invest, economic actions        |
+| Tactical      | Security operations and covert actions             | Stabilize, support security     |
+| Influence     | Story seed triggers and NPC reactions              | Recruit, general influence      |
+
+Skills range from level 1 (novice) to level 100 (master). Experience is gained
+through actions, with multipliers per domain configurable in `simulation.yml`.
+
+### Access Tiers
+
+As average skill levels increase, players unlock higher access tiers:
+
+| Tier        | Average Level | Unlocks                                        |
+| ----------- | ------------- | ---------------------------------------------- |
+| Novice      | 0             | Default access, basic districts and commands   |
+| Established | 50            | Advanced districts, some restricted actions    |
+| Elite       | 100           | Full access to all districts and commands      |
+
+The CLI `summary` command shows current tier and average skill level.
+
+### Faction Reputation
+
+Reputation with each faction ranges from -1.0 (hostile) to +1.0 (allied):
+
+| Range          | Relationship | Effect on Actions                              |
+| -------------- | ------------ | ---------------------------------------------- |
+| 0.75 to 1.0    | Allied       | +25% success chance                            |
+| 0.25 to 0.75   | Friendly     | +10% success chance                            |
+| -0.25 to 0.25  | Neutral      | No modifier                                    |
+| -0.75 to -0.25 | Unfriendly   | -10% success chance                            |
+| -1.0 to -0.75  | Hostile      | -25% success chance                            |
+
+Reputation changes based on faction actions each tick. Positive actions
+(lobbying, investing) improve reputation, while sabotage hurts reputation with
+the target faction.
+
+### Progression in CLI Summary
+
+After running ticks, the `summary` command displays progression state:
+
+```
+progression:
+  access_tier: novice
+  average_level: 1.2
+  total_experience: 45.5
+  actions_taken: 15
+  skills:
+    diplomacy: { level: 2, experience: 5.0 }
+    investigation: { level: 1, experience: 8.0 }
+    economics: { level: 1, experience: 0.0 }
+    tactical: { level: 1, experience: 2.5 }
+    influence: { level: 2, experience: 0.0 }
+  reputation:
+    union-of-flux: { value: 0.15, relationship: neutral }
+    cartel-of-mist: { value: -0.05, relationship: neutral }
+```
+
+### Configuring Progression
+
+Tune progression rates via the `progression` block in
+`content/config/simulation.yml`:
+
+```yaml
+progression:
+  base_experience_rate: 1.0      # Global experience multiplier
+  experience_per_action: 10.0   # Base experience per action
+  experience_per_inspection: 5.0
+  experience_per_negotiation: 15.0
+  diplomacy_multiplier: 1.0     # Per-domain scaling
+  investigation_multiplier: 1.0
+  economics_multiplier: 1.0
+  tactical_multiplier: 1.0
+  influence_multiplier: 1.0
+  reputation_gain_rate: 0.05    # Reputation delta per positive action
+  reputation_loss_rate: 0.03    # Reputation delta per negative action
+  skill_cap: 100                # Maximum skill level
+  established_threshold: 50     # Average level for Established tier
+  elite_threshold: 100          # Average level for Elite tier
+```
+
+Increase experience rates to speed up progression for tutorials or decrease them
+for more challenging campaigns.
