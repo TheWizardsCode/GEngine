@@ -155,6 +155,15 @@ class ProgressionSettings(BaseModel):
     elite_threshold: int = Field(100, ge=1)
 
 
+class CampaignSettings(BaseModel):
+    """Settings for campaign management and autosave."""
+
+    campaigns_dir: str = Field("campaigns")
+    autosave_interval: int = Field(50, ge=0)
+    max_autosaves: int = Field(3, ge=1)
+    generate_postmortem_on_end: bool = Field(True)
+
+
 class SimulationConfig(BaseModel):
     limits: SimulationLimits = Field(default_factory=SimulationLimits)
     lod: LodSettings = Field(default_factory=LodSettings)
@@ -164,6 +173,7 @@ class SimulationConfig(BaseModel):
     economy: EconomySettings = Field(default_factory=EconomySettings)
     environment: EnvironmentSettings = Field(default_factory=EnvironmentSettings)
     progression: ProgressionSettings = Field(default_factory=ProgressionSettings)
+    campaign: CampaignSettings = Field(default_factory=CampaignSettings)
 
 
 def _default_config_root() -> Path:
@@ -199,5 +209,6 @@ __all__ = [
     "FocusSettings",
     "EnvironmentSettings",
     "ProgressionSettings",
+    "CampaignSettings",
     "load_simulation_config",
 ]

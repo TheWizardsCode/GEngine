@@ -1503,3 +1503,102 @@ uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod bala
 4. Note skill levels and reputation changes
 5. Exit: `exit`
 
+
+## Session Start: 2025-11-30T21:59 UTC - Repository Review & Phase 7 Work
+=====================================================================
+
+### Initial Assessment
+- Working branch: copilot/linguistic-tahr
+- All 453 tests pass
+- Repository clean and synced
+
+### Task Status Review
+1. **Task 7.1.1 (Progression Systems)** - Issue #11
+   - ✅ VERIFIED COMPLETE: 48 progression tests pass
+   - ProgressionState, SkillDomain, AccessTier, ReputationState models implemented
+   - ProgressionSystem integrated with SimEngine
+   - Documentation updated in GDD, implementation plan, gameplay guide
+   - **Recommendation: Close GitHub Issue #11**
+
+2. **Task 7.4.1 (Campaign UX Flows)** - Issue #13
+   - ❌ NOT STARTED according to tracker
+   - Dependencies: Snapshot persistence (✅), post-mortem generator (✅), CLI/gateway surfaces (✅)
+   - Scope: Autosaves, campaign picker, end-of-run summaries
+
+### Plan for Task 7.4.1
+1. Review existing persistence and post-mortem infrastructure
+2. Design campaign data model and autosave mechanism
+3. Implement campaign picker CLI commands (list/start/resume/end)
+4. Add autosave functionality triggered at configurable intervals
+5. Polish end-of-run flow with post-mortem integration
+6. Write tests for campaign management
+7. Update documentation
+
+### Next Steps
+- Will create feature branch for 7.4.1 work
+- Starting with campaign data model design
+
+### Task 7.4.1 Implementation - Campaign UX Flows
+[2025-11-30 22:20 UTC]
+
+**Implementation Complete:**
+
+1. **Campaign Module** (`src/gengine/echoes/campaign/`):
+   - Created `Campaign` dataclass: id, name, world, timestamps, tick, ended status
+   - Created `CampaignManager` class: create, list, load, save, autosave, end
+   - Created `CampaignSettings` dataclass: configurable via simulation.yml
+   - Added `_json_default` helper for datetime serialization
+   - Autosave at configurable intervals with automatic cleanup of old saves
+   - Post-mortem generation and persistence on campaign end
+
+2. **Shell Integration** (`src/gengine/echoes/cli/shell.py`):
+   - Extended `ShellBackend` interface with campaign methods
+   - `LocalBackend` implements full campaign functionality
+   - `ServiceBackend` raises NotImplementedError (campaigns are local-only)
+   - Added campaign commands: list, new, resume, end, status
+   - `--campaign <id>` CLI flag for direct campaign resumption
+   - Autosave triggers automatically after `advance_ticks()`
+
+3. **Settings** (`src/gengine/echoes/settings.py`):
+   - Added `CampaignSettings` Pydantic model
+   - Added `campaign` field to `SimulationConfig`
+
+4. **Configuration** (`content/config/simulation.yml`):
+   - Added `campaign` section with:
+     - `campaigns_dir`: campaigns
+     - `autosave_interval`: 50
+     - `max_autosaves`: 3
+     - `generate_postmortem_on_end`: true
+
+5. **Tests** (`tests/echoes/test_campaign.py`):
+   - 23 tests covering:
+     - CampaignSettings (defaults, from_dict)
+     - Campaign model (to_dict, from_dict)
+     - CampaignManager (create, list, load, save, autosave, end, delete)
+     - Integration with LocalBackend
+
+**Test Results:**
+- 476 tests pass (453 existing + 23 new)
+- All campaign functionality verified
+
+**Telemetry Captured:**
+- `build/feature-m7-4-campaign-ux.json` (200 ticks, seed 42, balanced LOD)
+
+**Documentation Updated:**
+- `docs/gengine/how_to_play_echoes.md`: Added Section 12 (Campaign Management)
+- `docs/simul/emergent_story_game_implementation_plan.md`: Marked M7.4 complete
+- `docs/simul/emergent_story_game_gdd.md`: Updated progress log
+- `README.md`: Added campaign commands to CLI section
+- `.pm/tracker.md`: Updated task status to completed
+
+**Playtest Instructions:**
+1. Start shell: `uv run echoes-shell --world default`
+2. Create campaign: `campaign new "Test Campaign"`
+3. Run simulation: `run 50` (autosave should trigger)
+4. Check status: `campaign status`
+5. Exit and resume: `uv run echoes-shell --campaign <id>`
+6. End campaign: `campaign end`
+
+**GitHub Issues:**
+- Issue #11 (Task 7.1.1 - Progression): Ready to close
+- Issue #13 (Task 7.4.1 - Campaign UX): Ready to close

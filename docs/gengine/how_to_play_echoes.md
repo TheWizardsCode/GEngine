@@ -74,6 +74,11 @@ ASCII output as the local shell and honors `--script` for CI-friendly runs.
 | `save <path>`             | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `load world <name>`       | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `load snapshot <path>`    | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `campaign list`           | Lists all saved campaigns with their IDs, names, worlds, tick counts, and status (active/ended).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `campaign new <name> [world]` | Creates a new campaign with the given name, optionally specifying a world (defaults to "default"). Initializes the world and saves an initial snapshot.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `campaign resume <id>`    | Resumes a saved campaign by ID. Loads the campaign's snapshot and continues from where you left off.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `campaign end`            | Ends the active campaign, saves a final snapshot, generates a post-mortem summary, and marks the campaign as complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `campaign status`         | Shows the status of the currently active campaign including name, world, current tick, and autosave interval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `exit` / `quit`           | Leave the shell.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
@@ -754,3 +759,97 @@ progression:
 
 Increase experience rates to speed up progression for tutorials or decrease them
 for more challenging campaigns.
+
+## 12. Campaign Management
+
+The CLI supports persistent campaigns with autosave functionality. Instead of
+manually saving/loading snapshots, you can create named campaigns that track
+your progress automatically.
+
+### Starting a New Campaign
+
+```bash
+# Start with campaign commands in the shell
+uv run echoes-shell --world default
+(echoes) campaign new "My First Campaign" default
+```
+
+Or resume an existing campaign directly:
+
+```bash
+uv run echoes-shell --campaign abc123
+```
+
+### Campaign Commands
+
+| Command                   | Description                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| `campaign list`           | Show all saved campaigns with IDs, names, and status       |
+| `campaign new <name> [world]` | Create a new campaign (world defaults to "default")    |
+| `campaign resume <id>`    | Resume a saved campaign by its ID                          |
+| `campaign end`            | End the active campaign and generate a post-mortem         |
+| `campaign status`         | Show details about the currently active campaign           |
+
+### Autosave
+
+When a campaign is active, the system automatically saves your progress at
+regular intervals. Configure the autosave behavior in
+`content/config/simulation.yml`:
+
+```yaml
+campaign:
+  campaigns_dir: campaigns       # Where campaign data is stored
+  autosave_interval: 50          # Ticks between autosaves (0 = disabled)
+  max_autosaves: 3               # Keep only the N most recent autosaves
+  generate_postmortem_on_end: true  # Generate recap when campaign ends
+```
+
+Autosaves are created in the campaign's directory alongside the main snapshot.
+The most recent autosaves are kept (based on `max_autosaves`), older ones are
+automatically cleaned up.
+
+### Campaign Workflow Example
+
+```bash
+uv run echoes-shell --world default
+(echoes) campaign new "Stability Run" default
+Created campaign 'Stability Run' (ID: a1b2c3d4)
+World: default
+
+(echoes) run 100
+# ... play the simulation ...
+
+(echoes) campaign status
+Active campaign: Stability Run (ID: a1b2c3d4)
+World: default
+Current tick: 100
+Autosave interval: every 50 ticks
+
+# Exit and resume later
+(echoes) exit
+```
+
+To resume the campaign:
+
+```bash
+uv run echoes-shell --campaign a1b2c3d4
+Resumed campaign 'Stability Run' at tick 100
+```
+
+### Ending a Campaign
+
+When you're done with a campaign, end it formally to generate a complete
+post-mortem summary:
+
+```bash
+(echoes) campaign end
+Campaign 'Stability Run' ended at tick 250
+
+Post-mortem summary:
+  - Stability improved from 0.56 to 0.89 (+0.33)
+  - Union of Flux gained legitimacy (+0.15)
+  - Energy crisis resolved through investment
+```
+
+The post-mortem is saved alongside the campaign data for later review. Ended
+campaigns can still be resumed if you want to continue playing.

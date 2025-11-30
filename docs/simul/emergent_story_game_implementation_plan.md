@@ -50,8 +50,10 @@ A staged implementation that builds a solid simulation core, then layers on agen
   `ProgressionSystem` for per-tick updates, configuration in `simulation.yml`,
   and 48 new tests. **M7.2 Explanations** shipped with
   `ExplanationsManager`, CLI commands (`timeline`, `explain`, `why`), causal
-  chain tracking, and agent reasoning summaries. Remaining: M7.3 tuning,
-  M7.4 campaign UX.
+  chain tracking, and agent reasoning summaries. **M7.4 Campaign UX** shipped
+  with `gengine.echoes.campaign` module providing campaign creation, autosave,
+  resume, and end-of-campaign flows with post-mortem integration. Remaining:
+  M7.3 tuning.
 
 #### M7.1.x – Per-Agent Progression Layer (on top of global progression)
 
@@ -515,8 +517,16 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
   rolling timeline that persists in game state metadata.
 - **M7.3 Tuning + replayability** (1-2 days): scenario sweeps, difficulty
   modifiers, config exposure.
-- **M7.4 Campaign UX** (0.5-1 day): autosaves, campaign picker, clean
-  end-of-run flow in both CLI and gateway.
+- ✅ **M7.4 Campaign UX** (shipped): Campaign management module at
+  `gengine.echoes.campaign` provides:
+  - `CampaignManager` for campaign lifecycle (create, list, load, save, end)
+  - `Campaign` model tracking name, world, tick, created/saved timestamps
+  - `CampaignSettings` configuration via `simulation.yml` campaign block
+  - Autosave functionality at configurable tick intervals with cleanup
+  - Post-mortem generation on campaign end
+  - CLI commands: `campaign new/list/resume/end/status`
+  - `--campaign <id>` CLI flag for direct campaign resumption
+  - 23 new tests covering campaign management and integration
 
 ### Phase 8 – Cross-Cutting Concerns and Next Steps
 

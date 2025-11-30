@@ -19,7 +19,7 @@ You are a wanderer in a frontier city-state on the brink of transformation or co
 
 ---
 
-## Progress Log (Updated 2025-11-29)
+## Progress Log (Updated 2025-11-30)
 
 - ✅ **Phase 5 M5.3 – Pacing & lifecycle polish** shipped: the NarrativeDirector
   now enforces deterministic lifecycle states (`primed → active → resolving →
@@ -40,6 +40,12 @@ archived`), applies per-seed and global quiet timers, records
   metric explanations (e.g., "stability dropped due to high unrest, pollution").
   The system tracks causal chains between events each tick and persists them
   to game state metadata for querying.
+- ✅ **Phase 7 M7.4 – Campaign UX** shipped: campaign management module at
+  `gengine.echoes.campaign` provides persistent campaigns with autosave
+  functionality. CLI commands (`campaign new/list/resume/end/status`) and
+  the `--campaign <id>` flag enable campaign-based workflows. Autosaves
+  trigger at configurable intervals (default 50 ticks), post-mortems are
+  generated on campaign end, and campaign metadata persists across sessions.
 
 ## 2. Setting & Tone
 
