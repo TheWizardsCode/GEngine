@@ -703,6 +703,8 @@ Key flags:
 
 ### Programmatic Usage
 
+**Local SimEngine mode:**
+
 ```python
 from gengine.ai_player import Observer, ObserverConfig
 from gengine.ai_player.observer import create_observer_from_engine
@@ -721,6 +723,48 @@ print(report.stability_trend.to_dict())
 print(report.commentary)
 ```
 
+**Remote SimServiceClient mode:**
+
+```python
+from gengine.ai_player import Observer, ObserverConfig
+from gengine.ai_player.observer import create_observer_from_service
+
+# Connect to a running simulation service
+observer = create_observer_from_service(
+    base_url="http://localhost:8000",
+    config=ObserverConfig(
+        tick_budget=100,
+        analysis_interval=10,
+        stability_alert_threshold=0.6,
+        legitimacy_swing_threshold=0.15,
+    )
+)
+
+try:
+    report = observer.observe()
+    
+    # Check for critical alerts
+    if report.alerts:
+        print("ALERTS:", report.alerts)
+    
+    # Examine trend detection results
+    print(f"Stability: {report.stability_trend.trend}")
+    print(f"  Start: {report.stability_trend.start_value:.3f}")
+    print(f"  End: {report.stability_trend.end_value:.3f}")
+    
+    # Review faction dynamics
+    for faction_id, trend in report.faction_swings.items():
+        if trend.alert:
+            print(f"Faction swing detected: {trend.alert}")
+    
+    # Get structured JSON output
+    import json
+    print(json.dumps(report.to_dict(), indent=2))
+finally:
+    # Always close the client when done
+    observer._client.close()
+```
+
 The Observer output includes:
 
 - `stability_trend`: Start/end values, delta, trend direction, alert status
@@ -728,7 +772,7 @@ The Observer output includes:
 - `story_seeds_activated`: List of triggered narrative seeds with tick numbers
 - `alerts`: Critical warnings (e.g., stability crash)
 - `commentary`: Natural language summary of the observation period
-- `environment_summary`: Final environment metrics
+- `environment_summary`: Final environment metrics (stability, economy, agents)
 
 ## LLM Service (Phase 6 M6.3)
 
