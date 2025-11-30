@@ -495,22 +495,27 @@ class TestCreateObserverHelpers:
         assert observer.config.tick_budget == 25
 
 
+@pytest.fixture
+def service_client():
+    """Create a SimServiceClient backed by a test server with proper cleanup."""
+    engine = SimEngine()
+    engine.initialize_state(world="default")
+    app = create_app(engine=engine)
+    http_client = TestClient(app)
+    client = SimServiceClient(base_url="http://testserver", client=http_client)
+    yield client
+    client.close()
+
+
 class TestObserverWithSimServiceClient:
     """Integration tests for Observer using SimServiceClient."""
 
-    def _build_service_client(self) -> SimServiceClient:
-        """Create a SimServiceClient backed by a test server."""
-        engine = SimEngine()
-        engine.initialize_state(world="default")
-        app = create_app(engine=engine)
-        http_client = TestClient(app)
-        return SimServiceClient(base_url="http://testserver", client=http_client)
-
-    def test_observer_with_service_client_observes_ticks(self) -> None:
+    def test_observer_with_service_client_observes_ticks(
+        self, service_client: SimServiceClient
+    ) -> None:
         """Observer should work correctly with SimServiceClient."""
-        client = self._build_service_client()
         config = ObserverConfig(tick_budget=5, analysis_interval=2)
-        observer = Observer(client=client, config=config)
+        observer = Observer(client=service_client, config=config)
 
         report = observer.observe()
 
@@ -518,13 +523,13 @@ class TestObserverWithSimServiceClient:
         assert report.end_tick > report.start_tick
         assert isinstance(report.stability_trend, TrendAnalysis)
         assert isinstance(report.faction_swings, dict)
-        client.close()
 
-    def test_observer_with_service_client_detects_trends(self) -> None:
+    def test_observer_with_service_client_detects_trends(
+        self, service_client: SimServiceClient
+    ) -> None:
         """Observer should detect trends when using SimServiceClient."""
-        client = self._build_service_client()
         config = ObserverConfig(tick_budget=10, analysis_interval=5)
-        observer = Observer(client=client, config=config)
+        observer = Observer(client=service_client, config=config)
 
         report = observer.observe()
 
@@ -537,17 +542,17 @@ class TestObserverWithSimServiceClient:
         for faction_id, trend in report.faction_swings.items():
             assert trend.metric_name.startswith("faction_")
             assert trend.trend in ["increasing", "decreasing", "stable"]
-        client.close()
 
-    def test_observer_with_service_client_generates_commentary(self) -> None:
+    def test_observer_with_service_client_generates_commentary(
+        self, service_client: SimServiceClient
+    ) -> None:
         """Observer should generate commentary when using SimServiceClient."""
-        client = self._build_service_client()
         config = ObserverConfig(
             tick_budget=10,
             analysis_interval=5,
             log_natural_language=True,
         )
-        observer = Observer(client=client, config=config)
+        observer = Observer(client=service_client, config=config)
 
         report = observer.observe()
 
@@ -556,13 +561,13 @@ class TestObserverWithSimServiceClient:
         assert len(report.commentary) > 0
         # Verify structured labels are present
         assert any("[STABILITY]" in c for c in report.commentary)
-        client.close()
 
-    def test_observer_with_service_client_json_output(self) -> None:
+    def test_observer_with_service_client_json_output(
+        self, service_client: SimServiceClient
+    ) -> None:
         """Observer should produce valid JSON output via SimServiceClient."""
-        client = self._build_service_client()
         config = ObserverConfig(tick_budget=5, analysis_interval=2)
-        observer = Observer(client=client, config=config)
+        observer = Observer(client=service_client, config=config)
 
         report = observer.observe()
         result = report.to_dict()
@@ -578,4 +583,3 @@ class TestObserverWithSimServiceClient:
         assert "commentary" in result
         assert "environment_summary" in result
         assert "tick_reports_count" in result
-        client.close()
