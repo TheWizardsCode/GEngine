@@ -171,7 +171,7 @@ class CampaignManager:
         """
         self._ensure_campaigns_dir()
 
-        campaign_id = str(uuid.uuid4())[:8]
+        campaign_id = str(uuid.uuid4())[:12]  # Use 12 chars for reduced collision risk
         now = datetime.now(timezone.utc)
 
         campaign = Campaign(
@@ -348,8 +348,8 @@ class CampaignManager:
         campaign_dir = self._campaign_dir(self._active_campaign.id)
         campaign_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create autosave with timestamp
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        # Create autosave with timestamp including microseconds to avoid collisions
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
         autosave_name = f"{self.AUTOSAVE_PREFIX}{timestamp}_tick{tick}.json"
         autosave_path = campaign_dir / autosave_name
 
