@@ -227,12 +227,12 @@ def calculate_success_modifier(
     """
     base = 1.0
 
-    # Skill contribution: 0.0 to 0.25
+    # Skill contribution: -0.25 to +0.25
     if skill_domain is not None:
         skill_mod = progression.get_skill_modifier(skill_domain)
         base += (skill_mod - 0.5) * 0.5  # -0.25 to +0.25
 
-    # Reputation contribution: 0.0 to 0.25
+    # Reputation contribution: -0.25 to +0.25
     if faction_id is not None:
         rep_mod = progression.get_reputation_modifier(faction_id)
         base += (rep_mod - 0.5) * 0.5  # -0.25 to +0.25
