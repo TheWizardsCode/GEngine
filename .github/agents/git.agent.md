@@ -124,6 +124,11 @@ pull requests and issues instead of manually constructing URLs:
   
 ## Workflow
 
+0. **Review project overview**
+   - Read `README.md` to understand the repository's purpose,
+     structure, and Git workflow expectations before modifying branches
+     or history.
+
 1. **Assess state**
    - Use `git status`, `git branch`, and `git log --oneline --graph --decorate
      --all` to understand the current branch layout.

@@ -99,6 +99,11 @@ executable document:
 
   ## Execution Playbook (Driven by `ie`)
 
+  0. **Review project overview**
+     - Read `README.md` to understand the repository's purpose,
+       structure, and executable document conventions before
+       authoring or executing any docs.
+
   1. **Inspect** – `ie inspect <doc>` and remediate issues.
   2. **Verify Need** – `ie execute <doc> --section Verification` when the doc
      supports selective execution; otherwise run the Verification block manually

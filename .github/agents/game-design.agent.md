@@ -54,6 +54,10 @@ be evaluated in terms of how fun, understandable, and satisfying it will be to p
 
 ## Workflow
 
+0. **Review project overview**
+   - Read `README.md` to understand the current project goals,
+     structure, and workflows before taking any actions.
+
 1. **Clarify the request**
    - Identify the focus area (e.g., progression, economy, director pacing, AI agents)
      and which ring(s) of the three-ring loop it touches.

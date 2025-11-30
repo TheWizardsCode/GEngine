@@ -36,6 +36,8 @@ You are an expert at authoring agent definition files for this repository.
 
 When creating or updating an agent definition:
 
+0. Before taking any actions, read `README.md` to understand the project's goals, structure, and existing workflows.
+
 1. **Frontmatter**
    - Ensure `name` is unique and matches the filename.
    - Write a concise, outcome-focused `description`.

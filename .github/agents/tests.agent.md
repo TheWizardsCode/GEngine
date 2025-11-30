@@ -45,6 +45,11 @@ for this repository.
 
 ## Workflow
 
+0. **Review project overview**
+   - Read `README.md` to understand the project's goals,
+     structure, and testing conventions before adding or running
+     tests.
+
 1. **Understand the target behavior**
    - Read the relevant code in `src/` and any existing tests in `tests/`.
    - Clarify expected behavior, edge cases, and failure modes from docs or
