@@ -1,17 +1,20 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-11-30T21:45:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
-- ✅ Task 7.1.1 (Progression Systems) **COMPLETED** by gamedev-agent
-  - Core progression module with skills, access tiers, reputation
-  - ProgressionSystem integrated with SimEngine
-  - 48 new tests, configuration in simulation.yml
-  - Documentation updated in gameplay guide
-- 📋 GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) completed
+- ✅ Task 7.1.1 (Progression Systems) **COMPLETED** by gamedev-agent (2025-11-30)
+  - Core progression module with skills, access tiers, reputation implemented
+  - ProgressionSystem integrated with SimEngine tick loop
+  - 48 comprehensive tests (all passing), configuration in simulation.yml
+  - Documentation updated in GDD, implementation plan, and gameplay guide
+  - GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) ready to close
+- 🆕 Task 7.1.2 (Per-Agent Progression) **CREATED** by gamedev-agent (priority: Low)
+  - Extends 7.1.1 with per-agent specialization and stress mechanics
+  - Optional enhancement for deeper roster management
 
 **Previous Updates:**
 
@@ -24,14 +27,16 @@
 
 **Current Priorities:**
 
-1. Phase 7 campaign UX flows (M7.4)
-2. Phase 8 containerization and Kubernetes deployment  
-3. Phase 9 AI player testing expansion (M9.2-M9.4)
+1. ✅ **Phase 7 Core Features Complete** (M7.1-M7.3 done)
+2. 🎯 **Phase 7 Polish** - Task 7.4.1 (Campaign UX) is the last remaining Phase 7 item
+3. 🚀 **Phase 8 Deployment** - No active development on containerization/K8s
+4. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer waiting
 
 **Key Risks:**
 
-- No clear ownership assigned for remaining Phase 7-9 work (need Ross assignment)
-- Kubernetes deployment (Phase 8) has no active development
+- ⚠️ **Phase 7 nearly complete, but no Phase 8 work started** - Deployment infrastructure blocks wider distribution
+- ⚠️ **No clear ownership for Phase 8-9 tasks** - Need Ross to assign or deprioritize
+- ✅ **Phase 7 delivery risk resolved** - All core player experience features shipped
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -51,7 +56,7 @@
 | 6.3.1 | LLM service skeleton (M6.3) | completed | High | Team | 2025-11-30 |
 | 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | completed | High | Team | 2025-11-30 |
 | 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
-| 7.1.1 | Design & build progression systems (M7.1) | completed | Low | gamedev-agent | 2025-11-30 |
+| 7.1.1 | Design & build progression systems (M7.1) | completed | High | gamedev-agent | 2025-11-30 |
 | 7.1.2 | Implement per-agent progression layer (M7.1.x) | not-started | Low | gamedev-agent | 2025-11-30 |
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
@@ -316,11 +321,12 @@
 - **Last Updated:** 2025-11-30
 
 ### 7.4.1 — Campaign UX Flows (M7.4)
+- **GitHub Issue:** [#13](https://github.com/TheWizardsCode/GEngine/issues/13)
 - **Description:** Refine UX flows for campaigns, autosaves, campaign picker, and end-of-run summaries in both CLI and gateway.
 - **Acceptance Criteria:** Players can manage campaigns (start, resume, end) with autosaves; end-of-run flow cleanly surfaces post-mortems and summaries; responsibilities between services are clearly documented.
 - **Priority:** Medium
 - **Responsible:** TBD (ask Ross)
-- **Dependencies:** Snapshot persistence, post-mortem generator, CLI/gateway surfaces.
+- **Dependencies:** Snapshot persistence (✅ complete), post-mortem generator (✅ complete), CLI/gateway surfaces (✅ complete).
 - **Risks & Mitigations:**
   - Risk: UX complexity confuses testers. Mitigation: Provide guided flows and documentation.
 - **Next Steps:**
