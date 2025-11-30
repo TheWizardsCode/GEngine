@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
 from .models import Agent, City, EnvironmentState, Faction, StorySeed
+from .progression import ProgressionState
 
 
 class GameState(BaseModel):
@@ -18,6 +19,7 @@ class GameState(BaseModel):
     agents: Dict[str, Agent] = Field(default_factory=dict)
     story_seeds: Dict[str, StorySeed] = Field(default_factory=dict)
     environment: EnvironmentState = Field(default_factory=EnvironmentState)
+    progression: Optional[ProgressionState] = Field(default=None)
     tick: int = Field(default=0, ge=0)
     seed: int = Field(default=0, ge=0)
     version: str = Field(default="0.1.0")
@@ -37,10 +39,16 @@ class GameState(BaseModel):
         self.tick += count
         return self.tick
 
+    def ensure_progression(self) -> ProgressionState:
+        """Ensure progression state exists and return it."""
+        if self.progression is None:
+            self.progression = ProgressionState()
+        return self.progression
+
     def summary(self) -> Dict[str, Any]:
         """Return a lightweight summary useful for CLI/debug output."""
 
-        summary = {
+        summary: Dict[str, Any] = {
             "city": self.city.name,
             "tick": self.tick,
             "districts": len(self.city.districts),
@@ -52,6 +60,9 @@ class GameState(BaseModel):
             faction_id: round(faction.legitimacy, 3)
             for faction_id, faction in self.factions.items()
         }
+        # Include progression summary if it exists
+        if self.progression is not None:
+            summary["progression"] = self.progression.summary()
         market = self.metadata.get("market_prices") or {}
         if market:
             summary["market_prices"] = {

@@ -13,7 +13,8 @@ from ..content import load_world_bundle
 from ..core import GameState
 from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
-from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem
+from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem, ProgressionSystem
+from ..systems.progression import ProgressionSettings as SystemProgressionSettings
 from .director import DirectorBridge, NarrativeDirector
 from .explanations import ExplanationsManager
 from .focus import FocusManager
@@ -49,7 +50,30 @@ class SimEngine:
         self._director_bridge = DirectorBridge(settings=self._config.director)
         self._narrative_director = NarrativeDirector(settings=self._config.director)
         self._explanations_manager = ExplanationsManager(history_limit=100)
+        self._progression_system = ProgressionSystem(
+            settings=self._create_progression_settings()
+        )
         self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
+
+    def _create_progression_settings(self) -> SystemProgressionSettings:
+        """Convert config progression settings to system settings."""
+        cfg = self._config.progression
+        return SystemProgressionSettings(
+            base_experience_rate=cfg.base_experience_rate,
+            experience_per_action=cfg.experience_per_action,
+            experience_per_inspection=cfg.experience_per_inspection,
+            experience_per_negotiation=cfg.experience_per_negotiation,
+            diplomacy_multiplier=cfg.diplomacy_multiplier,
+            investigation_multiplier=cfg.investigation_multiplier,
+            economics_multiplier=cfg.economics_multiplier,
+            tactical_multiplier=cfg.tactical_multiplier,
+            influence_multiplier=cfg.influence_multiplier,
+            reputation_gain_rate=cfg.reputation_gain_rate,
+            reputation_loss_rate=cfg.reputation_loss_rate,
+            skill_cap=cfg.skill_cap,
+            established_threshold=cfg.established_threshold,
+            elite_threshold=cfg.elite_threshold,
+        )
 
     # ------------------------------------------------------------------
     @property
@@ -108,6 +132,15 @@ class SimEngine:
             narrative_director=self._narrative_director,
             explanations_manager=self._explanations_manager,
         )
+
+        # Process progression updates for each tick
+        for report in reports:
+            self._progression_system.tick(
+                self.state,
+                agent_actions=report.agent_actions,
+                faction_actions=report.faction_actions,
+            )
+
         duration_ms = (perf_counter() - start) * 1000
         self._record_profiling(reports)
         if self._config.profiling.log_ticks:
@@ -201,6 +234,23 @@ class SimEngine:
     def why(self, query: str) -> dict[str, Any]:
         """Answer a 'why' query about the simulation state."""
         return self._explanations_manager.get_why_summary(self.state, query)
+
+    # Progression API --------------------------------------------------
+    def progression_summary(self) -> dict[str, Any]:
+        """Get summary of player progression state."""
+        progression = self.state.ensure_progression()
+        return self._progression_system.summary(progression)
+
+    def calculate_success_chance(
+        self,
+        action_type: str,
+        faction_id: str | None = None,
+    ) -> float:
+        """Calculate success chance for an action based on progression."""
+        progression = self.state.ensure_progression()
+        return self._progression_system.calculate_action_success_chance(
+            progression, action_type, faction_id
+        )
 
     # Internal helpers --------------------------------------------------
     def _record_profiling(self, reports: Sequence[TickReport]) -> None:

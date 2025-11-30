@@ -45,10 +45,13 @@ A staged implementation that builds a solid simulation core, then layers on agen
     provider pattern (with `StubProvider` for offline testing), and
     `echoes-llm-service` CLI entry point. 31 new tests cover settings,
     providers, and FastAPI endpoints (243 tests total, 94% coverage).
-- ⚙️ Phase 7 (Player Experience): **M7.2 Explanations** shipped with
+- ⚙️ Phase 7 (Player Experience): **M7.1 Progression** shipped with
+  `ProgressionState` models (skills, access tiers, reputation),
+  `ProgressionSystem` for per-tick updates, configuration in `simulation.yml`,
+  and 48 new tests. **M7.2 Explanations** shipped with
   `ExplanationsManager`, CLI commands (`timeline`, `explain`, `why`), causal
-  chain tracking, and agent reasoning summaries. Remaining: M7.1 progression,
-  M7.3 tuning, M7.4 campaign UX.
+  chain tracking, and agent reasoning summaries. Remaining: M7.3 tuning,
+  M7.4 campaign UX.
 - ⏳ Phase 8: pending (containerization, Kubernetes).
 
 ## Tech Stack and Runtime Assumptions
@@ -428,8 +431,19 @@ scripts/run_headless_sim.py --world default --ticks 200 --lod balanced
 
 ### Phase 7 – Player Experience, Progression, Polish
 
-- **M7.1 Progression systems** (1-1.5 days): skills, access tiers, reputation
-  influencing success rates and dialogue.
+- ✅ **M7.1 Progression systems** (1-1.5 days): skills, access tiers, reputation
+  influencing success rates and dialogue. Implemented in
+  `gengine.echoes.core.progression` (ProgressionState, SkillDomain, AccessTier,
+  ReputationState) and `gengine.echoes.systems.progression` (ProgressionSystem).
+  Skills (diplomacy, investigation, economics, tactical, influence) gain
+  experience from agent/faction actions each tick. Access tiers unlock at average
+  skill levels 50 (Established) and 100 (Elite). Faction reputation (-1.0 to 1.0)
+  affects action success rates. Configuration exposed via `progression` block in
+  `simulation.yml`. GameState includes optional `progression` field that persists
+  across snapshots. SimEngine integrates progression updates after each tick and
+  exposes `progression_summary()` and `calculate_success_chance()` APIs.
+  Comprehensive test suite (48 tests) covers models, system, and integration.
+  Documentation updated in gameplay guide with progression mechanics explanation.
 - ✅ **M7.2 Explanations** (0.5-1 day): queryable timelines and causal summaries.
   Implemented via `ExplanationsManager` in `gengine.echoes.sim.explanations`
   which tracks causal chains between events, builds agent reasoning summaries,

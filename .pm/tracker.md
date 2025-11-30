@@ -1,14 +1,17 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-11-30T10:10:15Z
+**Last Updated:** 2025-11-30
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
-- 🎯 Task 7.1.1 (Progression Systems) assigned to gamedev-agent (priority: High)
-- 📋 GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) created
-- ✅ Task 7.3.1 (Tuning & Replayability Sweeps) completed by gamedev-agent
+- ✅ Task 7.1.1 (Progression Systems) **COMPLETED** by gamedev-agent
+  - Core progression module with skills, access tiers, reputation
+  - ProgressionSystem integrated with SimEngine
+  - 48 new tests, configuration in simulation.yml
+  - Documentation updated in gameplay guide
+- 📋 GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) completed
 
 **Previous Updates:**
 
@@ -21,7 +24,7 @@
 
 **Current Priorities:**
 
-1. Phase 7 player experience features (M7.1, M7.4)
+1. Phase 7 campaign UX flows (M7.4)
 2. Phase 8 containerization and Kubernetes deployment  
 3. Phase 9 AI player testing expansion (M9.2-M9.4)
 
@@ -48,7 +51,7 @@
 | 6.3.1 | LLM service skeleton (M6.3) | completed | High | Team | 2025-11-30 |
 | 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | completed | High | Team | 2025-11-30 |
 | 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
-| 7.1.1 | Design & build progression systems (M7.1) | assigned | High | gamedev-agent | 2025-11-30 |
+| 7.1.1 | Design & build progression systems (M7.1) | completed | High | gamedev-agent | 2025-11-30 |
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -223,20 +226,42 @@
 - **Acceptance Criteria:** Progression mechanics visible in gameplay surfaces; config-driven tuning; tests validate key progression flows.
 - **Priority:** High
 - **Responsible:** gamedev-agent
-- **Status:** assigned
+- **Status:** ✅ COMPLETED
 - **Dependencies:** Narrative director (✅ Phase 5), agent/faction systems (✅ Phase 4).
 - **Risks & Mitigations:**
   - Risk: Progression overwhelms core simulation complexity. Mitigation: Start with minimal viable progression and iterate.
   - Risk: Balancing progression curves is time-consuming. Mitigation: Use config-driven tuning and existing difficulty sweep infrastructure.
-- **Next Steps:**
-  1. Define 3-5 core skill domains (diplomacy, investigation, resource management, etc.)
-  2. Design 2-3 access tiers with unlock criteria
-  3. Create `gengine.echoes.core.progression` and `gengine.echoes.sim.systems.progression` modules
-  4. Integrate with agent actions and faction AI
-  5. Add `progression` config section to `simulation.yml`
-  6. Write comprehensive tests and capture telemetry
-  7. Update gameplay documentation
-- **Last Updated:** 2025-11-30T10:10:15Z
+- **Completion Notes:**
+  - **Core Progression Module** (`src/gengine/echoes/core/progression.py`):
+    - `SkillDomain` enum: diplomacy, investigation, economics, tactical, influence
+    - `AccessTier` enum: novice, established, elite
+    - `SkillState` model: level (1-100), experience tracking, level-up calculations
+    - `ReputationState` model: -1.0 to 1.0 value, relationship labels (hostile to allied)
+    - `ProgressionState` model: complete player progression with skills, reputation, tier
+    - `calculate_success_modifier()`: combines skill and reputation for action success rates
+  - **Progression System** (`src/gengine/echoes/systems/progression.py`):
+    - `ProgressionSystem` class processes agent/faction actions each tick
+    - Grants skill experience based on action types
+    - Modifies reputation based on faction actions (positive/negative)
+    - Tracks progression events for telemetry
+    - `ProgressionSettings` dataclass with config-driven tuning
+  - **GameState Integration**: Optional `progression` field persists across snapshots
+  - **SimEngine Integration**: Progression updates after each tick batch
+  - **Configuration** (`content/config/simulation.yml`):
+    - New `progression` section with all tunable parameters
+    - Experience rates, domain multipliers, reputation rates, tier thresholds
+  - **Test Coverage**: 48 new tests in `tests/echoes/test_progression.py`
+    - Model tests for SkillState, ReputationState, ProgressionState
+    - System tests for tick processing, reputation changes
+    - Integration tests for SimEngine and GameState
+    - Scenario tests for progression over time
+  - **Documentation**: Updated `docs/gengine/how_to_play_echoes.md` with:
+    - Section 11: Player Progression System
+    - Skill domain descriptions
+    - Access tier unlock criteria
+    - Reputation effects on success rates
+    - Configuration reference
+- **Last Updated:** 2025-11-30
 
 ### 7.3.1 — Tuning & Replayability Sweeps (M7.3)
 - **Description:** Implement scenario sweeps, difficulty modifiers, and config exposure to tune pacing, difficulty, and replayability.

@@ -96,6 +96,11 @@ def run_headless_sim(
     profiling = engine.state.metadata.get("profiling")
     if profiling:
         summary["profiling"] = profiling
+    # Include progression summary
+    if engine.state.progression is not None:
+        summary["progression"] = engine.state.progression.summary()
+    # Include full summary for reference
+    summary["summary"] = engine.state.summary()
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)

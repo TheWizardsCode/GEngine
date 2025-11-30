@@ -1421,3 +1421,85 @@ The sweep comparison shows:
 Recommended tuning:
 - Lower scarcity weights in hard/brutal to prevent full collapse
 - Widen parameter gaps between tutorial/easy/normal for clearer progression
+
+## Task 7.1.1 - Design & Build Progression Systems (M7.1) (2025-11-30)
+=====================================================================
+
+### Initial Plan
+
+**Skill Domains (5 core):**
+- Diplomacy: Faction negotiations, dialogue success
+- Investigation: District inspections, information gathering
+- Economics: Resource management, trade effectiveness
+- Tactical: Security operations, covert actions
+- Influence: Story seed triggers, NPC reactions
+
+**Access Tiers (3 levels):**
+- Novice: Default, basic districts and commands
+- Established: Advanced districts, some restricted actions
+- Elite: Full access to all districts and commands
+
+**Reputation Scale:**
+- Range: -1.0 to 1.0 (hostile to allied)
+- Per-faction tracking
+- Affects negotiation success rates and dialogue
+
+### Implementation Steps
+1. Create `src/gengine/echoes/core/progression.py` with ProgressionState model
+2. Create `src/gengine/echoes/systems/progression.py` with ProgressionSystem
+3. Extend GameState to include progression field
+4. Update simulation.yml with progression config section
+5. Integrate with agent/faction systems for skill-based modifiers
+6. Add CLI summary/explain surfaces for progression data
+7. Write comprehensive tests
+8. Update documentation
+
+### Code Changes Log
+
+**Completed (2025-11-30):**
+
+1. Created `src/gengine/echoes/core/progression.py` - Core progression models:
+   - SkillDomain enum (5 domains)
+   - AccessTier enum (3 tiers)
+   - SkillState model with experience/leveling
+   - ReputationState model (-1 to 1 range)
+   - ProgressionState model with full progression tracking
+   - calculate_success_modifier() helper function
+
+2. Created `src/gengine/echoes/systems/progression.py` - Progression system:
+   - ProgressionSystem class for per-tick updates
+   - ProgressionSettings dataclass for configuration
+   - ProgressionEvent dataclass for event tracking
+   - Integration with agent/faction actions
+
+3. Updated `src/gengine/echoes/core/__init__.py` - Added exports
+4. Updated `src/gengine/echoes/core/state.py` - Added progression field to GameState
+5. Updated `src/gengine/echoes/systems/__init__.py` - Added progression exports
+6. Updated `src/gengine/echoes/settings.py` - Added ProgressionSettings
+7. Updated `src/gengine/echoes/sim/engine.py` - Integrated ProgressionSystem
+8. Updated `content/config/simulation.yml` - Added progression section
+9. Updated `src/gengine/echoes/cli/shell.py` - Added progression to CLI summary
+10. Created `tests/echoes/test_progression.py` - 48 comprehensive tests
+11. Updated `tests/echoes/test_cli_shell.py` - Added progression rendering test
+
+**Test Coverage:**
+- 453 tests pass (401 echoes + 52 scripts/ai_player)
+- 48 new progression tests
+
+**Documentation Updates:**
+- docs/gengine/how_to_play_echoes.md - Section 11 with full progression guide
+- docs/simul/emergent_story_game_implementation_plan.md - M7.1 marked complete
+- .pm/tracker.md - Task 7.1.1 marked completed
+
+**Telemetry Capture:**
+```bash
+uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m7-1-progression.json
+```
+
+**Playtest Instructions:**
+1. Start shell: `uv run echoes-shell --world default`
+2. Run simulation: `run 20`
+3. Check progression: `summary` (look for progression section)
+4. Note skill levels and reputation changes
+5. Exit: `exit`
+

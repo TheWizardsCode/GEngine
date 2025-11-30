@@ -543,6 +543,42 @@ def test_render_summary_surfaces_director_analysis() -> None:
     assert "recommend focus" in rendered
 
 
+def test_render_summary_surfaces_progression() -> None:
+    summary = {
+        "city": "Test",
+        "tick": 20,
+        "districts": 3,
+        "factions": 2,
+        "agents": 5,
+        "stability": 0.9,
+        "progression": {
+            "access_tier": "established",
+            "average_level": 25.5,
+            "total_experience": 500.0,
+            "actions_taken": 50,
+            "skills": {
+                "diplomacy": {"level": 30, "experience": 15.0},
+                "investigation": {"level": 25, "experience": 8.0},
+                "economics": {"level": 20, "experience": 0.0},
+            },
+            "reputation": {
+                "union-of-flux": {"value": 0.35, "relationship": "friendly"},
+                "cartel-of-mist": {"value": -0.15, "relationship": "neutral"},
+            },
+        },
+    }
+
+    rendered = _render_summary(summary)
+
+    assert "progression:" in rendered
+    assert "tier: established" in rendered
+    assert "avg level: 25.5" in rendered
+    assert "actions taken: 50" in rendered
+    assert "diplomacy:30" in rendered
+    assert "union-of-flux" in rendered
+    assert "friendly" in rendered
+
+
 def test_shell_postmortem_command_outputs_summary() -> None:
     engine = SimEngine()
     engine.initialize_state(world="default")
