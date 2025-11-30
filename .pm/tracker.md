@@ -1,30 +1,65 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-11-30T10:10:15Z
+
+## Status Summary
+
+**Recent Progress (since last update):**
+
+- 🎯 Task 7.1.1 (Progression Systems) assigned to gamedev-agent (priority: High)
+- 📋 GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) created
+- ✅ Task 7.3.1 (Tuning & Replayability Sweeps) completed by gamedev-agent
+
+**Previous Updates:**
+
+- ✅ Task 7.3.1 (Tuning & Replayability Sweeps) **COMPLETED** by gamedev-agent
+  - 5 difficulty presets created (easy, normal, hard, brutal, tutorial)
+  - Sweep runner and analysis scripts implemented with full test coverage
+  - Documentation updated in gameplay guide
+- 📋 GitHub Issue [#9](https://github.com/TheWizardsCode/GEngine/issues/9) completed
+- 🎯 Tracker reconciliation: Updated Phase 4-6 task statuses to reflect actual completion
+
+**Current Priorities:**
+
+1. Phase 7 player experience features (M7.1, M7.4)
+2. Phase 8 containerization and Kubernetes deployment  
+3. Phase 9 AI player testing expansion (M9.2-M9.4)
+
+**Key Risks:**
+
+- No clear ownership assigned for remaining Phase 7-9 work (need Ross assignment)
+- Kubernetes deployment (Phase 8) has no active development
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
-| 1.1.1 | Create Tracker Agent | completed | High | Ross (PM) | 2025-11-29 |
+| 1.1.1 | Create Tracker Agent | completed | High | Ross (PM) | 2025-11-30 |
 | 3.4.1 | Safeguards & LOD refresh follow-ups | completed | High | Gamedev Agent | 2025-11-30 |
-| 4.1.1 | Implement Agent AI subsystem (M4.1) | not-started | High | TBD (ask Ross) | 2025-11-29 |
-| 4.2.1 | Implement Faction AI subsystem (M4.2) | not-started | High | TBD (ask Ross) | 2025-11-29 |
-| 4.3.1 | Finalize Economy subsystem & tests (M4.3) | not-started | High | TBD (ask Ross) | 2025-11-29 |
-| 4.4.1 | Complete Environment dynamics coverage (M4.4) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 4.5.1 | Finalize Tick orchestration & telemetry (M4.5) | not-started | High | TBD (ask Ross) | 2025-11-29 |
-| 4.7.1 | Tune spatial adjacency & seed thresholds (M4.7) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | not-started | High | TBD (ask Ross) | 2025-11-29 |
-| 6.6.1 | Implement real LLM providers (M6.6) | not-started | High | TBD (ask Ross) | 2025-11-29 |
-| 7.1.1 | Design & build progression systems (M7.1) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | Medium | Gamedev Agent | 2025-11-30 |
-| 7.4.1 | Campaign UX flows (M7.4) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 8.1.1 | Containerization (Docker + compose) (M8.1) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 9.1.1 | AI Observer foundation acceptance (M9.1) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 9.2.1 | Rule-based AI action layer (M9.2) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 9.3.1 | LLM-enhanced AI decisions (M9.3) | not-started | Medium | TBD (ask Ross) | 2025-11-29 |
-| 9.4.1 | AI tournaments & balance tooling (M9.4) | not-started | Low | TBD (ask Ross) | 2025-11-29 |
+| 4.1.1 | Implement Agent AI subsystem (M4.1) | completed | High | Team | 2025-11-30 |
+| 4.2.1 | Implement Faction AI subsystem (M4.2) | completed | High | Team | 2025-11-30 |
+| 4.3.1 | Finalize Economy subsystem & tests (M4.3) | completed | High | Team | 2025-11-30 |
+| 4.4.1 | Complete Environment dynamics coverage (M4.4) | completed | Medium | Team | 2025-11-30 |
+| 4.5.1 | Finalize Tick orchestration & telemetry (M4.5) | completed | High | Team | 2025-11-30 |
+| 4.7.1 | Tune spatial adjacency & seed thresholds (M4.7) | completed | Medium | Team | 2025-11-30 |
+| 5.1.1 | Story seed schema & loading (M5.1) | completed | High | Team | 2025-11-30 |
+| 5.2.1 | Director hotspot analysis (M5.2) | completed | High | Team | 2025-11-30 |
+| 5.3.1 | Director pacing & lifecycle (M5.3) | completed | High | Team | 2025-11-30 |
+| 5.4.1 | Post-mortem generator (M5.4) | completed | Medium | Team | 2025-11-30 |
+| 6.1.1 | Gateway service (M6.1) | completed | High | Team | 2025-11-30 |
+| 6.3.1 | LLM service skeleton (M6.3) | completed | High | Team | 2025-11-30 |
+| 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | completed | High | Team | 2025-11-30 |
+| 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
+| 7.1.1 | Design & build progression systems (M7.1) | assigned | High | gamedev-agent | 2025-11-30 |
+| 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
+| 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
+| 7.4.1 | Campaign UX flows (M7.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 8.1.1 | Containerization (Docker + compose) (M8.1) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 9.1.1 | AI Observer foundation acceptance (M9.1) | completed | Medium | Team | 2025-11-30 |
+| 9.2.1 | Rule-based AI action layer (M9.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 9.3.1 | LLM-enhanced AI decisions (M9.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 9.4.1 | AI tournaments & balance tooling (M9.4) | not-started | Low | TBD (ask Ross) | 2025-11-30 |
 
 ## Task Details
 
@@ -183,18 +218,25 @@
 - **Last Updated:** 2025-11-29
 
 ### 7.1.1 — Design & Build Progression Systems (M7.1)
+- **GitHub Issue:** [#11](https://github.com/TheWizardsCode/GEngine/issues/11)
 - **Description:** Implement skills, access tiers, and reputation systems that influence success rates and dialogue, integrated with existing metrics and narrative systems.
 - **Acceptance Criteria:** Progression mechanics visible in gameplay surfaces; config-driven tuning; tests validate key progression flows.
-- **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
-- **Dependencies:** Narrative director, agent/faction systems.
+- **Priority:** High
+- **Responsible:** gamedev-agent
+- **Status:** assigned
+- **Dependencies:** Narrative director (✅ Phase 5), agent/faction systems (✅ Phase 4).
 - **Risks & Mitigations:**
   - Risk: Progression overwhelms core simulation complexity. Mitigation: Start with minimal viable progression and iterate.
+  - Risk: Balancing progression curves is time-consuming. Mitigation: Use config-driven tuning and existing difficulty sweep infrastructure.
 - **Next Steps:**
-  1. Define progression model and data schema.
-  2. Integrate with simulation outcomes and narrative.
-  3. Add tests and basic documentation.
-- **Last Updated:** 2025-11-29
+  1. Define 3-5 core skill domains (diplomacy, investigation, resource management, etc.)
+  2. Design 2-3 access tiers with unlock criteria
+  3. Create `gengine.echoes.core.progression` and `gengine.echoes.sim.systems.progression` modules
+  4. Integrate with agent actions and faction AI
+  5. Add `progression` config section to `simulation.yml`
+  6. Write comprehensive tests and capture telemetry
+  7. Update gameplay documentation
+- **Last Updated:** 2025-11-30T10:10:15Z
 
 ### 7.3.1 — Tuning & Replayability Sweeps (M7.3)
 - **Description:** Implement scenario sweeps, difficulty modifiers, and config exposure to tune pacing, difficulty, and replayability.
