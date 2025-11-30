@@ -59,6 +59,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+!.env.sample
 secrets*.yaml
 *.secret.yaml
 

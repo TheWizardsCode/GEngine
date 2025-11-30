@@ -914,9 +914,138 @@ narration_prompt = build_narration_prompt(
 
 The intent schemas enable the LLM service to convert natural language into type-safe game actions with validation, while the prompt templates ensure consistent LLM behavior across different providers.
 
+## Docker
+
+The project includes Docker support for containerized deployment of all three
+services (simulation, gateway, LLM).
+
+### Prerequisites
+
+- Docker 20.10+ with BuildKit support
+- Docker Compose V2 (included with Docker Desktop)
+
+### Quick Start
+
+```bash
+# Build and start all services
+docker compose up --build
+
+# Or start in detached mode
+docker compose up -d --build
+
+# View logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+```
+
+### Service URLs
+
+When running via Docker Compose, services are available at:
+
+| Service    | URL                     | Description                              |
+| ---------- | ----------------------- | ---------------------------------------- |
+| Simulation | http://localhost:8000   | Core simulation API                      |
+| Gateway    | http://localhost:8100   | WebSocket gateway for CLI sessions       |
+| LLM        | http://localhost:8001   | Natural language processing service      |
+
+### Configuration
+
+Copy the sample environment file and customize as needed:
+
+```bash
+cp .env.sample .env
+```
+
+Key configuration options in `.env`:
+
+```bash
+# Port mappings (host ports)
+SIMULATION_PORT=8000
+GATEWAY_PORT=8100
+LLM_PORT=8001
+
+# World to load (available in content/worlds/)
+ECHOES_SERVICE_WORLD=default
+
+# LLM provider: stub (default), openai, or anthropic
+ECHOES_LLM_PROVIDER=stub
+
+# For real LLM providers (OpenAI/Anthropic)
+ECHOES_LLM_API_KEY=your-api-key
+ECHOES_LLM_MODEL=gpt-4-turbo-preview
+```
+
+### Running Individual Services
+
+```bash
+# Start only the simulation service
+docker compose up simulation
+
+# Start simulation + gateway (no LLM)
+docker compose up simulation gateway
+```
+
+### Connecting from Host
+
+Use the gateway shell client to connect to containerized services:
+
+```bash
+# Connect to gateway via WebSocket
+uv run echoes-gateway-shell --gateway-url ws://localhost:8100/ws
+
+# Or connect directly to simulation service
+uv run echoes-shell --service-url http://localhost:8000
+```
+
+### Development Mode
+
+For development with hot-reload of source code, mount the source directory:
+
+```bash
+# Build with dev dependencies
+docker compose build --build-arg TARGET=development
+
+# Run with source mounted
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+Or create a `docker-compose.dev.yml` override:
+
+```yaml
+services:
+  simulation:
+    build:
+      target: development
+    volumes:
+      - ./src:/app/src:ro
+      - ./content:/app/content:ro
+```
+
+### Health Checks
+
+All services expose health check endpoints at `/healthz`:
+
+- Simulation: `GET /healthz`
+- Gateway: `GET /healthz`
+- LLM: `GET /healthz`
+
+Docker Compose configures automatic health checks with 30-second intervals.
+
+### Networking
+
+Services communicate via the `echoes-network` Docker bridge network using
+service names as hostnames:
+
+- Gateway → Simulation: `http://simulation:8000`
+- Gateway → LLM: `http://llm:8001`
+
 ## Next Steps
 
-1. **Phase 7 – Kubernetes Deployment** – containerize services (simulation, gateway, LLM) and create manifests for local minikube deployment, enabling multi-container orchestration and service discovery.
+1. **Phase 8 – Kubernetes Deployment** – create Kubernetes manifests for local
+   minikube deployment, enabling multi-container orchestration and service
+   discovery. Docker containerization is complete (see Docker section above).
 2. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
    heuristic decision logic for automated playtesting (depends on Phase 6
    action routing). See the Phase 9 section of the implementation plan for the
