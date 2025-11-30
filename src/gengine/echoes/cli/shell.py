@@ -17,11 +17,30 @@ from ..sim import SimEngine, TickReport
 
 try:
     from . import display
+    from io import StringIO
+    from rich.console import Console
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
 
 PROMPT = "(echoes) "
+
+# Cached styled prompt for Rich mode
+_STYLED_PROMPT: str | None = None
+
+
+def _get_prompt(enable_rich: bool) -> str:
+    """Return the prompt string, optionally styled green with Rich."""
+    global _STYLED_PROMPT
+    if not enable_rich or not RICH_AVAILABLE:
+        return PROMPT
+    if _STYLED_PROMPT is None:
+        console = Console(file=StringIO(), force_terminal=True)
+        console.print("[green](echoes)[/green] ", end="")
+        _STYLED_PROMPT = console.file.getvalue()
+    return _STYLED_PROMPT
+
+
 INTRO_TEXT = "Echoes shell ready. Type 'help' for commands."
 
 
@@ -1377,9 +1396,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         print(INTRO_TEXT)
         print(_render_summary(backend.summary()))
+        prompt = _get_prompt(shell.enable_rich)
         while True:
             try:
-                line = input(PROMPT)
+                line = input(prompt)
             except (EOFError, KeyboardInterrupt):
                 print()
                 break
