@@ -84,6 +84,27 @@ Adjust branch names if the project uses something other than `main`.
 - Push updated main:
   - `git push origin main`
 
+## GitHub CLI (`gh`) Examples
+
+When `gh` is available in the environment, prefer it for interacting with
+pull requests and issues instead of manually constructing URLs:
+
+- Inspect PRs for this repo:
+  - `gh pr list`
+  - `gh pr view <number>`
+  - `gh pr view <number> --web`
+
+- Check PR status and CI:
+  - `gh pr status`
+
+- Create and update PRs from the current branch:
+  - `gh pr create --fill`
+  - `gh pr edit <number> --add-label bug`
+
+- Merge a PR (only after tests pass and with user confirmation):
+  - `gh pr merge <number> --merge`
+  - `gh pr merge <number> --squash`
+  
 ## Workflow
 
 1. **Assess state**
