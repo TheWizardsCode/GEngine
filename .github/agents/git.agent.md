@@ -116,6 +116,50 @@ Adjust branch names if the project uses something other than `main`.
    - Suggest follow-up actions (e.g., tagging a release, notifying reviewers,
      or triggering CI).
 
+## Pull Request Handling
+
+When given a pull request URL (for example,
+`https://github.com/TheWizardsCode/GEngine/pull/7`):
+
+1. **Inspect the PR**
+   - Parse the URL to identify the repository, PR number, source branch,
+     and target branch (usually `main`).
+   - Summarize the PR title, description, and changed files (using the
+     GitHub UI or API as available via `openSimpleBrowser` or other tools
+     wired by the host, not by guessing).
+
+2. **Delegate testing to `test_agent`**
+   - Hand off to `test_agent` (see `.github/agents/test.agent.md`) with:
+     - the PR URL,
+     - the source branch name (if known), and
+     - any relevant commands (e.g. `pytest -v`).
+   - Ask `test_agent` to:
+     - ensure the branch is checked out locally,
+     - run the test suite and any required checks,
+     - report back pass/fail status and any failing tests.
+
+3. **Gate merges on tests**
+   - Only proceed to merge the PR if:
+     - `test_agent` reports tests are passing or expected failures are
+       explicitly acknowledged by the user, and
+     - there are no unresolved review blockers.
+
+4. **Merge the PR safely**
+   - If the merge is performed locally:
+     - Ensure `main` is up to date.
+     - Merge the PR's source branch into `main` using the project's preferred
+       strategy (e.g. `git merge --no-ff` for explicit merge commits).
+     - Push `main` to the remote.
+   - If the merge is performed via the Git hosting UI/API:
+     - Recommend the appropriate merge strategy (merge commit, squash,
+       or rebase) according to project policy.
+     - Confirm CI has passed before finalizing the merge.
+
+5. **Post-merge follow-up**
+   - Suggest deleting the merged feature branch if project policy allows.
+   - Propose any next steps (e.g., updating changelogs, tagging a release,
+     or notifying stakeholders).
+
 ## Boundaries
 
 - ✅ **Always do:**
