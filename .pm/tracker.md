@@ -51,7 +51,8 @@
 | 6.3.1 | LLM service skeleton (M6.3) | completed | High | Team | 2025-11-30 |
 | 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | completed | High | Team | 2025-11-30 |
 | 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
-| 7.1.1 | Design & build progression systems (M7.1) | completed | High | gamedev-agent | 2025-11-30 |
+| 7.1.1 | Design & build progression systems (M7.1) | completed | Low | gamedev-agent | 2025-11-30 |
+| 7.1.2 | Implement per-agent progression layer (M7.1.x) | not-started | Low | gamedev-agent | 2025-11-30 |
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -261,6 +262,29 @@
     - Access tier unlock criteria
     - Reputation effects on success rates
     - Configuration reference
+- **Last Updated:** 2025-11-30
+
+### 7.1.2 — Implement Per-Agent Progression Layer (M7.1.x)
+- **Description:** Implement the per-agent progression layer described in GDD §4.1.1 and the implementation plan (M7.1.x), adding a lightweight `AgentProgressionState` keyed by `agent_id` on top of the existing global `ProgressionState`. Wire it into `GameState`, `ProgressionSystem.tick(...)`, configuration, and minimal CLI/service surfaces while keeping effects bounded and optional.
+- **Acceptance Criteria:**
+  - `AgentProgressionState` model exists with specialization, expertise pips, reliability, stress, and mission counters.
+  - `GameState` can persist and restore `agent_progression` without breaking old snapshots.
+  - `ProgressionSystem` updates per-agent state when `agent_actions` include `agent_id`, without changing existing global progression behavior.
+  - New config knobs in `simulation.yml` control expertise/stress/reliability deltas and max bonus/penalty envelope.
+  - Optional success-modifier wrapper for per-agent bonuses is gated behind a config flag.
+  - At least a couple of CLI/service/explanation surfaces can display basic per-agent summaries.
+  - Tests cover model behavior, tick integration, and snapshot round-tripping.
+- **Priority:** Low
+- **Responsible:** gamedev-agent
+- **Status:** not-started
+- **Dependencies:** 7.1.1 (global progression systems), Phase 4 agent system, stable `agent_actions` payloads.
+- **Risks & Mitigations:**
+  - Risk: Per-agent bonuses/penalties destabilize difficulty. Mitigation: Keep modifiers small, config-gated, and covered by scenario tests.
+  - Risk: Roster UX becomes too fiddly. Mitigation: Limit tracked stats and ensure agent summaries remain legible in CLI/gateway views.
+- **Next Steps:**
+  1. Implement `AgentProgressionState` and integrate `agent_progression` into `GameState` with migration-safe defaults.
+  2. Extend `ProgressionSystem.tick(...)` to update per-agent progression from `agent_actions` and emit minimal telemetry.
+  3. Add config knobs, basic UX surfaces, and regression tests as outlined in the implementation plan.
 - **Last Updated:** 2025-11-30
 
 ### 7.3.1 — Tuning & Replayability Sweeps (M7.3)

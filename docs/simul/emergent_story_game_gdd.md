@@ -126,6 +126,78 @@ Reflective, grounded science fiction. Emphasis on cause-and-effect, unintended c
 - A former ally, repeatedly betrayed by the player, slowly drifts toward a rival faction and later leads efforts against the player.
 - Small groups coalesce into a movement after repeated injustices in the same district, leading to spontaneous protests.
 
+#### 4.1.1 Per-Agent Progression & Traits (Layered on Global Progression)
+
+The **ProgressionSystem** tracks two complementary layers:
+
+- **Global Player Progression** (already implemented): a single `ProgressionState` on `GameState` that represents the player profile – skill domains (diplomacy, investigation, economics, tactical, influence), faction reputation, and access tier (novice/established/elite).
+- **Per-Agent Progression** (design intent in this section): a lightweight state for each field agent that reflects what they have been asked to do, how often they succeed, and how strained they feel.
+
+Design goal: give agents a sense of personal history and specialization that gently shapes odds and recommendations, without turning the game into a micro-managed RPG party.
+
+**Agent Progression State (Conceptual Model):**
+
+Each important, player-facing field agent has an `AgentProgressionState` keyed by `agent_id` and containing:
+
+- **Specialization:** a primary role tag (e.g., negotiator, investigator, operator, influencer) aligned with the global skill domains.
+- **Expertise Pips:** a tiny bounded track (0–5) per relevant action family (e.g., negotiation, reconnaissance, covert ops) that grows when an agent repeatedly succeeds at that kind of assignment.
+- **Reliability:** a scalar in a bounded range (0–1) that trends up with clean successes and down with botched or abandoned missions.
+- **Stress / Burnout:** a scalar in a bounded range that rises with failure, overuse, and high-risk tasks, and slowly recovers when the agent is rested or assigned low-risk work.
+- **History Counters:** simple `missions_completed` / `missions_failed` counts to support summaries and post-mortems.
+
+All values are intentionally low-resolution (small integers or coarse buckets) so players can read them at a glance from CLI/service/headless surfaces.
+
+**Inputs & Updates:**
+
+The `ProgressionSystem.tick(...)` already consumes `agent_actions` reports from the AgentSystem and writes to the global `ProgressionState`. Per-agent progression layers onto this flow without changing the public contract:
+
+- Each agent action carries an `agent_id`, an `intent` (e.g., `NEGOTIATE_FACTION`, `INSPECT_DISTRICT`, `SABOTAGE_RIVAL`), and a simple success flag or outcome rating.
+- On each tick, for every action with an `agent_id`:
+  - Ensure an `AgentProgressionState` exists for that `agent_id` on `GameState`.
+  - Map `intent` to a domain family (negotiation, investigation, tactical, influence) using the same mapping table as global skills.
+  - **On success:**
+    - Increment the corresponding expertise pip up to a small cap (e.g., 0–5).
+    - Nudge reliability upward, with diminishing returns as it approaches the cap.
+    - Apply a small stress bump only for hazardous or overextended assignments.
+  - **On failure or aborted missions:**
+    - Increment the relevant failure counter and raise stress/burnout.
+    - Slightly reduce reliability, bounded so one bad mission does not erase a long good streak.
+  - Record a compact telemetry event (e.g., `agent_progression` with agent id, domain, expertise delta, stress delta) for debugging and post-mortems.
+
+The global `ProgressionState` continues to grant skill experience and adjust faction reputation as it does today; per-agent updates are an additive layer.
+
+**Mechanical Effects & Tuning Envelope:**
+
+- **Expertise Bonus:** agents with higher expertise in a domain contribute a modest positive modifier to success odds for actions they personally execute (e.g., ±5–10% around the base rate shaped by global skills + reputation). This bonus should never exceed the effect of the global skill/reputation combination.
+- **Reliability:** can bias outcome variance – highly reliable agents produce fewer wild swings (fewer critical failures/critical successes), while unreliable agents are swingier but not strictly worse at the mean.
+- **Stress / Burnout:** pushes in the opposite direction of expertise if ignored:
+  - At low to moderate levels, stress adds flavor text and gentle nudges but no hard blocks.
+  - At high levels, it introduces small penalties to the agent’s effective modifier and increases the chance of partial success or noisy outputs from agent-AI tooling.
+  - Stress should have **clear recovery paths** (time off, low-risk tasks) to avoid irreversible death spirals.
+
+Safe tuning guidelines for early iterations:
+
+- Cap expertise bonuses to a narrow band (e.g., `+0.05` to `+0.1` to the final modifier at max expertise).
+- Cap stress penalties similarly (e.g., `-0.05` to `-0.1` at worst), and ensure they never stack with other maluses to make actions impossible.
+- Ensure that even a brand-new, unstressed agent with no expertise still has a viable chance to succeed when global skills and reputation are neutral.
+- Prefer linear or gently diminishing gains over exponential curves so there is no “god agent” that trivializes the game.
+
+**Player-Facing Surfaces:**
+
+- **Agent Summary Views:** when the player inspects an agent, they see:
+  - Role label (e.g., "Veteran Negotiator", "Rookie Operative").
+  - A small set of pips or bars for their key domain expertise.
+  - A one- or two-word stress state ("calm", "strained", "burned out").
+  - A short textual note referencing recent missions (pulled from history counters/telemetry).
+- **Assignment Decisions:**
+  - When choosing who to send on a mission, players are nudged to balance using their best specialists versus resting overstressed agents.
+  - The system should **never** require pixel-perfect optimization; it should reward intuitive choices (“send the calm negotiator to the tense council hearing”) while keeping failure and surprise in play.
+- **Post-Mortems & Explanations:** recap views (CLI `postmortem`, timeline/explanation queries) include short notes such as:
+  - "Agent ILYA’s long run of successful negotiations made this deal more likely to succeed."
+  - "Agent SERA was burned out, slightly reducing the odds of a clean infiltration."
+
+This per-agent layer lives firmly in the **moment-to-moment** ring (which agent you send) and the **mid-term management** ring (how you rotate and care for your roster), while the existing global progression continues to drive the **long-term campaign arc** (which districts/commands unlock, how factions treat you overall).
+
 ### 4.2 Faction & Institution System
 
 **Factions:**
