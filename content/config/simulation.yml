@@ -97,3 +97,8 @@ progression:
   skill_cap: 100
   established_threshold: 50
   elite_threshold: 100
+campaign:
+  campaigns_dir: campaigns
+  autosave_interval: 50
+  max_autosaves: 3
+  generate_postmortem_on_end: true

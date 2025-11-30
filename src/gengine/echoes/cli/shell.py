@@ -7,12 +7,13 @@ import json
 import shlex
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, List, Mapping, Sequence
+from typing import Any, Iterable, List, Mapping, Optional, Sequence
 
+from ..campaign import Campaign, CampaignManager, CampaignSettings as CampaignMgrSettings
 from ..core import GameState
 from ..persistence import save_snapshot
 from ..client import SimServiceClient
-from ..settings import SimulationConfig, SimulationLimits, load_simulation_config
+from ..settings import SimulationConfig, SimulationLimits, CampaignSettings, load_simulation_config
 from ..sim import SimEngine, TickReport
 
 try:
@@ -96,20 +97,59 @@ class ShellBackend:
         """Hook for releasing backend resources (network clients, etc.)."""
         return None
 
+    # Campaign management methods
+    def campaign_list(self) -> List[dict[str, object]]:  # pragma: no cover
+        """List all available campaigns."""
+        raise NotImplementedError
+
+    def campaign_new(
+        self, name: str, world: str = "default", description: str = ""
+    ) -> dict[str, object]:  # pragma: no cover
+        """Create a new campaign."""
+        raise NotImplementedError
+
+    def campaign_resume(self, campaign_id: str) -> dict[str, object]:  # pragma: no cover
+        """Resume an existing campaign."""
+        raise NotImplementedError
+
+    def campaign_end(self) -> dict[str, object]:  # pragma: no cover
+        """End the active campaign with a post-mortem."""
+        raise NotImplementedError
+
+    def campaign_status(self) -> dict[str, object]:  # pragma: no cover
+        """Get the status of the active campaign."""
+        raise NotImplementedError
+
+    def campaign_autosave(self) -> Optional[str]:  # pragma: no cover
+        """Check and perform autosave if needed."""
+        return None
+
 
 class LocalBackend(ShellBackend):
-    def __init__(self, engine: SimEngine) -> None:
+    def __init__(
+        self,
+        engine: SimEngine,
+        campaign_manager: Optional[CampaignManager] = None,
+    ) -> None:
         self.engine = engine
+        self._campaign_manager = campaign_manager
 
     @property
     def state(self) -> GameState:
         return self.engine.state
 
+    @property
+    def campaign_manager(self) -> Optional[CampaignManager]:
+        return self._campaign_manager
+
     def summary(self) -> dict[str, object]:
         return self.engine.query_view("summary")
 
     def advance_ticks(self, count: int) -> Sequence[TickReport]:
-        return self.engine.advance_ticks(count)
+        reports = self.engine.advance_ticks(count)
+        # Check for autosave after advancing ticks
+        self.campaign_autosave()
+        return reports
 
     def render_map(self, district_id: str | None) -> str:
         return _render_map(self.state, district_id)
@@ -158,6 +198,80 @@ class LocalBackend(ShellBackend):
         return self.engine.why(query)
 
     def close(self) -> None:  # pragma: no cover - nothing to release
+        return None
+
+    # Campaign management implementations
+    def campaign_list(self) -> List[dict[str, object]]:
+        if self._campaign_manager is None:
+            return []
+        campaigns = self._campaign_manager.list_campaigns()
+        return [c.to_dict() for c in campaigns]
+
+    def campaign_new(
+        self, name: str, world: str = "default", description: str = ""
+    ) -> dict[str, object]:
+        if self._campaign_manager is None:
+            return {"error": "Campaign manager not initialized"}
+        # Initialize the world first
+        self.engine.initialize_state(world=world)
+        # Create the campaign
+        campaign = self._campaign_manager.create_campaign(
+            name=name, world=world, description=description
+        )
+        # Save initial snapshot
+        self._campaign_manager.save_campaign(
+            self.state.snapshot(), self.state.tick
+        )
+        return campaign.to_dict()
+
+    def campaign_resume(self, campaign_id: str) -> dict[str, object]:
+        if self._campaign_manager is None:
+            return {"error": "Campaign manager not initialized"}
+        try:
+            campaign = self._campaign_manager.load_campaign(campaign_id)
+            # Load the snapshot
+            snapshot_path = self._campaign_manager.get_snapshot_path(campaign_id)
+            if snapshot_path.exists():
+                self.engine.initialize_state(snapshot=snapshot_path)
+            else:
+                # If no snapshot, load the world fresh
+                self.engine.initialize_state(world=campaign.world)
+            return campaign.to_dict()
+        except FileNotFoundError as exc:
+            return {"error": str(exc)}
+        except ValueError as exc:
+            return {"error": str(exc)}
+
+    def campaign_end(self) -> dict[str, object]:
+        if self._campaign_manager is None:
+            return {"error": "Campaign manager not initialized"}
+        if self._campaign_manager.active_campaign is None:
+            return {"error": "No active campaign to end"}
+        # Get post-mortem data
+        post_mortem = self.engine.query_view("post-mortem")
+        # End the campaign
+        campaign = self._campaign_manager.end_campaign(
+            state_snapshot=self.state.snapshot(),
+            tick=self.state.tick,
+            post_mortem=post_mortem,
+        )
+        return {"ended": campaign.to_dict(), "post_mortem": post_mortem}
+
+    def campaign_status(self) -> dict[str, object]:
+        if self._campaign_manager is None:
+            return {"error": "Campaign manager not initialized"}
+        return self._campaign_manager.summary()
+
+    def campaign_autosave(self) -> Optional[str]:
+        if self._campaign_manager is None:
+            return None
+        if self._campaign_manager.active_campaign is None:
+            return None
+        path = self._campaign_manager.check_autosave(
+            self.state.snapshot(), self.state.tick
+        )
+        if path:
+            return str(path)
         return None
 
 
@@ -226,6 +340,24 @@ class ServiceBackend(ShellBackend):
     def close(self) -> None:
         self.client.close()
 
+    # Campaign methods - not supported in service mode
+    def campaign_list(self) -> List[dict[str, object]]:
+        raise NotImplementedError("Campaign management requires local backend")
+
+    def campaign_new(
+        self, name: str, world: str = "default", description: str = ""
+    ) -> dict[str, object]:
+        raise NotImplementedError("Campaign management requires local backend")
+
+    def campaign_resume(self, campaign_id: str) -> dict[str, object]:
+        raise NotImplementedError("Campaign management requires local backend")
+
+    def campaign_end(self) -> dict[str, object]:
+        raise NotImplementedError("Campaign management requires local backend")
+
+    def campaign_status(self) -> dict[str, object]:
+        raise NotImplementedError("Campaign management requires local backend")
+
 
 class EchoesShell:
     """Minimal command processor for the early CLI shell."""
@@ -257,9 +389,27 @@ class EchoesShell:
     # Command implementations -------------------------------------------
     def _cmd_help(self, _: Sequence[str]) -> CommandResult:
         return CommandResult(
-            "Available commands: summary, next [n], run <n>, map [district], focus [district|clear], "
-            "history [count], director [count], postmortem, timeline [count], explain <type> <id>, "
-            "why <query>, save <path>, load world <name>|snapshot <path>, help, exit"
+            "Available commands:\n"
+            "  summary           - Show world status and progression\n"
+            "  next              - Advance 1 tick\n"
+            "  run <n>           - Advance n ticks\n"
+            "  map [district]    - Show map or district details\n"
+            "  focus [district|clear] - Manage narrative focus\n"
+            "  history [count]   - Show narrator history\n"
+            "  director [count]  - Show director feed\n"
+            "  postmortem        - Show end-of-run recap\n"
+            "  timeline [count]  - Show causal timeline\n"
+            "  explain <type> <id> - Query entity explanations\n"
+            "  why <query>       - Answer 'why' questions\n"
+            "  save <path>       - Save snapshot\n"
+            "  load world|snapshot <name|path> - Load world or snapshot\n"
+            "  campaign list     - List saved campaigns\n"
+            "  campaign new <name> [world] - Start new campaign\n"
+            "  campaign resume <id> - Resume saved campaign\n"
+            "  campaign end      - End active campaign with post-mortem\n"
+            "  campaign status   - Show active campaign status\n"
+            "  help              - Show this message\n"
+            "  exit              - Leave the shell"
         )
 
     def _cmd_summary(self, _: Sequence[str]) -> CommandResult:
@@ -427,6 +577,118 @@ class EchoesShell:
         return CommandResult("Exiting shell.", should_exit=True)
 
     _cmd_quit = _cmd_exit
+
+    # Campaign commands
+    def _cmd_campaign(self, args: Sequence[str]) -> CommandResult:
+        if not args:
+            return CommandResult(
+                "Usage: campaign <subcommand>\n"
+                "Subcommands:\n"
+                "  list              - List saved campaigns\n"
+                "  new <name> [world] [description] - Start new campaign\n"
+                "  resume <id>       - Resume saved campaign\n"
+                "  end               - End active campaign with post-mortem\n"
+                "  status            - Show active campaign status"
+            )
+        subcmd = args[0].lower()
+        subargs = args[1:]
+
+        if subcmd == "list":
+            return self._campaign_list()
+        elif subcmd == "new":
+            return self._campaign_new(subargs)
+        elif subcmd == "resume":
+            return self._campaign_resume(subargs)
+        elif subcmd == "end":
+            return self._campaign_end()
+        elif subcmd == "status":
+            return self._campaign_status()
+        else:
+            return CommandResult(f"Unknown campaign subcommand '{subcmd}'")
+
+    def _campaign_list(self) -> CommandResult:
+        try:
+            campaigns = self.backend.campaign_list()
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        if not campaigns:
+            return CommandResult("No saved campaigns found.")
+        lines = ["Saved campaigns:"]
+        for c in campaigns:
+            status = "ended" if c.get("ended") else "active"
+            last_tick = c.get("last_tick", 0)
+            lines.append(
+                f"  [{c.get('id')}] {c.get('name')} - {c.get('world')} "
+                f"(tick {last_tick}, {status})"
+            )
+        return CommandResult("\n".join(lines))
+
+    def _campaign_new(self, args: Sequence[str]) -> CommandResult:
+        if not args:
+            return CommandResult("Usage: campaign new <name> [world] [description]")
+        name = args[0]
+        world = args[1] if len(args) > 1 else "default"
+        description = " ".join(args[2:]) if len(args) > 2 else ""
+        try:
+            result = self.backend.campaign_new(name, world, description)
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        if "error" in result:
+            return CommandResult(f"Error: {result['error']}")
+        return CommandResult(
+            f"Created campaign '{result.get('name')}' (ID: {result.get('id')})\n"
+            f"World: {result.get('world')}"
+        )
+
+    def _campaign_resume(self, args: Sequence[str]) -> CommandResult:
+        if not args:
+            return CommandResult("Usage: campaign resume <campaign_id>")
+        campaign_id = args[0]
+        try:
+            result = self.backend.campaign_resume(campaign_id)
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        if "error" in result:
+            return CommandResult(f"Error: {result['error']}")
+        return CommandResult(
+            f"Resumed campaign '{result.get('name')}' at tick {result.get('last_tick')}"
+        )
+
+    def _campaign_end(self) -> CommandResult:
+        try:
+            result = self.backend.campaign_end()
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        if "error" in result:
+            return CommandResult(f"Error: {result['error']}")
+        ended = result.get("ended", {})
+        post_mortem = result.get("post_mortem", {})
+        lines = [
+            f"Campaign '{ended.get('name')}' ended at tick {ended.get('last_tick')}",
+            "",
+            "Post-mortem summary:",
+        ]
+        notes = post_mortem.get("notes") or []
+        for note in notes[:5]:
+            lines.append(f"  - {note}")
+        return CommandResult("\n".join(lines))
+
+    def _campaign_status(self) -> CommandResult:
+        try:
+            result = self.backend.campaign_status()
+        except NotImplementedError as exc:
+            return CommandResult(str(exc))
+        if "error" in result:
+            return CommandResult(f"Error: {result['error']}")
+        active = result.get("active_campaign")
+        if active is None:
+            return CommandResult("No active campaign.")
+        return CommandResult(
+            f"Active campaign: {active.get('name')} (ID: {active.get('id')})\n"
+            f"World: {active.get('world')}\n"
+            f"Current tick: {active.get('tick')}\n"
+            f"Autosave interval: every {result.get('autosave_interval', 0)} ticks"
+        )
 
 
 def _render_summary(summary: dict[str, object]) -> str:
@@ -1399,16 +1661,45 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Enable enhanced ASCII views with Rich formatting (tables, colors, panels)",
     )
+    parser.add_argument(
+        "--campaign",
+        type=str,
+        default=None,
+        help="Resume a specific campaign by ID",
+    )
     args = parser.parse_args(argv)
     config = load_simulation_config()
 
     client: SimServiceClient | None = None
+    campaign_manager: CampaignManager | None = None
+
     if args.service_url:
         client = SimServiceClient(args.service_url)
         backend: ShellBackend = ServiceBackend(client)
     else:
+        # Create campaign manager with settings from config
+        campaign_settings = CampaignMgrSettings(
+            campaigns_dir=Path(config.campaign.campaigns_dir),
+            autosave_interval=config.campaign.autosave_interval,
+            max_autosaves=config.campaign.max_autosaves,
+            generate_postmortem_on_end=config.campaign.generate_postmortem_on_end,
+        )
+        campaign_manager = CampaignManager(campaign_settings)
+
         engine = _build_engine(args.world, args.snapshot, config=config)
-        backend = LocalBackend(engine)
+        backend = LocalBackend(engine, campaign_manager)
+
+        # Resume campaign if specified
+        if args.campaign:
+            try:
+                campaign = campaign_manager.load_campaign(args.campaign)
+                snapshot_path = campaign_manager.get_snapshot_path(args.campaign)
+                if snapshot_path.exists():
+                    engine.initialize_state(snapshot=snapshot_path)
+                print(f"Resumed campaign '{campaign.name}' at tick {campaign.last_tick}")
+            except (FileNotFoundError, ValueError) as exc:
+                print(f"Warning: Could not resume campaign: {exc}")
+
     shell = EchoesShell(backend, limits=config.limits, enable_rich=args.rich)
 
     try:

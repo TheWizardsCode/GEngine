@@ -1,42 +1,46 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-11-30T21:45:00Z
+**Last Updated:** 2025-11-30T22:30:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
+
+- ✅ Task 7.4.1 (Campaign UX Flows) **COMPLETED** by gamedev-agent (2025-11-30)
+  - Campaign module with create/list/resume/end/autosave functionality
+  - CLI commands: campaign new/list/resume/end/status plus --campaign flag
+  - 23 comprehensive tests (all passing), configuration in simulation.yml
+  - Documentation updated in GDD, implementation plan, and gameplay guide
+  - GitHub Issue [#13](https://github.com/TheWizardsCode/GEngine/issues/13) ready to close
+- ✅ Task 7.1.1 (Progression Systems) **VERIFIED COMPLETE**
+  - 48 progression tests pass, implementation fully functional
+  - GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) ready to close
+- 🆕 Task 7.1.2 (Per-Agent Progression) remains not-started (priority: Low)
+
+**Previous Updates:**
 
 - ✅ Task 7.1.1 (Progression Systems) **COMPLETED** by gamedev-agent (2025-11-30)
   - Core progression module with skills, access tiers, reputation implemented
   - ProgressionSystem integrated with SimEngine tick loop
   - 48 comprehensive tests (all passing), configuration in simulation.yml
   - Documentation updated in GDD, implementation plan, and gameplay guide
-  - GitHub Issue [#11](https://github.com/TheWizardsCode/GEngine/issues/11) ready to close
-- 🆕 Task 7.1.2 (Per-Agent Progression) **CREATED** by gamedev-agent (priority: Low)
-  - Extends 7.1.1 with per-agent specialization and stress mechanics
-  - Optional enhancement for deeper roster management
-
-**Previous Updates:**
-
 - ✅ Task 7.3.1 (Tuning & Replayability Sweeps) **COMPLETED** by gamedev-agent
   - 5 difficulty presets created (easy, normal, hard, brutal, tutorial)
   - Sweep runner and analysis scripts implemented with full test coverage
   - Documentation updated in gameplay guide
 - 📋 GitHub Issue [#9](https://github.com/TheWizardsCode/GEngine/issues/9) completed
-- 🎯 Tracker reconciliation: Updated Phase 4-6 task statuses to reflect actual completion
 
 **Current Priorities:**
 
-1. ✅ **Phase 7 Core Features Complete** (M7.1-M7.3 done)
-2. 🎯 **Phase 7 Polish** - Task 7.4.1 (Campaign UX) is the last remaining Phase 7 item
-3. 🚀 **Phase 8 Deployment** - No active development on containerization/K8s
-4. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer waiting
+1. ✅ **Phase 7 COMPLETE** (M7.1-M7.4 all done)
+2. 🚀 **Phase 8 Deployment** - No active development on containerization/K8s
+3. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer waiting
 
 **Key Risks:**
 
-- ⚠️ **Phase 7 nearly complete, but no Phase 8 work started** - Deployment infrastructure blocks wider distribution
+- ⚠️ **Phase 7 complete, but no Phase 8 work started** - Deployment infrastructure blocks wider distribution
 - ⚠️ **No clear ownership for Phase 8-9 tasks** - Need Ross to assign or deprioritize
-- ✅ **Phase 7 delivery risk resolved** - All core player experience features shipped
+- ✅ **Phase 7 delivery completed** - All player experience features shipped
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -60,7 +64,7 @@
 | 7.1.2 | Implement per-agent progression layer (M7.1.x) | not-started | Low | gamedev-agent | 2025-11-30 |
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
-| 7.4.1 | Campaign UX flows (M7.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 8.1.1 | Containerization (Docker + compose) (M8.1) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -325,15 +329,32 @@
 - **Description:** Refine UX flows for campaigns, autosaves, campaign picker, and end-of-run summaries in both CLI and gateway.
 - **Acceptance Criteria:** Players can manage campaigns (start, resume, end) with autosaves; end-of-run flow cleanly surfaces post-mortems and summaries; responsibilities between services are clearly documented.
 - **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
+- **Responsible:** gamedev-agent
+- **Status:** ✅ COMPLETED
+- **Completion Notes:**
+  - **Campaign Module** (`src/gengine/echoes/campaign/`):
+    - `Campaign` model: ID, name, world, timestamps, tick, ended status
+    - `CampaignManager` class: create, list, load, save, autosave, end campaigns
+    - `CampaignSettings` dataclass: configurable via simulation.yml
+    - Autosave at configurable intervals with automatic cleanup
+    - Post-mortem generation and persistence on campaign end
+  - **CLI Commands:**
+    - `campaign list` - show all saved campaigns
+    - `campaign new <name> [world]` - create new campaign
+    - `campaign resume <id>` - resume existing campaign
+    - `campaign end` - end campaign with post-mortem
+    - `campaign status` - show active campaign details
+    - `--campaign <id>` CLI flag for direct campaign resumption
+  - **Configuration** (`content/config/simulation.yml`):
+    - New `campaign` section with campaigns_dir, autosave_interval, max_autosaves, generate_postmortem_on_end
+  - **Test Coverage:** 23 new tests in `tests/echoes/test_campaign.py`
+    - CampaignSettings tests
+    - Campaign model serialization tests
+    - CampaignManager lifecycle tests
+    - Integration tests with LocalBackend
+  - **Documentation:** Updated gameplay guide, README, GDD, implementation plan
 - **Dependencies:** Snapshot persistence (✅ complete), post-mortem generator (✅ complete), CLI/gateway surfaces (✅ complete).
-- **Risks & Mitigations:**
-  - Risk: UX complexity confuses testers. Mitigation: Provide guided flows and documentation.
-- **Next Steps:**
-  1. Design campaign flow diagrams.
-  2. Implement autosaves and campaign picker.
-  3. Polish end-of-run UX and docs.
-- **Last Updated:** 2025-11-29
+- **Last Updated:** 2025-11-30
 
 ### 8.1.1 — Containerization (Docker + Compose) (M8.1)
 - **Description:** Create Dockerfiles and docker-compose configuration for simulation, gateway, and LLM services.

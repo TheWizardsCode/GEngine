@@ -421,6 +421,11 @@ seeds` block that lists which seeds attached, their target districts, and why
 - `save <path>` – write the current snapshot as JSON.
 - `load world <name>` / `load snapshot <path>` – swap to a new authored world or
   on-disk snapshot (local engine mode only).
+- `campaign list` – list all saved campaigns with IDs, names, and status.
+- `campaign new <name> [world]` – create a new campaign and initialize the world.
+- `campaign resume <id>` – resume a saved campaign by its ID.
+- `campaign end` – end the active campaign with a post-mortem summary.
+- `campaign status` – show details about the currently active campaign.
 - `exit`/`quit` – leave the shell.
 - Tick reports now include agent activity lines such as "Aria Volt inspects
   Industrial Tier" plus faction beats like "Union of Flux invests in
