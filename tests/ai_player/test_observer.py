@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import pytest
+from fastapi.testclient import TestClient
 
 from gengine.ai_player import Observer, ObserverConfig, TrendAnalysis
 from gengine.ai_player.observer import create_observer_from_engine
+from gengine.echoes.client import SimServiceClient
+from gengine.echoes.service import create_app
 from gengine.echoes.sim import SimEngine
 
 
@@ -490,3 +493,89 @@ class TestCreateObserverHelpers:
         observer = create_observer_from_engine(world="default", config=config)
 
         assert observer.config.tick_budget == 25
+
+
+class TestObserverWithSimServiceClient:
+    """Integration tests for Observer using SimServiceClient."""
+
+    def _build_service_client(self) -> SimServiceClient:
+        """Create a SimServiceClient backed by a test server."""
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+        app = create_app(engine=engine)
+        http_client = TestClient(app)
+        return SimServiceClient(base_url="http://testserver", client=http_client)
+
+    def test_observer_with_service_client_observes_ticks(self) -> None:
+        """Observer should work correctly with SimServiceClient."""
+        client = self._build_service_client()
+        config = ObserverConfig(tick_budget=5, analysis_interval=2)
+        observer = Observer(client=client, config=config)
+
+        report = observer.observe()
+
+        assert report.ticks_observed == 5
+        assert report.end_tick > report.start_tick
+        assert isinstance(report.stability_trend, TrendAnalysis)
+        assert isinstance(report.faction_swings, dict)
+        client.close()
+
+    def test_observer_with_service_client_detects_trends(self) -> None:
+        """Observer should detect trends when using SimServiceClient."""
+        client = self._build_service_client()
+        config = ObserverConfig(tick_budget=10, analysis_interval=5)
+        observer = Observer(client=client, config=config)
+
+        report = observer.observe()
+
+        # Verify trend detection works
+        assert report.stability_trend.metric_name == "stability"
+        assert report.stability_trend.trend in ["increasing", "decreasing", "stable"]
+        assert len(report.stability_trend.samples) > 0
+        # Verify faction tracking works
+        assert len(report.faction_swings) > 0
+        for faction_id, trend in report.faction_swings.items():
+            assert trend.metric_name.startswith("faction_")
+            assert trend.trend in ["increasing", "decreasing", "stable"]
+        client.close()
+
+    def test_observer_with_service_client_generates_commentary(self) -> None:
+        """Observer should generate commentary when using SimServiceClient."""
+        client = self._build_service_client()
+        config = ObserverConfig(
+            tick_budget=10,
+            analysis_interval=5,
+            log_natural_language=True,
+        )
+        observer = Observer(client=client, config=config)
+
+        report = observer.observe()
+
+        # Verify commentary is generated
+        assert isinstance(report.commentary, list)
+        assert len(report.commentary) > 0
+        # Verify structured labels are present
+        assert any("[STABILITY]" in c for c in report.commentary)
+        client.close()
+
+    def test_observer_with_service_client_json_output(self) -> None:
+        """Observer should produce valid JSON output via SimServiceClient."""
+        client = self._build_service_client()
+        config = ObserverConfig(tick_budget=5, analysis_interval=2)
+        observer = Observer(client=client, config=config)
+
+        report = observer.observe()
+        result = report.to_dict()
+
+        # Verify JSON structure
+        assert "ticks_observed" in result
+        assert "start_tick" in result
+        assert "end_tick" in result
+        assert "stability_trend" in result
+        assert "faction_swings" in result
+        assert "story_seeds_activated" in result
+        assert "alerts" in result
+        assert "commentary" in result
+        assert "environment_summary" in result
+        assert "tick_reports_count" in result
+        client.close()

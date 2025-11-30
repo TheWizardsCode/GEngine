@@ -260,6 +260,12 @@ class Observer:
         
         For remote connections, will raise an exception if connection fails.
         Callers should handle connection errors appropriately.
+        
+        Returns
+        -------
+        dict
+            State data containing stability, faction_legitimacy, story_seeds, etc.
+            For service mode, the 'data' field is automatically unwrapped.
         """
         if self._is_local:
             assert self._engine is not None
@@ -267,7 +273,12 @@ class Observer:
         else:
             assert self._client is not None
             try:
-                return self._client.state("summary")
+                response = self._client.state("summary")
+                # Service returns {"detail": "...", "data": {...}}
+                # Unwrap to get the actual state data
+                if "data" in response:
+                    return response["data"]
+                return response
             except Exception as e:
                 logger.error(f"Failed to fetch state from remote service: {e}")
                 raise ConnectionError(
