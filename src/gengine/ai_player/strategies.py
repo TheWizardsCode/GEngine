@@ -906,7 +906,7 @@ class HybridStrategy(BaseStrategy):
             rule_decisions = self._fallback.evaluate(state, tick)
             # Lower the priority of rule decisions when LLM is primary
             for rd in rule_decisions:
-                rd.priority = rd.priority * 0.5
+                rd.priority = rd.priority * self._llm_config.rule_priority_scaling
 
             self._rule_decisions += len(rule_decisions)
             return [decision] + rule_decisions

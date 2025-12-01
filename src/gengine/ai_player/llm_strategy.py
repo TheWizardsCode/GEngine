@@ -41,12 +41,16 @@ class LLMStrategyConfig:
         Stability level below which situation is considered critical.
     complexity_threshold_seeds
         Number of active story seeds to trigger LLM evaluation.
+    complexity_threshold_legitimacy_spread
+        Legitimacy spread between factions to trigger LLM evaluation.
     cost_per_call_estimate
         Estimated cost per LLM call for budget tracking.
     llm_timeout_seconds
         Timeout for LLM calls.
     fallback_on_error
         Whether to use rule-based fallback on LLM errors.
+    rule_priority_scaling
+        Scaling factor for rule decision priorities when LLM is primary.
     """
 
     llm_call_budget: int = 10
@@ -54,9 +58,11 @@ class LLMStrategyConfig:
     complexity_threshold_legitimacy: float = 0.4
     complexity_threshold_stability: float = 0.5
     complexity_threshold_seeds: int = 2
+    complexity_threshold_legitimacy_spread: float = 0.3
     cost_per_call_estimate: float = 0.01
     llm_timeout_seconds: float = 10.0
     fallback_on_error: bool = True
+    rule_priority_scaling: float = 0.5
 
     def __post_init__(self) -> None:
         """Validate configuration values."""
@@ -70,8 +76,16 @@ class LLMStrategyConfig:
             raise ValueError(
                 "complexity_threshold_stability must be between 0.0 and 1.0"
             )
+        if not 0.0 <= self.complexity_threshold_legitimacy_spread <= 1.0:
+            raise ValueError(
+                "complexity_threshold_legitimacy_spread must be between 0.0 and 1.0"
+            )
         if self.llm_timeout_seconds <= 0:
             raise ValueError("llm_timeout_seconds must be positive")
+        if not 0.0 <= self.rule_priority_scaling <= 1.0:
+            raise ValueError(
+                "rule_priority_scaling must be between 0.0 and 1.0"
+            )
 
 
 @dataclass
@@ -253,12 +267,13 @@ class LLMDecisionLayer:
             except RuntimeError:
                 loop = None
 
-            if loop is not None:
-                # Already in async context, need to schedule
+            if loop is not None and loop.is_running():
+                # Already in async context - use thread to avoid nested loops
                 import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self._call_llm(request))
-                    return future.result()
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    # Create a new event loop in the thread
+                    future = executor.submit(self._run_in_new_loop, request)
+                    return future.result(timeout=self._config.llm_timeout_seconds + 5)
             else:
                 # No event loop running, create a new one
                 return asyncio.run(self._call_llm(request))
@@ -268,6 +283,18 @@ class LLMDecisionLayer:
             if not self._config.fallback_on_error:
                 raise
             return None
+
+    def _run_in_new_loop(
+        self,
+        request: LLMDecisionRequest,
+    ) -> LLMDecisionResponse | None:
+        """Run the LLM call in a new event loop (for threading context)."""
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
+        try:
+            return new_loop.run_until_complete(self._call_llm(request))
+        finally:
+            new_loop.close()
 
     async def _call_llm(
         self,
@@ -377,7 +404,7 @@ class LLMDecisionLayer:
         session_id: str,
     ) -> GameIntent | None:
         """Parse an LLM result into a GameIntent."""
-        if not result.intents:
+        if not result or not result.intents:
             return None
 
         intent_data = result.intents[0]
@@ -487,7 +514,7 @@ def evaluate_complexity(
         legitimacy_values = list(faction_legitimacy.values())
         if legitimacy_values:
             spread = max(legitimacy_values) - min(legitimacy_values)
-            if spread > 0.3:
+            if spread > config.complexity_threshold_legitimacy_spread:
                 factors.append("faction_legitimacy_spread")
 
     is_complex = len(factors) > 0
