@@ -18,6 +18,7 @@
   - ✅ Task 7.3.1 (Tuning & Replayability) completed
   - ✅ Task 7.2.1 (Explanations) completed
   - 📋 Issues #11, #13 closed
+- 🚀 **Task 8.1.1 (Containerization) IN PROGRESS** - GitHub Issue [#15](https://github.com/TheWizardsCode/GEngine/issues/15), PR [#16](https://github.com/TheWizardsCode/GEngine/pull/16) opened and validated with `uv run --group dev pytest` (476 tests passing).
 
 **Previous Updates:**
 
@@ -72,7 +73,7 @@
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
-| 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
+| 8.1.1 | Containerization (Docker + compose) (M8.1) | in-progress | High | TBD (ask Ross) | 2025-11-30 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -391,9 +392,19 @@
   - **Test Coverage**: Full Python suite passes (476 tests, 0 failures)
 - **Dependencies:** Stable service boundaries (✅ Phase 6 complete), configuration contracts (✅ complete).
 - **Risks & Mitigations:**
-  - Risk: Divergence between local and container configs. Mitigation: Used shared env var contracts and sample env files.
-  - Risk: Port conflicts or networking issues. Mitigation: Used docker-compose networking with service names.
-- **Last Updated:** 2025-12-01
+  - Risk: Divergence between local and container configs. Mitigation: Use shared env var contracts and sample env files.
+  - Risk: Port conflicts or networking issues. Mitigation: Use docker-compose networking with service names.
+- **Current Status:** In progress (implementation under review in PR #16; all Python tests passing via `uv run --group dev pytest`).
+- **Completion Notes (so far):**
+  - Dockerfile added with multi-stage `uv`-based build and a single image parameterized by `SERVICE` env var to run simulation, gateway, or LLM services.
+  - `docker-compose.yml` added to orchestrate `simulation` (8000), `gateway` (8100), and `llm` (8001) services on a shared network with service-name-based URLs.
+  - `.env.sample` added documenting shared env var contracts between services.
+  - README updated with Docker usage and health-check examples.
+- **Next Steps:**
+  1. Assign owner for Docker/DevOps work and merge PR #16 after review/CI.
+  2. Add a container smoke test that builds the image, runs `docker compose up -d`, and verifies `/healthz` endpoints for simulation, gateway, and LLM.
+  3. Flip Task 8.1.1 to COMPLETED in `.pm/tracker.md` once containers are smoke-tested and merged.
+- **Last Updated:** 2025-11-30
 
 ### 8.2.1 — Kubernetes Manifests & Docs (M8.2)
 - **Description:** Define Kubernetes Deployments/Services/ConfigMaps/Ingress for simulation, gateway, and LLM services, plus supporting documentation.
