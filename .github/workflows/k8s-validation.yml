@@ -19,6 +19,9 @@ on:
       - 'k8s/**/*.yaml'
       - '.github/workflows/k8s-*.yml'
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint K8s Manifests
