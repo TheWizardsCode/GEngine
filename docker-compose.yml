@@ -1,0 +1,147 @@
+# Docker Compose configuration for GEngine Echoes of Emergence
+# 
+# This file orchestrates three microservices:
+# - simulation: Core simulation engine (port 8000)
+# - gateway: WebSocket gateway for CLI sessions (port 8100)
+# - llm: LLM service for natural language processing (port 8001)
+#
+# Usage:
+#   docker compose up                    # Start all services
+#   docker compose up simulation         # Start only simulation
+#   docker compose up -d                 # Start detached
+#   docker compose logs -f gateway       # Follow gateway logs
+#   docker compose down                  # Stop all services
+#
+# Environment variables can be customized via .env file
+
+services:
+  # ==========================================================================
+  # Simulation Service - Core simulation engine
+  # ==========================================================================
+  simulation:
+    build:
+      context: .
+      target: runtime
+    image: gengine:latest
+    container_name: echoes-simulation
+    environment:
+      SERVICE: simulation
+      ECHOES_SERVICE_HOST: "0.0.0.0"
+      ECHOES_SERVICE_PORT: "8000"
+      ECHOES_SERVICE_WORLD: "${ECHOES_SERVICE_WORLD:-default}"
+      ECHOES_CONFIG_ROOT: "/app/content"
+    ports:
+      - "${SIMULATION_PORT:-8000}:8000"
+    volumes:
+      # Mount content directory for hot-reload of world configs
+      - ./content:/app/content:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - echoes-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Gateway Service - WebSocket gateway for CLI/external clients
+  # ==========================================================================
+  gateway:
+    build:
+      context: .
+      target: runtime
+    image: gengine:latest
+    container_name: echoes-gateway
+    environment:
+      SERVICE: gateway
+      ECHOES_GATEWAY_HOST: "0.0.0.0"
+      ECHOES_GATEWAY_PORT: "8100"
+      # Connect to simulation service via Docker network
+      ECHOES_GATEWAY_SERVICE_URL: "http://simulation:8000"
+      # Optional: Connect to LLM service for natural language commands
+      ECHOES_GATEWAY_LLM_URL: "${ECHOES_GATEWAY_LLM_URL:-http://llm:8001}"
+    ports:
+      - "${GATEWAY_PORT:-8100}:8100"
+    depends_on:
+      simulation:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - echoes-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # LLM Service - Natural language processing service
+  # ==========================================================================
+  llm:
+    build:
+      context: .
+      target: runtime
+    image: gengine:latest
+    container_name: echoes-llm
+    environment:
+      SERVICE: llm
+      # Default to stub provider (no API key required)
+      ECHOES_LLM_PROVIDER: "${ECHOES_LLM_PROVIDER:-stub}"
+      # For real providers, set these in .env file
+      ECHOES_LLM_API_KEY: "${ECHOES_LLM_API_KEY:-}"
+      ECHOES_LLM_MODEL: "${ECHOES_LLM_MODEL:-}"
+      ECHOES_LLM_TEMPERATURE: "${ECHOES_LLM_TEMPERATURE:-0.7}"
+      ECHOES_LLM_MAX_TOKENS: "${ECHOES_LLM_MAX_TOKENS:-1000}"
+      ECHOES_LLM_TIMEOUT: "${ECHOES_LLM_TIMEOUT:-30}"
+      ECHOES_LLM_MAX_RETRIES: "${ECHOES_LLM_MAX_RETRIES:-2}"
+    ports:
+      - "${LLM_PORT:-8001}:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - echoes-network
+    restart: unless-stopped
+
+# =============================================================================
+# Network Configuration
+# =============================================================================
+networks:
+  echoes-network:
+    driver: bridge
+    name: echoes-network
+
+# =============================================================================
+# Development Override Example
+# =============================================================================
+# For development, create a docker-compose.dev.yml file with the following:
+#
+# services:
+#   simulation:
+#     build:
+#       target: development
+#     volumes:
+#       - ./src:/app/src:ro
+#       - ./content:/app/content:ro
+#
+#   gateway:
+#     build:
+#       target: development
+#     volumes:
+#       - ./src:/app/src:ro
+#       - ./content:/app/content:ro
+#
+#   llm:
+#     build:
+#       target: development
+#     volumes:
+#       - ./src:/app/src:ro
+#       - ./content:/app/content:ro
+#
+# Then run: docker compose -f docker-compose.yml -f docker-compose.dev.yml up

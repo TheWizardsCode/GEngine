@@ -174,6 +174,7 @@ tests/                    Pytest suites (content, tick loop, CLI shell, AI playe
 
 - Python 3.12+
 - `uv` (https://github.com/astral-sh/uv)
+- Docker (for container workflows; e.g., Docker Desktop or Docker Engine)
 
 ## Setup
 
@@ -184,6 +185,34 @@ uv sync --group dev
 
 The first sync creates/updates `.venv` and installs runtime plus dev
 dependencies.
+
+## Docker / Container Setup
+
+Task 8.1.1 adds official Docker support for the simulation, gateway, and LLM services. You only need Docker if you plan to run the stack via containers or use the container smoke tests.
+
+- **Install Docker:**
+  - Linux: `docker` and `docker compose` via your distro packages or https://docs.docker.com/engine/install/
+  - macOS / Windows: Docker Desktop from https://www.docker.com/products/docker-desktop
+
+- **Build and run containers:**
+
+  ```bash
+  # From the repo root
+  docker compose up --build
+  ```
+
+  This starts:
+  - simulation service on port 8000
+  - gateway service on port 8100
+  - LLM service on port 8001
+
+- **Container smoke test (recommended):**
+
+  ```bash
+  bash scripts/smoke_test_containers.sh
+  ```
+
+  This script builds the images, brings up the stack with Docker Compose, polls `/healthz` for each service, and tears everything down when checks pass.
 
 ## Running Tests
 
@@ -958,9 +987,172 @@ narration_prompt = build_narration_prompt(
 
 The intent schemas enable the LLM service to convert natural language into type-safe game actions with validation, while the prompt templates ensure consistent LLM behavior across different providers.
 
+## Docker
+
+The project includes Docker support for containerized deployment of all three
+services (simulation, gateway, LLM).
+
+### Prerequisites
+
+- Docker 20.10+ with BuildKit support
+- Docker Compose V2 (included with Docker Desktop)
+
+### Quick Start
+
+```bash
+# Build and start all services
+docker compose up --build
+
+# Or start in detached mode
+docker compose up -d --build
+
+# View logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+```
+
+### Service URLs
+
+When running via Docker Compose, services are available at:
+
+| Service    | URL                     | Description                              |
+| ---------- | ----------------------- | ---------------------------------------- |
+| Simulation | http://localhost:8000   | Core simulation API                      |
+| Gateway    | http://localhost:8100   | WebSocket gateway for CLI sessions       |
+| LLM        | http://localhost:8001   | Natural language processing service      |
+
+### Configuration
+
+Copy the sample environment file and customize as needed:
+
+```bash
+cp .env.sample .env
+```
+
+Key configuration options in `.env`:
+
+```bash
+# Port mappings (host ports)
+SIMULATION_PORT=8000
+GATEWAY_PORT=8100
+LLM_PORT=8001
+
+# World to load (available in content/worlds/)
+ECHOES_SERVICE_WORLD=default
+
+# LLM provider: stub (default), openai, or anthropic
+ECHOES_LLM_PROVIDER=stub
+
+# For real LLM providers (OpenAI/Anthropic)
+ECHOES_LLM_API_KEY=your-api-key
+ECHOES_LLM_MODEL=gpt-4-turbo-preview
+```
+
+### Running Individual Services
+
+```bash
+# Start only the simulation service
+docker compose up simulation
+
+# Start simulation + gateway (no LLM)
+docker compose up simulation gateway
+```
+
+### Connecting from Host
+
+Use the gateway shell client to connect to containerized services:
+
+```bash
+# Connect to gateway via WebSocket
+uv run echoes-gateway-shell --gateway-url ws://localhost:8100/ws
+
+# Or connect directly to simulation service
+uv run echoes-shell --service-url http://localhost:8000
+```
+
+### Development Mode
+
+For development with hot-reload of source code, create a `docker-compose.dev.yml`
+file to mount the source directory and use dev dependencies:
+
+```yaml
+# docker-compose.dev.yml - Development overrides
+services:
+  simulation:
+    build:
+      target: development
+    volumes:
+      - ./src:/app/src:ro
+      - ./content:/app/content:ro
+
+  gateway:
+    build:
+      target: development
+    volumes:
+      - ./src:/app/src:ro
+      - ./content:/app/content:ro
+
+  llm:
+    build:
+      target: development
+    volumes:
+      - ./src:/app/src:ro
+      - ./content:/app/content:ro
+```
+
+Then run with the override file:
+
+```bash
+# Build with dev dependencies
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+
+# Run with source mounted
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+### Health Checks
+
+All services expose health check endpoints at `/healthz`:
+
+- Simulation: `GET /healthz`
+- Gateway: `GET /healthz`
+- LLM: `GET /healthz`
+
+Docker Compose configures automatic health checks with 30-second intervals.
+
+### Container Smoke Tests
+
+A smoke test script validates the entire Docker/Compose setup:
+
+```bash
+# Run the container smoke test
+./scripts/smoke_test_containers.sh
+```
+
+The script will:
+1. Build the Docker image
+2. Start all services via `docker compose up`
+3. Poll `/healthz` endpoints for simulation, gateway, and LLM
+4. Verify HTTP 200 responses
+5. Clean up containers on completion
+
+Exit codes: 0 (success), 1 (build failed), 2 (health check timeout), 3 (verification failed).
+
+### Networking
+
+Services communicate via the `echoes-network` Docker bridge network using
+service names as hostnames:
+
+- Gateway → Simulation: `http://simulation:8000`
+- Gateway → LLM: `http://llm:8001`
+
 ## Next Steps
 
-1. **Phase 7 – Kubernetes Deployment** – containerize services (simulation, gateway, LLM) and create manifests for local minikube deployment, enabling multi-container orchestration and service discovery.
+1. **Phase 8 – Kubernetes Deployment** – create Kubernetes manifests for local
+   minikube deployment, enabling multi-container orchestration and service
+   discovery. Docker containerization is complete (see Docker section above).
 2. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
    heuristic decision logic for automated playtesting (depends on Phase 6
    action routing). See the Phase 9 section of the implementation plan for the

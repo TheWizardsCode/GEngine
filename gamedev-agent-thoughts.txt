@@ -1603,6 +1603,7 @@ uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod bala
 - Issue #11 (Task 7.1.1 - Progression): Ready to close
 - Issue #13 (Task 7.4.1 - Campaign UX): Ready to close
 
+<<<<<<< HEAD
 
 ## Task 9.1.1 - AI Observer Foundation Review & Polish (2025-11-30T23:13 UTC)
 =====================================================================
@@ -1661,3 +1662,84 @@ All acceptance criteria met:
 ✅ README documents usage with examples
 
 
+=======
+## Task 8.1.1: Containerization (Docker + Compose) (2025-11-30)
+=====================================================================
+
+### Initial Assessment
+- Working branch: copilot/scornful-wasp
+- Repository synced and clean
+
+### Project Structure Analysis
+Services to containerize:
+1. **Simulation Service** (port 8000): `src/gengine/echoes/service/main.py`
+2. **Gateway Service** (port 8100): `src/gengine/echoes/gateway/main.py`
+3. **LLM Service** (port 8001): `src/gengine/echoes/llm/main.py`
+
+### Environment Variables Inventory
+**Simulation:**
+- ECHOES_SERVICE_HOST (default: "0.0.0.0")
+- ECHOES_SERVICE_PORT (default: "8000")
+- ECHOES_SERVICE_WORLD (default: "default")
+- ECHOES_CONFIG_ROOT (optional)
+
+**Gateway:**
+- ECHOES_GATEWAY_SERVICE_URL (default: "http://localhost:8000")
+- ECHOES_GATEWAY_LLM_URL (optional)
+- ECHOES_GATEWAY_HOST (default: "0.0.0.0")
+- ECHOES_GATEWAY_PORT (default: "8100")
+
+**LLM:**
+- ECHOES_LLM_PROVIDER (default: "stub")
+- ECHOES_LLM_API_KEY (required for real providers)
+- ECHOES_LLM_MODEL (required for real providers)
+- ECHOES_LLM_TEMPERATURE (default: 0.7)
+- ECHOES_LLM_MAX_TOKENS (default: 1000)
+- ECHOES_LLM_TIMEOUT (default: 30)
+- ECHOES_LLM_MAX_RETRIES (default: 2)
+
+### Implementation Plan
+1. [x] Analyze project structure and dependencies
+2. [x] Create Dockerfile (shared multi-stage build)
+3. [x] Create docker-compose.yml for multi-service orchestration
+4. [x] Create .env.sample with documented variables
+5. [x] Update README.md with Docker section
+6. [ ] Verify Docker setup
+
+### Implementation Complete
+
+**Files Created:**
+1. `Dockerfile` - Multi-stage build supporting all three services
+   - Base stage: Python 3.12 slim + uv + dependencies
+   - Runtime stage: Application code + content + entrypoint
+   - Development stage: Dev dependencies for hot-reload
+   - SERVICE env var selects which service to run (simulation/gateway/llm)
+
+2. `docker-compose.yml` - Multi-service orchestration
+   - simulation service (port 8000): Core simulation API
+   - gateway service (port 8100): WebSocket gateway
+   - llm service (port 8001): Natural language processing
+   - echoes-network bridge for inter-service communication
+   - Health checks for all services
+   - Volume mounts for content directory
+
+3. `.env.sample` - Documented environment variables
+   - Port mappings
+   - World selection
+   - LLM provider configuration (stub/openai/anthropic)
+
+**README.md Updates:**
+- Added comprehensive Docker section with:
+  - Prerequisites
+  - Quick start commands
+  - Service URLs table
+  - Configuration guidance
+  - Individual service commands
+  - Host connection instructions
+  - Development mode setup
+  - Health check documentation
+  - Network configuration
+
+**.gitignore Updates:**
+- Added `!.env.sample` exception to track the sample env file
+>>>>>>> pr-16
