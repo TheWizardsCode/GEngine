@@ -144,8 +144,13 @@ pull requests and issues instead of manually constructing URLs:
 3. **Prepare for merge**
    - Ensure all relevant work is committed on the feature branch with clear
      messages.
-   - Run tests (e.g., `pytest -v`) and address obvious failures.
-   - Re-run tests after resolving conflicts if any.
+   - Run fast local checks (linting, a smoke subset of tests) to catch
+     obvious issues early.
+   - Once local checks pass, **handoff to `test_agent`** for a complete test
+     run of the branch (full `pytest` suite or project-standard commands).
+   - Do not recommend merging until `test_agent` has reported that the
+     complete test run has passed or any known, explicitly accepted
+     failures are documented.
 
 4. **Merge and push**
    - Merge the feature branch into `main` using `--no-ff` (if the project
