@@ -1,24 +1,11 @@
 # Project Task Tracker
 
-<<<<<<< HEAD
-**Last Updated:** 2025-12-01T04:00:00Z
-=======
-<<<<<<< HEAD
-**Last Updated:** 2025-12-01T03:47:00Z
-=======
-<<<<<<< HEAD
-**Last Updated:** 2025-12-01T03:51:00Z
-=======
-**Last Updated:** 2025-12-01T03:52:00Z
->>>>>>> main
->>>>>>> main
->>>>>>> main
+**Last Updated:** 2025-12-01T04:52:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
-<<<<<<< HEAD
 - 🎉 **Task 9.2.1 (Rule-Based AI Action Layer) COMPLETED** - GitHub Issue [#24](https://github.com/TheWizardsCode/GEngine/issues/24)
   - Strategies module with BalancedStrategy, AggressiveStrategy, DiplomaticStrategy
   - Actor module for action selection and submission via intent API
@@ -26,8 +13,6 @@
   - 75 new tests (41 strategies + 34 actor), 112 total AI player tests
   - Documentation updated in README and implementation plan
   - Unblocks Task 9.3.1 (LLM-Enhanced AI Decisions)
-=======
-<<<<<<< HEAD
 - 🎉 **Task 8.2.1 (Kubernetes Manifests & Docs) COMPLETED** - GitHub Issue #21
   - Kubernetes manifests directory (`k8s/`) with base and overlay structure
   - Base manifests: namespace, configmap, deployments, services, ingress for all 3 services
@@ -35,15 +20,12 @@
   - Staging overlay: Higher resource limits, ingress, Always pull policy
   - Executable documentation following existing Minikube patterns
   - Verification steps with health checks and troubleshooting guide
-=======
 - 🎉 **Task 7.1.3 (Enable Per-Agent Modifiers) COMPLETED** - GitHub Issue [#25](https://github.com/TheWizardsCode/GEngine/issues/25)
   - Ran difficulty sweeps with modifiers enabled across all 5 presets
   - Validated balance: metrics identical before/after (no destabilization)
   - Updated config to set `enable_per_agent_modifiers: true`
   - Documented findings in gameplay guide Section 11.4
   - All 523 tests pass with modifiers enabled
->>>>>>> main
->>>>>>> main
 - 🎉 **Task 7.1.2 (Per-Agent Progression) COMPLETED** - GitHub Issue [#17](https://github.com/TheWizardsCode/GEngine/issues/17)
   - AgentProgressionState model with specialization, expertise, reliability, stress
   - GameState integration with migration-safe defaults
@@ -93,32 +75,17 @@
 
 **Current Priorities:**
 
-<<<<<<< HEAD
-1. 🚀 **Phase 8 Deployment** - Task 8.1.1 complete, remaining tasks (8.2.1, 8.3.1, 8.4.1) need ownership
-2. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
-3. 🔧 **Optional Polish** - Task 7.1.3 (Enable per-agent modifiers by default) marked Medium priority
-
-**Key Risks:**
-
-- ⚠️ **Phase 8 remaining tasks need ownership** - K8s manifests (8.2.1), observability (8.3.1), content pipeline (8.4.1) all require assignment
-- ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
-- ⚠️ **Per-agent modifiers disabled** - Task 7.1.2 complete but 7.1.3 (enable by default) remains
-- ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested
-- ✅ **Containerization risk eliminated** - Docker/Compose setup tested and documented
-- ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
-=======
 1. 🚀 **Phase 8 Deployment** - Tasks 8.1.1 and 8.2.1 complete, remaining tasks (8.3.1, 8.4.1) need ownership
-2. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer (9.2.1) ready to start
+2. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
 
 **Key Risks:**
 
 - ⚠️ **Phase 8 remaining tasks need ownership** - Observability (8.3.1), content pipeline (8.4.1) require assignment
-- ⚠️ **Phase 9 ready to start** - Observer foundation complete, rule-based AI (9.2.1) unblocked but needs owner
-- ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers now enabled by default
-- ✅ **Containerization risk eliminated** - Docker/Compose setup tested and documented
-- ✅ **K8s manifests complete** - Local and staging overlays ready for deployment
-- ✅ **No open issues or PRs** - Clean repository state
->>>>>>> main
+- ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
+- ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
+- ✅ **Containerization complete** - Docker/Compose and K8s manifests tested and documented
+- ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
+- ✅ **Clean repository state** - Issues #21, #24, #25 closed
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -167,7 +134,6 @@
 - **Next Steps:**
   1. Use tracker agent to keep `.pm/tracker.md` current as work progresses.
   2. Review tracker weekly to adjust priorities, risks, and ownership.
-- **Last Updated:** 2025-11-29
 
 ### 3.4.1 — Safeguards & LOD Refresh Follow-Ups
 - **Description:** Complete the remaining M3.4 safeguard and LOD refresh work: audit all guardrail surfaces against current config, extend profiling hooks so CLI/service/headless share a common performance block, maintain the guardrail verification matrix, and ensure docs explain tuning per environment.
@@ -192,7 +158,6 @@
     - `test_tick_endpoint_rejects_large_requests`
     - `test_run_headless_sim_supports_batches`
   - **Documentation:** README.md and `docs/gengine/how_to_play_echoes.md` describe guardrails and tuning per environment.
-- **Last Updated:** 2025-11-30
 
 ### 4.1.1 — Implement Agent AI Subsystem (M4.1)
 - **Description:** Deliver Phase 4 agent AI: extend content schema for needs/goals/memory, implement a deterministic agent brain that emits per-tick intents, guarantee at least one strategic action per tick, and surface aggregate agent telemetry in headless summaries.
@@ -207,7 +172,6 @@
   1. Design and document agent traits/needs/goals schema.
   2. Implement utility model and plumb into tick loop.
   3. Add telemetry fields and regression tests.
-- **Last Updated:** 2025-11-29
 
 ### 4.2.1 — Implement Faction AI Subsystem (M4.2)
 - **Description:** Implement faction AI with resources, legitimacy, territory, and strategic actions that operate at a slower cadence, emitting structured events and telemetry for summaries and metrics.
@@ -222,7 +186,6 @@
   1. Finalize faction resource/ideology schema.
   2. Implement faction actions and conflict resolution.
   3. Extend summaries/metrics and add scenario tests.
-- **Last Updated:** 2025-11-29
 
 ### 4.3.1 — Finalize Economy Subsystem & Tests (M4.3)
 - **Description:** Complete remaining economy subsystem work: conservation checks, shortage handling, config knob exposure, and expanded regression/property tests plus scenario sweeps.
@@ -237,7 +200,6 @@
   1. Implement conservation checks and shortage warnings.
   2. Wire economy knobs through configs and docs.
   3. Add unit/property tests and scenario sweeps.
-- **Last Updated:** 2025-11-29
 
 ### 4.4.1 — Complete Environment Dynamics Coverage (M4.4)
 - **Description:** Finish environment subsystem validation with scenario coverage for pollution emergencies, diffusion telemetry, biodiversity scarcity/recovery loops, stability feedback, and CLI messaging, plus any pending environment map warnings.
@@ -251,7 +213,6 @@
   1. Identify missing environment scenarios.
   2. Implement tests and map warnings.
   3. Update docs with environment telemetry guidance.
-- **Last Updated:** 2025-11-29
 
 ### 4.5.1 — Finalize Tick Orchestration & Telemetry (M4.5)
 - **Description:** Ensure tick orchestration (subsystem ordering, anomaly handling) and telemetry (durations, errors, focus budgets, suppressed events) are complete, observable via `/metrics` and headless summaries.
@@ -265,7 +226,6 @@
   1. Document and lock in subsystem order.
   2. Verify telemetry fields across CLI/service/headless.
   3. Add or extend integration tests.
-- **Last Updated:** 2025-11-29
 
 ### 4.7.1 — Tune Spatial Adjacency & Seed Thresholds (M4.7)
 - **Description:** Tune the spatial adjacency graph and narrative seed thresholds using new spatial weights and director feeds; expand authored seeds and wire resolution/cooldown UX across all surfaces.
@@ -279,7 +239,6 @@
   1. Run sweeps to observe hotspot behavior.
   2. Adjust thresholds/weights and author seeds.
   3. Polish UX for resolution/cooldown states.
-- **Last Updated:** 2025-11-29
 
 ### 6.5.1 — Gateway ↔ LLM ↔ Sim Integration (M6.5)
 - **Description:** Wire full loop from user text through LLM intent parsing into simulation actions and back to narrative responses, including retry/fallback flows.
@@ -293,7 +252,6 @@
   1. Define end-to-end interaction contract.
   2. Implement gateway orchestration logic.
   3. Add stub-based integration tests.
-- **Last Updated:** 2025-11-29
 
 ### 6.6.1 — Implement Real LLM Providers (M6.6)
 - **Description:** Implement `OpenAIProvider` and `AnthropicProvider` wired to intent schema and prompts, with configuration, retries, and error handling.
@@ -307,7 +265,6 @@
   1. Implement provider adapters.
   2. Add configuration + docs.
   3. Write mocked integration tests.
-- **Last Updated:** 2025-11-29
 
 ### 7.1.1 — Design & Build Progression Systems (M7.1)
 - **GitHub Issue:** [#11](https://github.com/TheWizardsCode/GEngine/issues/11)
@@ -350,7 +307,6 @@
     - Access tier unlock criteria
     - Reputation effects on success rates
     - Configuration reference
-- **Last Updated:** 2025-11-30
 
 ### 7.1.2 — Implement Per-Agent Progression Layer (M7.1.x)
 - **GitHub Issue:** [#17](https://github.com/TheWizardsCode/GEngine/issues/17) - CLOSED
@@ -398,7 +354,6 @@
     - Expertise pip mechanics
     - Stress and reliability tracking
   - **Note:** Task 7.1.3 completed to enable per-agent modifiers by default
-- **Last Updated:** 2025-12-01
 
 ### 7.1.3 — Enable Per-Agent Success Modifiers by Default (M7.1.x)
 - **GitHub Issue:** [#25](https://github.com/TheWizardsCode/GEngine/issues/25)
@@ -423,7 +378,6 @@
     - Config example now shows `enable_per_agent_modifiers: true`
     - Added note explaining scenario testing confirmed balance stability
   - **Test Results:** All 523 tests pass with modifiers enabled
-- **Last Updated:** 2025-12-01
 
 ### 7.3.1 — Tuning & Replayability Sweeps (M7.3)
 - **Description:** Implement scenario sweeps, difficulty modifiers, and config exposure to tune pacing, difficulty, and replayability.
@@ -451,7 +405,6 @@
 - **Dependencies:** Stable core systems, story seeds, and telemetry.
 - **Risks & Mitigations:**
   - Risk: Large sweep runs slow. Mitigation: Stage runs (smoke vs deep sweeps).
-- **Last Updated:** 2025-11-30
 
 ### 7.4.1 — Campaign UX Flows (M7.4)
 - **GitHub Issue:** [#13](https://github.com/TheWizardsCode/GEngine/issues/13)
@@ -483,7 +436,6 @@
     - Integration tests with LocalBackend
   - **Documentation:** Updated gameplay guide, README, GDD, implementation plan
 - **Dependencies:** Snapshot persistence (✅ complete), post-mortem generator (✅ complete), CLI/gateway surfaces (✅ complete).
-- **Last Updated:** 2025-11-30
 
 ### 8.1.1 — Containerization (Docker + Compose) (M8.1)
 - **GitHub Issue:** [#15](https://github.com/TheWizardsCode/GEngine/issues/15)
@@ -525,7 +477,6 @@
   1. Assign owner for Docker/DevOps work and merge PR #16 after review/CI.
   2. Add a container smoke test that builds the image, runs `docker compose up -d`, and verifies `/healthz` endpoints for simulation, gateway, and LLM.
   3. Flip Task 8.1.1 to COMPLETED in `.pm/tracker.md` once containers are smoke-tested and merged.
-- **Last Updated:** 2025-11-30
 
 ### 8.2.1 — Kubernetes Manifests & Docs (M8.2)
 - **GitHub Issue:** [#21](https://github.com/TheWizardsCode/GEngine/issues/21)
@@ -559,7 +510,6 @@
     - Verification section with health checks and API tests
     - Troubleshooting guide for common issues
     - Cleanup instructions
-- **Last Updated:** 2025-12-01
 
 
 ### 8.3.1 — Observability in Kubernetes (M8.3)
@@ -575,7 +525,6 @@
   1. Add ServiceMonitor/PodMonitor or annotations.
   2. Define load smoke test.
   3. Iterate on resource sizing.
-- **Last Updated:** 2025-11-29
 
 ### 8.4.1 — Content Pipeline Tooling & CI (M8.4)
 - **GitHub Issue:** [#23](https://github.com/TheWizardsCode/GEngine/issues/23)
@@ -590,7 +539,6 @@
   1. Implement build script.
   2. Wire into CI.
   3. Document designer workflow.
-- **Last Updated:** 2025-11-29
 
 ### 9.1.1 — AI Observer Foundation Acceptance (M9.1)
 - **GitHub Issue:** [#19](https://github.com/TheWizardsCode/GEngine/issues/19)
@@ -616,7 +564,6 @@
     - `test_observer_with_service_client_json_output`
   - **README Enhanced:** Added remote SimServiceClient mode programmatic example with comprehensive trend detection and faction swing monitoring
   - **Total AI Observer Tests:** 37 tests (all passing)
-- **Last Updated:** 2025-11-30
 
 ### 9.2.1 — Rule-Based AI Action Layer (M9.2)
 - **GitHub Issue:** [#24](https://github.com/TheWizardsCode/GEngine/issues/24)
@@ -650,7 +597,6 @@
     - Includes 100-tick regression tests with deterministic seeds
     - Total AI player tests: 112 (all passing)
   - **Documentation**: Updated README with AI Player Actor section, updated implementation plan
-- **Last Updated:** 2025-12-01
 
 ### 9.3.1 — LLM-Enhanced AI Decisions (M9.3)
 - **Description:** Implement LLM-enhanced AI strategy layer that calls LLM service for complex choices with budget controls and fallbacks.
@@ -664,7 +610,6 @@
   1. Define LLM decision triggers and prompts.
   2. Implement hybrid strategy layer.
   3. Add scenario tests and telemetry.
-- **Last Updated:** 2025-11-29
 
 ### 9.4.1 — AI Tournaments & Balance Tooling (M9.4)
 - **Description:** Build AI tournament and analysis tooling to run many games in parallel and surface balance/anomaly reports.
@@ -678,6 +623,5 @@
   1. Implement tournament runner and analysis scripts.
   2. Add reporting format.
   3. Integrate into CI for periodic runs.
-- **Last Updated:** 2025-11-29
 
 
