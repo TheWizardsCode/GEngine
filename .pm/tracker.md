@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-01T06:15:00Z
+**Last Updated:** 2025-12-01T06:18:00Z
 
 ## Status Summary
 
@@ -86,13 +86,14 @@
 
 **Key Risks:**
 
+- 🔴 **K8s CI validation missing** - Bad manifests can break deployment (8.3.2) - HIGH IMPACT
 - ⚠️ **Phase 8 content pipeline needs ownership** - Task 8.4.1 requires assignment
 - ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
 - ✅ **Phase 8 observability complete** - Task 8.3.1 Prometheus annotations and smoke tests added (2025-12-01)
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
 - ✅ **Containerization complete** - Docker/Compose and K8s manifests tested and documented
 - ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
-- ✅ **Clean repository state** - Issues #21, #22, #24, #25 closed
+- ✅ **Clean repository state** - Issues #21, #24, #25 closed (verified 2025-12-01)
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -120,7 +121,8 @@
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
-| 8.3.1 | Observability in Kubernetes (M8.3) | completed | Medium | devops-infra-agent | 2025-12-01 |
+| 8.3.1 | Observability in Kubernetes (M8.3) | in-progress | Medium | devops-infra-agent | 2025-12-01 |
+| 8.3.2 | K8s Validation CI Job (M8.3.x) | not-started | High | TBD (ask Ross) | 2025-12-01 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 9.2.1 | Rule-based AI action layer (M9.2) | completed | Medium | gamedev-agent | 2025-12-01 |
@@ -547,6 +549,32 @@
     - Prometheus scraping verification steps
     - ServiceMonitor/Prometheus Operator integration guide
     - Troubleshooting for metrics issues
+- **Last Updated:** 2025-12-01
+
+### 8.3.2 — K8s Validation CI Job (M8.3.x)
+- **GitHub Issue:** [#31](https://github.com/TheWizardsCode/GEngine/issues/31)
+- **Description:** Add a dedicated CI job that validates Kubernetes manifests using `kubectl apply --dry-run=server` for both base and overlays, plus automated linting with kube-linter or kubeconform to catch misconfigurations before deployment.
+- **Acceptance Criteria:** 
+  - CI workflow validates all manifests under `k8s/base` and `k8s/overlays/*` with `kubectl apply --dry-run=server -k`
+  - K8s linter (kube-linter or kubeconform) runs on all manifests with reasonable ruleset
+  - Validation failures block PR merge
+  - Documentation explains validation workflow and how to run locally
+  - Workflow runs on K8s manifest changes (paths: `k8s/**/*.yaml`, `.github/workflows/k8s-*.yml`)
+- **Priority:** High
+- **Responsible:** TBD (ask Ross)
+- **Dependencies:** K8s manifests (✅ 8.2.1 complete), CI infrastructure
+- **Risks & Mitigations:**
+  - Risk: Bad manifests or misconfigurations take down deployment despite green unit tests. Mitigation: Server-side dry-run catches deployment-time errors early.
+  - Risk: K8s validation adds significant CI time. Mitigation: Run only on manifest changes, use fast linter like kubeconform.
+  - Risk: False positives from overly strict linting. Mitigation: Start with default ruleset, tune based on team feedback.
+- **Next Steps:**
+  1. Create `.github/workflows/k8s-validation.yml` workflow
+  2. Set up kubectl with a K8s version matching production/staging (e.g., kind cluster or k3s)
+  3. Add validation steps for base + all overlays (local, staging)
+  4. Integrate kube-linter or kubeconform with reasonable defaults
+  5. Document local validation workflow in K8s deployment docs
+  6. Test workflow with intentional manifest errors to verify blocking behavior
+- **Rationale:** A bad K8s manifest or misconfigured deployment can bring down the entire system even when all unit/integration tests pass. These issues easily slip through without automation. Catching K8s breakage early in CI protects every environment and typically delivers the best reliability gain per unit of effort.
 - **Last Updated:** 2025-12-01
 
 ### 8.4.1 — Content Pipeline Tooling & CI (M8.4)
