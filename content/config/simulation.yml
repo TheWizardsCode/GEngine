@@ -97,6 +97,17 @@ progression:
   skill_cap: 100
   established_threshold: 50
   elite_threshold: 100
+per_agent_progression:
+  enable_per_agent_modifiers: false
+  expertise_max_pips: 5
+  expertise_gain_per_success: 1
+  reliability_gain_per_success: 0.05
+  reliability_loss_per_failure: 0.08
+  stress_gain_per_failure: 0.1
+  stress_gain_per_hazardous: 0.05
+  stress_recovery_per_tick: 0.02
+  max_expertise_bonus: 0.1
+  max_stress_penalty: 0.1
 campaign:
   campaigns_dir: campaigns
   autosave_interval: 50

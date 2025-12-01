@@ -4,12 +4,13 @@ This module defines the player progression system including:
 - Skill domains (diplomacy, investigation, economics, tactical, influence)
 - Access tiers (novice, established, elite) that unlock districts/commands
 - Reputation tracking per faction affecting AI responses and success rates
+- Per-agent progression (specialization, expertise, reliability, stress)
 """
 
 from __future__ import annotations
 
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -32,12 +33,35 @@ class AccessTier(str, Enum):
     ELITE = "elite"  # Full access to all districts and commands
 
 
+class AgentSpecialization(str, Enum):
+    """Agent specialization aligned with skill domain families."""
+
+    NEGOTIATOR = "negotiator"  # Aligned with DIPLOMACY
+    INVESTIGATOR = "investigator"  # Aligned with INVESTIGATION
+    ANALYST = "analyst"  # Aligned with ECONOMICS
+    OPERATOR = "operator"  # Aligned with TACTICAL
+    INFLUENCER = "influencer"  # Aligned with INFLUENCE
+
+
+# Mapping from specialization to primary skill domain
+SPECIALIZATION_DOMAIN_MAP = {
+    AgentSpecialization.NEGOTIATOR: SkillDomain.DIPLOMACY,
+    AgentSpecialization.INVESTIGATOR: SkillDomain.INVESTIGATION,
+    AgentSpecialization.ANALYST: SkillDomain.ECONOMICS,
+    AgentSpecialization.OPERATOR: SkillDomain.TACTICAL,
+    AgentSpecialization.INFLUENCER: SkillDomain.INFLUENCE,
+}
+
+
 # Skill thresholds for tier progression
 TIER_THRESHOLDS = {
     AccessTier.NOVICE: 0,
     AccessTier.ESTABLISHED: 50,
     AccessTier.ELITE: 100,
 }
+
+# Threshold for "Junior" role label in per-agent progression
+JUNIOR_MISSIONS_THRESHOLD = 5
 
 
 class SkillState(BaseModel):
@@ -94,6 +118,111 @@ class ReputationState(BaseModel):
             return "unfriendly"
         else:
             return "hostile"
+
+
+# Maximum expertise pips per domain
+EXPERTISE_MAX_PIPS = 5
+
+
+class AgentProgressionState(BaseModel):
+    """Per-agent progression tracking for field agents.
+
+    This provides lightweight per-agent state layered on top of the global
+    ProgressionState, giving agents personal history and specialization.
+    """
+
+    agent_id: str = Field(..., min_length=1)
+    specialization: AgentSpecialization = Field(
+        default=AgentSpecialization.INVESTIGATOR
+    )
+    expertise: Dict[str, int] = Field(default_factory=dict)
+    reliability: float = Field(default=0.5, ge=0.0, le=1.0)
+    stress: float = Field(default=0.0, ge=0.0, le=1.0)
+    missions_completed: int = Field(default=0, ge=0)
+    missions_failed: int = Field(default=0, ge=0)
+
+    model_config = {"validate_assignment": True}
+
+    @field_validator("reliability")
+    @classmethod
+    def _clamp_reliability(cls, v: float) -> float:
+        return max(0.0, min(1.0, v))
+
+    @field_validator("stress")
+    @classmethod
+    def _clamp_stress(cls, v: float) -> float:
+        return max(0.0, min(1.0, v))
+
+    def get_expertise(self, domain: SkillDomain | str) -> int:
+        """Get expertise pips (0-5) for a domain."""
+        key = domain.value if isinstance(domain, SkillDomain) else domain
+        return self.expertise.get(key, 0)
+
+    def add_expertise(self, domain: SkillDomain | str, amount: int = 1) -> int:
+        """Add expertise pips, capped at EXPERTISE_MAX_PIPS. Returns new value."""
+        key = domain.value if isinstance(domain, SkillDomain) else domain
+        current = self.expertise.get(key, 0)
+        new_value = min(EXPERTISE_MAX_PIPS, current + amount)
+        self.expertise[key] = new_value
+        return new_value
+
+    def modify_reliability(self, delta: float) -> None:
+        """Modify reliability, clamping to [0, 1]."""
+        self.reliability = max(0.0, min(1.0, self.reliability + delta))
+
+    def modify_stress(self, delta: float) -> None:
+        """Modify stress, clamping to [0, 1]."""
+        self.stress = max(0.0, min(1.0, self.stress + delta))
+
+    def record_success(self) -> None:
+        """Record a successful mission."""
+        self.missions_completed += 1
+
+    def record_failure(self) -> None:
+        """Record a failed mission."""
+        self.missions_failed += 1
+
+    def stress_label(self) -> str:
+        """Return human-readable stress state."""
+        if self.stress <= 0.2:
+            return "calm"
+        elif self.stress <= 0.5:
+            return "focused"
+        elif self.stress <= 0.75:
+            return "strained"
+        else:
+            return "burned out"
+
+    def role_label(self) -> str:
+        """Return a role label based on specialization and expertise."""
+        primary_domain = SPECIALIZATION_DOMAIN_MAP.get(self.specialization)
+        if primary_domain:
+            expertise_level = self.get_expertise(primary_domain)
+            if expertise_level >= 4:
+                prefix = "Veteran"
+            elif expertise_level >= 2:
+                prefix = "Experienced"
+            elif self.missions_completed >= JUNIOR_MISSIONS_THRESHOLD:
+                prefix = "Junior"
+            else:
+                prefix = "Rookie"
+        else:
+            prefix = "Rookie"
+        return f"{prefix} {self.specialization.value.title()}"
+
+    def summary(self) -> Dict[str, object]:
+        """Return a compact summary for CLI/service displays."""
+        return {
+            "agent_id": self.agent_id,
+            "role": self.role_label(),
+            "specialization": self.specialization.value,
+            "expertise": dict(self.expertise),
+            "reliability": round(self.reliability, 2),
+            "stress": round(self.stress, 2),
+            "stress_label": self.stress_label(),
+            "missions_completed": self.missions_completed,
+            "missions_failed": self.missions_failed,
+        }
 
 
 class ProgressionState(BaseModel):
@@ -236,5 +365,44 @@ def calculate_success_modifier(
     if faction_id is not None:
         rep_mod = progression.get_reputation_modifier(faction_id)
         base += (rep_mod - 0.5) * 0.5  # -0.25 to +0.25
+
+    return max(0.5, min(1.5, base))
+
+
+def calculate_agent_modifier(
+    global_progression: ProgressionState,
+    agent_progression: Optional[AgentProgressionState],
+    skill_domain: SkillDomain | str | None = None,
+    faction_id: str | None = None,
+    *,
+    max_expertise_bonus: float = 0.1,
+    max_stress_penalty: float = 0.1,
+) -> float:
+    """Calculate success modifier combining global and per-agent progression.
+
+    This wraps calculate_success_modifier and adds a bounded per-agent tweak:
+    - Expertise bonus: +0.0 to +max_expertise_bonus based on expertise pips
+    - Stress penalty: -0.0 to -max_stress_penalty based on stress level
+
+    The agent-specific modifier never exceeds the global modifier's contribution.
+    Returns a value between 0.5 and 1.5.
+    """
+    # Start with global modifier
+    base = calculate_success_modifier(global_progression, skill_domain, faction_id)
+
+    if agent_progression is None:
+        return base
+
+    # Agent expertise bonus (0 to max_expertise_bonus)
+    if skill_domain is not None:
+        expertise = agent_progression.get_expertise(skill_domain)
+        expertise_ratio = expertise / EXPERTISE_MAX_PIPS  # 0.0 to 1.0
+        base += expertise_ratio * max_expertise_bonus
+
+    # Agent stress penalty (0 to -max_stress_penalty)
+    if agent_progression.stress > 0.5:
+        # Only apply penalty when stress exceeds 50%
+        stress_ratio = (agent_progression.stress - 0.5) / 0.5  # 0.0 to 1.0
+        base -= stress_ratio * max_stress_penalty
 
     return max(0.5, min(1.5, base))

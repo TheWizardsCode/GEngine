@@ -4,7 +4,12 @@ from .agents import AgentIntent, AgentSystem
 from .economy import EconomySystem, EconomyReport
 from .factions import FactionAction, FactionSystem
 from .environment import EnvironmentImpact, EnvironmentSystem
-from .progression import ProgressionEvent, ProgressionSettings, ProgressionSystem
+from .progression import (
+    PerAgentProgressionSettings,
+    ProgressionEvent,
+    ProgressionSettings,
+    ProgressionSystem,
+)
 
 __all__ = [
 	"AgentIntent",
@@ -15,6 +20,7 @@ __all__ = [
     "EconomyReport",
     "EnvironmentImpact",
     "EnvironmentSystem",
+    "PerAgentProgressionSettings",
     "ProgressionEvent",
     "ProgressionSettings",
     "ProgressionSystem",

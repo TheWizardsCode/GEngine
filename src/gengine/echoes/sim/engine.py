@@ -14,7 +14,10 @@ from ..core import GameState
 from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
 from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem, ProgressionSystem
-from ..systems.progression import ProgressionSettings as SystemProgressionSettings
+from ..systems.progression import (
+    PerAgentProgressionSettings as SystemPerAgentSettings,
+    ProgressionSettings as SystemProgressionSettings,
+)
 from .director import DirectorBridge, NarrativeDirector
 from .explanations import ExplanationsManager
 from .focus import FocusManager
@@ -51,7 +54,8 @@ class SimEngine:
         self._narrative_director = NarrativeDirector(settings=self._config.director)
         self._explanations_manager = ExplanationsManager(history_limit=100)
         self._progression_system = ProgressionSystem(
-            settings=self._create_progression_settings()
+            settings=self._create_progression_settings(),
+            per_agent_settings=self._create_per_agent_settings(),
         )
         self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
 
@@ -73,6 +77,22 @@ class SimEngine:
             skill_cap=cfg.skill_cap,
             established_threshold=cfg.established_threshold,
             elite_threshold=cfg.elite_threshold,
+        )
+
+    def _create_per_agent_settings(self) -> SystemPerAgentSettings:
+        """Convert config per-agent progression settings to system settings."""
+        cfg = self._config.per_agent_progression
+        return SystemPerAgentSettings(
+            enable_per_agent_modifiers=cfg.enable_per_agent_modifiers,
+            expertise_max_pips=cfg.expertise_max_pips,
+            expertise_gain_per_success=cfg.expertise_gain_per_success,
+            reliability_gain_per_success=cfg.reliability_gain_per_success,
+            reliability_loss_per_failure=cfg.reliability_loss_per_failure,
+            stress_gain_per_failure=cfg.stress_gain_per_failure,
+            stress_gain_per_hazardous=cfg.stress_gain_per_hazardous,
+            stress_recovery_per_tick=cfg.stress_recovery_per_tick,
+            max_expertise_bonus=cfg.max_expertise_bonus,
+            max_stress_penalty=cfg.max_stress_penalty,
         )
 
     # ------------------------------------------------------------------
@@ -251,6 +271,21 @@ class SimEngine:
         return self._progression_system.calculate_action_success_chance(
             progression, action_type, faction_id
         )
+
+    def calculate_success_chance_with_agent(
+        self,
+        action_type: str,
+        agent_id: str | None = None,
+        faction_id: str | None = None,
+    ) -> float:
+        """Calculate success chance including per-agent modifiers (if enabled)."""
+        return self._progression_system.calculate_action_success_chance_with_agent(
+            self.state, action_type, agent_id, faction_id
+        )
+
+    def agent_roster_summary(self) -> list[dict[str, Any]]:
+        """Get summary of all agent progression states."""
+        return self._progression_system.agent_roster_summary(self.state)
 
     # Internal helpers --------------------------------------------------
     def _record_profiling(self, reports: Sequence[TickReport]) -> None:

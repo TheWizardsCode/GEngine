@@ -760,6 +760,90 @@ progression:
 Increase experience rates to speed up progression for tutorials or decrease them
 for more challenging campaigns.
 
+### Per-Agent Progression (M7.1.2)
+
+Beyond global player progression, each field agent can develop individual
+expertise, reliability, and stress levels. This adds a tactical layer where
+you choose which agent to send on missions based on their specialization and
+current condition.
+
+#### Agent Specializations
+
+Each agent has a primary specialization aligned with the skill domains:
+
+| Specialization | Primary Domain | Best Used For                          |
+| ------------- | -------------- | -------------------------------------- |
+| Negotiator    | Diplomacy      | Faction talks, council lobbying        |
+| Investigator  | Investigation  | District inspections, intelligence     |
+| Analyst       | Economics      | Resource management, trade operations  |
+| Operator      | Tactical       | Security ops, covert actions           |
+| Influencer    | Influence      | Story seeds, NPC manipulation          |
+
+#### Agent Stats
+
+Each agent tracks:
+
+- **Expertise** (0-5 pips per domain): Grows with successful missions
+- **Reliability** (0.0-1.0): Increases on success, decreases on failure
+- **Stress** (0.0-1.0): Rises with failures and hazardous missions, slowly recovers
+
+Stress labels help quickly assess agent condition:
+- **Calm** (0-20%): Ready for any mission
+- **Focused** (20-50%): Normal operational state
+- **Strained** (50-75%): Consider lighter assignments
+- **Burned out** (75-100%): High risk of failure, needs rest
+
+#### Agent Progression in CLI
+
+The `summary` command shows agent progression when available:
+
+```
+agent_progression:
+  agent-1:
+    role: Experienced Investigator
+    expertise: { investigation: 3, diplomacy: 1 }
+    reliability: 0.72
+    stress: 0.25
+    stress_label: focused
+    missions_completed: 12
+    missions_failed: 2
+```
+
+#### Per-Agent Success Modifiers
+
+When `enable_per_agent_modifiers: true` is set in the config, agent stats
+contribute to action success rates:
+
+- **Expertise bonus**: Up to +10% for max expertise in the relevant domain
+- **Stress penalty**: Up to -10% when severely stressed (above 50%)
+
+These modifiers are intentionally small to avoid making the game feel like
+micro-managing an RPG party. The best strategy is intuitive: send calm,
+specialized agents to important missions.
+
+#### Configuring Per-Agent Progression
+
+Tune per-agent progression via the `per_agent_progression` block in
+`content/config/simulation.yml`:
+
+```yaml
+per_agent_progression:
+  enable_per_agent_modifiers: false  # Toggle agent success modifiers
+  expertise_max_pips: 5              # Maximum expertise per domain
+  expertise_gain_per_success: 1      # Pips gained per success
+  reliability_gain_per_success: 0.05 # Reliability boost per success
+  reliability_loss_per_failure: 0.08 # Reliability drop per failure
+  stress_gain_per_failure: 0.1       # Stress increase per failure
+  stress_gain_per_hazardous: 0.05    # Extra stress for risky missions
+  stress_recovery_per_tick: 0.02     # Natural stress recovery
+  max_expertise_bonus: 0.1           # Max success chance bonus
+  max_stress_penalty: 0.1            # Max stress-induced penalty
+```
+
+The feature is disabled by default (`enable_per_agent_modifiers: false`) to
+keep early playtesting simple. Enable it to add tactical depth around agent
+management.
+
 ## 12. Campaign Management
 
 The CLI supports persistent campaigns with autosave functionality. Instead of
