@@ -1,0 +1,86 @@
+# GEngine Kustomization - Local (Minikube) Overlay
+# Use: kubectl apply -k k8s/overlays/local
+#
+# This overlay:
+# - Uses NodePort services for direct access from host machine
+# - Configures imagePullPolicy for local images
+# - Sets resource limits appropriate for local development
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gengine
+
+resources:
+  - ../../base
+
+# Patches for local development
+patches:
+  # Use NodePort for simulation service
+  - target:
+      kind: Service
+      name: simulation
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: NodePort
+      - op: add
+        path: /spec/ports/0/nodePort
+        value: 30000
+
+  # Use NodePort for gateway service
+  - target:
+      kind: Service
+      name: gateway
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: NodePort
+      - op: add
+        path: /spec/ports/0/nodePort
+        value: 30100
+
+  # Use NodePort for LLM service
+  - target:
+      kind: Service
+      name: llm
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: NodePort
+      - op: add
+        path: /spec/ports/0/nodePort
+        value: 30001
+
+  # Ensure local images are used without pulling
+  - target:
+      kind: Deployment
+      name: simulation
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+
+  - target:
+      kind: Deployment
+      name: gateway
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+
+  - target:
+      kind: Deployment
+      name: llm
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+
+labels:
+  - pairs:
+      environment: local
+    includeSelectors: false
+
+images:
+  - name: gengine
+    newTag: latest

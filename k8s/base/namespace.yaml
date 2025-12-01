@@ -1,0 +1,9 @@
+# GEngine Namespace
+# Isolates all GEngine services in a dedicated Kubernetes namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gengine
+  labels:
+    app.kubernetes.io/name: gengine
+    app.kubernetes.io/part-of: gengine
