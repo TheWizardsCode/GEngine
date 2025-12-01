@@ -1,0 +1,43 @@
+# GEngine Ingress
+# Routes external traffic to the gateway service
+# For Minikube, enable the ingress addon: minikube addons enable ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gengine-ingress
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: gengine
+    app.kubernetes.io/part-of: gengine
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: gengine.local
+      http:
+        paths:
+          # Gateway service for CLI/WebSocket connections
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8100
+          # Direct access to simulation API
+          - path: /simulation
+            pathType: Prefix
+            backend:
+              service:
+                name: simulation
+                port:
+                  number: 8000
+          # Direct access to LLM API
+          - path: /llm
+            pathType: Prefix
+            backend:
+              service:
+                name: llm
+                port:
+                  number: 8001

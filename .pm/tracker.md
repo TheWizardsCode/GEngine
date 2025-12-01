@@ -1,11 +1,18 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-01T03:04:00Z
+**Last Updated:** 2025-12-01T03:47:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 8.2.1 (Kubernetes Manifests & Docs) COMPLETED** - GitHub Issue #21
+  - Kubernetes manifests directory (`k8s/`) with base and overlay structure
+  - Base manifests: namespace, configmap, deployments, services, ingress for all 3 services
+  - Local overlay: Minikube-friendly with NodePort services (30000, 30100, 30001)
+  - Staging overlay: Higher resource limits, ingress, Always pull policy
+  - Executable documentation following existing Minikube patterns
+  - Verification steps with health checks and troubleshooting guide
 - 🎉 **Task 7.1.2 (Per-Agent Progression) COMPLETED** - GitHub Issue [#17](https://github.com/TheWizardsCode/GEngine/issues/17)
   - AgentProgressionState model with specialization, expertise, reliability, stress
   - GameState integration with migration-safe defaults
@@ -20,8 +27,9 @@
   - Enhanced README with comprehensive service mode examples
   - All acceptance criteria verified and met
   - Unblocks Task 9.2.1 (Rule-Based AI Action Layer)
-- 🎉 **Phase 8 Containerization** - Task 8.1.1 COMPLETED!
+- 🎉 **Phase 8 Containerization** - Tasks 8.1.1 and 8.2.1 COMPLETED!
   - ✅ Task 8.1.1 (Containerization) completed via PR #16 (Issue #15)
+  - ✅ Task 8.2.1 (Kubernetes Manifests) completed
   - Multi-stage Dockerfile supporting simulation, gateway, and LLM services
   - docker-compose.yml orchestrating all services on shared network
   - Container smoke test script at `scripts/smoke_test_containers.sh` (all checks passing)
@@ -54,17 +62,18 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Task 8.1.1 complete, remaining tasks (8.2.1, 8.3.1, 8.4.1) need ownership
+1. 🚀 **Phase 8 Deployment** - Tasks 8.1.1 and 8.2.1 complete, remaining tasks (8.3.1, 8.4.1) need ownership
 2. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer (9.2.1) ready to start
 3. 🔧 **Optional Polish** - Task 7.1.3 (Enable per-agent modifiers by default) marked Medium priority
 
 **Key Risks:**
 
-- ⚠️ **Phase 8 remaining tasks need ownership** - K8s manifests (8.2.1), observability (8.3.1), content pipeline (8.4.1) all require assignment
+- ⚠️ **Phase 8 remaining tasks need ownership** - Observability (8.3.1), content pipeline (8.4.1) require assignment
 - ⚠️ **Phase 9 ready to start** - Observer foundation complete, rule-based AI (9.2.1) unblocked but needs owner
 - ⚠️ **Per-agent modifiers disabled** - Task 7.1.2 complete but 7.1.3 (enable by default) remains
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested
 - ✅ **Containerization risk eliminated** - Docker/Compose setup tested and documented
+- ✅ **K8s manifests complete** - Local and staging overlays ready for deployment
 - ✅ **No open issues or PRs** - Clean repository state
 
 | ID | Task | Status | Priority | Responsible | Updated |
@@ -92,7 +101,7 @@
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
-| 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1) | completed | Medium | gamedev-agent | 2025-11-30 |
@@ -453,15 +462,35 @@
 - **Description:** Define Kubernetes Deployments/Services/ConfigMaps/Ingress for simulation, gateway, and LLM services, plus supporting documentation.
 - **Acceptance Criteria:** Manifests support local (Minikube) and staging deployments; exec doc explains setup mirroring existing Minikube patterns.
 - **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
+- **Responsible:** devops-agent
+- **Status:** ✅ COMPLETED
 - **Dependencies:** Container images, stable service ports and env contracts.
 - **Risks & Mitigations:**
   - Risk: Overcomplicated manifests. Mitigation: Start minimal, iterate for staging/prod needs.
-- **Next Steps:**
-  1. Draft base manifests.
-  2. Test on local K8s.
-  3. Refine and document.
-- **Last Updated:** 2025-11-29
+- **Completion Notes:**
+  - **Kubernetes Manifests** (`k8s/base/`):
+    - `namespace.yaml`: Dedicated gengine namespace with standard labels
+    - `configmap.yaml`: Shared configuration for all services with K8s DNS URLs
+    - `simulation-deployment.yaml` & `simulation-service.yaml`: Core simulation (port 8000)
+    - `gateway-deployment.yaml` & `gateway-service.yaml`: WebSocket gateway (port 8100)
+    - `llm-deployment.yaml` & `llm-service.yaml`: LLM processor (port 8001)
+    - `ingress.yaml`: NGINX ingress for external access
+    - `kustomization.yaml`: Base kustomization with common labels
+  - **Environment Overlays** (`k8s/overlays/`):
+    - `local/kustomization.yaml`: Minikube overlay with NodePort services (30000, 30100, 30001), imagePullPolicy: Never
+    - `staging/kustomization.yaml`: Staging overlay with higher resource limits, ingress, imagePullPolicy: Always
+  - **Resource Configuration**:
+    - Local: 256Mi/250m requests, 512Mi/500m limits
+    - Staging: 512Mi/500m requests, 1Gi/1000m limits
+  - **Health Probes**: Readiness and liveness probes on /healthz for all services
+  - **Documentation** (`docs/gengine/Deploy_GEngine_To_Kubernetes.md`):
+    - Executable document following existing Minikube patterns
+    - Prerequisites, environment setup, deployment steps
+    - Verification section with health checks and API tests
+    - Troubleshooting guide for common issues
+    - Cleanup instructions
+- **Last Updated:** 2025-12-01
+
 
 ### 8.3.1 — Observability in Kubernetes (M8.3)
 - **Description:** Add Prometheus scraping, resource sizing, and basic load smoke tests for K8s deployments.

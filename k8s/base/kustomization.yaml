@@ -1,0 +1,27 @@
+# GEngine Kustomization - Base Configuration
+# Use: kubectl apply -k k8s/base
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gengine
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - simulation-deployment.yaml
+  - simulation-service.yaml
+  - gateway-deployment.yaml
+  - gateway-service.yaml
+  - llm-deployment.yaml
+  - llm-service.yaml
+  - ingress.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: gengine
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
+
+images:
+  - name: gengine
+    newTag: latest

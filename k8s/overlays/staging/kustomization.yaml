@@ -1,0 +1,97 @@
+# GEngine Kustomization - Staging Overlay
+# Use: kubectl apply -k k8s/overlays/staging
+#
+# This overlay:
+# - Uses ClusterIP services with Ingress for external access
+# - Configures higher resource limits for staging workloads
+# - Uses image pull from registry
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gengine
+
+resources:
+  - ../../base
+
+# Patches for staging environment
+patches:
+  # Increase resource limits for staging
+  - target:
+      kind: Deployment
+      name: simulation
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+
+  - target:
+      kind: Deployment
+      name: gateway
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+
+  - target:
+      kind: Deployment
+      name: llm
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+
+  # Update ingress for staging hostname
+  - target:
+      kind: Ingress
+      name: gengine-ingress
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: gengine-staging.example.com
+
+labels:
+  - pairs:
+      environment: staging
+    includeSelectors: false
+
+images:
+  - name: gengine
+    # For staging, use a specific image registry and tag
+    # Override with: kustomize edit set image gengine=registry.example.com/gengine:v1.0.0
+    newTag: latest

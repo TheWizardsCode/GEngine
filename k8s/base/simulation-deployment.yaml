@@ -1,0 +1,62 @@
+# Simulation Service Deployment
+# Core simulation engine for GEngine Echoes of Emergence
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulation
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: simulation
+    app.kubernetes.io/component: simulation
+    app.kubernetes.io/part-of: gengine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: simulation
+      app.kubernetes.io/component: simulation
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: simulation
+        app.kubernetes.io/component: simulation
+        app.kubernetes.io/part-of: gengine
+    spec:
+      containers:
+        - name: simulation
+          image: gengine:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: SERVICE
+              value: "simulation"
+          envFrom:
+            - configMapRef:
+                name: gengine-config
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+      restartPolicy: Always
