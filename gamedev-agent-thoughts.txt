@@ -1603,7 +1603,6 @@ uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod bala
 - Issue #11 (Task 7.1.1 - Progression): Ready to close
 - Issue #13 (Task 7.4.1 - Campaign UX): Ready to close
 
-<<<<<<< HEAD
 
 ## Task 9.1.1 - AI Observer Foundation Review & Polish (2025-11-30T23:13 UTC)
 =====================================================================
@@ -1662,7 +1661,6 @@ All acceptance criteria met:
 ✅ README documents usage with examples
 
 
-=======
 ## Task 8.1.1: Containerization (Docker + Compose) (2025-11-30)
 =====================================================================
 
@@ -1742,4 +1740,3 @@ Services to containerize:
 
 **.gitignore Updates:**
 - Added `!.env.sample` exception to track the sample env file
->>>>>>> pr-16
