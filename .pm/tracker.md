@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-01T06:18:00Z
+**Last Updated:** 2025-12-01T07:15:36Z
 
 ## Status Summary
 
@@ -81,8 +81,39 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Tasks 8.1.1, 8.2.1, and 8.3.1 complete, task 8.4.1 needs ownership
+1. 🚀 **Phase 8 Deployment** - Core complete (8.1.1, 8.2.1, 8.3.1), need CI automation (8.3.2) and content pipeline (8.4.1)
 2. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
+3. 🔧 **CI/CD Gap** - No automated workflows exist; high risk of regressions
+
+**Recommended Next 3 Parallel Tasks:**
+
+1. **8.3.2 - K8s Validation CI Job** (Priority: HIGH, Effort: Medium)
+   - Why: Critical automation gap; prevents deployment breakage
+   - Owner needed: DevOps/Infrastructure-focused agent
+   - Parallelizable: Infrastructure work, no code dependencies
+   - Impact: Protects all environments from manifest errors
+   - Estimated time: 1-2 days
+
+2. **8.3.3 - K8s Resource Tuning** (Priority: MEDIUM, Effort: Low)
+   - Why: Complete 8.3.1 resource sizing acceptance criteria
+   - Owner needed: DevOps/SRE-focused agent
+   - Parallelizable: Configuration work, independent of code
+   - Impact: Prevents resource exhaustion in production
+   - Estimated time: 4-6 hours
+   - Prerequisites: Smoke test data from 8.3.1
+
+3. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High)
+   - Why: Builds on completed AI foundation (9.1.1, 9.2.1)
+   - Owner needed: AI/ML-focused agent with LLM experience
+   - Parallelizable: AI/ML work, independent of infrastructure
+   - Impact: Enables advanced AI testing capabilities
+   - Estimated time: 3-5 days
+
+**Alternative (if no AI/ML owner available):**
+- **8.4.1 - Content Pipeline Tooling** instead of 9.3.1
+  - Priority: MEDIUM, Effort: Medium
+  - Unblocks content designers
+  - Estimated time: 2-3 days
 
 **Key Risks:**
 
@@ -121,8 +152,9 @@
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
-| 8.3.1 | Observability in Kubernetes (M8.3) | in-progress | Medium | devops-infra-agent | 2025-12-01 |
+| 8.3.1 | Observability in Kubernetes (M8.3) | completed | Medium | devops-infra-agent | 2025-12-01 |
 | 8.3.2 | K8s Validation CI Job (M8.3.x) | not-started | High | TBD (ask Ross) | 2025-12-01 |
+| 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
 | 8.3.3 | Gateway/LLM Prometheus Metrics (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
 | 8.3.4 | Integrate K8s Smoke Test into CI (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -578,6 +610,32 @@
   5. Document local validation workflow in K8s deployment docs
   6. Test workflow with intentional manifest errors to verify blocking behavior
 - **Rationale:** A bad K8s manifest or misconfigured deployment can bring down the entire system even when all unit/integration tests pass. These issues easily slip through without automation. Catching K8s breakage early in CI protects every environment and typically delivers the best reliability gain per unit of effort.
+- **Last Updated:** 2025-12-01
+
+### 8.3.3 — K8s Resource Sizing & Tuning (M8.3.y)
+- **GitHub Issue:** TBD
+- **Description:** Complete the resource sizing acceptance criterion from task 8.3.1 by tuning Kubernetes resource requests/limits based on smoke test data and expected load patterns. Update manifests for all three services (simulation, gateway, LLM) in both base and overlay configurations.
+- **Acceptance Criteria:**
+  - Resource `requests` and `limits` tuned for simulation, gateway, and LLM services
+  - Settings based on smoke test observations and expected load patterns
+  - Both base and overlay configs updated (local/staging)
+  - Documentation explains resource rationale and tuning methodology
+  - Smoke tests validate updated resource constraints don't cause instability
+- **Priority:** Medium
+- **Responsible:** TBD (ask Ross)
+- **Dependencies:** 8.3.1 smoke test data (✅ complete)
+- **Risks & Mitigations:**
+  - Risk: Over-constraining resources causes pod evictions. Mitigation: Start conservative with 2x observed usage, tune down iteratively.
+  - Risk: Under-constraining allows resource exhaustion. Mitigation: Set firm limits with headroom for bursts.
+- **Next Steps:**
+  1. Review smoke test output from `scripts/k8s_smoke_test.sh --load`
+  2. Analyze CPU/memory usage patterns under load
+  3. Update resource specs in `k8s/base/*-deployment.yaml`
+  4. Update overlay variants in `k8s/overlays/*/`
+  5. Re-run smoke tests to validate
+  6. Document sizing rationale in deployment docs
+- **Rationale:** Task 8.3.1 deferred resource tuning to keep the observability PR focused. Completing this work ensures production deployments are properly sized to prevent resource exhaustion or pod instability.
+- **Estimated Effort:** 4-6 hours
 - **Last Updated:** 2025-12-01
 
 ### 8.3.3 — Gateway/LLM Prometheus Metrics (M8.3.x)
