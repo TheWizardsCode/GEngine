@@ -1,0 +1,98 @@
+# Kubernetes Manifest Validation Workflow
+# Validates all K8s manifests under k8s/base and k8s/overlays/* with:
+#   - kubectl apply --dry-run=server -k (using Kind cluster)
+#   - kubeconform linting for schema validation
+#
+# Runs on pull requests and pushes that modify K8s manifests or this workflow.
+
+name: K8s Validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'k8s/**/*.yaml'
+      - '.github/workflows/k8s-*.yml'
+  pull_request:
+    paths:
+      - 'k8s/**/*.yaml'
+      - '.github/workflows/k8s-*.yml'
+
+jobs:
+  lint:
+    name: Lint K8s Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          KUBECONFORM_VERSION="v0.6.4"
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | \
+            tar -xzf - -C /usr/local/bin kubeconform
+          chmod +x /usr/local/bin/kubeconform
+          kubeconform -v
+
+      - name: Lint base manifests
+        run: |
+          echo "Linting k8s/base manifests..."
+          kubeconform \
+            -summary \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.29.0 \
+            -skip ServiceMonitor \
+            k8s/base/*.yaml
+
+      - name: Lint local overlay (rendered)
+        run: |
+          echo "Linting k8s/overlays/local (rendered via kustomize)..."
+          kubectl kustomize k8s/overlays/local | kubeconform \
+            -summary \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.29.0
+
+      - name: Lint staging overlay (rendered)
+        run: |
+          echo "Linting k8s/overlays/staging (rendered via kustomize)..."
+          kubectl kustomize k8s/overlays/staging | kubeconform \
+            -summary \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.29.0
+
+  validate:
+    name: Validate K8s Manifests (Dry-Run)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: gengine-validation
+          wait: 60s
+
+      - name: Verify cluster is ready
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Dry-run validate base manifests
+        run: |
+          echo "Validating k8s/base with --dry-run=server..."
+          kubectl apply --dry-run=server -k k8s/base
+
+      - name: Dry-run validate local overlay
+        run: |
+          echo "Validating k8s/overlays/local with --dry-run=server..."
+          kubectl apply --dry-run=server -k k8s/overlays/local
+
+      - name: Dry-run validate staging overlay
+        run: |
+          echo "Validating k8s/overlays/staging with --dry-run=server..."
+          kubectl apply --dry-run=server -k k8s/overlays/staging

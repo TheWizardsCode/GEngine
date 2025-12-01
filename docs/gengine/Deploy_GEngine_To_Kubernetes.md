@@ -579,6 +579,115 @@ Summary:
 - Services deployed using the appropriate Kustomize overlay.
 - Health checks verified for all services.
 
+## CI/CD Validation
+
+GEngine uses a GitHub Actions workflow to validate all Kubernetes manifests
+on every pull request and push to main. The workflow ensures manifests are
+syntactically correct and can be applied to a cluster.
+
+### Validation Workflow
+
+The `.github/workflows/k8s-validation.yml` workflow performs two types of
+validation:
+
+1. **Linting with kubeconform** – Validates manifest schemas against
+   Kubernetes API specifications without requiring a cluster.
+
+2. **Dry-run validation** – Creates a temporary Kind cluster and runs
+   `kubectl apply --dry-run=server -k` to validate that manifests can be
+   applied successfully.
+
+The workflow runs on:
+- Pull requests modifying `k8s/**/*.yaml` or `.github/workflows/k8s-*.yml`
+- Pushes to main modifying the same paths
+
+Validation failures will block PR merge.
+
+### Running Validation Locally
+
+You can run the same validation locally before pushing changes.
+
+#### Prerequisites
+
+Install the required tools:
+
+```bash
+# Install kubeconform
+KUBECONFORM_VERSION="v0.6.4"
+curl -sSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | \
+  tar -xzf - -C /usr/local/bin kubeconform
+
+# Verify installation
+kubeconform -v
+```
+
+For dry-run validation, you need a running Kubernetes cluster (Minikube, Kind,
+or any cluster with kubectl access).
+
+#### Lint Manifests
+
+Run kubeconform on individual manifests or rendered Kustomize output:
+
+```bash
+# Lint base manifests
+kubeconform \
+  -summary \
+  -strict \
+  -ignore-missing-schemas \
+  -kubernetes-version 1.29.0 \
+  -skip ServiceMonitor \
+  k8s/base/*.yaml
+
+# Lint local overlay (rendered)
+kubectl kustomize k8s/overlays/local | kubeconform \
+  -summary \
+  -strict \
+  -ignore-missing-schemas \
+  -kubernetes-version 1.29.0
+
+# Lint staging overlay (rendered)
+kubectl kustomize k8s/overlays/staging | kubeconform \
+  -summary \
+  -strict \
+  -ignore-missing-schemas \
+  -kubernetes-version 1.29.0
+```
+
+#### Dry-Run Validation
+
+With a running cluster, validate manifests against the API server:
+
+```bash
+# Validate base manifests
+kubectl apply --dry-run=server -k k8s/base
+
+# Validate local overlay
+kubectl apply --dry-run=server -k k8s/overlays/local
+
+# Validate staging overlay
+kubectl apply --dry-run=server -k k8s/overlays/staging
+```
+
+#### Using Kind for Local Dry-Run
+
+If you don't have a Kubernetes cluster, use Kind to create a temporary one:
+
+```bash
+# Install kind (if not already installed)
+# See: https://kind.sigs.k8s.io/docs/user/quick-start/#installation
+
+# Create a temporary cluster
+kind create cluster --name gengine-validation
+
+# Run dry-run validation
+kubectl apply --dry-run=server -k k8s/base
+kubectl apply --dry-run=server -k k8s/overlays/local
+kubectl apply --dry-run=server -k k8s/overlays/staging
+
+# Delete the cluster when done
+kind delete cluster --name gengine-validation
+```
+
 ## Next Steps
 
 - [Create_Local_Kubernetes_With_Minikube.md](Create_Local_Kubernetes_With_Minikube.md) -
