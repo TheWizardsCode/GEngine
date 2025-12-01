@@ -1,0 +1,21 @@
+# LLM Service
+# Exposes the LLM processing service within the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: llm
+    app.kubernetes.io/component: llm
+    app.kubernetes.io/part-of: gengine
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: llm
+    app.kubernetes.io/component: llm
+  ports:
+    - name: http
+      port: 8001
+      targetPort: 8001
+      protocol: TCP

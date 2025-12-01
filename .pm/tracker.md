@@ -1,11 +1,24 @@
 # Project Task Tracker
 
+<<<<<<< HEAD
 **Last Updated:** 2025-12-01T04:00:00Z
+=======
+<<<<<<< HEAD
+**Last Updated:** 2025-12-01T03:47:00Z
+=======
+<<<<<<< HEAD
+**Last Updated:** 2025-12-01T03:51:00Z
+=======
+**Last Updated:** 2025-12-01T03:52:00Z
+>>>>>>> main
+>>>>>>> main
+>>>>>>> main
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+<<<<<<< HEAD
 - 🎉 **Task 9.2.1 (Rule-Based AI Action Layer) COMPLETED** - GitHub Issue [#24](https://github.com/TheWizardsCode/GEngine/issues/24)
   - Strategies module with BalancedStrategy, AggressiveStrategy, DiplomaticStrategy
   - Actor module for action selection and submission via intent API
@@ -13,6 +26,24 @@
   - 75 new tests (41 strategies + 34 actor), 112 total AI player tests
   - Documentation updated in README and implementation plan
   - Unblocks Task 9.3.1 (LLM-Enhanced AI Decisions)
+=======
+<<<<<<< HEAD
+- 🎉 **Task 8.2.1 (Kubernetes Manifests & Docs) COMPLETED** - GitHub Issue #21
+  - Kubernetes manifests directory (`k8s/`) with base and overlay structure
+  - Base manifests: namespace, configmap, deployments, services, ingress for all 3 services
+  - Local overlay: Minikube-friendly with NodePort services (30000, 30100, 30001)
+  - Staging overlay: Higher resource limits, ingress, Always pull policy
+  - Executable documentation following existing Minikube patterns
+  - Verification steps with health checks and troubleshooting guide
+=======
+- 🎉 **Task 7.1.3 (Enable Per-Agent Modifiers) COMPLETED** - GitHub Issue [#25](https://github.com/TheWizardsCode/GEngine/issues/25)
+  - Ran difficulty sweeps with modifiers enabled across all 5 presets
+  - Validated balance: metrics identical before/after (no destabilization)
+  - Updated config to set `enable_per_agent_modifiers: true`
+  - Documented findings in gameplay guide Section 11.4
+  - All 523 tests pass with modifiers enabled
+>>>>>>> main
+>>>>>>> main
 - 🎉 **Task 7.1.2 (Per-Agent Progression) COMPLETED** - GitHub Issue [#17](https://github.com/TheWizardsCode/GEngine/issues/17)
   - AgentProgressionState model with specialization, expertise, reliability, stress
   - GameState integration with migration-safe defaults
@@ -20,26 +51,27 @@
   - 43 comprehensive tests (all passing)
   - Configuration in simulation.yml with per_agent_progression section
   - Documentation updated in gameplay guide and implementation plan
-  - Task 7.1.3 remains: enable per-agent modifiers by default (currently false)
 - 🎉 **Task 9.1.1 (AI Observer Foundation) COMPLETED** - GitHub Issue [#19](https://github.com/TheWizardsCode/GEngine/issues/19)
   - Fixed bug in Observer._get_state() for service mode data unwrapping
   - Added 4 new integration tests for SimServiceClient mode
   - Enhanced README with comprehensive service mode examples
   - All acceptance criteria verified and met
   - Unblocks Task 9.2.1 (Rule-Based AI Action Layer)
-- 🎉 **Phase 8 Containerization** - Task 8.1.1 COMPLETED!
+- 🎉 **Phase 8 Containerization** - Tasks 8.1.1 and 8.2.1 COMPLETED!
   - ✅ Task 8.1.1 (Containerization) completed via PR #16 (Issue #15)
+  - ✅ Task 8.2.1 (Kubernetes Manifests) completed
   - Multi-stage Dockerfile supporting simulation, gateway, and LLM services
   - docker-compose.yml orchestrating all services on shared network
   - Container smoke test script at `scripts/smoke_test_containers.sh` (all checks passing)
-  - Full Python test suite passes (476 tests, 0 failures)
+  - Full Python test suite passes (523 tests, 0 failures)
 - 🎉 **Phase 7 COMPLETE** - All player experience features shipped!
   - ✅ Task 7.4.1 (Campaign UX) completed and merged via PR #14
   - ✅ Task 7.1.1 (Progression Systems) completed and merged via PR #12
   - ✅ Task 7.1.2 (Per-Agent Progression Layer) completed
+  - ✅ Task 7.1.3 (Enable Per-Agent Modifiers) completed
   - ✅ Task 7.3.1 (Tuning & Replayability) completed
   - ✅ Task 7.2.1 (Explanations) completed
-  - 📋 Issues #11, #13, #17 closed
+  - 📋 Issues #11, #13, #17, #25 closed
   
 
 **Previous Updates:**
@@ -61,6 +93,7 @@
 
 **Current Priorities:**
 
+<<<<<<< HEAD
 1. 🚀 **Phase 8 Deployment** - Task 8.1.1 complete, remaining tasks (8.2.1, 8.3.1, 8.4.1) need ownership
 2. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
 3. 🔧 **Optional Polish** - Task 7.1.3 (Enable per-agent modifiers by default) marked Medium priority
@@ -73,6 +106,19 @@
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested
 - ✅ **Containerization risk eliminated** - Docker/Compose setup tested and documented
 - ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
+=======
+1. 🚀 **Phase 8 Deployment** - Tasks 8.1.1 and 8.2.1 complete, remaining tasks (8.3.1, 8.4.1) need ownership
+2. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer (9.2.1) ready to start
+
+**Key Risks:**
+
+- ⚠️ **Phase 8 remaining tasks need ownership** - Observability (8.3.1), content pipeline (8.4.1) require assignment
+- ⚠️ **Phase 9 ready to start** - Observer foundation complete, rule-based AI (9.2.1) unblocked but needs owner
+- ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers now enabled by default
+- ✅ **Containerization risk eliminated** - Docker/Compose setup tested and documented
+- ✅ **K8s manifests complete** - Local and staging overlays ready for deployment
+- ✅ **No open issues or PRs** - Clean repository state
+>>>>>>> main
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -94,12 +140,12 @@
 | 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
 | 7.1.1 | Design & build progression systems (M7.1) | completed | High | gamedev-agent | 2025-11-30 |
 | 7.1.2 | Implement per-agent progression layer (M7.1.x) | completed | Low | gamedev-agent | 2025-12-01 |
-| 7.1.3 | Default per-agent success modifiers to enabled | not-started | Medium | gamedev-agent | 2025-12-01 |
+| 7.1.3 | Default per-agent success modifiers to enabled | completed | Medium | gamedev-agent | 2025-12-01 |
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
-| 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
+| 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1) | completed | Medium | gamedev-agent | 2025-11-30 |
@@ -351,7 +397,32 @@
     - Specialization descriptions
     - Expertise pip mechanics
     - Stress and reliability tracking
-  - **Note:** Task 7.1.3 remains to enable per-agent modifiers by default
+  - **Note:** Task 7.1.3 completed to enable per-agent modifiers by default
+- **Last Updated:** 2025-12-01
+
+### 7.1.3 — Enable Per-Agent Success Modifiers by Default (M7.1.x)
+- **GitHub Issue:** [#25](https://github.com/TheWizardsCode/GEngine/issues/25)
+- **Description:** Enable per-agent progression modifiers by default in `content/config/simulation.yml` after validating balance through scenario testing.
+- **Acceptance Criteria:**
+  - ✅ Run scenario tests with `enable_per_agent_modifiers: true` across all difficulty presets
+  - ✅ Validate that per-agent bonuses/penalties don't destabilize difficulty balance
+  - ✅ Update `content/config/simulation.yml` to set `enable_per_agent_modifiers: true`
+  - ✅ Document any observed balance impacts in gameplay guide
+  - ✅ All existing tests pass with modifiers enabled
+- **Priority:** Medium
+- **Responsible:** gamedev-agent
+- **Status:** ✅ COMPLETED
+- **Dependencies:** 7.1.2 (Per-Agent Progression Layer), 7.3.1 (Difficulty Sweeps)
+- **Completion Notes:**
+  - **Scenario Testing:** Ran difficulty sweeps with `enable_per_agent_modifiers: true` across all 5 presets
+  - **Balance Validation:** Compared before/after results - metrics identical across all difficulty levels
+    - Stability, unrest, pollution, anomalies, and suppressed events unchanged
+    - The ±10% bonus/penalty envelope is intentionally small to avoid destabilizing balance
+  - **Configuration Update:** Set `enable_per_agent_modifiers: true` in `content/config/simulation.yml`
+  - **Documentation:** Updated `docs/gengine/how_to_play_echoes.md` Section 11.4 with:
+    - Config example now shows `enable_per_agent_modifiers: true`
+    - Added note explaining scenario testing confirmed balance stability
+  - **Test Results:** All 523 tests pass with modifiers enabled
 - **Last Updated:** 2025-12-01
 
 ### 7.3.1 — Tuning & Replayability Sweeps (M7.3)
@@ -457,20 +528,42 @@
 - **Last Updated:** 2025-11-30
 
 ### 8.2.1 — Kubernetes Manifests & Docs (M8.2)
+- **GitHub Issue:** [#21](https://github.com/TheWizardsCode/GEngine/issues/21)
 - **Description:** Define Kubernetes Deployments/Services/ConfigMaps/Ingress for simulation, gateway, and LLM services, plus supporting documentation.
 - **Acceptance Criteria:** Manifests support local (Minikube) and staging deployments; exec doc explains setup mirroring existing Minikube patterns.
 - **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
+- **Responsible:** devops-agent
+- **Status:** ✅ COMPLETED
 - **Dependencies:** Container images, stable service ports and env contracts.
 - **Risks & Mitigations:**
   - Risk: Overcomplicated manifests. Mitigation: Start minimal, iterate for staging/prod needs.
-- **Next Steps:**
-  1. Draft base manifests.
-  2. Test on local K8s.
-  3. Refine and document.
-- **Last Updated:** 2025-11-29
+- **Completion Notes:**
+  - **Kubernetes Manifests** (`k8s/base/`):
+    - `namespace.yaml`: Dedicated gengine namespace with standard labels
+    - `configmap.yaml`: Shared configuration for all services with K8s DNS URLs
+    - `simulation-deployment.yaml` & `simulation-service.yaml`: Core simulation (port 8000)
+    - `gateway-deployment.yaml` & `gateway-service.yaml`: WebSocket gateway (port 8100)
+    - `llm-deployment.yaml` & `llm-service.yaml`: LLM processor (port 8001)
+    - `ingress.yaml`: NGINX ingress for external access
+    - `kustomization.yaml`: Base kustomization with common labels
+  - **Environment Overlays** (`k8s/overlays/`):
+    - `local/kustomization.yaml`: Minikube overlay with NodePort services (30000, 30100, 30001), imagePullPolicy: Never
+    - `staging/kustomization.yaml`: Staging overlay with higher resource limits, ingress, imagePullPolicy: Always
+  - **Resource Configuration**:
+    - Local: 256Mi/250m requests, 512Mi/500m limits
+    - Staging: 512Mi/500m requests, 1Gi/1000m limits
+  - **Health Probes**: Readiness and liveness probes on /healthz for all services
+  - **Documentation** (`docs/gengine/Deploy_GEngine_To_Kubernetes.md`):
+    - Executable document following existing Minikube patterns
+    - Prerequisites, environment setup, deployment steps
+    - Verification section with health checks and API tests
+    - Troubleshooting guide for common issues
+    - Cleanup instructions
+- **Last Updated:** 2025-12-01
+
 
 ### 8.3.1 — Observability in Kubernetes (M8.3)
+- **GitHub Issue:** [#22](https://github.com/TheWizardsCode/GEngine/issues/22)
 - **Description:** Add Prometheus scraping, resource sizing, and basic load smoke tests for K8s deployments.
 - **Acceptance Criteria:** Metrics scraped for all services; resource requests/limits tuned for expected load; smoke tests runnable via `kubectl` or scripts.
 - **Priority:** Medium
@@ -485,6 +578,7 @@
 - **Last Updated:** 2025-11-29
 
 ### 8.4.1 — Content Pipeline Tooling & CI (M8.4)
+- **GitHub Issue:** [#23](https://github.com/TheWizardsCode/GEngine/issues/23)
 - **Description:** Implement content build tooling (`scripts/build_content.py`), CI validation hooks, and documentation so designers can author/test YAML and story seeds efficiently.
 - **Acceptance Criteria:** Content build step produces artifacts consumed by simulation; CI validates content on change; designer workflow documented.
 - **Priority:** Medium

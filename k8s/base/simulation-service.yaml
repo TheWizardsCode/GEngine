@@ -1,0 +1,21 @@
+# Simulation Service
+# Exposes the simulation engine within the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: simulation
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: simulation
+    app.kubernetes.io/component: simulation
+    app.kubernetes.io/part-of: gengine
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: simulation
+    app.kubernetes.io/component: simulation
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP

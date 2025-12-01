@@ -1,0 +1,21 @@
+# Gateway Service
+# Exposes the WebSocket gateway within the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/component: gateway
+    app.kubernetes.io/part-of: gengine
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/component: gateway
+  ports:
+    - name: http
+      port: 8100
+      targetPort: 8100
+      protocol: TCP

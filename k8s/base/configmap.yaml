@@ -1,0 +1,30 @@
+# GEngine Shared ConfigMap
+# Contains common configuration shared across services
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gengine-config
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: gengine
+    app.kubernetes.io/part-of: gengine
+data:
+  # Simulation Service Configuration
+  ECHOES_SERVICE_HOST: "0.0.0.0"
+  ECHOES_SERVICE_PORT: "8000"
+  ECHOES_SERVICE_WORLD: "default"
+  ECHOES_CONFIG_ROOT: "/app/content"
+
+  # Gateway Service Configuration
+  ECHOES_GATEWAY_HOST: "0.0.0.0"
+  ECHOES_GATEWAY_PORT: "8100"
+  # Use internal Kubernetes DNS for service-to-service communication
+  ECHOES_GATEWAY_SERVICE_URL: "http://simulation.gengine.svc.cluster.local:8000"
+  ECHOES_GATEWAY_LLM_URL: "http://llm.gengine.svc.cluster.local:8001"
+
+  # LLM Service Configuration (defaults for stub provider)
+  ECHOES_LLM_PROVIDER: "stub"
+  ECHOES_LLM_TEMPERATURE: "0.7"
+  ECHOES_LLM_MAX_TOKENS: "1000"
+  ECHOES_LLM_TIMEOUT: "30"
+  ECHOES_LLM_MAX_RETRIES: "2"
