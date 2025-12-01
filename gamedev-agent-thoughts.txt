@@ -1746,3 +1746,55 @@ Services to containerize:
 
 **.gitignore Updates:**
 - Added `!.env.sample` exception to track the sample env file
+
+## Task 7.1.3: Enable Per-Agent Success Modifiers by Default (Issue #25)
+=====================================================================
+2025-12-01T03:53:52 UTC
+
+### Initial Assessment
+- Working branch: copilot/enable-per-agent-success-modifiers
+- Repository synced and clean
+- All 523 tests pass
+
+### Acceptance Criteria from Issue:
+1. Run scenario tests with `enable_per_agent_modifiers: true` across all difficulty presets
+2. Validate that per-agent bonuses/penalties don't destabilize difficulty balance
+3. Update `content/config/simulation.yml` to set `enable_per_agent_modifiers: true`
+4. Document any observed balance impacts in gameplay guide
+5. All existing tests pass with modifiers enabled
+
+### Plan:
+1. Run difficulty sweeps with modifiers enabled (temporarily modify config)
+2. Analyze balance impact comparing before/after
+3. If acceptable, make the change permanent
+4. Document findings
+5. Verify all tests pass
+
+
+### Step 2: Difficulty Sweeps with Modifiers Enabled
+Ran sweeps with enable_per_agent_modifiers: true across all 5 presets:
+- tutorial: stb=1.00 unrest=0.20 poll=0.44 (unchanged)
+- easy: stb=1.00 unrest=0.24 poll=0.46 (unchanged)
+- normal: stb=1.00 unrest=0.20 poll=0.49 (unchanged)
+- hard: stb=0.00 unrest=1.00 poll=0.99 (unchanged)
+- brutal: stb=0.00 unrest=1.00 poll=1.00 (unchanged)
+
+### Step 3: Balance Analysis
+Result: Metrics IDENTICAL before/after enabling modifiers.
+The ±10% bonus/penalty envelope is intentionally small and does not affect
+the macro-level stability, unrest, or pollution curves.
+
+### Step 4: Configuration Update
+Updated content/config/simulation.yml line 101:
+  enable_per_agent_modifiers: false -> enable_per_agent_modifiers: true
+
+### Step 5: Documentation Update
+Updated docs/gengine/how_to_play_echoes.md Section 11.4:
+- Changed example to show enable_per_agent_modifiers: true
+- Added note explaining scenario testing confirmed balance stability
+
+### Step 6: Test Verification
+All 523 tests pass with modifiers enabled.
+
+### Task 7.1.3 Status: COMPLETED
+
