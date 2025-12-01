@@ -1,6 +1,10 @@
 # Project Task Tracker
 
+<<<<<<< HEAD
 **Last Updated:** 2025-12-01T03:51:00Z
+=======
+**Last Updated:** 2025-12-01T03:52:00Z
+>>>>>>> main
 
 ## Status Summary
 
@@ -479,6 +483,7 @@
 - **Last Updated:** 2025-11-30
 
 ### 8.2.1 — Kubernetes Manifests & Docs (M8.2)
+- **GitHub Issue:** [#21](https://github.com/TheWizardsCode/GEngine/issues/21)
 - **Description:** Define Kubernetes Deployments/Services/ConfigMaps/Ingress for simulation, gateway, and LLM services, plus supporting documentation.
 - **Acceptance Criteria:** Manifests support local (Minikube) and staging deployments; exec doc explains setup mirroring existing Minikube patterns.
 - **Priority:** Medium
@@ -493,6 +498,7 @@
 - **Last Updated:** 2025-11-29
 
 ### 8.3.1 — Observability in Kubernetes (M8.3)
+- **GitHub Issue:** [#22](https://github.com/TheWizardsCode/GEngine/issues/22)
 - **Description:** Add Prometheus scraping, resource sizing, and basic load smoke tests for K8s deployments.
 - **Acceptance Criteria:** Metrics scraped for all services; resource requests/limits tuned for expected load; smoke tests runnable via `kubectl` or scripts.
 - **Priority:** Medium
@@ -507,6 +513,7 @@
 - **Last Updated:** 2025-11-29
 
 ### 8.4.1 — Content Pipeline Tooling & CI (M8.4)
+- **GitHub Issue:** [#23](https://github.com/TheWizardsCode/GEngine/issues/23)
 - **Description:** Implement content build tooling (`scripts/build_content.py`), CI validation hooks, and documentation so designers can author/test YAML and story seeds efficiently.
 - **Acceptance Criteria:** Content build step produces artifacts consumed by simulation; CI validates content on change; designer workflow documented.
 - **Priority:** Medium
@@ -547,6 +554,7 @@
 - **Last Updated:** 2025-11-30
 
 ### 9.2.1 — Rule-Based AI Action Layer (M9.2)
+- **GitHub Issue:** [#24](https://github.com/TheWizardsCode/GEngine/issues/24)
 - **Description:** Implement rule-based AI strategies and actor that submit intents, log decisions, and support deterministic 100-tick runs.
 - **Acceptance Criteria:** Strategies (balanced/aggressive/diplomatic) implemented; AI actor submits valid intents and handles responses; regression test shows stabilization behavior; telemetry captures decision rationale.
 - **Priority:** Medium
