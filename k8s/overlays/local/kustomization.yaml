@@ -84,4 +84,3 @@ labels:
 images:
   - name: gengine
     newTag: latest
-
