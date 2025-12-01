@@ -123,6 +123,8 @@
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | in-progress | Medium | devops-infra-agent | 2025-12-01 |
 | 8.3.2 | K8s Validation CI Job (M8.3.x) | not-started | High | TBD (ask Ross) | 2025-12-01 |
+| 8.3.3 | Gateway/LLM Prometheus Metrics (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
+| 8.3.4 | Integrate K8s Smoke Test into CI (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 9.2.1 | Rule-based AI action layer (M9.2) | completed | Medium | gamedev-agent | 2025-12-01 |
@@ -549,6 +551,7 @@
     - Prometheus scraping verification steps
     - ServiceMonitor/Prometheus Operator integration guide
     - Troubleshooting for metrics issues
+- **Resource Sizing Status:** This PR does **not** change Kubernetes resource `requests`/`limits`; existing manifest resource settings remain as they were in 8.2.1. As a result, this work fully covers observability (Prometheus annotations, ServiceMonitors) and Kubernetes smoke tests, but **only partially** addresses the original “resource sizing” acceptance criterion. Resource tuning for expected load will be completed in a follow-up task/PR.
 - **Last Updated:** 2025-12-01
 
 ### 8.3.2 — K8s Validation CI Job (M8.3.x)
@@ -575,6 +578,48 @@
   5. Document local validation workflow in K8s deployment docs
   6. Test workflow with intentional manifest errors to verify blocking behavior
 - **Rationale:** A bad K8s manifest or misconfigured deployment can bring down the entire system even when all unit/integration tests pass. These issues easily slip through without automation. Catching K8s breakage early in CI protects every environment and typically delivers the best reliability gain per unit of effort.
+- **Last Updated:** 2025-12-01
+
+### 8.3.3 — Gateway/LLM Prometheus Metrics (M8.3.x)
+- **Description:** Expose true Prometheus-style metrics for the gateway and LLM services (separate from `/healthz`), and update annotations/ServiceMonitors to scrape those endpoints.
+- **Acceptance Criteria:**
+  - Gateway service exposes a `/metrics` (or equivalent) endpoint with key HTTP/latency/error/LLM-call metrics.
+  - LLM service exposes a `/metrics` endpoint with request counts, latencies, error breakdowns, and provider-level stats.
+  - `k8s/base/*-deployment.yaml` `prometheus.io/path` annotations for gateway/LLM point to the metrics endpoint instead of `/healthz`.
+  - `k8s/base/servicemonitor.yaml` targets the updated metrics paths/ports for gateway and LLM.
+  - Documentation in `docs/gengine/Deploy_GEngine_To_Kubernetes.md` is updated to distinguish health vs. metrics endpoints and show example metrics for all three services.
+- **Priority:** Medium
+- **Responsible:** TBD (ask Ross)
+- **Dependencies:** Existing gateway/LLM services, Prometheus annotations and ServiceMonitor wiring from 8.3.1.
+- **Risks & Mitigations:**
+  - Risk: Metrics endpoints increase CPU/latency under load. Mitigation: Start with a minimal, targeted metrics set and sample where possible.
+  - Risk: Confusion between `/healthz` and `/metrics`. Mitigation: Clearly document both surfaces and their intended use.
+- **Next Steps:**
+  1. Implement `/metrics` endpoints for gateway and LLM with basic counters/histograms.
+  2. Update `k8s/base/gateway-deployment.yaml` and `k8s/base/llm-deployment.yaml` `prometheus.io/path` values to the new metrics endpoints.
+  3. Adjust `k8s/base/servicemonitor.yaml` to scrape the new paths.
+  4. Extend `scripts/k8s_smoke_test.sh` to validate gateway/LLM metrics endpoints (not just health).
+  5. Update K8s deployment docs with example metric names and troubleshooting steps.
+- **Last Updated:** 2025-12-01
+
+### 8.3.4 — Integrate K8s Smoke Test into CI (M8.3.x)
+- **Description:** Integrate the Kubernetes smoke test script (`scripts/k8s_smoke_test.sh`) into the automated testing workflow so that basic cluster health and metrics checks run in CI or a gated pipeline.
+- **Acceptance Criteria:**
+  - A CI job runs `scripts/k8s_smoke_test.sh` (or an adapted variant) against a disposable or shared test cluster on demand (e.g., nightly or on `main`).
+  - Failures in the smoke test job clearly surface in CI and block the pipeline for that environment.
+  - The job is scoped so it does not run on every PR by default (to avoid heavy K8s usage), but is easily triggerable (e.g., on `main`, nightly, or with a label).
+  - Documentation explains when/how the smoke tests run in CI and how to invoke them locally with the same settings.
+- **Priority:** Medium
+- **Responsible:** TBD (ask Ross)
+- **Dependencies:** K8s manifests (✅ 8.2.1 complete), observability (✅ 8.3.1 complete), CI infrastructure capable of reaching a test cluster.
+- **Risks & Mitigations:**
+  - Risk: Running smoke tests against real clusters is slow or flaky. Mitigation: Start with targeted, low-frequency runs (nightly or on `main`) and use generous timeouts.
+  - Risk: K8s cluster credentials/contexts in CI are hard to manage. Mitigation: Reuse existing cluster access patterns; document any secrets/config needed.
+- **Next Steps:**
+  1. Decide on the triggering policy for smoke tests (nightly, `main` only, or manual).
+  2. Create a CI workflow (e.g., `.github/workflows/k8s-smoke-test.yml`) that provisions KUBECONFIG/namespace and calls `scripts/k8s_smoke_test.sh` with appropriate flags.
+  3. Ensure logs from the smoke test script are captured and surfaced in CI for debugging.
+  4. Update K8s deployment docs to describe the CI smoke test job and how to replicate it locally.
 - **Last Updated:** 2025-12-01
 
 ### 8.4.1 — Content Pipeline Tooling & CI (M8.4)
