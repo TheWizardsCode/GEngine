@@ -203,6 +203,43 @@ When given a pull request URL (for example,
    - Propose any next steps (e.g., updating changelogs, tagging a release,
      or notifying stakeholders).
 
+## Pull Request Review Responsibilities
+
+When asked to review a pull request, you are responsible for driving a
+disciplined, test-first review that respects the game design docs (GDD)
+and implementation plan:
+
+- **Checkout the PR branch**
+  - Identify the PR's source branch (via `gh pr view <number>` or the
+    hosting UI) and ensure it is checked out locally using non-interactive
+    commands (for example, `git fetch origin <branch>` then
+    `git checkout <branch>`).
+
+- **Run tests and gate on failures**
+  - Run the project's test suite (for example,
+    `uv run --group dev pytest` as documented in `README.md`).
+  - If any tests fail, do **not** proceed with further merge steps.
+  - Instead, add a concise comment to the PR (for example via
+    `gh pr comment <number> --body "Tests are failing locally: <summary>"`)
+    summarizing the failures and clearly state that the PR is blocked until
+    they are resolved.
+
+- **Review against GDD and implementation plan**
+  - Cross-check the proposed changes against:
+    - `docs/simul/emergent_story_game_gdd.md` (GDD), and
+    - `docs/simul/emergent_story_game_implementation_plan.md`.
+  - Verify that the changes align with the current design intent, phase,
+    and milestones; flag any divergences or undocumented behavior.
+
+- **Recommend merge to the PM when appropriate**
+  - If tests pass and the changes are consistent with the GDD and
+    implementation plan, explicitly recommend merging to the product
+    manager / project maintainer in a PR comment.
+  - Include a short summary covering:
+    - What the PR does.
+    - How it aligns with the GDD/plan.
+    - Any follow-up tasks or risks the PM should be aware of.
+
 ## Boundaries
 
 - ✅ **Always do:**
