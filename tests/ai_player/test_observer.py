@@ -50,13 +50,19 @@ class TestObserverConfig:
             ObserverConfig(tick_budget=10, analysis_interval=20)
 
     def test_config_validates_stability_threshold_range(self) -> None:
-        with pytest.raises(ValueError, match="stability_alert_threshold must be between"):
+        with pytest.raises(
+            ValueError, match="stability_alert_threshold must be between"
+        ):
             ObserverConfig(stability_alert_threshold=1.5)
-        with pytest.raises(ValueError, match="stability_alert_threshold must be between"):
+        with pytest.raises(
+            ValueError, match="stability_alert_threshold must be between"
+        ):
             ObserverConfig(stability_alert_threshold=-0.1)
 
     def test_config_validates_legitimacy_threshold(self) -> None:
-        with pytest.raises(ValueError, match="legitimacy_swing_threshold must be non-negative"):
+        with pytest.raises(
+            ValueError, match="legitimacy_swing_threshold must be non-negative"
+        ):
             ObserverConfig(legitimacy_swing_threshold=-0.1)
 
 
@@ -334,7 +340,10 @@ class TestObserverAlertAndCommentaryEdgeCases:
 
         comments = observer._generate_commentary(stability_trend, {}, [])
 
-        assert any("[STABILITY]" in c and "Declined significantly" in c for c in comments)
+        assert any(
+            "[STABILITY]" in c and "Declined significantly" in c
+            for c in comments
+        )
         assert any("0.90" in c and "0.60" in c for c in comments)
 
     def test_commentary_stability_stable(self) -> None:
@@ -374,7 +383,10 @@ class TestObserverAlertAndCommentaryEdgeCases:
                 end_value=0.5,
                 delta=-0.2,
                 trend="decreasing",
-                alert="faction_rebel_alliance_legitimacy lost 0.200 over observation period",
+                alert=(
+                    "faction_rebel_alliance_legitimacy lost 0.200 "
+                    "over observation period"
+                ),
             )
         }
 
@@ -539,7 +551,7 @@ class TestObserverWithSimServiceClient:
         assert len(report.stability_trend.samples) > 0
         # Verify faction tracking works
         assert len(report.faction_swings) > 0
-        for faction_id, trend in report.faction_swings.items():
+        for _faction_id, trend in report.faction_swings.items():
             assert trend.metric_name.startswith("faction_")
             assert trend.trend in ["increasing", "decreasing", "stable"]
 

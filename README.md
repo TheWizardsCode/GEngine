@@ -131,7 +131,7 @@ run locally.
 See `docs/simul/emergent_story_game_implementation_plan.md` for the full
 multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guide.
 
-## Progress Log (Updated 2025-11-29)
+## Progress Log (Updated 2025-12-01)
 
 - ✅ **Phase 5 M5.3 – Pacing & lifecycle polish** shipped: deterministic
   lifecycle states with per-seed/global quiet timers now gate director overlap,
@@ -157,6 +157,13 @@ multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guid
   generates structured JSON reports with natural language commentary. The CLI
   runner at `scripts/run_ai_observer.py` supports configurable tick budgets,
   analysis intervals, and alert thresholds.
+- ✅ **Phase 9 M9.2 – Rule-based action layer** shipped: AI actor at
+  `src/gengine/ai_player/actor.py` wraps observer analysis with strategy-based
+  action selection. Three strategies implemented (BALANCED, AGGRESSIVE,
+  DIPLOMATIC) with configurable thresholds and action intervals. Actor submits
+  intents via `SimEngine.apply_action` API and logs all decisions for telemetry
+  replay. Regression tests validate 100-tick deterministic runs with AI
+  interventions. Coverage at 94% for new modules.
 
 ## Repository Layout
 
@@ -803,6 +810,104 @@ The Observer output includes:
 - `commentary`: Natural language summary of the observation period
 - `environment_summary`: Final environment metrics (stability, economy, agents)
 
+## AI Player Actor (Phase 9 M9.2)
+
+The AI Player Actor (`src/gengine/ai_player/actor.py`) extends the Observer with
+rule-based action selection and submission. It uses configurable strategies to
+autonomously interact with the simulation for automated testing and balance
+validation.
+
+### Strategies
+
+Three built-in strategies are available:
+
+- **BALANCED**: Moderate intervention, stabilizes at 0.6, supports factions at 0.4
+- **AGGRESSIVE**: Frequent actions, higher thresholds, larger resource deployments
+- **DIPLOMATIC**: Prefers negotiation, builds faction relationships, lower intervention thresholds
+
+### Running the AI Actor
+
+**Basic local mode:**
+
+```python
+from gengine.ai_player import AIActor, ActorConfig
+from gengine.ai_player.strategies import StrategyType
+
+from gengine.echoes.sim import SimEngine
+
+engine = SimEngine()
+engine.initialize_state(world="default")
+
+config = ActorConfig(
+    strategy_type=StrategyType.BALANCED,
+    tick_budget=100,
+    actions_per_observation=1,
+)
+actor = AIActor(engine=engine, config=config)
+report = actor.run()
+
+print(f"Actions taken: {report.actions_taken}")
+print(f"Final stability: {report.final_stability}")
+print(f"Telemetry: {report.telemetry}")
+```
+
+**With custom strategy:**
+
+```python
+from gengine.ai_player import AIActor
+from gengine.ai_player.strategies import AggressiveStrategy, StrategyConfig
+
+strategy = AggressiveStrategy(
+    session_id="test-session",
+    config=StrategyConfig(
+        stability_low=0.75,
+        action_interval=3,
+    ),
+)
+actor = AIActor(engine=engine, strategy=strategy)
+report = actor.run(ticks=50)
+```
+
+### Actor Configuration
+
+- `strategy_type`: Which strategy to use (BALANCED, AGGRESSIVE, DIPLOMATIC)
+- `tick_budget`: Total ticks to run (default: 100)
+- `actions_per_observation`: Max actions per analysis interval (default: 1)
+- `analysis_interval`: Ticks between strategy evaluations (default: 10)
+- `log_decisions`: Enable decision logging (default: True)
+
+### Strategy Customization
+
+Custom strategies can be created by subclassing `BaseStrategy`:
+
+```python
+from gengine.ai_player.strategies import BaseStrategy, StrategyDecision, StrategyType
+
+class CustomStrategy(BaseStrategy):
+    strategy_type = StrategyType.BALANCED  # or create your own
+
+    def evaluate(self, state: dict, tick: int) -> list[StrategyDecision]:
+        decisions = []
+        stability = state.get("stability", 1.0)
+        
+        if stability < 0.5:
+            # Create and return decisions based on your rules
+            pass
+        
+        return sorted(decisions, key=lambda d: d.priority, reverse=True)
+```
+
+### Telemetry Output
+
+The actor report includes:
+
+- `ticks_run`: Total ticks executed
+- `actions_taken`: Number of actions submitted
+- `decisions`: Full list of strategy decisions with rationales
+- `receipts`: Action submission receipts with status
+- `final_stability`: City stability at end of session
+- `telemetry`: Action counts, priority stats, rationales
+
 ## LLM Service (Phase 6 M6.3)
 
 The LLM service provides natural language processing for intent parsing and narrative generation. It runs as a separate FastAPI service and communicates with the gateway/CLI.
@@ -1153,10 +1258,10 @@ service names as hostnames:
 1. **Phase 8 – Kubernetes Deployment** – create Kubernetes manifests for local
    minikube deployment, enabling multi-container orchestration and service
    discovery. Docker containerization is complete (see Docker section above).
-2. **Phase 9 M9.2 – Rule-based action layer** – extend the AI Player with
-   heuristic decision logic for automated playtesting (depends on Phase 6
-   action routing). See the Phase 9 section of the implementation plan for the
-   full observer → actor → LLM roadmap.
+2. **Phase 9 M9.3 – LLM-enhanced decisions** – layer LLM strategy that delegates
+   complex narrative choices to the LLM service when story seeds trigger. Includes
+   budget controls and fallback to rule-based logic. See the Phase 9 section of
+   the implementation plan for the full observer → actor → LLM roadmap.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

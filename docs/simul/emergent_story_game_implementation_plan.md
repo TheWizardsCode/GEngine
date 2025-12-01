@@ -573,23 +573,21 @@ playthrough validation.
   - Integration test asserts observer detects a scripted stability crash
   - README includes observer invocation examples and use cases
 
-- **M9.2 Rule-based action layer** (1-2 days, depends on Phase 6 action
-  system): Once `apply_action` and intent routing are available, extend
-  `ai_player/strategies.py` with heuristic decision logic (emergency responses
-  for low stability, resource rebalancing, faction support). Implement
-  `ai_player/actor.py` that wraps observer analysis with action selection,
-  submits intents via the action API, and logs decisions for replay. Add
-  regression tests that run 100-tick games with AI interventions and assert
-  deterministic outcomes under fixed seeds. Update telemetry capture to include
-  AI decision logs alongside simulation state.
+- ✅ **M9.2 Rule-based action layer** (shipped): Extended `ai_player/strategies.py`
+  with heuristic decision logic (emergency responses for low stability, resource
+  rebalancing, faction support). Implemented `ai_player/actor.py` that wraps
+  observer analysis with action selection, submits intents via the action API,
+  and logs decisions for replay. Added regression tests that run 100-tick games
+  with AI interventions and assert deterministic outcomes under fixed seeds.
+  Telemetry captures AI decision rationale alongside simulation state.
 
-  **Acceptance Criteria:**
+  **Acceptance Criteria (all met):**
 
-  - Rule-based strategies (balanced, aggressive, diplomatic) implemented
-  - AI actor submits valid intents and handles API responses/errors
-  - Regression test shows AI can stabilize a failing city
-  - Telemetry captures AI decision rationale alongside game state
-  - Documentation covers strategy tuning and custom rule authoring
+  - ✅ Rule-based strategies (balanced, aggressive, diplomatic) implemented
+  - ✅ AI actor submits valid intents and handles API responses/errors
+  - ✅ Regression test shows AI can stabilize a failing city
+  - ✅ Telemetry captures AI decision rationale alongside game state
+  - ✅ Documentation covers strategy tuning and custom rule authoring
 
 - **M9.3 LLM-enhanced decisions** (1-2 days, depends on Phase 6 LLM service):
   Layer `ai_player/llm_strategy.py` that delegates complex narrative choices to
