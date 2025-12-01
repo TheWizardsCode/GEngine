@@ -1,6 +1,7 @@
 ---
 name: git_agent
 description: Manages feature-branch Git workflow and safe merges for this repo.
+model: Grok Code Fast 1 (copilot)
 tools:
   - search
   - edit
