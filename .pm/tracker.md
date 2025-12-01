@@ -1,11 +1,19 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-01T01:00:00Z
+**Last Updated:** 2025-12-01T03:04:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 7.1.2 (Per-Agent Progression) COMPLETED** - GitHub Issue [#17](https://github.com/TheWizardsCode/GEngine/issues/17)
+  - AgentProgressionState model with specialization, expertise, reliability, stress
+  - GameState integration with migration-safe defaults
+  - ProgressionSystem processes agent_actions with agent_id
+  - 43 comprehensive tests (all passing)
+  - Configuration in simulation.yml with per_agent_progression section
+  - Documentation updated in gameplay guide and implementation plan
+  - Task 7.1.3 remains: enable per-agent modifiers by default (currently false)
 - 🎉 **Task 9.1.1 (AI Observer Foundation) COMPLETED** - GitHub Issue [#19](https://github.com/TheWizardsCode/GEngine/issues/19)
   - Fixed bug in Observer._get_state() for service mode data unwrapping
   - Added 4 new integration tests for SimServiceClient mode
@@ -21,9 +29,10 @@
 - 🎉 **Phase 7 COMPLETE** - All player experience features shipped!
   - ✅ Task 7.4.1 (Campaign UX) completed and merged via PR #14
   - ✅ Task 7.1.1 (Progression Systems) completed and merged via PR #12
+  - ✅ Task 7.1.2 (Per-Agent Progression Layer) completed
   - ✅ Task 7.3.1 (Tuning & Replayability) completed
   - ✅ Task 7.2.1 (Explanations) completed
-  - 📋 Issues #11, #13 closed
+  - 📋 Issues #11, #13, #17 closed
   
 
 **Previous Updates:**
@@ -45,16 +54,18 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Task 8.1.1 complete, next tasks ready
-2. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer waiting
-3. 🔧 **Optional Polish** - Task 7.1.2 (Per-Agent Progression) marked Low priority
+1. 🚀 **Phase 8 Deployment** - Task 8.1.1 complete, remaining tasks (8.2.1, 8.3.1, 8.4.1) need ownership
+2. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer (9.2.1) ready to start
+3. 🔧 **Optional Polish** - Task 7.1.3 (Enable per-agent modifiers by default) marked Medium priority
 
 **Key Risks:**
 
-- ⚠️ **Phase 8 remaining tasks need ownership** - K8s manifests, observability, content pipeline
-- ⚠️ **No parallel Phase 9 work** - Could start AI testing while Phase 8 progresses
+- ⚠️ **Phase 8 remaining tasks need ownership** - K8s manifests (8.2.1), observability (8.3.1), content pipeline (8.4.1) all require assignment
+- ⚠️ **Phase 9 ready to start** - Observer foundation complete, rule-based AI (9.2.1) unblocked but needs owner
+- ⚠️ **Per-agent modifiers disabled** - Task 7.1.2 complete but 7.1.3 (enable by default) remains
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested
 - ✅ **Containerization risk eliminated** - Docker/Compose setup tested and documented
+- ✅ **No open issues or PRs** - Clean repository state
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -75,8 +86,8 @@
 | 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | completed | High | Team | 2025-11-30 |
 | 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
 | 7.1.1 | Design & build progression systems (M7.1) | completed | High | gamedev-agent | 2025-11-30 |
-| 7.1.2 | Implement per-agent progression layer (M7.1.x) | completed | Low | gamedev-agent | 2025-11-30 |
-| 7.1.3 | Default per-agent success modifiers to enabled | not-started | Medium | gamedev-agent | 2025-11-30 |
+| 7.1.2 | Implement per-agent progression layer (M7.1.x) | completed | Low | gamedev-agent | 2025-12-01 |
+| 7.1.3 | Default per-agent success modifiers to enabled | not-started | Medium | gamedev-agent | 2025-12-01 |
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
@@ -289,28 +300,52 @@
 - **Last Updated:** 2025-11-30
 
 ### 7.1.2 — Implement Per-Agent Progression Layer (M7.1.x)
-- **GitHub Issue:** [#17](https://github.com/TheWizardsCode/GEngine/issues/17)
+- **GitHub Issue:** [#17](https://github.com/TheWizardsCode/GEngine/issues/17) - CLOSED
 - **Description:** Implement the per-agent progression layer described in GDD §4.1.1 and the implementation plan (M7.1.x), adding a lightweight `AgentProgressionState` keyed by `agent_id` on top of the existing global `ProgressionState`. Wire it into `GameState`, `ProgressionSystem.tick(...)`, configuration, and minimal CLI/service surfaces while keeping effects bounded and optional.
 - **Acceptance Criteria:**
-  - `AgentProgressionState` model exists with specialization, expertise pips, reliability, stress, and mission counters.
-  - `GameState` can persist and restore `agent_progression` without breaking old snapshots.
-  - `ProgressionSystem` updates per-agent state when `agent_actions` include `agent_id`, without changing existing global progression behavior.
-  - New config knobs in `simulation.yml` control expertise/stress/reliability deltas and max bonus/penalty envelope.
-  - Optional success-modifier wrapper for per-agent bonuses is gated behind a config flag.
-  - At least a couple of CLI/service/explanation surfaces can display basic per-agent summaries.
-  - Tests cover model behavior, tick integration, and snapshot round-tripping.
+  - ✅ `AgentProgressionState` model exists with specialization, expertise pips, reliability, stress, and mission counters.
+  - ✅ `GameState` can persist and restore `agent_progression` without breaking old snapshots.
+  - ✅ `ProgressionSystem` updates per-agent state when `agent_actions` include `agent_id`, without changing existing global progression behavior.
+  - ✅ New config knobs in `simulation.yml` control expertise/stress/reliability deltas and max bonus/penalty envelope.
+  - ✅ Optional success-modifier wrapper for per-agent bonuses is gated behind a config flag (`enable_per_agent_modifiers`).
+  - ✅ At least a couple of CLI/service/explanation surfaces can display basic per-agent summaries.
+  - ✅ Tests cover model behavior, tick integration, and snapshot round-tripping (43 new tests).
 - **Priority:** Low
 - **Responsible:** gamedev-agent
-- **Status:** not-started
+- **Status:** ✅ COMPLETED
 - **Dependencies:** 7.1.1 (global progression systems), Phase 4 agent system, stable `agent_actions` payloads.
-- **Risks & Mitigations:**
-  - Risk: Per-agent bonuses/penalties destabilize difficulty. Mitigation: Keep modifiers small, config-gated, and covered by scenario tests.
-  - Risk: Roster UX becomes too fiddly. Mitigation: Limit tracked stats and ensure agent summaries remain legible in CLI/gateway views.
-- **Next Steps:**
-  1. Implement `AgentProgressionState` and integrate `agent_progression` into `GameState` with migration-safe defaults.
-  2. Extend `ProgressionSystem.tick(...)` to update per-agent progression from `agent_actions` and emit minimal telemetry.
-  3. Add config knobs, basic UX surfaces, and regression tests as outlined in the implementation plan.
-- **Last Updated:** 2025-11-30
+- **Completion Notes:**
+  - **Per-Agent Progression Model** (`src/gengine/echoes/core/progression.py`):
+    - `AgentSpecialization` enum: negotiator, investigator, analyst, operator, influencer
+    - `AgentProgressionState` model: specialization, expertise (0-5 pips), reliability (0-1), stress (0-1)
+    - Mission tracking: total_missions, successful_missions, hazardous_actions
+  - **GameState Integration** (`src/gengine/echoes/core/state.py`):
+    - Optional `agent_progression: Dict[str, AgentProgressionState]` field
+    - Helper methods: `ensure_agent_progression()`, `get_agent_progression()`
+    - Migration-safe defaults for backward compatibility
+  - **ProgressionSystem Updates** (`src/gengine/echoes/systems/progression.py`):
+    - Processes `agent_actions` with `agent_id` field
+    - Updates expertise based on mission outcomes
+    - Tracks stress for hazardous actions
+    - Calculates reliability from success rate
+  - **Success Modifier Integration**:
+    - `calculate_agent_modifier()` combines global + per-agent bonuses
+    - Gated behind `enable_per_agent_modifiers` config flag (currently `false`)
+  - **Configuration** (`content/config/simulation.yml`):
+    - New `per_agent_progression` section with tunable parameters
+    - Expertise gain/loss rates, stress accumulation/decay, reliability tracking
+  - **Test Coverage**: 43 new tests in `tests/echoes/test_progression.py`
+    - Model tests for AgentProgressionState
+    - System tests for tick processing and agent tracking
+    - Integration tests for GameState persistence
+    - Scenario tests for progression over time
+  - **Documentation**: Updated `docs/gengine/how_to_play_echoes.md` with:
+    - Section 11.4: Per-Agent Progression
+    - Specialization descriptions
+    - Expertise pip mechanics
+    - Stress and reliability tracking
+  - **Note:** Task 7.1.3 remains to enable per-agent modifiers by default
+- **Last Updated:** 2025-12-01
 
 ### 7.3.1 — Tuning & Replayability Sweeps (M7.3)
 - **Description:** Implement scenario sweeps, difficulty modifiers, and config exposure to tune pacing, difficulty, and replayability.
