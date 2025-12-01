@@ -15,6 +15,8 @@ resources:
   - llm-deployment.yaml
   - llm-service.yaml
   - ingress.yaml
+  # Uncomment if Prometheus Operator is installed:
+  # - servicemonitor.yaml
 
 labels:
   - pairs:

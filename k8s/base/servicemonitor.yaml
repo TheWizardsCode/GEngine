@@ -1,0 +1,62 @@
+# ServiceMonitor for Prometheus Operator
+# This resource enables Prometheus Operator to automatically discover and scrape
+# GEngine services. Only deploy if Prometheus Operator is installed in your cluster.
+#
+# To check if Prometheus Operator is available:
+#   kubectl api-resources | grep servicemonitors
+#
+# If not available, Prometheus will still scrape metrics using pod annotations.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gengine-simulation
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: simulation
+    app.kubernetes.io/part-of: gengine
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: simulation
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gengine-gateway
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/part-of: gengine
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gateway
+  endpoints:
+    - port: http
+      path: /healthz
+      interval: 30s
+      scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gengine-llm
+  namespace: gengine
+  labels:
+    app.kubernetes.io/name: llm
+    app.kubernetes.io/part-of: gengine
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llm
+  endpoints:
+    - port: http
+      path: /healthz
+      interval: 30s
+      scrapeTimeout: 10s
