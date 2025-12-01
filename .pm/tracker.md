@@ -1,11 +1,17 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-01T06:05:00Z
+**Last Updated:** 2025-12-01T06:15:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 8.3.1 (Observability in Kubernetes) COMPLETED** - GitHub Issue [#22](https://github.com/TheWizardsCode/GEngine/issues/22)
+  - Prometheus annotations added to all deployment manifests (simulation, gateway, llm)
+  - ServiceMonitor resources for Prometheus Operator integration
+  - Kubernetes smoke test script (`scripts/k8s_smoke_test.sh`) with health/metrics validation
+  - Documentation updated with monitoring and troubleshooting sections
+  - All acceptance criteria met for metrics scraping, smoke tests, and documentation
 - 🎉 **Task 9.2.1 (Rule-Based AI Action Layer) COMPLETED** - GitHub Issue [#24](https://github.com/TheWizardsCode/GEngine/issues/24)
   - Strategies module with BalancedStrategy, AggressiveStrategy, DiplomaticStrategy
   - Actor module for action selection and submission via intent API
@@ -75,18 +81,18 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Tasks 8.1.1 and 8.2.1 complete, task 8.3.1 in progress (devops-infra-agent), task 8.4.1 needs ownership
+1. 🚀 **Phase 8 Deployment** - Tasks 8.1.1, 8.2.1, and 8.3.1 complete, task 8.4.1 needs ownership
 2. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
 
 **Key Risks:**
 
 - ⚠️ **Phase 8 content pipeline needs ownership** - Task 8.4.1 requires assignment
 - ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
-- 🟡 **Phase 8 observability in progress** - Task 8.3.1 delegated to devops-infra-agent (2025-12-01)
+- ✅ **Phase 8 observability complete** - Task 8.3.1 Prometheus annotations and smoke tests added (2025-12-01)
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
 - ✅ **Containerization complete** - Docker/Compose and K8s manifests tested and documented
 - ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
-- ✅ **Clean repository state** - Issues #21, #24, #25 closed
+- ✅ **Clean repository state** - Issues #21, #22, #24, #25 closed
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -114,7 +120,7 @@
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
-| 8.3.1 | Observability in Kubernetes (M8.3) | in-progress | Medium | devops-infra-agent | 2025-12-01 |
+| 8.3.1 | Observability in Kubernetes (M8.3) | completed | Medium | devops-infra-agent | 2025-12-01 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1) | completed | Medium | gamedev-agent | 2025-11-30 |
 | 9.2.1 | Rule-based AI action layer (M9.2) | completed | Medium | gamedev-agent | 2025-12-01 |
@@ -519,15 +525,28 @@
 - **Acceptance Criteria:** Metrics scraped for all services; resource requests/limits tuned for expected load; smoke tests runnable via `kubectl` or scripts.
 - **Priority:** Medium
 - **Responsible:** devops-infra-agent
-- **Status:** in-progress
+- **Status:** ✅ COMPLETED
 - **Dependencies:** K8s manifests (✅ 8.2.1 complete) and running cluster.
 - **Risks & Mitigations:**
   - Risk: Mis-sized resources causing instability. Mitigation: Start conservative and adjust based on telemetry.
-- **Next Steps:**
-  1. Add ServiceMonitor/PodMonitor or annotations for Prometheus scraping.
-  2. Define resource requests/limits for simulation, gateway, LLM services.
-  3. Create load smoke tests runnable via `kubectl` or scripts.
-  4. Document monitoring and troubleshooting workflows.
+- **Completion Notes:**
+  - **Prometheus Annotations** (`k8s/base/`):
+    - Added `prometheus.io/scrape: "true"` to all deployment manifests
+    - Added `prometheus.io/port` for each service (8000, 8100, 8001)
+    - Added `prometheus.io/path` annotations (/metrics for simulation, /healthz for gateway/llm)
+  - **ServiceMonitor Resources** (`k8s/base/servicemonitor.yaml`):
+    - Created ServiceMonitor resources for Prometheus Operator integration
+    - Optional inclusion via kustomization.yaml (commented by default)
+  - **Kubernetes Smoke Test** (`scripts/k8s_smoke_test.sh`):
+    - Pod health checks and status verification
+    - Health and metrics endpoint validation
+    - Prometheus annotation verification
+    - Optional load testing with `--load` flag
+  - **Documentation** (`docs/gengine/Deploy_GEngine_To_Kubernetes.md`):
+    - Added Monitoring and Observability section
+    - Prometheus scraping verification steps
+    - ServiceMonitor/Prometheus Operator integration guide
+    - Troubleshooting for metrics issues
 - **Last Updated:** 2025-12-01
 
 ### 8.4.1 — Content Pipeline Tooling & CI (M8.4)

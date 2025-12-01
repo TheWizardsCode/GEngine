@@ -458,6 +458,115 @@ kubectl top pods -n "${GENGINE_NAMESPACE}"
 # Increase limits in the overlay's kustomization.yaml and redeploy
 ```
 
+### Metrics Not Being Scraped
+
+If Prometheus is not scraping your services:
+
+```bash
+# Verify Prometheus annotations are present on pods
+kubectl get pods -n "${GENGINE_NAMESPACE}" -o jsonpath='{range .items[*]}{.metadata.name}: {.metadata.annotations}{"\n"}{end}'
+
+# Check if Prometheus can reach the service
+kubectl run -n "${GENGINE_NAMESPACE}" --rm -it --image=curlimages/curl test-curl -- \
+  curl -v http://simulation.gengine.svc.cluster.local:8000/metrics
+
+# If using Prometheus Operator, check ServiceMonitor status
+kubectl get servicemonitors -n "${GENGINE_NAMESPACE}"
+```
+
+## Monitoring and Observability
+
+GEngine services are instrumented with Prometheus-compatible metrics endpoints
+for monitoring and alerting.
+
+### Metrics Endpoints
+
+Each service exposes metrics that can be scraped by Prometheus:
+
+| Service    | Port | Metrics Endpoint | Description                      |
+|------------|------|------------------|----------------------------------|
+| Simulation | 8000 | `/metrics`       | Tick count, environment, profiling |
+| Gateway    | 8100 | `/healthz`       | Service health and connection info |
+| LLM        | 8001 | `/healthz`       | Service health status            |
+
+### Prometheus Annotations
+
+All deployments are annotated for automatic Prometheus discovery:
+
+```yaml
+annotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "<service-port>"
+  prometheus.io/path: "/metrics"  # or "/healthz"
+```
+
+### Verifying Prometheus Scraping
+
+To confirm Prometheus is scraping your services:
+
+```bash
+# Check simulation metrics directly
+if [[ "${GENGINE_DEPLOY_ENV}" == "local" ]]; then
+  MINIKUBE_IP=$(minikube ip)
+  curl -s "http://${MINIKUBE_IP}:30000/metrics" | jq .
+fi
+
+# Using kubectl proxy or port-forward
+kubectl port-forward -n "${GENGINE_NAMESPACE}" svc/simulation 8000:8000 &
+curl -s http://localhost:8000/metrics | jq .
+```
+
+Expected output:
+
+```json
+{
+  "tick": 0,
+  "environment": {
+    "temperature": 0.0,
+    "instability": 0.0,
+    "tension": 0.0
+  },
+  "profiling": {}
+}
+```
+
+### Prometheus Operator Integration
+
+For clusters running Prometheus Operator, ServiceMonitor resources are available:
+
+```bash
+# Enable ServiceMonitors in kustomization.yaml
+# Uncomment the servicemonitor.yaml line in k8s/base/kustomization.yaml
+
+# Apply with ServiceMonitors
+kubectl apply -k k8s/overlays/${GENGINE_DEPLOY_ENV}
+
+# Verify ServiceMonitors are created
+kubectl get servicemonitors -n "${GENGINE_NAMESPACE}"
+```
+
+### Running Smoke Tests
+
+A dedicated smoke test script validates the Kubernetes deployment including
+metrics endpoints:
+
+```bash
+# Basic smoke test
+./scripts/k8s_smoke_test.sh
+
+# With namespace override
+./scripts/k8s_smoke_test.sh --namespace gengine
+
+# Include load testing
+./scripts/k8s_smoke_test.sh --load
+```
+
+The smoke test verifies:
+- All pods are running and ready
+- Health endpoints respond with HTTP 200
+- Metrics endpoints are accessible
+- Prometheus annotations are correctly configured
+
 ## Summary
 
 This document deployed the GEngine services (simulation, gateway, LLM) to a

@@ -21,6 +21,10 @@ spec:
         app.kubernetes.io/name: llm
         app.kubernetes.io/component: llm
         app.kubernetes.io/part-of: gengine
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/healthz"
     spec:
       containers:
         - name: llm

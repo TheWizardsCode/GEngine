@@ -21,6 +21,10 @@ spec:
         app.kubernetes.io/name: gateway
         app.kubernetes.io/component: gateway
         app.kubernetes.io/part-of: gengine
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8100"
+        prometheus.io/path: "/healthz"
     spec:
       containers:
         - name: gateway
