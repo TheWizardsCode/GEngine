@@ -174,6 +174,7 @@ tests/                    Pytest suites (content, tick loop, CLI shell, AI playe
 
 - Python 3.12+
 - `uv` (https://github.com/astral-sh/uv)
+- Docker (for container workflows; e.g., Docker Desktop or Docker Engine)
 
 ## Setup
 
@@ -184,6 +185,34 @@ uv sync --group dev
 
 The first sync creates/updates `.venv` and installs runtime plus dev
 dependencies.
+
+## Docker / Container Setup
+
+Task 8.1.1 adds official Docker support for the simulation, gateway, and LLM services. You only need Docker if you plan to run the stack via containers or use the container smoke tests.
+
+- **Install Docker:**
+  - Linux: `docker` and `docker compose` via your distro packages or https://docs.docker.com/engine/install/
+  - macOS / Windows: Docker Desktop from https://www.docker.com/products/docker-desktop
+
+- **Build and run containers:**
+
+  ```bash
+  # From the repo root
+  docker compose up --build
+  ```
+
+  This starts:
+  - simulation service on port 8000
+  - gateway service on port 8100
+  - LLM service on port 8001
+
+- **Container smoke test (recommended):**
+
+  ```bash
+  bash scripts/smoke_test_containers.sh
+  ```
+
+  This script builds the images, brings up the stack with Docker Compose, polls `/healthz` for each service, and tears everything down when checks pass.
 
 ## Running Tests
 

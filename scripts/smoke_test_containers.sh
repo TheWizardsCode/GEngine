@@ -84,7 +84,8 @@ log_info "curl: $(curl --version | head -n 1)"
 # =============================================================================
 log_info "Building Docker image..."
 
-if ! docker compose build --quiet; then
+# Use normal docker compose build so buildx provides full diagnostics
+if ! docker compose build; then
     log_error "Docker image build failed"
     exit 1
 fi

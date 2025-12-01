@@ -10,7 +10,7 @@
   - ✅ Task 8.1.1 (Containerization) completed via PR #16 (Issue #15)
   - Multi-stage Dockerfile supporting simulation, gateway, and LLM services
   - docker-compose.yml orchestrating all services on shared network
-  - Container smoke test script at `scripts/smoke_test_containers.sh`
+  - Container smoke test script at `scripts/smoke_test_containers.sh` (all checks passing)
   - Full Python test suite passes (476 tests, 0 failures)
 - 🎉 **Phase 7 COMPLETE** - All player experience features shipped!
   - ✅ Task 7.4.1 (Campaign UX) completed and merged via PR #14
@@ -18,7 +18,7 @@
   - ✅ Task 7.3.1 (Tuning & Replayability) completed
   - ✅ Task 7.2.1 (Explanations) completed
   - 📋 Issues #11, #13 closed
-- 🚀 **Task 8.1.1 (Containerization) IN PROGRESS** - GitHub Issue [#15](https://github.com/TheWizardsCode/GEngine/issues/15), PR [#16](https://github.com/TheWizardsCode/GEngine/pull/16) opened and validated with `uv run --group dev pytest` (476 tests passing).
+  
 
 **Previous Updates:**
 
@@ -73,7 +73,7 @@
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
-| 8.1.1 | Containerization (Docker + compose) (M8.1) | in-progress | High | TBD (ask Ross) | 2025-11-30 |
+| 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |

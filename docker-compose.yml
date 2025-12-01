@@ -29,7 +29,7 @@ services:
       ECHOES_SERVICE_HOST: "0.0.0.0"
       ECHOES_SERVICE_PORT: "8000"
       ECHOES_SERVICE_WORLD: "${ECHOES_SERVICE_WORLD:-default}"
-      ECHOES_CONFIG_ROOT: "/app/content/config"
+      ECHOES_CONFIG_ROOT: "/app/content"
     ports:
       - "${SIMULATION_PORT:-8000}:8000"
     volumes:

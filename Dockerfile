@@ -24,12 +24,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Create app directory
 WORKDIR /app
 
-# Copy dependency files
+# Copy dependency files and source so the package can be installed
 COPY pyproject.toml ./
-COPY README.md ./
+COPY src/ ./src/
 
-# Install dependencies using uv
-RUN uv pip install --system -e .
+# Install the gengine package + dependencies into the system environment
+RUN uv pip install --system .
 
 # =============================================================================
 # Stage 2: Runtime image with application code
@@ -41,6 +41,10 @@ COPY src/ ./src/
 
 # Copy content directory (world data and configs)
 COPY content/ ./content/
+
+# Also copy content into the path used by the loader in site-packages
+RUN mkdir -p /usr/local/lib/python3.12/content && \
+  cp -R ./content/* /usr/local/lib/python3.12/content/
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser && \
