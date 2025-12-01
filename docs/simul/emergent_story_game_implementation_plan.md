@@ -589,21 +589,21 @@ playthrough validation.
   - ✅ Telemetry captures AI decision rationale alongside game state
   - ✅ Documentation covers strategy tuning and custom rule authoring
 
-- **M9.3 LLM-enhanced decisions** (1-2 days, depends on Phase 6 LLM service):
-  Layer `ai_player/llm_strategy.py` that delegates complex narrative choices to
-  the LLM service when story seeds trigger or critical thresholds are crossed.
-  Implement budget controls (max LLM calls per session) and fallback to
-  rule-based logic when quota exhausted. Add scenario tests comparing
-  rule-only vs. hybrid AI performance across different world configs. Document
-  LLM prompt templates and cost/latency tradeoffs.
+- **M9.3 LLM-enhanced decisions** (COMPLETED):
+  `ai_player/llm_strategy.py` and `HybridStrategy` in `strategies.py` delegate
+  complex narrative choices to the LLM service when story seeds trigger or
+  critical thresholds are crossed. Budget controls via `LLMStrategyConfig`
+  (max LLM calls per session, cost tracking) with automatic fallback to
+  rule-based logic when quota exhausted. Scenario tests compare rule-only vs.
+  hybrid AI performance. Telemetry tracks `decision_source` ("rule"/"llm").
 
-  **Acceptance Criteria:**
+  **Acceptance Criteria (all met):**
 
-  - Hybrid strategy routes routine actions to rules, complex choices to LLM
-  - Budget enforcement prevents runaway API costs
-  - Scenario tests measure win rates and narrative quality differences
-  - Documentation includes prompt engineering guidance
-  - Telemetry distinguishes rule-based vs. LLM-driven decisions
+  - ✅ Hybrid strategy routes routine actions to rules, complex choices to LLM
+  - ✅ Budget enforcement prevents runaway API costs
+  - ✅ Scenario tests compare rule-only vs hybrid behavior
+  - ✅ Documentation includes prompt and trade-off guidance
+  - ✅ Telemetry distinguishes rule-based vs. LLM-driven decisions
 
 - **M9.4 AI tournaments and balance tooling** (1-2 days): Create
   `scripts/run_ai_tournament.py` that executes N parallel games with varied AI
@@ -625,7 +625,7 @@ playthrough validation.
 
 - M9.1 (Observer) can start immediately with existing simulation APIs
 - M9.2 (Rule-based actions) requires Phase 6 action routing and intent schema
-- M9.3 (LLM enhancement) requires Phase 6 LLM service integration
+- M9.3 (LLM enhancement) requires Phase 6 LLM service integration ✅
 - M9.4 (Tournaments) requires M9.2 at minimum, benefits from M9.3
 
 **Folder Structure:**

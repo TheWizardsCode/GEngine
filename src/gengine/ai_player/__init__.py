@@ -13,6 +13,15 @@ from .actor import (
     create_actor_from_engine,
     create_actor_from_service,
 )
+from .llm_strategy import (
+    LLMBudgetState,
+    LLMDecisionLayer,
+    LLMDecisionRequest,
+    LLMDecisionResponse,
+    LLMStrategyConfig,
+    create_llm_decision_layer,
+    evaluate_complexity,
+)
 from .observer import (
     ObservationReport,
     Observer,
@@ -24,6 +33,7 @@ from .strategies import (
     BalancedStrategy,
     BaseStrategy,
     DiplomaticStrategy,
+    HybridStrategy,
     StrategyConfig,
     StrategyDecision,
     StrategyType,
@@ -44,7 +54,16 @@ __all__ = [
     "BalancedStrategy",
     "AggressiveStrategy",
     "DiplomaticStrategy",
+    "HybridStrategy",
     "create_strategy",
+    # LLM Strategy Layer
+    "LLMStrategyConfig",
+    "LLMBudgetState",
+    "LLMDecisionRequest",
+    "LLMDecisionResponse",
+    "LLMDecisionLayer",
+    "create_llm_decision_layer",
+    "evaluate_complexity",
     # Actor
     "AIActor",
     "ActorConfig",

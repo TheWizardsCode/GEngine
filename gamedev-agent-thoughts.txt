@@ -443,3 +443,85 @@ All 523 tests pass with modifiers enabled.
 
 **Conclusion:**
 All acceptance criteria for Issue #24 are met. The implementation is production-ready.
+
+
+## Issue #34 - LLM-Enhanced AI Decisions (Task 9.3.1) - 2025-12-01T07:42 UTC
+=========================================================
+
+### Initial Assessment
+- Working branch: copilot/enhance-ai-decisions-issue-34
+- Repository synced and clean
+- All 112 AI player tests pass
+
+### Acceptance Criteria from Issue:
+1. Hybrid strategy routes routine actions to rules and complex choices to LLM
+2. Budget enforcement prevents runaway costs
+3. Scenario tests compare rule-only vs hybrid
+4. Telemetry distinguishes rule vs LLM decisions
+5. Docs cover prompts and trade-offs
+
+### Implementation Plan:
+
+1. **Extend StrategyType enum** with HYBRID value
+2. **Create HybridStrategyConfig** with LLM budget controls:
+   - llm_call_budget: Maximum LLM calls per session
+   - complexity_thresholds: When to trigger LLM vs rules
+   - cost_tracking: calls_used, estimated_cost
+3. **Create HybridStrategy class**:
+   - Wraps a fallback rule-based strategy
+   - Routes routine decisions to rules
+   - Routes complex decisions to LLM (via LLMDecisionLayer)
+   - Falls back to rules when budget exhausted
+4. **Create LLMDecisionLayer** (llm_strategy.py):
+   - LLMDecisionRequest dataclass
+   - build_decision_prompt() for LLM context
+   - parse_llm_response() to create StrategyDecision
+   - Async provider calls with timeout/error handling
+5. **Add decision_source telemetry**:
+   - Add decision_source field to StrategyDecision
+   - Track LLM call counts, latency, fallback rates
+6. **Add complexity detection**:
+   - Multiple factions with low legitimacy
+   - Critical stability crisis
+   - Conflicting story seeds active
+7. **Tests**:
+   - test_hybrid_strategy.py with stub provider
+   - Budget enforcement tests
+   - Decision routing tests
+   - Scenario comparisons
+8. **Documentation**:
+   - Update README with hybrid strategy examples
+   - Document prompts and trade-offs
+
+### Files Created/Modified:
+- src/gengine/ai_player/llm_strategy.py (NEW)
+- src/gengine/ai_player/strategies.py (MODIFIED - added HYBRID type, HybridStrategy class, decision_source)
+- src/gengine/ai_player/__init__.py (MODIFIED - new exports)
+- tests/ai_player/test_hybrid_strategy.py (NEW)
+- README.md (MODIFIED - documentation updates)
+- docs/simul/emergent_story_game_implementation_plan.md (MODIFIED - marked M9.3 complete)
+
+### Test Results:
+- AI player tests: 158 passed
+- Full test suite: 644 passed
+- AI player coverage: 91%
+  - llm_strategy.py: 76%
+  - strategies.py: 93%
+  - actor.py: 97%
+  - observer.py: 94%
+  - __init__.py: 100%
+
+### Telemetry Capture:
+- Command: uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m9-3-llm-hybrid.json
+- Ticks executed: 200
+- Suppressed events: 343
+
+### Acceptance Criteria Status:
+1. ✅ Hybrid strategy routes routine actions to rules and complex choices to LLM
+2. ✅ Budget enforcement prevents runaway costs (LLMStrategyConfig.llm_call_budget)
+3. ✅ Scenario tests compare rule-only vs hybrid (TestHybridStrategyScenarios class)
+4. ✅ Telemetry distinguishes rule vs LLM decisions (decision_source field)
+5. ✅ Docs cover prompts and trade-offs (README.md updated)
+
+### Task 9.3.1 Status: COMPLETED
+All acceptance criteria for Issue #34 are met.
