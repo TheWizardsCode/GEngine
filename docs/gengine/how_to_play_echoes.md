@@ -828,7 +828,7 @@ Tune per-agent progression via the `per_agent_progression` block in
 
 ```yaml
 per_agent_progression:
-  enable_per_agent_modifiers: false  # Toggle agent success modifiers
+  enable_per_agent_modifiers: true   # Toggle agent success modifiers
   expertise_max_pips: 5              # Maximum expertise per domain
   expertise_gain_per_success: 1      # Pips gained per success
   reliability_gain_per_success: 0.05 # Reliability boost per success
@@ -840,9 +840,10 @@ per_agent_progression:
   max_stress_penalty: 0.1            # Max stress-induced penalty
 ```
 
-The feature is disabled by default (`enable_per_agent_modifiers: false`) to
-keep early playtesting simple. Enable it to add tactical depth around agent
-management.
+Per-agent modifiers are enabled by default (`enable_per_agent_modifiers: true`).
+Scenario testing across all difficulty presets confirmed that the ±10% bonus/
+penalty envelope does not destabilize game balance. Disable the flag if you want
+to remove the tactical layer around agent selection.
 
 ## 12. Campaign Management
 

@@ -98,7 +98,7 @@ progression:
   established_threshold: 50
   elite_threshold: 100
 per_agent_progression:
-  enable_per_agent_modifiers: false
+  enable_per_agent_modifiers: true
   expertise_max_pips: 5
   expertise_gain_per_success: 1
   reliability_gain_per_success: 0.05
