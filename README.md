@@ -1049,6 +1049,24 @@ All services expose health check endpoints at `/healthz`:
 
 Docker Compose configures automatic health checks with 30-second intervals.
 
+### Container Smoke Tests
+
+A smoke test script validates the entire Docker/Compose setup:
+
+```bash
+# Run the container smoke test
+./scripts/smoke_test_containers.sh
+```
+
+The script will:
+1. Build the Docker image
+2. Start all services via `docker compose up`
+3. Poll `/healthz` endpoints for simulation, gateway, and LLM
+4. Verify HTTP 200 responses
+5. Clean up containers on completion
+
+Exit codes: 0 (success), 1 (build failed), 2 (health check timeout), 3 (verification failed).
+
 ### Networking
 
 Services communicate via the `echoes-network` Docker bridge network using

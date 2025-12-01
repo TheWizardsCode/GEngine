@@ -1,20 +1,23 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-11-30T23:02:00Z
+**Last Updated:** 2025-12-01T01:00:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Phase 8 Containerization** - Task 8.1.1 COMPLETED!
+  - ✅ Task 8.1.1 (Containerization) completed via PR #16 (Issue #15)
+  - Multi-stage Dockerfile supporting simulation, gateway, and LLM services
+  - docker-compose.yml orchestrating all services on shared network
+  - Container smoke test script at `scripts/smoke_test_containers.sh`
+  - Full Python test suite passes (476 tests, 0 failures)
 - 🎉 **Phase 7 COMPLETE** - All player experience features shipped!
   - ✅ Task 7.4.1 (Campaign UX) completed and merged via PR #14
   - ✅ Task 7.1.1 (Progression Systems) completed and merged via PR #12
   - ✅ Task 7.3.1 (Tuning & Replayability) completed
   - ✅ Task 7.2.1 (Explanations) completed
   - 📋 Issues #11, #13 closed
-- 🆕 **Phase 8 initiated** - Task 8.1.1 (Containerization) created
-  - 📋 GitHub Issue [#15](https://github.com/TheWizardsCode/GEngine/issues/15) created
-  - Status: Not started, awaiting assignment
 
 **Previous Updates:**
 
@@ -35,15 +38,16 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Just initiated with Task 8.1.1 (Issue #15)
+1. 🚀 **Phase 8 Deployment** - Task 8.1.1 complete, next tasks ready
 2. 🤖 **Phase 9 AI Testing** - Observer foundation complete, action layer waiting
 3. 🔧 **Optional Polish** - Task 7.1.2 (Per-Agent Progression) marked Low priority
 
 **Key Risks:**
 
-- ⚠️ **Phase 8 requires ownership assignment** - Who handles Docker/K8s work? (Ross to assign)
+- ⚠️ **Phase 8 remaining tasks need ownership** - K8s manifests, observability, content pipeline
 - ⚠️ **No parallel Phase 9 work** - Could start AI testing while Phase 8 progresses
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested
+- ✅ **Containerization risk eliminated** - Docker/Compose setup tested and documented
 
 | ID | Task | Status | Priority | Responsible | Updated |
 |---:|---|---|---|---|---|
@@ -68,7 +72,7 @@
 | 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
 | 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
 | 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
-| 8.1.1 | Containerization (Docker + compose) (M8.1) | not-started | High | TBD (ask Ross) | 2025-11-30 |
+| 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -361,21 +365,35 @@
 
 ### 8.1.1 — Containerization (Docker + Compose) (M8.1)
 - **GitHub Issue:** [#15](https://github.com/TheWizardsCode/GEngine/issues/15)
+- **GitHub PR:** [#16](https://github.com/TheWizardsCode/GEngine/pull/16)
 - **Description:** Create Dockerfiles and docker-compose configuration for simulation, gateway, and LLM services.
 - **Acceptance Criteria:** All three services can be built and run via Docker/compose; basic README instructions exist; environment configuration is shared via env vars.
 - **Priority:** High
-- **Responsible:** TBD (ask Ross)
+- **Responsible:** copilot
+- **Status:** ✅ COMPLETED
+- **Completion Notes:**
+  - **Dockerfile**: Multi-stage build with Python 3.12 + uv:
+    - Single image supporting all services via `SERVICE` env var
+    - Non-root user for security
+    - Development stage with dev dependencies
+  - **docker-compose.yml**: Service orchestration:
+    - simulation (8000), gateway (8100), llm (8001)
+    - Bridge network with service-name DNS
+    - Health checks, dependency ordering, content volume mount
+  - **.env.sample**: Documented environment variable contracts
+  - **README.md**: Docker usage section with quick start, configuration, development mode
+  - **Container Smoke Tests**: `scripts/smoke_test_containers.sh`:
+    - Builds Docker images
+    - Starts all services via compose
+    - Polls /healthz endpoints with timeout
+    - Verifies HTTP 200 responses
+    - Cleans up on completion
+  - **Test Coverage**: Full Python suite passes (476 tests, 0 failures)
 - **Dependencies:** Stable service boundaries (✅ Phase 6 complete), configuration contracts (✅ complete).
 - **Risks & Mitigations:**
-  - Risk: Divergence between local and container configs. Mitigation: Use shared env var contracts and sample env files.
-  - Risk: Port conflicts or networking issues. Mitigation: Use docker-compose networking with service names.
-- **Next Steps:**
-  1. Assign owner for Docker/DevOps work.
-  2. Draft Dockerfiles for each service (simulation, gateway, LLM).
-  3. Add docker-compose orchestration with networking.
-  4. Test multi-service startup and inter-service communication.
-  5. Document usage in README.
-- **Last Updated:** 2025-11-30
+  - Risk: Divergence between local and container configs. Mitigation: Used shared env var contracts and sample env files.
+  - Risk: Port conflicts or networking issues. Mitigation: Used docker-compose networking with service names.
+- **Last Updated:** 2025-12-01
 
 ### 8.2.1 — Kubernetes Manifests & Docs (M8.2)
 - **Description:** Define Kubernetes Deployments/Services/ConfigMaps/Ingress for simulation, gateway, and LLM services, plus supporting documentation.
