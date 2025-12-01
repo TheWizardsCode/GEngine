@@ -612,10 +612,14 @@ You can run the same validation locally before pushing changes.
 Install the required tools:
 
 ```bash
-# Install kubeconform
+# Install kubeconform (Linux)
 KUBECONFORM_VERSION="v0.6.4"
+mkdir -p ~/.local/bin
 curl -sSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | \
-  tar -xzf - -C /usr/local/bin kubeconform
+  tar -xzf - -C ~/.local/bin kubeconform
+
+# Add to PATH if not already (add to ~/.bashrc for persistence)
+export PATH="$HOME/.local/bin:$PATH"
 
 # Verify installation
 kubeconform -v
@@ -630,6 +634,8 @@ Run kubeconform on individual manifests or rendered Kustomize output:
 
 ```bash
 # Lint base manifests
+# Note: -skip ServiceMonitor because servicemonitor.yaml exists but is
+# optional (Prometheus Operator CRD, commented out in kustomization.yaml)
 kubeconform \
   -summary \
   -strict \

@@ -38,6 +38,8 @@ jobs:
       - name: Lint base manifests
         run: |
           echo "Linting k8s/base manifests..."
+          # Skip ServiceMonitor because servicemonitor.yaml exists but is
+          # commented out in kustomization.yaml (optional Prometheus Operator CRD)
           kubeconform \
             -summary \
             -strict \
