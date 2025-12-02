@@ -2,7 +2,13 @@
 
 ## Overview
 
-The LLM service (`echoes-llm-service`) provides natural language processing for the Echoes of Emergence game. It converts player text into structured game intents and generates narrative text from simulation events.
+The LLM service (`echoes-llm-service`) provides natural language processing
+
+for the Echoes of Emergence game.
+
+It converts player text into structured game intents and generates
+
+narrative text from simulation events.
 
 ## Quick Start
 
@@ -229,7 +235,13 @@ asyncio.run(main())
 
 ## Integration with Gateway
 
-The LLM service is designed to work with the gateway service (`echoes-gateway-service`) for natural language command routing. See the Phase 6 implementation plan for details on M6.4 (Intent routing) and M6.5 (Gateway-LLM integration).
+The LLM service is designed to work with the gateway service (`echoes-gateway-service`)
+
+for natural language command routing.
+
+See the Phase 6 implementation plan for details on M6.4 (Intent routing)
+
+and M6.5 (Gateway-LLM integration).
 
 ## Adding New Providers
 

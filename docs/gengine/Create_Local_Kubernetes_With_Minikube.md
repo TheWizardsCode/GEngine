@@ -49,7 +49,9 @@ CLI version requirements configured.
 
 #### Install Docker Server
 
-We use the Docker Server to host the Kubernetes Cluster. This section will ensure it is installed or upgraded as needed.
+We use the Docker Server to host the Kubernetes Cluster.
+
+This section will ensure it is installed or upgraded as needed.
 
 Prepare the Docker installation metadata so the workflow can download the
 official installer script or use a custom command without manual edits.
@@ -191,7 +193,9 @@ Docker Server version: 28.5.1 (baseline 24.0.6) [DIFF]
 
 #### Install Kubectl
 
-All management of workloads on the Kubernetes cluster is done using the Kubectl command. This section will ensure it is installed.
+All management of workloads on the Kubernetes cluster is done using the Kubectl command.
+
+This section will ensure it is installed.
 
 Inspect the kubectl client version to confirm API compatibility.
 
@@ -241,7 +245,9 @@ kubectl version: v1.34.2 (baseline v1.30.1) [DIFF]
 
 #### Install Minikube
 
-We use Minikube to manage a local Kubernetes cluster. This section ensures that the correct version of Minikube is installed.
+We use Minikube to manage a local Kubernetes cluster.
+
+This section ensures that the correct version of Minikube is installed.
 
 Configure the Minikube installation path so the workflow can add or update
 the binary without manual intervention.
@@ -478,7 +484,9 @@ fi
 
 This logic starts a new Minikube profile or confirms it is already running.
 
-<!-- expected_similarity="(Profile .*already running|Done! kubectl is now configured)" -->
+<!-- 
+expected_similarity="(Profile .*already running|Done! kubectl is now configured)"
+-->
 
 Representative output:
 
