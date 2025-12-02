@@ -24,7 +24,7 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8001"
-        prometheus.io/path: "/healthz"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
         - name: llm

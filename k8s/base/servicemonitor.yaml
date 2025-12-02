@@ -39,7 +39,7 @@ spec:
       app.kubernetes.io/name: gateway
   endpoints:
     - port: http
-      path: /healthz
+      path: /metrics
       interval: 30s
       scrapeTimeout: 10s
 ---
@@ -57,6 +57,6 @@ spec:
       app.kubernetes.io/name: llm
   endpoints:
     - port: http
-      path: /healthz
+      path: /metrics
       interval: 30s
       scrapeTimeout: 10s

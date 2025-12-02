@@ -592,17 +592,115 @@ If using LLM service extensively, increase memory for context buffering:
 ## Monitoring and Observability
 
 GEngine services are instrumented with Prometheus-compatible metrics endpoints
-for monitoring and alerting.
+for monitoring and alerting. Health checks (`/healthz`) are separate from
+metrics collection (`/metrics`) to allow independent control of readiness
+probes and observability scraping.
+
+### Health Check Endpoints
+
+Health checks are used for Kubernetes liveness and readiness probes:
+
+| Service    | Port | Health Endpoint | Description                           |
+| ---------- | ---- | --------------- | ------------------------------------- |
+| Simulation | 8000 | `/healthz`      | Returns `{"status": "ok"}`            |
+| Gateway    | 8100 | `/healthz`      | Returns status and upstream URLs      |
+| LLM        | 8001 | `/healthz`      | Returns status, provider, and model   |
 
 ### Metrics Endpoints
 
-Each service exposes metrics that can be scraped by Prometheus:
+Each service exposes dedicated metrics for Prometheus scraping:
 
 | Service    | Port | Metrics Endpoint | Description                        |
 | ---------- | ---- | ---------------- | ---------------------------------- |
 | Simulation | 8000 | `/metrics`       | Tick count, environment, profiling |
-| Gateway    | 8100 | `/healthz`       | Service health and connection info |
-| LLM        | 8001 | `/healthz`       | Service health status              |
+| Gateway    | 8100 | `/metrics`       | Request counts, latencies, connections, LLM integration |
+| LLM        | 8001 | `/metrics`       | Request counts, latencies, errors, provider stats, token usage |
+
+### Example Metrics Responses
+
+**Simulation Service** (`/metrics`):
+```json
+{
+  "tick": 42,
+  "environment": {
+    "temperature": 0.5,
+    "instability": 0.2,
+    "tension": 0.3
+  },
+  "profiling": {
+    "tick_ms_p50": 12.5,
+    "tick_ms_p95": 25.0,
+    "tick_ms_max": 45.0
+  }
+}
+```
+
+**Gateway Service** (`/metrics`):
+```json
+{
+  "service": "gateway",
+  "service_url": "http://simulation:8000",
+  "llm_service_url": "http://llm:8001",
+  "requests": {
+    "total": 150,
+    "by_type": {"command": 120, "natural_language": 30},
+    "websocket_messages": 150,
+    "natural_language": 30,
+    "commands": 120
+  },
+  "errors": {
+    "total": 2,
+    "by_type": {"execution_error": 2}
+  },
+  "latency_ms": {
+    "avg": 45.5,
+    "min": 10.2,
+    "max": 250.0,
+    "p50": 35.0,
+    "p95": 120.0
+  },
+  "connections": {
+    "active": 3,
+    "total": 25,
+    "disconnections": 22
+  },
+  "llm_integration": {
+    "requests": 30,
+    "errors": 0,
+    "latency_ms": {"avg": 150.0, "min": 80.0, "max": 500.0, "p50": 120.0, "p95": 350.0}
+  }
+}
+```
+
+**LLM Service** (`/metrics`):
+```json
+{
+  "service": "llm",
+  "requests": {
+    "total": 100,
+    "parse_intent": 80,
+    "narrate": 20
+  },
+  "errors": {
+    "total": 1,
+    "parse_intent": 1,
+    "narrate": 0,
+    "by_type": {"parse_intent:ValueError": 1}
+  },
+  "latency_ms": {
+    "parse_intent": {"avg": 120.0, "min": 50.0, "max": 400.0, "p50": 100.0, "p95": 300.0},
+    "narrate": {"avg": 200.0, "min": 100.0, "max": 600.0, "p50": 180.0, "p95": 450.0}
+  },
+  "provider": {
+    "name": "openai",
+    "model": "gpt-4-turbo-preview"
+  },
+  "token_usage": {
+    "total_input": 50000,
+    "total_output": 15000
+  }
+}
+```
 
 ### Prometheus Annotations
 
@@ -612,7 +710,7 @@ All deployments are annotated for automatic Prometheus discovery:
 annotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "<service-port>"
-  prometheus.io/path: "/metrics"  # or "/healthz"
+  prometheus.io/path: "/metrics"
 ```
 
 ### Verifying Prometheus Scraping
@@ -624,25 +722,17 @@ To confirm Prometheus is scraping your services:
 if [[ "${GENGINE_DEPLOY_ENV}" == "local" ]]; then
   MINIKUBE_IP=$(minikube ip)
   curl -s "http://${MINIKUBE_IP}:30000/metrics" | jq .
+  curl -s "http://${MINIKUBE_IP}:30100/metrics" | jq .
+  curl -s "http://${MINIKUBE_IP}:30001/metrics" | jq .
 fi
 
 # Using kubectl proxy or port-forward
 kubectl port-forward -n "${GENGINE_NAMESPACE}" svc/simulation 8000:8000 &
+kubectl port-forward -n "${GENGINE_NAMESPACE}" svc/gateway 8100:8100 &
+kubectl port-forward -n "${GENGINE_NAMESPACE}" svc/llm 8001:8001 &
 curl -s http://localhost:8000/metrics | jq .
-```
-
-Expected output:
-
-```json
-{
-  "tick": 0,
-  "environment": {
-    "temperature": 0.0,
-    "instability": 0.0,
-    "tension": 0.0
-  },
-  "profiling": {}
-}
+curl -s http://localhost:8100/metrics | jq .
+curl -s http://localhost:8001/metrics | jq .
 ```
 
 ### Prometheus Operator Integration
