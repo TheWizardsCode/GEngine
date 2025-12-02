@@ -132,42 +132,51 @@
 - ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
 - ✅ **Clean repository state** - Issues #21, #24, #25 closed (verified 2025-12-01)
 
-| ID | Task | Status | Priority | Responsible | Updated |
-|---:|---|---|---|---|---|
-| 1.1.1 | Create Tracker Agent | completed | High | Ross (PM) | 2025-11-30 |
-| 3.4.1 | Safeguards & LOD refresh follow-ups | completed | High | Gamedev Agent | 2025-11-30 |
-| 4.1.1 | Implement Agent AI subsystem (M4.1) | completed | High | Team | 2025-11-30 |
-| 4.2.1 | Implement Faction AI subsystem (M4.2) | completed | High | Team | 2025-11-30 |
-| 4.3.1 | Finalize Economy subsystem & tests (M4.3) | completed | High | Team | 2025-11-30 |
-| 4.4.1 | Complete Environment dynamics coverage (M4.4) | completed | Medium | Team | 2025-11-30 |
-| 4.5.1 | Finalize Tick orchestration & telemetry (M4.5) | completed | High | Team | 2025-11-30 |
-| 4.7.1 | Tune spatial adjacency & seed thresholds (M4.7) | completed | Medium | Team | 2025-11-30 |
-| 5.1.1 | Story seed schema & loading (M5.1) | completed | High | Team | 2025-11-30 |
-| 5.2.1 | Director hotspot analysis (M5.2) | completed | High | Team | 2025-11-30 |
-| 5.3.1 | Director pacing & lifecycle (M5.3) | completed | High | Team | 2025-11-30 |
-| 5.4.1 | Post-mortem generator (M5.4) | completed | Medium | Team | 2025-11-30 |
-| 6.1.1 | Gateway service (M6.1) | completed | High | Team | 2025-11-30 |
-| 6.3.1 | LLM service skeleton (M6.3) | completed | High | Team | 2025-11-30 |
-| 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5) | completed | High | Team | 2025-11-30 |
-| 6.6.1 | Implement real LLM providers (M6.6) | completed | High | Team | 2025-11-30 |
-| 7.1.1 | Design & build progression systems (M7.1) | completed | High | gamedev-agent | 2025-11-30 |
-| 7.1.2 | Implement per-agent progression layer (M7.1.x) | completed | Low | gamedev-agent | 2025-12-01 |
-| 7.1.3 | Default per-agent success modifiers to enabled | completed | Medium | gamedev-agent | 2025-12-01 |
-| 7.2.1 | Explanations & causal queries (M7.2) | completed | High | Team | 2025-11-30 |
-| 7.3.1 | Tuning & replayability sweeps (M7.3) | completed | High | Gamedev Agent | 2025-11-30 |
-| 7.4.1 | Campaign UX flows (M7.4) | completed | Medium | gamedev-agent | 2025-11-30 |
-| 8.1.1 | Containerization (Docker + compose) (M8.1) | completed | High | copilot | 2025-12-01 |
-| 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
-| 8.3.1 | Observability in Kubernetes (M8.3) | completed | Medium | devops-infra-agent | 2025-12-01 |
-| 8.3.2 | K8s Validation CI Job (M8.3.x) | not-started | High | TBD (ask Ross) | 2025-12-01 |
-| 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y) | completed | Medium | devops-agent | 2025-12-02 |
-| 8.3.3 | Gateway/LLM Prometheus Metrics (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
-| 8.3.4 | Integrate K8s Smoke Test into CI (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
-| 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
-| 9.1.1 | AI Observer foundation acceptance (M9.1) | completed | Medium | gamedev-agent | 2025-11-30 |
-| 9.2.1 | Rule-based AI action layer (M9.2) | completed | Medium | gamedev-agent | 2025-12-01 |
-| 9.3.1 | LLM-enhanced AI decisions (M9.3) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
-| 9.4.1 | AI tournaments & balance tooling (M9.4) | not-started | Low | TBD (ask Ross) | 2025-11-30 |
+|    ID | Task                                            | Status      | Priority | Responsible        | Updated    |
+| ----: | ----------------------------------------------- | ----------- | -------- | ------------------ | ---------- |
+| 1.1.1 | Create Tracker Agent                            | completed   | High     | Ross (PM)          | 2025-11-30 |
+| 3.4.1 | Safeguards & LOD refresh follow-ups             | completed   | High     | Gamedev Agent      | 2025-11-30 |
+| 4.1.1 | Implement Agent AI subsystem (M4.1)             | completed   | High     | Team               | 2025-11-30 |
+| 4.2.1 | Implement Faction AI subsystem (M4.2)           | completed   | High     | Team               | 2025-11-30 |
+| 4.3.1 | Finalize Economy subsystem & tests (M4.3)       | completed   | High     | Team               | 2025-11-30 |
+| 4.4.1 | Complete Environment dynamics coverage (M4.4)   | completed   | Medium   | Team               | 2025-11-30 |
+| 4.5.1 | Finalize Tick orchestration & telemetry (M4.5)  | completed   | High     | Team               | 2025-11-30 |
+| 4.7.1 | Tune spatial adjacency & seed thresholds (M4.7) | completed   | Medium   | Team               | 2025-11-30 |
+| 5.1.1 | Story seed schema & loading (M5.1)              | completed   | High     | Team               | 2025-11-30 |
+| 5.2.1 | Director hotspot analysis (M5.2)                | completed   | High     | Team               | 2025-11-30 |
+| 5.3.1 | Director pacing & lifecycle (M5.3)              | completed   | High     | Team               | 2025-11-30 |
+| 5.4.1 | Post-mortem generator (M5.4)                    | completed   | Medium   | Team               | 2025-11-30 |
+| 6.1.1 | Gateway service (M6.1)                          | completed   | High     | Team               | 2025-11-30 |
+| 6.3.1 | LLM service skeleton (M6.3)                     | completed   | High     | Team               | 2025-11-30 |
+| 6.5.1 | Gateway ↔ LLM ↔ sim integration (M6.5)          | completed   | High     | Team               | 2025-11-30 |
+| 6.6.1 | Implement real LLM providers (M6.6)             | completed   | High     | Team               | 2025-11-30 |
+| 7.1.1 | Design & build progression systems (M7.1)       | completed   | High     | gamedev-agent      | 2025-11-30 |
+| 7.1.2 | Implement per-agent progression layer (M7.1.x)  | completed   | Low      | gamedev-agent      | 2025-12-01 |
+| 7.1.3 | Default per-agent success modifiers to enabled  | completed   | Medium   | gamedev-agent      | 2025-12-01 |
+| 7.2.1 | Explanations & causal queries (M7.2)            | completed   | High     | Team               | 2025-11-30 |
+| 7.3.1 | Tuning & replayability sweeps (M7.3)            | completed   | High     | Gamedev Agent      | 2025-11-30 |
+| 7.4.1 | Campaign UX flows (M7.4)                        | completed   | Medium   | gamedev-agent      | 2025-11-30 |
+| 8.1.1 | Containerization (Docker + compose) (M8.1)      | completed   | High     | copilot            | 2025-12-01 |
+| 8.2.1 | Kubernetes manifests & docs (M8.2)              | completed   | Medium   | devops-agent       | 2025-12-01 |
+| 8.3.1 | Observability in Kubernetes (M8.3)              | completed   | Medium   | devops-infra-agent | 2025-12-01 |
+| 8.3.2 | K8s Validation CI Job (M8.3.x)                  | not-started | High     | TBD (ask Ross)     | 2025-12-01 |
+| 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y)           | completed   | Medium   | devops-agent       | 2025-12-02 |
+| 8.3.3 | Gateway/LLM Prometheus Metrics (M8.3.x)         | not-started | Medium   | TBD (ask Ross)     | 2025-12-01 |
+| 8.3.4 | Integrate K8s Smoke Test into CI (M8.3.x)       | not-started | Medium   | TBD (ask Ross)     | 2025-12-01 |
+| 8.4.1 | Content pipeline tooling & CI (M8.4)            | not-started | Medium   | TBD (ask Ross)     | 2025-11-30 |
+| 9.1.1 | AI Observer foundation acceptance (M9.1)        | completed   | Medium   | gamedev-agent      | 2025-11-30 |
+| 9.2.1 | Rule-based AI action layer (M9.2)               | completed   | Medium   | gamedev-agent      | 2025-12-01 |
+| 9.3.1 | LLM-enhanced AI decisions (M9.3)                | not-started | Medium   | TBD (ask Ross)     | 2025-11-30 |
+| 9.4.1 | AI tournaments & balance tooling (M9.4)         | not-started | Low      | TBD (ask Ross)     | 2025-11-30 |
+
+| 10.1.1 | Core systems test coverage improvements (epic) | not-started | High | Test Agent | 2025-12-02 |
+| 10.1.2 | Strengthen AgentSystem decision logic tests | not-started | High | Test Agent | 2025-12-02 |
+| 10.1.3 | Expand SimEngine API and error-path tests | not-started | High | Test Agent | 2025-12-02 |
+| 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | not-started | Medium | Test Agent | 2025-12-02 |
+| 10.1.5 | Persistence save/load fidelity tests | not-started | Medium | Test Agent | 2025-12-02 |
+| 10.1.6 | Cross-system integration scenario tests | not-started | Medium | Test Agent | 2025-12-02 |
+| 10.1.7 | Performance and tick-limit regression tests | not-started | Low | Test Agent | 2025-12-02 |
+| 10.1.8 | AI/LLM mocking and coverage for gateways | not-started | Medium | Test Agent | 2025-12-02 |
 
 ## Task Details
 
@@ -797,5 +806,147 @@
   1. Implement tournament runner and analysis scripts.
   2. Add reporting format.
   3. Integrate into CI for periodic runs.
+
+### 10.1.1 — Core systems test coverage improvements (epic)
+
+- **Description:** Umbrella task to implement the test coverage and quality improvements described in `docs/gengine/test_coverage_report.md` across core systems (SimEngine, AgentSystem, FactionSystem, EconomySystem, EnvironmentSystem, ProgressionSystem) and integration surfaces (AI player, gateway, LLM).
+- **Acceptance Criteria:** Child tasks 10.1.2–10.1.8 are completed and passing; coverage thresholds for core systems meet or exceed current levels with improved branch/behavior coverage; no new flaky tests introduced; report updated to reflect new coverage and gaps.
+- **Priority:** High
+- **Responsible:** Test Agent
+- **Dependencies:** None (epic/parent task)
+- **Risks & Mitigations:**
+  - Risk: Overly prescriptive tests make refactoring hard. Mitigation: Focus on behavior and contracts, not implementation details.
+  - Risk: Increased CI runtime. Mitigation: Group heavier tests under separate markers.
+- **Next Steps:**
+  1. Implement child tasks 10.1.2–10.1.8.
+  2. Re-run coverage and update `docs/gengine/test_coverage_report.md`.
+  3. Tag heavier tests for selective execution (e.g., `slow`, `integration`).
+- **Last Updated:** 2025-12-02
+
+### 10.1.2 — Strengthen AgentSystem decision logic tests
+
+- **Description:** Improve `AgentSystem` tests so they validate decision logic and trait effects (empathy, cunning, resolve), not just deterministic output sequences.
+- **Acceptance Criteria:**
+  - Unit tests for `_decide` or equivalent logic verify option scoring under controlled inputs (e.g., high unrest + high empathy → higher `STABILIZE_UNREST` weight).
+  - Edge-case tests cover agents with missing districts/factions and cases where total option weight is non-positive.
+  - Tests remain deterministic by injecting a fake RNG or by checking scoring and choice logic separately.
+- **Priority:** High
+- **Responsible:** Test Agent
+- **Dependencies:** 4.1.1 (Agent AI subsystem) – already completed.
+- **Risks & Mitigations:**
+  - Risk: Tests rely on fragile internal details. Mitigation: Prefer public behavior and scoring contracts over internal data structures.
+- **Next Steps:**
+  1. Introduce a small fake RNG helper or refactor to accept a sampling strategy.
+  2. Add targeted tests for trait and environment influences.
+  3. Add edge-case tests for missing data and no-option scenarios.
+- **Last Updated:** 2025-12-02
+
+### 10.1.3 — Expand SimEngine API and error-path tests
+
+- **Description:** Add tests for all public `SimEngine` APIs (views, focus, director, explanations, progression) and error handling paths.
+- **Acceptance Criteria:**
+  - Tests cover: `initialize_state` validation, `query_view` with all view names and invalid names, `director_feed`, all explanations helpers, and progression helpers (`progression_summary`, `calculate_success_chance`, etc.).
+  - Error paths tested: using engine before initialization, requesting too many ticks, and unknown views.
+  - At least one test validates that progression state is updated when ticks advance.
+- **Priority:** High
+- **Responsible:** Test Agent
+- **Dependencies:** 4.5.1 (Tick orchestration) and 7.1.x progression tasks – completed.
+- **Risks & Mitigations:**
+  - Risk: Tests become brittle to representation details. Mitigation: Assert on high-level contracts and key fields only.
+- **Next Steps:**
+  1. Extend `tests/echoes/test_sim_engine.py` with new API coverage.
+  2. Add explicit error-path tests for invalid inputs and state.
+  3. Wire progression expectations through existing fixtures.
+- **Last Updated:** 2025-12-02
+
+### 10.1.4 — Stabilize FactionSystem tests (decouple RNG)
+
+- **Description:** Refactor faction system tests so they do not rely on fragile `random.Random` seeds and instead use deterministic control over decision paths.
+- **Acceptance Criteria:**
+  - Tests no longer depend on magic seed values; they either inject a fake RNG or isolate decision logic such that choices can be forced.
+  - Existing behavioral assertions (lobby, sabotage, invest, recruit) remain covered.
+  - Tests remain green even if internal action ordering changes, as long as behavior contracts hold.
+- **Priority:** Medium
+- **Responsible:** Test Agent
+- **Dependencies:** 4.2.1 (Faction AI subsystem) – completed.
+- **Risks & Mitigations:**
+  - Risk: Refactoring tests requires minor code changes for better injection points. Mitigation: Keep production changes minimal and backwards compatible.
+- **Next Steps:**
+  1. Identify RNG usage in `FactionSystem` and add injection seams if needed.
+  2. Replace seed-based tests with fake RNG or deterministic strategies.
+  3. Re-run coverage to confirm unchanged or improved coverage.
+- **Last Updated:** 2025-12-02
+
+### 10.1.5 — Persistence save/load fidelity tests
+
+- **Description:** Add high-confidence tests that `GameState` snapshots and related persistence components can be saved and loaded without data loss, including progression and per-agent state.
+- **Acceptance Criteria:**
+  - Round-trip tests (`save → load → save`) confirm structural and critical-field equivalence for snapshots.
+  - Tests cover key subsystems: city/districts, factions, agents, environment, progression, agent progression, and metadata.
+  - At least one test asserts backwards compatibility with older snapshot versions if applicable.
+- **Priority:** Medium
+- **Responsible:** Test Agent
+- **Dependencies:** Persistence module and snapshot format stabilized.
+- **Risks & Mitigations:**
+  - Risk: Exact byte-level equality is brittle. Mitigation: Compare semantic equality rather than raw file bytes where appropriate.
+- **Next Steps:**
+  1. Identify canonical snapshot fixtures.
+  2. Implement semantic comparison helpers.
+  3. Add tests to `tests/echoes/test_snapshot_persistence.py` or equivalent.
+- **Last Updated:** 2025-12-02
+
+### 10.1.6 — Cross-system integration scenario tests
+
+- **Description:** Create end-to-end scenario tests that exercise chains of behavior across systems (agents → districts → factions → economy/environment) over multiple ticks.
+- **Acceptance Criteria:**
+  - At least one scenario test encodes a reproducible narrative (e.g., unrest spike leading to faction interventions and economic shifts).
+  - Tests assert on key metrics and state transitions rather than exact per-tick logs.
+  - Scenario tests are marked as `integration` or `slow` for selective CI execution.
+- **Priority:** Medium
+- **Responsible:** Test Agent
+- **Dependencies:** Core systems for agents, factions, economy, environment fully implemented (Phase 4 complete).
+- **Risks & Mitigations:**
+  - Risk: Scenario expectations become invalid as tuning evolves. Mitigation: Assert broad behavior ranges and trends instead of exact numbers.
+- **Next Steps:**
+  1. Design 1–2 representative scenarios.
+  2. Implement scenario harness using existing fixtures.
+  3. Add assertions on cross-system outcomes.
+- **Last Updated:** 2025-12-02
+
+### 10.1.7 — Performance and tick-limit regression tests
+
+- **Description:** Add basic performance and guardrail regression tests to ensure engine tick times and tick-limit enforcement remain within expected bounds.
+- **Acceptance Criteria:**
+  - Tests verify that configured tick limits (engine, CLI, service) are enforced via existing APIs.
+  - At least one test captures rough timing for a multi-tick run and asserts it remains under a generous threshold on CI hardware.
+  - Tests can be skipped or marked `slow` to avoid flakiness.
+- **Priority:** Low
+- **Responsible:** Test Agent
+- **Dependencies:** Guardrail configuration from 3.4.1, SimEngine tick loop.
+- **Risks & Mitigations:**
+  - Risk: Performance tests flaky across hardware. Mitigation: Use conservative thresholds and optional markers.
+- **Next Steps:**
+  1. Reuse existing guardrail tests as a base.
+  2. Add timing checks where feasible.
+  3. Tag as `slow` or `perf` for selective runs.
+- **Last Updated:** 2025-12-02
+
+### 10.1.8 — AI/LLM mocking and coverage for gateways
+
+- **Description:** Implement robust mocking for LLM providers and gateway integrations so that AI player, LLM service, and gateway logic can be tested without real API calls.
+- **Acceptance Criteria:**
+  - Mock providers for OpenAI/Anthropic exist and are used in tests for `gengine.echoes.llm` and `gengine.ai_player`.
+  - Gateway and LLM service tests cover success, failure, and timeout paths.
+  - No external network calls are made during tests; CI-friendly without credentials.
+- **Priority:** Medium
+- **Responsible:** Test Agent (with support from AI-focused agent if available)
+- **Dependencies:** 6.5.1, 6.6.1, and 9.2.1/9.3.1 implementations.
+- **Risks & Mitigations:**
+  - Risk: Mocks diverge from real provider behavior. Mitigation: Keep mocks simple and driven by the same intent schema.
+- **Next Steps:**
+  1. Add mock provider classes and fixtures.
+  2. Expand tests in `tests/echoes/test_llm_*` and gateway tests.
+  3. Ensure CI configuration does not require real API keys.
+- **Last Updated:** 2025-12-02
 
 
