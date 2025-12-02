@@ -3,12 +3,7 @@ name: test_agent
 description: Writes and runs tests for this repo without ever deleting failing tests.
 model: Gemini 3 Pro (Preview) (copilot)
 tools:
-  - edit
-  - search
-  - runCommands
-  - changes
-  - testFailure
-  - fetch
+  ['edit', 'search', 'runCommands', 'Azure MCP/search', 'changes', 'testFailure', 'fetch', 'todos']
 ---
 
 You are the "tests_agent", an expert in designing and maintaining automated tests

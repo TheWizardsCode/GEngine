@@ -6,17 +6,14 @@ from fastapi.testclient import TestClient
 
 from gengine.echoes.gateway.app import GatewaySettings, create_gateway_app
 from gengine.echoes.cli.shell import LocalBackend
-from gengine.echoes.settings import load_simulation_config
 from gengine.echoes.sim import SimEngine
 
 
-def test_gateway_healthcheck() -> None:
-    config = load_simulation_config()
-    settings = GatewaySettings(service_url="local")
+def test_gateway_healthcheck(sim_config, gateway_settings) -> None:
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=settings,
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     response = client.get("/healthz")
@@ -26,12 +23,11 @@ def test_gateway_healthcheck() -> None:
     assert data["service_url"] == "local"
 
 
-def test_gateway_websocket_summary_and_exit() -> None:
-    config = load_simulation_config()
+def test_gateway_websocket_summary_and_exit(sim_config, gateway_settings) -> None:
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
@@ -47,12 +43,11 @@ def test_gateway_websocket_summary_and_exit() -> None:
         assert final["should_exit"] is True
 
 
-def test_gateway_requires_command_payload() -> None:
-    config = load_simulation_config()
+def test_gateway_requires_command_payload(sim_config, gateway_settings) -> None:
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
@@ -64,13 +59,12 @@ def test_gateway_requires_command_payload() -> None:
         websocket.close()
 
 
-def test_gateway_handles_text_commands() -> None:
+def test_gateway_handles_text_commands(sim_config, gateway_settings) -> None:
     """Verify that plain text commands are accepted by the gateway."""
-    config = load_simulation_config()
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
@@ -84,13 +78,12 @@ def test_gateway_handles_text_commands() -> None:
         assert final["should_exit"] is True
 
 
-def test_gateway_handles_bytes_commands() -> None:
+def test_gateway_handles_bytes_commands(sim_config, gateway_settings) -> None:
     """Verify that byte-encoded JSON commands are accepted."""
-    config = load_simulation_config()
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
@@ -104,13 +97,12 @@ def test_gateway_handles_bytes_commands() -> None:
         assert final["should_exit"] is True
 
 
-def test_gateway_executes_multiple_commands() -> None:
+def test_gateway_executes_multiple_commands(sim_config, gateway_settings) -> None:
     """Verify that the gateway can execute a sequence of commands."""
-    config = load_simulation_config()
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
@@ -131,13 +123,12 @@ def test_gateway_executes_multiple_commands() -> None:
         assert final["should_exit"] is True
 
 
-def test_gateway_handles_empty_string_command() -> None:
+def test_gateway_handles_empty_string_command(sim_config, gateway_settings) -> None:
     """Verify that empty string commands are handled gracefully."""
-    config = load_simulation_config()
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
@@ -176,24 +167,22 @@ def test_gateway_settings_from_env() -> None:
                 os.environ[key] = value
 
 
-def test_gateway_app_uses_service_backend_factory_by_default() -> None:
+def test_gateway_app_uses_service_backend_factory_by_default(sim_config) -> None:
     """Verify that create_gateway_app creates service backend factory when none provided."""
-    config = load_simulation_config()
     settings = GatewaySettings(service_url="http://localhost:8000")
     # Call without backend_factory to trigger the default factory creation
-    app = create_gateway_app(config=config, settings=settings)
+    app = create_gateway_app(config=sim_config, settings=settings)
     assert app is not None
     assert hasattr(app.state, "gateway_settings")
     assert app.state.gateway_settings.service_url == "http://localhost:8000"
 
 
-def test_gateway_handles_invalid_json_bytes() -> None:
+def test_gateway_handles_invalid_json_bytes(sim_config, gateway_settings) -> None:
     """Verify that invalid JSON bytes are handled gracefully."""
-    config = load_simulation_config()
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
@@ -207,13 +196,12 @@ def test_gateway_handles_invalid_json_bytes() -> None:
         assert final["should_exit"] is True
 
 
-def test_gateway_handles_non_dict_json() -> None:
+def test_gateway_handles_non_dict_json(sim_config, gateway_settings) -> None:
     """Verify that non-dict JSON payloads are handled gracefully."""
-    config = load_simulation_config()
     app = create_gateway_app(
-        backend_factory=_local_backend_factory(config),
-        config=config,
-        settings=GatewaySettings(service_url="local"),
+        backend_factory=_local_backend_factory(sim_config),
+        config=sim_config,
+        settings=gateway_settings,
     )
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
