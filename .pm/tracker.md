@@ -639,6 +639,7 @@
 - **Last Updated:** 2025-12-01
 
 ### 8.3.3 — Gateway/LLM Prometheus Metrics (M8.3.x)
+- **GitHub Issue:** [#39](https://github.com/TheWizardsCode/GEngine/issues/39)
 - **Description:** Expose true Prometheus-style metrics for the gateway and LLM services (separate from `/healthz`), and update annotations/ServiceMonitors to scrape those endpoints.
 - **Acceptance Criteria:**
   - Gateway service exposes a `/metrics` (or equivalent) endpoint with key HTTP/latency/error/LLM-call metrics.

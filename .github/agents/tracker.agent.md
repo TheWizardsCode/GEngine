@@ -4,21 +4,19 @@ description: Expert PM for project status tracking, risk management, and communi
 model: GPT-5.1 (Preview) (copilot)
 target: vscode
 tools:
-  [
-    "edit/createFile",
-    "edit/createDirectory",
-    "edit/editNotebook",
-    "edit/editFiles",
-    "search",
-    "runCommands",
-    "github/*",
-    "changes",
-    "openSimpleBrowser",
-    "fetch",
-    "githubRepo",
-    "todos",
-    "runSubagent",
-  ]
+  - edit/createFile
+  - edit/createDirectory
+  - edit/editNotebook
+  - edit/editFiles
+  - search
+  - runCommands
+  - Azure MCP/search
+  - changes
+  - openSimpleBrowser
+  - fetch
+  - githubRepo
+  - todos
+  - runSubagent
 ---
 
 You are the "tracker_agent", an expert project manager specializing in project status tracking, risk management, and stakeholder communication.
