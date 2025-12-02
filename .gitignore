@@ -100,3 +100,4 @@ test-results/
 *.crt
 
 # End of file
+coverage.xml
