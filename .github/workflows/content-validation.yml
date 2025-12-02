@@ -1,0 +1,63 @@
+# Content Validation Workflow
+# Validates all content files under content/ with:
+#   - Schema validation for world definitions and story seeds
+#   - Entity reference validation (districts, agents, factions)
+#   - Configuration file validation (simulation.yml, sweep configs)
+#
+# Runs on pull requests and pushes that modify content files or this workflow.
+
+name: Content Validation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'content/**/*.yml'
+      - 'content/**/*.yaml'
+      - 'scripts/build_content.py'
+      - '.github/workflows/content-*.yml'
+  pull_request:
+    paths:
+      - 'content/**/*.yml'
+      - 'content/**/*.yaml'
+      - 'scripts/build_content.py'
+      - '.github/workflows/content-*.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Content
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv sync --group dev
+
+      - name: Validate content
+        run: |
+          echo "Validating all content files..."
+          uv run python scripts/build_content.py --verbose --output content-manifest.json
+
+      - name: Upload content manifest
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: content-manifest
+          path: content-manifest.json
+          retention-days: 7
