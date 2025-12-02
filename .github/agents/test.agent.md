@@ -1,6 +1,7 @@
 ---
 name: test_agent
 description: Writes and runs tests for this repo without ever deleting failing tests.
+model: Gemini 3 Pro (Preview) (copilot)
 tools:
   - edit
   - search
