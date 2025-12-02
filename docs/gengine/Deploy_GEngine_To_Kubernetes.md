@@ -635,71 +635,55 @@ Each service exposes dedicated metrics for Prometheus scraping:
 }
 ```
 
-**Gateway Service** (`/metrics`):
-```json
-{
-  "service": "gateway",
-  "service_url": "http://simulation:8000",
-  "llm_service_url": "http://llm:8001",
-  "requests": {
-    "total": 150,
-    "by_type": {"command": 120, "natural_language": 30},
-    "websocket_messages": 150,
-    "natural_language": 30,
-    "commands": 120
-  },
-  "errors": {
-    "total": 2,
-    "by_type": {"execution_error": 2}
-  },
-  "latency_ms": {
-    "avg": 45.5,
-    "min": 10.2,
-    "max": 250.0,
-    "p50": 35.0,
-    "p95": 120.0
-  },
-  "connections": {
-    "active": 3,
-    "total": 25,
-    "disconnections": 22
-  },
-  "llm_integration": {
-    "requests": 30,
-    "errors": 0,
-    "latency_ms": {"avg": 150.0, "min": 80.0, "max": 500.0, "p50": 120.0, "p95": 350.0}
-  }
-}
+**Gateway Service** (`/metrics`) - Prometheus text format:
+```text
+# HELP gateway_requests_total Total number of requests processed
+# TYPE gateway_requests_total counter
+gateway_requests_total 150.0
+# HELP gateway_requests_by_type_total Requests by type
+# TYPE gateway_requests_by_type_total counter
+gateway_requests_by_type_total{request_type="command"} 120.0
+gateway_requests_by_type_total{request_type="natural_language"} 30.0
+# HELP gateway_errors_total Total number of errors
+# TYPE gateway_errors_total counter
+gateway_errors_total 2.0
+# HELP gateway_active_connections Number of active WebSocket connections
+# TYPE gateway_active_connections gauge
+gateway_active_connections 3.0
+# HELP gateway_request_latency_seconds Request latency in seconds
+# TYPE gateway_request_latency_seconds histogram
+gateway_request_latency_seconds_bucket{request_type="command",le="0.1"} 80.0
+gateway_request_latency_seconds_bucket{request_type="command",le="0.5"} 115.0
+gateway_request_latency_seconds_bucket{request_type="command",le="+Inf"} 120.0
+gateway_request_latency_seconds_count{request_type="command"} 120.0
+gateway_request_latency_seconds_sum{request_type="command"} 5.46
 ```
 
-**LLM Service** (`/metrics`):
-```json
-{
-  "service": "llm",
-  "requests": {
-    "total": 100,
-    "parse_intent": 80,
-    "narrate": 20
-  },
-  "errors": {
-    "total": 1,
-    "parse_intent": 1,
-    "narrate": 0,
-    "by_type": {"parse_intent:ValueError": 1}
-  },
-  "latency_ms": {
-    "parse_intent": {"avg": 120.0, "min": 50.0, "max": 400.0, "p50": 100.0, "p95": 300.0},
-    "narrate": {"avg": 200.0, "min": 100.0, "max": 600.0, "p50": 180.0, "p95": 450.0}
-  },
-  "provider": {
-    "name": "openai",
-    "model": "gpt-4-turbo-preview"
-  },
-  "token_usage": {
-    "total_input": 50000,
-    "total_output": 15000
-  }
-}
+**LLM Service** (`/metrics`) - Prometheus text format:
+```text
+# HELP llm_requests_total Total number of requests processed
+# TYPE llm_requests_total counter
+llm_requests_total 100.0
+# HELP llm_parse_intent_requests_total Total parse_intent requests
+# TYPE llm_parse_intent_requests_total counter
+llm_parse_intent_requests_total 80.0
+# HELP llm_narrate_requests_total Total narrate requests
+# TYPE llm_narrate_requests_total counter
+llm_narrate_requests_total 20.0
+# HELP llm_errors_total Total number of errors
+# TYPE llm_errors_total counter
+llm_errors_total 1.0
+# HELP llm_input_tokens_total Total input tokens used
+# TYPE llm_input_tokens_total counter
+llm_input_tokens_total 50000.0
+# HELP llm_output_tokens_total Total output tokens used
+# TYPE llm_output_tokens_total counter
+llm_output_tokens_total 15000.0
+# HELP llm_parse_intent_latency_seconds parse_intent request latency in seconds
+# TYPE llm_parse_intent_latency_seconds histogram
+llm_parse_intent_latency_seconds_bucket{le="1.0"} 75.0
+llm_parse_intent_latency_seconds_bucket{le="5.0"} 80.0
+llm_parse_intent_latency_seconds_bucket{le="+Inf"} 80.0
 ```
 
 ### Prometheus Annotations

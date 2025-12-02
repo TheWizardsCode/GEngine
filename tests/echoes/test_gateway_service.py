@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from gengine.echoes.cli.shell import LocalBackend
+<<<<<<< HEAD
 from gengine.echoes.gateway.app import GatewaySettings, GatewayMetrics, create_gateway_app
+=======
+>>>>>>> origin/main
+from gengine.echoes.cli.shell import LocalBackend
+from gengine.echoes.gateway.app import GatewaySettings, create_gateway_app
 from gengine.echoes.sim import SimEngine
 
 

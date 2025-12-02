@@ -257,6 +257,8 @@ def create_gateway_app(
                         }
                     )
                     continue
+<<<<<<< HEAD
+                
                 start_time = time.perf_counter()
                 try:
                     if is_nl and session.llm_client:
@@ -265,6 +267,14 @@ def create_gateway_app(
                         result = await asyncio.to_thread(session.execute_natural_language, command)
                         llm_latency = (time.perf_counter() - llm_start) * 1000
                         metrics.record_llm_request(llm_latency)
+=======
+
+                try:
+                    if is_nl and session.llm_client:
+                        result = await asyncio.to_thread(
+                            session.execute_natural_language, command
+                        )
+>>>>>>> origin/main
                     else:
                         metrics.command_requests += 1
                         result = await asyncio.to_thread(session.execute, command)
@@ -337,9 +347,15 @@ class _GatewayManager:
             # Check LLM service health
             if not llm_client.healthcheck():
                 LOGGER.warning("LLM service unhealthy at %s", self._llm_service_url)
+<<<<<<< HEAD
                 if self._metrics:
                     self._metrics.record_llm_error()
         return GatewaySession(backend, limits=self._config.limits, llm_client=llm_client)
+=======
+        return GatewaySession(
+            backend, limits=self._config.limits, llm_client=llm_client
+        )
+>>>>>>> origin/main
 
 
 async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None:

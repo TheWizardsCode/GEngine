@@ -3,118 +3,139 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Histogram,
+    generate_latest,
+)
 from pydantic import BaseModel, Field
 
 from .providers import LLMProvider, create_provider
 from .settings import LLMSettings
 
 
-@dataclass
 class LLMMetrics:
-    """Metrics tracking for the LLM service."""
+    """Prometheus metrics tracking for the LLM service."""
 
-    # Request counts
-    total_requests: int = 0
-    parse_intent_requests: int = 0
-    narrate_requests: int = 0
+    def __init__(self, registry: CollectorRegistry | None = None) -> None:
+        """Initialize Prometheus metrics with optional custom registry."""
+        self._registry = registry or CollectorRegistry()
+        
+        # Request counters
+        self._total_requests = Counter(
+            "llm_requests_total",
+            "Total number of requests processed",
+            registry=self._registry,
+        )
+        self._parse_intent_requests = Counter(
+            "llm_parse_intent_requests_total",
+            "Total parse_intent requests",
+            registry=self._registry,
+        )
+        self._narrate_requests = Counter(
+            "llm_narrate_requests_total",
+            "Total narrate requests",
+            registry=self._registry,
+        )
 
-    # Error tracking
-    total_errors: int = 0
-    parse_intent_errors: int = 0
-    narrate_errors: int = 0
-    errors_by_type: dict[str, int] = field(default_factory=dict)
+        # Error counters
+        self._total_errors = Counter(
+            "llm_errors_total",
+            "Total number of errors",
+            registry=self._registry,
+        )
+        self._parse_intent_errors = Counter(
+            "llm_parse_intent_errors_total",
+            "Total parse_intent errors",
+            registry=self._registry,
+        )
+        self._narrate_errors = Counter(
+            "llm_narrate_errors_total",
+            "Total narrate errors",
+            registry=self._registry,
+        )
+        self._errors_by_type = Counter(
+            "llm_errors_by_type_total",
+            "Errors by endpoint and type",
+            ["endpoint", "error_type"],
+            registry=self._registry,
+        )
 
-    # Latency tracking (in ms)
-    parse_intent_latencies: list[float] = field(default_factory=list)
-    narrate_latencies: list[float] = field(default_factory=list)
-    max_latency_samples: int = 1000
+        # Latency histograms (in seconds for Prometheus convention)
+        self._parse_intent_latency = Histogram(
+            "llm_parse_intent_latency_seconds",
+            "parse_intent request latency in seconds",
+            buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0],
+            registry=self._registry,
+        )
+        self._narrate_latency = Histogram(
+            "llm_narrate_latency_seconds",
+            "narrate request latency in seconds",
+            buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0],
+            registry=self._registry,
+        )
 
-    # Token usage (if available from provider)
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
+        # Token usage counters
+        self._total_input_tokens = Counter(
+            "llm_input_tokens_total",
+            "Total input tokens used",
+            registry=self._registry,
+        )
+        self._total_output_tokens = Counter(
+            "llm_output_tokens_total",
+            "Total output tokens used",
+            registry=self._registry,
+        )
 
-    def record_parse_intent(self, latency_ms: float, input_tokens: int = 0, output_tokens: int = 0) -> None:
+    @property
+    def registry(self) -> CollectorRegistry:
+        """Return the Prometheus registry."""
+        return self._registry
+
+    def record_parse_intent(
+        self,
+        latency_seconds: float,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+    ) -> None:
         """Record a parse_intent request."""
-        self.total_requests += 1
-        self.parse_intent_requests += 1
-        self._add_latency(self.parse_intent_latencies, latency_ms)
-        self.total_input_tokens += input_tokens
-        self.total_output_tokens += output_tokens
+        self._total_requests.inc()
+        self._parse_intent_requests.inc()
+        self._parse_intent_latency.observe(latency_seconds)
+        if input_tokens > 0:
+            self._total_input_tokens.inc(input_tokens)
+        if output_tokens > 0:
+            self._total_output_tokens.inc(output_tokens)
 
-    def record_narrate(self, latency_ms: float, input_tokens: int = 0, output_tokens: int = 0) -> None:
+    def record_narrate(
+        self,
+        latency_seconds: float,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+    ) -> None:
         """Record a narrate request."""
-        self.total_requests += 1
-        self.narrate_requests += 1
-        self._add_latency(self.narrate_latencies, latency_ms)
-        self.total_input_tokens += input_tokens
-        self.total_output_tokens += output_tokens
+        self._total_requests.inc()
+        self._narrate_requests.inc()
+        self._narrate_latency.observe(latency_seconds)
+        if input_tokens > 0:
+            self._total_input_tokens.inc(input_tokens)
+        if output_tokens > 0:
+            self._total_output_tokens.inc(output_tokens)
 
     def record_error(self, endpoint: str, error_type: str) -> None:
         """Record an error by endpoint and type."""
-        self.total_errors += 1
+        self._total_errors.inc()
         if endpoint == "parse_intent":
-            self.parse_intent_errors += 1
+            self._parse_intent_errors.inc()
         elif endpoint == "narrate":
-            self.narrate_errors += 1
-        key = f"{endpoint}:{error_type}"
-        self.errors_by_type[key] = self.errors_by_type.get(key, 0) + 1
-
-    def _add_latency(self, latencies: list[float], latency_ms: float) -> None:
-        """Add latency sample, maintaining max samples."""
-        if len(latencies) >= self.max_latency_samples:
-            latencies.pop(0)
-        latencies.append(latency_ms)
-
-    def to_dict(self, provider: str = "unknown", model: str | None = None) -> dict[str, Any]:
-        """Convert metrics to dictionary for JSON serialization."""
-        parse_intent_stats = self._calculate_latency_stats(self.parse_intent_latencies)
-        narrate_stats = self._calculate_latency_stats(self.narrate_latencies)
-
-        return {
-            "requests": {
-                "total": self.total_requests,
-                "parse_intent": self.parse_intent_requests,
-                "narrate": self.narrate_requests,
-            },
-            "errors": {
-                "total": self.total_errors,
-                "parse_intent": self.parse_intent_errors,
-                "narrate": self.narrate_errors,
-                "by_type": dict(self.errors_by_type),
-            },
-            "latency_ms": {
-                "parse_intent": parse_intent_stats,
-                "narrate": narrate_stats,
-            },
-            "provider": {
-                "name": provider,
-                "model": model or "N/A",
-            },
-            "token_usage": {
-                "total_input": self.total_input_tokens,
-                "total_output": self.total_output_tokens,
-            },
-        }
-
-    def _calculate_latency_stats(self, latencies: list[float]) -> dict[str, float]:
-        """Calculate latency statistics from samples."""
-        if not latencies:
-            return {"avg": 0.0, "min": 0.0, "max": 0.0, "p50": 0.0, "p95": 0.0}
-
-        sorted_latencies = sorted(latencies)
-        n = len(sorted_latencies)
-
-        return {
-            "avg": round(sum(latencies) / n, 2),
-            "min": round(min(latencies), 2),
-            "max": round(max(latencies), 2),
-            "p50": round(sorted_latencies[n // 2], 2),
-            "p95": round(sorted_latencies[int(n * 0.95)] if n >= 20 else sorted_latencies[-1], 2),
-        }
+            self._narrate_errors.inc()
+        self._errors_by_type.labels(endpoint=endpoint, error_type=error_type).inc()
 
 
 def _extract_token_usage(result: Any) -> tuple[int, int]:
@@ -220,15 +241,12 @@ def create_llm_app(
         }
 
     @app.get("/metrics")
-    async def get_metrics() -> dict[str, Any]:
-        """Return LLM service metrics for Prometheus scraping."""
-        return {
-            "service": "llm",
-            **metrics.to_dict(
-                provider=app.state.llm_settings.provider,
-                model=app.state.llm_settings.model,
-            ),
-        }
+    async def get_metrics() -> Response:
+        """Return LLM service metrics in Prometheus text format."""
+        return Response(
+            content=generate_latest(metrics.registry),
+            media_type=CONTENT_TYPE_LATEST,
+        )
 
     @app.post("/parse_intent", response_model=ParseIntentResponse)
     async def parse_intent(request: ParseIntentRequest) -> ParseIntentResponse:
@@ -243,10 +261,10 @@ def create_llm_app(
                 request.user_input,
                 request.context,
             )
-            latency_ms = (time.perf_counter() - start_time) * 1000
+            latency_seconds = time.perf_counter() - start_time
             # Extract token usage from result attributes or metadata
             input_tokens, output_tokens = _extract_token_usage(result)
-            metrics.record_parse_intent(latency_ms, input_tokens, output_tokens)
+            metrics.record_parse_intent(latency_seconds, input_tokens, output_tokens)
             return ParseIntentResponse(
                 intents=result.intents,
                 raw_response=result.raw_response,
@@ -272,10 +290,10 @@ def create_llm_app(
                 request.events,
                 request.context,
             )
-            latency_ms = (time.perf_counter() - start_time) * 1000
+            latency_seconds = time.perf_counter() - start_time
             # Extract token usage from result attributes or metadata
             input_tokens, output_tokens = _extract_token_usage(result)
-            metrics.record_narrate(latency_ms, input_tokens, output_tokens)
+            metrics.record_narrate(latency_seconds, input_tokens, output_tokens)
             return NarrateResponse(
                 narrative=result.narrative,
                 raw_response=result.raw_response,
