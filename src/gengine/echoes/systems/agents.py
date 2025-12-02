@@ -68,19 +68,13 @@ class AgentSystem:
         return intents
 
     # ------------------------------------------------------------------
-    def _decide(
+    def _calculate_scores(
         self,
         agent: Agent,
-        districts: Dict[str, District],
-        factions: Dict[str, Faction],
+        district: District | None,
+        faction: Faction | None,
         state: GameState,
-        rng: random.Random,
-        *,
-        force_strategic: bool = False,
-    ) -> AgentIntent | None:
-        district = districts.get(agent.home_district or "")
-        faction = factions.get(agent.faction_id or "") if agent.faction_id else None
-
+    ) -> List[tuple[str, float]]:
         options: List[tuple[str, float]] = []
         if district:
             unrest_pressure = district.modifiers.unrest
@@ -98,13 +92,33 @@ class AgentSystem:
         empathy = traits.get("empathy", 0.5)
         cunning = traits.get("cunning", 0.5)
         resolve = traits.get("resolve", 0.5)
-        for index, (intent_name, base_score) in enumerate(options):
+
+        final_options = []
+        for intent_name, base_score in options:
+            score = base_score
             if intent_name == "STABILIZE_UNREST":
-                options[index] = (intent_name, base_score + empathy * 0.3)
+                score += empathy * 0.3
             elif intent_name == "NEGOTIATE_FACTION":
-                options[index] = (intent_name, base_score + cunning * 0.3)
+                score += cunning * 0.3
             elif intent_name == "SUPPORT_SECURITY":
-                options[index] = (intent_name, base_score + resolve * 0.2)
+                score += resolve * 0.2
+            final_options.append((intent_name, score))
+        return final_options
+
+    def _decide(
+        self,
+        agent: Agent,
+        districts: Dict[str, District],
+        factions: Dict[str, Faction],
+        state: GameState,
+        rng: random.Random,
+        *,
+        force_strategic: bool = False,
+    ) -> AgentIntent | None:
+        district = districts.get(agent.home_district or "")
+        faction = factions.get(agent.faction_id or "") if agent.faction_id else None
+
+        options = self._calculate_scores(agent, district, faction, state)
 
         if force_strategic:
             strategic_options = [option for option in options if option[0] in self._STRATEGIC_INTENTS]

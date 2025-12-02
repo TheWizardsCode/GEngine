@@ -6,6 +6,11 @@
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 10.1.2 (Strengthen AgentSystem Tests) COMPLETED**
+  - Refactored `AgentSystem` to extract scoring logic for testability.
+  - Added unit tests verifying trait influence (empathy, cunning, resolve) on decision scoring.
+  - Added tests for environment modifier influence and edge cases (missing data, no options).
+  - Updated test coverage report.
 - 🎉 **Task 8.3.3 (K8s Resource Sizing & Tuning) COMPLETED** - GitHub Issue [#33](https://github.com/TheWizardsCode/GEngine/issues/33)
   - Differentiated resource allocations for simulation, gateway, and LLM services
   - Base manifests updated with workload-appropriate requests/limits
@@ -839,6 +844,7 @@
   1. Introduce a small fake RNG helper or refactor to accept a sampling strategy.
   2. Add targeted tests for trait and environment influences.
   3. Add edge-case tests for missing data and no-option scenarios.
+- **Status:** Completed
 - **Last Updated:** 2025-12-02
 
 ### 10.1.3 — Expand SimEngine API and error-path tests

@@ -14,7 +14,7 @@ Significant gaps exist in testing the AI Player, Gateway, and LLM integration la
 | Component             | Line Coverage | Assessment                                                                                       |
 | :-------------------- | :------------ | :----------------------------------------------------------------------------------------------- |
 | **SimEngine**         | 85%           | Good line coverage, but misses error handling and new API endpoints (Explanations, Progression). |
-| **AgentSystem**       | 95%           | High coverage, but tests are superficial (determinism checks).                                   |
+| **AgentSystem**       | 95%           | High coverage. Logic verification tests added for traits, environment influence, and edge cases. |
 | **FactionSystem**     | 95%           | High coverage, tests specific behaviors but relies on brittle RNG seeding.                       |
 | **EconomySystem**     | 99%           | Excellent line coverage.                                                                         |
 | **EnvironmentSystem** | 96%           | Excellent line coverage.                                                                         |
@@ -33,10 +33,8 @@ Significant gaps exist in testing the AI Player, Gateway, and LLM integration la
 *   **Integration**: The interaction between `SimEngine` and the `ProgressionSystem` is not explicitly verified (e.g., does a tick actually update progression?).
 
 ### 3.2. Agent System (`AgentSystem`)
-*   **Logic Verification**: Tests verify that agents *do something* deterministically, but not *why*.
-    *   **Trait Influence**: No tests verify that high `empathy` actually increases the probability of `STABILIZE_UNREST`.
-    *   **Fallback Logic**: No tests for scenarios where no valid options exist.
-*   **Edge Cases**: Handling of agents with missing data (no district, no faction) is not explicitly tested.
+*   **Logic Verification**: ✅ Tests now verify trait influence (e.g., empathy -> stabilize) and environment modifiers.
+*   **Edge Cases**: ✅ Tests now cover agents with missing districts/factions and no-option scenarios.
 
 ### 3.3. Faction System (`FactionSystem`)
 *   **Brittle Tests**: Tests rely on specific `random.Random` seeds to force outcomes. If the internal order of checks changes, these tests will break even if the logic is correct.
@@ -51,8 +49,8 @@ Significant gaps exist in testing the AI Player, Gateway, and LLM integration la
 
 ### 4.1. Immediate Improvements (High Priority)
 1.  **Verify Logic, Not Just Execution**:
-    *   Refactor `AgentSystem` tests to mock the RNG or use statistical verification to ensure traits influence decisions as expected.
-    *   Add unit tests for `AgentSystem._decide` that test specific input combinations (e.g., "High Unrest + High Empathy = High Score for Stabilize").
+    *   ✅ Refactor `AgentSystem` tests to mock the RNG or use statistical verification to ensure traits influence decisions as expected.
+    *   ✅ Add unit tests for `AgentSystem._decide` that test specific input combinations (e.g., "High Unrest + High Empathy = High Score for Stabilize").
 2.  **Expand SimEngine Coverage**:
     *   Add tests for all `SimEngine` public methods, including Explanations and Progression APIs.
     *   Test error conditions (invalid inputs, uninitialized state).
