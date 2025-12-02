@@ -20,6 +20,7 @@ build/
 .wheels/
 
 # ---- uv / virtual environments ----
+venv/
 .venv/
 innovation-engine-mcp/.venv/
 
