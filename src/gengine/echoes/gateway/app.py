@@ -25,14 +25,23 @@ BackendFactory = Callable[[], ShellBackend]
 
 @dataclass
 class GatewayMetrics:
-    """Metrics tracking for the gateway service."""
+    """Metrics tracking for the gateway service.
+    
+    Note on message counters:
+    - websocket_messages: All messages received via WebSocket (including invalid)
+    - natural_language_requests: Valid natural language commands executed
+    - command_requests: Valid regular commands executed
+    
+    The sum of natural_language_requests + command_requests will be <= websocket_messages
+    since invalid messages are counted in websocket_messages but not the request counters.
+    """
 
     # Request counts
     total_requests: int = 0
     requests_by_type: dict[str, int] = field(default_factory=dict)
-    websocket_messages: int = 0
-    natural_language_requests: int = 0
-    command_requests: int = 0
+    websocket_messages: int = 0  # All messages received (including invalid)
+    natural_language_requests: int = 0  # Valid NL commands processed
+    command_requests: int = 0  # Valid regular commands processed
 
     # Error tracking
     total_errors: int = 0
@@ -89,9 +98,9 @@ class GatewayMetrics:
             "requests": {
                 "total": self.total_requests,
                 "by_type": dict(self.requests_by_type),
-                "websocket_messages": self.websocket_messages,
-                "natural_language": self.natural_language_requests,
-                "commands": self.command_requests,
+                "websocket_messages": self.websocket_messages,  # All messages (including invalid)
+                "natural_language": self.natural_language_requests,  # Valid NL commands
+                "commands": self.command_requests,  # Valid regular commands
             },
             "errors": {
                 "total": self.total_errors,

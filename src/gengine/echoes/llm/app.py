@@ -117,6 +117,25 @@ class LLMMetrics:
         }
 
 
+def _extract_token_usage(result: Any) -> tuple[int, int]:
+    """Extract token usage from LLM result.
+
+    Tries result attributes first, then falls back to metadata dict.
+    Returns (input_tokens, output_tokens).
+    """
+    # Try direct attributes first
+    input_tokens = getattr(result, "input_tokens", None)
+    output_tokens = getattr(result, "output_tokens", None)
+
+    # Fall back to metadata dict if available
+    if input_tokens is None and hasattr(result, "metadata") and result.metadata:
+        input_tokens = result.metadata.get("input_tokens")
+    if output_tokens is None and hasattr(result, "metadata") and result.metadata:
+        output_tokens = result.metadata.get("output_tokens")
+
+    return (input_tokens or 0, output_tokens or 0)
+
+
 class ParseIntentRequest(BaseModel):
     """Request payload for /parse_intent endpoint."""
 
@@ -225,9 +244,8 @@ def create_llm_app(
                 request.context,
             )
             latency_ms = (time.perf_counter() - start_time) * 1000
-            # Extract token usage from metadata if available
-            input_tokens = getattr(result, "input_tokens", 0) or 0
-            output_tokens = getattr(result, "output_tokens", 0) or 0
+            # Extract token usage from result attributes or metadata
+            input_tokens, output_tokens = _extract_token_usage(result)
             metrics.record_parse_intent(latency_ms, input_tokens, output_tokens)
             return ParseIntentResponse(
                 intents=result.intents,
@@ -255,12 +273,8 @@ def create_llm_app(
                 request.context,
             )
             latency_ms = (time.perf_counter() - start_time) * 1000
-            # Extract token usage from metadata if available
-            input_tokens = 0
-            output_tokens = 0
-            if result.metadata:
-                input_tokens = result.metadata.get("input_tokens", 0) or 0
-                output_tokens = result.metadata.get("output_tokens", 0) or 0
+            # Extract token usage from result attributes or metadata
+            input_tokens, output_tokens = _extract_token_usage(result)
             metrics.record_narrate(latency_ms, input_tokens, output_tokens)
             return NarrateResponse(
                 narrative=result.narrative,
