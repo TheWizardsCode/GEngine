@@ -19,7 +19,8 @@ class TestLLMClient:
         assert client.max_retries == 3
         client.close()
 
-    def test_context_manager(self):
+    @patch("httpx.Client")
+    def test_context_manager(self, mock_client):
         """Test client works as context manager."""
         with LLMClient("http://localhost:8001") as client:
             assert client.base_url == "http://localhost:8001"
