@@ -164,6 +164,15 @@ multi-phase roadmap and `docs/gengine/how_to_play_echoes.md` for a gameplay guid
   intents via `SimEngine.apply_action` API and logs all decisions for telemetry
   replay. Regression tests validate 100-tick deterministic runs with AI
   interventions. Coverage at 94% for new modules.
+- ✅ **Phase 9 M9.3 – LLM-enhanced decisions** shipped: `HybridStrategy` at
+  `src/gengine/ai_player/strategies.py` routes routine decisions to rule-based
+  logic and delegates complex choices (multiple stressed factions, critical
+  stability, multiple story seeds) to the LLM service. Budget enforcement via
+  `LLMStrategyConfig` prevents runaway costs with configurable `llm_call_budget`.
+  Telemetry tracks `decision_source` ("rule" vs "llm"), call counts, latency,
+  and fallback rates. Scenario tests compare rule-only vs hybrid behavior.
+  46 new tests cover the hybrid strategy, LLM decision layer, and complexity
+  evaluation. Coverage at 94% for AI player module.
 
 ## Repository Layout
 
@@ -819,11 +828,12 @@ validation.
 
 ### Strategies
 
-Three built-in strategies are available:
+Four built-in strategies are available:
 
 - **BALANCED**: Moderate intervention, stabilizes at 0.6, supports factions at 0.4
 - **AGGRESSIVE**: Frequent actions, higher thresholds, larger resource deployments
 - **DIPLOMATIC**: Prefers negotiation, builds faction relationships, lower intervention thresholds
+- **HYBRID**: Combines rule-based and LLM-enhanced decisions with budget controls
 
 ### Running the AI Actor
 
@@ -868,9 +878,71 @@ actor = AIActor(engine=engine, strategy=strategy)
 report = actor.run(ticks=50)
 ```
 
+### Hybrid Strategy (LLM-Enhanced Decisions)
+
+The **HYBRID** strategy combines rule-based heuristics with LLM-enhanced decisions
+for complex situations. It routes routine decisions to fast rule-based logic and
+delegates complex choices to the LLM service.
+
+**Complex situations that trigger LLM:**
+- Multiple factions with low legitimacy (< 0.4)
+- Critical stability crisis (< 0.5)
+- Multiple active story seeds
+- Large legitimacy spread between factions
+
+**Budget controls prevent runaway costs:**
+- Configurable `llm_call_budget` limits total LLM calls per session
+- Falls back to rules when budget exhausted
+- Tracks estimated costs and latency
+
+```python
+from gengine.ai_player import AIActor, ActorConfig, HybridStrategy, LLMStrategyConfig
+from gengine.echoes.sim import SimEngine
+
+engine = SimEngine()
+engine.initialize_state(world="default")
+
+# Configure LLM budget and complexity thresholds
+llm_config = LLMStrategyConfig(
+    llm_call_budget=10,  # Max 10 LLM calls per session
+    complexity_threshold_stability=0.5,  # Trigger LLM below this stability
+    complexity_threshold_factions=2,  # Trigger if >= 2 stressed factions
+    cost_per_call_estimate=0.01,  # Track estimated costs
+)
+
+# Create hybrid strategy
+hybrid = HybridStrategy(
+    session_id="hybrid-test",
+    llm_config=llm_config,
+)
+
+# Run actor with hybrid strategy
+config = ActorConfig(tick_budget=100)
+actor = AIActor(engine=engine, config=config, strategy=hybrid)
+report = actor.run()
+
+# Check hybrid-specific telemetry
+print(f"Rule decisions: {hybrid.telemetry['rule_decisions']}")
+print(f"LLM decisions: {hybrid.telemetry['llm_decisions']}")
+print(f"LLM calls used: {hybrid.llm_budget.calls_used}")
+print(f"Estimated cost: ${hybrid.llm_budget.estimated_cost:.4f}")
+```
+
+**Decision source tracking:**
+
+Every `StrategyDecision` now includes a `decision_source` field indicating
+whether it came from rules ("rule") or LLM ("llm"). This enables telemetry
+analysis comparing rule-only vs hybrid behavior.
+
+```python
+decisions = hybrid.evaluate(state, tick)
+for d in decisions:
+    print(f"{d.intent.intent.value}: source={d.decision_source}")
+```
+
 ### Actor Configuration
 
-- `strategy_type`: Which strategy to use (BALANCED, AGGRESSIVE, DIPLOMATIC)
+- `strategy_type`: Which strategy to use (BALANCED, AGGRESSIVE, DIPLOMATIC, HYBRID)
 - `tick_budget`: Total ticks to run (default: 100)
 - `actions_per_observation`: Max actions per analysis interval (default: 1)
 - `analysis_interval`: Ticks between strategy evaluations (default: 10)
@@ -903,10 +975,15 @@ The actor report includes:
 
 - `ticks_run`: Total ticks executed
 - `actions_taken`: Number of actions submitted
-- `decisions`: Full list of strategy decisions with rationales
+- `decisions`: Full list of strategy decisions with rationales and decision_source
 - `receipts`: Action submission receipts with status
 - `final_stability`: City stability at end of session
 - `telemetry`: Action counts, priority stats, rationales
+
+For hybrid strategies, additional telemetry is available via `strategy.telemetry`:
+- `rule_decisions`: Count of rule-based decisions
+- `llm_decisions`: Count of LLM-based decisions
+- `llm_budget`: Budget tracking (calls_used, estimated_cost, fallback_count)
 
 ## LLM Service (Phase 6 M6.3)
 
@@ -1258,10 +1335,10 @@ service names as hostnames:
 1. **Phase 8 – Kubernetes Deployment** – create Kubernetes manifests for local
    minikube deployment, enabling multi-container orchestration and service
    discovery. Docker containerization is complete (see Docker section above).
-2. **Phase 9 M9.3 – LLM-enhanced decisions** – layer LLM strategy that delegates
-   complex narrative choices to the LLM service when story seeds trigger. Includes
-   budget controls and fallback to rule-based logic. See the Phase 9 section of
-   the implementation plan for the full observer → actor → LLM roadmap.
+2. **Phase 9 M9.4 – AI tournaments and balance tooling** – create tournament
+   scripts that run multiple AI strategies in parallel, aggregate comparative
+   reports (win rates, stability curves, story seed coverage), and identify
+   balance outliers. See the Phase 9 section of the implementation plan.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).
