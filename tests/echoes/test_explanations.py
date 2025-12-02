@@ -204,7 +204,9 @@ class TestExplanationsManager:
             faction_deltas={"union-of-flux": 0.05, "cartel-of-mist": -0.03},
         )
         # Should have events for faction legitimacy changes
-        faction_events = [e for e in entry.events if e.category == CausalCategory.FACTION]
+        faction_events = [
+            e for e in entry.events if e.category == CausalCategory.FACTION
+        ]
         assert len(faction_events) >= 2
 
     def test_record_tick_captures_agent_actions(self, sample_state: GameState):
@@ -246,7 +248,9 @@ class TestExplanationsManager:
             tick=11,
             faction_actions=faction_actions,
         )
-        faction_events = [e for e in entry.events if e.category == CausalCategory.FACTION]
+        faction_events = [
+            e for e in entry.events if e.category == CausalCategory.FACTION
+        ]
         assert len(faction_events) >= 1
         # Should have effects for investment
         invest_event = next(

@@ -29,11 +29,25 @@ def test_generate_post_mortem_summary_builds_recap() -> None:
         }
     ]
     state.metadata["story_seed_lifecycle"] = {
-        "energy-quota-crisis": {"state": "archived", "entered_tick": 150, "cooldown_remaining": 2}
+        "energy-quota-crisis": {
+            "state": "archived",
+            "entered_tick": 150,
+            "cooldown_remaining": 2,
+        }
     }
     state.metadata["story_seed_lifecycle_history"] = [
-        {"seed_id": "energy-quota-crisis", "from": "active", "to": "archived", "tick": 150},
-        {"seed_id": "hollow-supply-chain", "from": "primed", "to": "active", "tick": 160},
+        {
+            "seed_id": "energy-quota-crisis",
+            "from": "active",
+            "to": "archived",
+            "tick": 150,
+        },
+        {
+            "seed_id": "hollow-supply-chain",
+            "from": "primed",
+            "to": "active",
+            "tick": 160,
+        },
     ]
 
     summary = generate_post_mortem_summary(state)

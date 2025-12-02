@@ -14,7 +14,7 @@ LOGGER = logging.getLogger("gengine.echoes.gateway.llm")
 
 class LLMClient:
     """HTTP client for the LLM service.
-    
+
     Provides intent parsing and narration with retry logic and fallback handling.
     """
 
@@ -26,7 +26,7 @@ class LLMClient:
         max_retries: int = 2,
     ) -> None:
         """Initialize LLM client.
-        
+
         Args:
             base_url: Base URL of the LLM service (e.g., "http://localhost:8001")
             timeout: Request timeout in seconds
@@ -54,11 +54,11 @@ class LLMClient:
         context: dict[str, Any] | None = None,
     ) -> GameIntent | None:
         """Parse natural language text into a structured game intent.
-        
+
         Args:
             text: Natural language command from user
             context: Optional context (district, tick, recent_events, etc.)
-            
+
         Returns:
             Parsed GameIntent or None if parsing fails
         """
@@ -74,17 +74,19 @@ class LLMClient:
                 )
                 response.raise_for_status()
                 data = response.json()
-                
+
                 # The LLM response should contain intent data directly
                 # or wrapped in an "intent" field
                 intent_data = data.get("intent", data)
-                
+
                 if not isinstance(intent_data, dict):
-                    LOGGER.warning("LLM response intent is not a dict: %s", type(intent_data))
+                    LOGGER.warning(
+                        "LLM response intent is not a dict: %s", type(intent_data)
+                    )
                     return None
-                    
+
                 return parse_intent(intent_data)
-                
+
             except httpx.HTTPStatusError as exc:
                 LOGGER.warning(
                     "LLM parse_intent failed (attempt %d/%d): HTTP %d",
@@ -95,7 +97,7 @@ class LLMClient:
                 if attempt == self.max_retries:
                     LOGGER.error("LLM parse_intent exhausted retries")
                     return None
-                    
+
             except (httpx.RequestError, ValueError) as exc:
                 LOGGER.warning(
                     "LLM parse_intent error (attempt %d/%d): %s",
@@ -116,11 +118,11 @@ class LLMClient:
         context: dict[str, Any] | None = None,
     ) -> str | None:
         """Generate narrative text from simulation events.
-        
+
         Args:
             events: List of event strings from simulation
             context: Optional context (district, tick, etc.)
-            
+
         Returns:
             Generated narration or None if generation fails
         """
@@ -136,14 +138,14 @@ class LLMClient:
                 )
                 response.raise_for_status()
                 data = response.json()
-                
+
                 narration = data.get("narration")
                 if not narration:
                     LOGGER.warning("LLM response missing 'narration' field: %s", data)
                     return None
-                    
+
                 return str(narration)
-                
+
             except httpx.HTTPStatusError as exc:
                 LOGGER.warning(
                     "LLM narrate failed (attempt %d/%d): HTTP %d",
@@ -154,7 +156,7 @@ class LLMClient:
                 if attempt == self.max_retries:
                     LOGGER.error("LLM narrate exhausted retries")
                     return None
-                    
+
             except (httpx.RequestError, ValueError) as exc:
                 LOGGER.warning(
                     "LLM narrate error (attempt %d/%d): %s",
@@ -170,7 +172,7 @@ class LLMClient:
 
     def healthcheck(self) -> bool:
         """Check if LLM service is healthy.
-        
+
         Returns:
             True if service is healthy, False otherwise
         """

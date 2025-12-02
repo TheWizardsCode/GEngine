@@ -202,7 +202,7 @@ class BaseStrategy(ABC):
         state: dict[str, Any],
     ) -> str | None:
         """Find a district that needs resource deployment.
-        
+
         Note: The summary API returns district count, not district list.
         This method returns a placeholder district ID when no detailed
         district data is available.
@@ -338,8 +338,7 @@ class BalancedStrategy(BaseStrategy):
                             intent=intent,
                             priority=0.7,
                             rationale=(
-                                f"Deploying resources to {district} "
-                                "for stabilization"
+                                f"Deploying resources to {district} for stabilization"
                             ),
                             strategy_type=self.strategy_type,
                             tick=tick,
@@ -530,8 +529,7 @@ class AggressiveStrategy(BaseStrategy):
                         intent=intent,
                         priority=0.7,
                         rationale=(
-                            f"Pressuring faction {faction_id} "
-                            f"at {legitimacy:.2f}"
+                            f"Pressuring faction {faction_id} at {legitimacy:.2f}"
                         ),
                         strategy_type=self.strategy_type,
                         tick=tick,

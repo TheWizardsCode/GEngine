@@ -153,7 +153,8 @@ class FocusManager:
                 entry.to_display() for entry in result.suppressed[:preview_limit]
             ],
             "archive": [
-                entry.to_display() for entry in result.archive[: self._settings.history_limit]
+                entry.to_display()
+                for entry in result.archive[: self._settings.history_limit]
             ],
             "ranked_archive": [
                 ranked.to_payload()
@@ -215,7 +216,9 @@ class FocusManager:
             "spatial_metrics": metrics,
         }
 
-    def _resolve_center(self, districts: Sequence[District], district_id: str | None) -> District:
+    def _resolve_center(
+        self, districts: Sequence[District], district_id: str | None
+    ) -> District:
         lookup = {district.id: district for district in districts}
         if district_id and district_id in lookup:
             return lookup[district_id]
@@ -274,7 +277,9 @@ class FocusManager:
         ring = focus_state.get("ring") or []
         ranked: List[RankedEvent] = []
         for entry in events:
-            severity = self._scope_severity(entry.scope) + self._message_bonus(entry.message)
+            severity = self._scope_severity(entry.scope) + self._message_bonus(
+                entry.message
+            )
             severity = max(0.1, min(1.5, severity))
             distance = self._focus_distance(entry.district_id, ring)
             distance_penalty = max(0.2, 1.0 - 0.15 * min(distance, 5))
@@ -349,10 +354,13 @@ class FocusManager:
         adjacency = set(center.adjacent)
         distances = self._distance_lookup(center.coordinates, districts)
         raw_max_distance = max(distances.values(), default=0.0)
-        normalized_max = raw_max_distance if raw_max_distance > 0 else self._settings.spatial_falloff
+        normalized_max = (
+            raw_max_distance if raw_max_distance > 0 else self._settings.spatial_falloff
+        )
         total_weight = max(
             0.001,
-            self._settings.spatial_population_weight + self._settings.spatial_distance_weight,
+            self._settings.spatial_population_weight
+            + self._settings.spatial_distance_weight,
         )
 
         results: List[Dict[str, object]] = []
@@ -382,7 +390,9 @@ class FocusManager:
                 }
             )
 
-        results.sort(key=lambda item: (item["score"], item["population_rank"]), reverse=True)
+        results.sort(
+            key=lambda item: (item["score"], item["population_rank"]), reverse=True
+        )
         metrics = {
             "population_weight": self._settings.spatial_population_weight,
             "distance_weight": self._settings.spatial_distance_weight,

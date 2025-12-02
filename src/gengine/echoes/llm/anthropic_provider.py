@@ -8,7 +8,6 @@ from typing import Any
 
 from anthropic import Anthropic, AnthropicError
 
-from . import parse_intent
 from .prompts import (
     ANTHROPIC_INTENT_SCHEMA,
     INTENT_PARSING_SYSTEM_PROMPT,
@@ -76,20 +75,18 @@ Ensure the response is valid JSON that can be parsed."""
                 max_tokens=1000,
                 temperature=0.3,
                 system=INTENT_PARSING_SYSTEM_PROMPT,
-                messages=[
-                    {"role": "user", "content": full_prompt}
-                ],
+                messages=[{"role": "user", "content": full_prompt}],
             )
 
             raw_response = response.model_dump_json()
 
             # Extract JSON from response
             content = response.content[0].text if response.content else ""
-            
+
             # Try to parse JSON from content
             intents = []
             confidence = 0.0
-            
+
             try:
                 # Look for JSON in the response
                 json_start = content.find("{")
@@ -97,7 +94,7 @@ Ensure the response is valid JSON that can be parsed."""
                 if json_start >= 0 and json_end > json_start:
                     json_str = content[json_start:json_end]
                     parsed = json.loads(json_str)
-                    
+
                     # Convert to intent dict with session_id
                     intent_dict = self._structured_output_to_intent(parsed, context)
                     if intent_dict:
@@ -107,7 +104,8 @@ Ensure the response is valid JSON that can be parsed."""
                 logger.warning(f"Failed to parse JSON from Anthropic response: {e}")
 
             logger.info(
-                f"Anthropic parsed intent: {len(intents)} intent(s) from '{user_input[:50]}...'"
+                f"Anthropic parsed intent: {len(intents)} intent(s) "
+                f"from '{user_input[:50]}...'"
             )
 
             return IntentParseResult(
@@ -145,9 +143,7 @@ Ensure the response is valid JSON that can be parsed."""
         """
         try:
             # Convert event dicts to strings
-            event_strings = [
-                e.get("description", str(e)) for e in events
-            ]
+            event_strings = [e.get("description", str(e)) for e in events]
             prompt = build_narration_prompt(event_strings, context=context)
 
             response = self.client.messages.create(
@@ -155,9 +151,7 @@ Ensure the response is valid JSON that can be parsed."""
                 max_tokens=500,
                 temperature=0.7,
                 system=NARRATION_SYSTEM_PROMPT,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
+                messages=[{"role": "user", "content": prompt}],
             )
 
             raw_response = response.model_dump_json()
@@ -166,7 +160,10 @@ Ensure the response is valid JSON that can be parsed."""
             metadata = {
                 "model": self.model,
                 "event_count": len(events),
-                "tokens_used": response.usage.input_tokens + response.usage.output_tokens if response.usage else 0,
+                "tokens_used": response.usage.input_tokens
+                + response.usage.output_tokens
+                if response.usage
+                else 0,
             }
 
             logger.info(f"Anthropic narrated {len(events)} events")

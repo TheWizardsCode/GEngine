@@ -49,7 +49,8 @@ OPENAI_INTENT_FUNCTIONS = [
                 },
                 "levers": {
                     "type": "object",
-                    "description": "Negotiation levers (resource offers, policy promises)",
+                    "description": "Negotiation levers "
+                    "(resource offers, policy promises)",
                 },
                 "goal": {
                     "type": "string",
@@ -193,7 +194,14 @@ OPENAI_INTENT_FUNCTIONS = [
             "properties": {
                 "report_type": {
                     "type": "string",
-                    "enum": ["summary", "district", "faction", "agent", "environment", "director"],
+                    "enum": [
+                        "summary",
+                        "district",
+                        "faction",
+                        "agent",
+                        "environment",
+                        "director",
+                    ],
                     "description": "Type of report to generate",
                 },
                 "filters": {
@@ -215,24 +223,28 @@ OPENAI_INTENT_FUNCTIONS = [
 ]
 
 # System prompt for intent parsing
-INTENT_PARSING_SYSTEM_PROMPT = """You are an AI assistant helping players interact with "Echoes of Emergence", a city simulation game.
-
-Your role is to parse player commands into structured game intents. Players can:
-- INSPECT districts, agents, or factions to gather information
-- NEGOTIATE with factions to broker deals or resolve conflicts
-- DEPLOY resources (materials/energy) to districts
-- PASS policies that affect the entire city
-- Execute COVERT actions for hidden operations
-- INVOKE specific agents to take actions
-- REQUEST reports about simulation state
-
-Always use the provided functions to structure your responses. Extract key details from player text:
-- Target entities (districts, agents, factions)
-- Resource types and amounts
-- Goals and purposes
-- Any relevant context
-
-Be permissive in parsing - if the player's intent is unclear but seems like one of these actions, make a reasonable guess and include context about the uncertainty."""
+INTENT_PARSING_SYSTEM_PROMPT = (
+    "You are an AI assistant helping players interact with "
+    '"Echoes of Emergence", a city simulation game.\n\n'
+    "Your role is to parse player commands into structured game intents. "
+    "Players can:\n"
+    "- INSPECT districts, agents, or factions to gather information\n"
+    "- NEGOTIATE with factions to broker deals or resolve conflicts\n"
+    "- DEPLOY resources (materials/energy) to districts\n"
+    "- PASS policies that affect the entire city\n"
+    "- Execute COVERT actions for hidden operations\n"
+    "- INVOKE specific agents to take actions\n"
+    "- REQUEST reports about simulation state\n\n"
+    "Always use the provided functions to structure your responses. "
+    "Extract key details from player text:\n"
+    "- Target entities (districts, agents, factions)\n"
+    "- Resource types and amounts\n"
+    "- Goals and purposes\n"
+    "- Any relevant context\n\n"
+    "Be permissive in parsing - if the player's intent is unclear but "
+    "seems like one of these actions, make a reasonable guess and include "
+    "context about the uncertainty."
+)
 
 # Anthropic structured output schema
 ANTHROPIC_INTENT_SCHEMA = {
@@ -268,26 +280,32 @@ ANTHROPIC_INTENT_SCHEMA = {
 }
 
 # Narration system prompt
-NARRATION_SYSTEM_PROMPT = """You are a narrative generator for "Echoes of Emergence", a city simulation game.
-
-Your role is to transform simulation events into engaging story text. Given a list of events and context:
-- Weave events into a cohesive narrative
-- Match the tone to the context (neutral, tense, hopeful, etc.)
-- Use vivid but concise language
-- Connect events causally when possible
-- Maintain consistency with the game world
-
-The game world:
-- Near-future city dealing with resource scarcity and political tensions
-- Three main districts: Industrial Tier (production), Perimeter Hollow (volatile), Spire (elite)
-- Two factions: Union of Flux (labor/environment) and Compact Majority (order/tradition)
-- Agents act as key NPCs driving events
-
-Keep narrations brief (2-4 sentences) unless context suggests more detail is needed."""
+NARRATION_SYSTEM_PROMPT = (
+    "You are a narrative generator for "
+    '"Echoes of Emergence", a city simulation game.\n\n'
+    "Your role is to transform simulation events into engaging story text. "
+    "Given a list of events and context:\n"
+    "- Weave events into a cohesive narrative\n"
+    "- Match the tone to the context (neutral, tense, hopeful, etc.)\n"
+    "- Use vivid but concise language\n"
+    "- Connect events causally when possible\n"
+    "- Maintain consistency with the game world\n\n"
+    "The game world:\n"
+    "- Near-future city dealing with resource scarcity and political tensions\n"
+    "- Three main districts: Industrial Tier (production), "
+    "Perimeter Hollow (volatile), Spire (elite)\n"
+    "- Two factions: Union of Flux (labor/environment) and "
+    "Compact Majority (order/tradition)\n"
+    "- Agents act as key NPCs driving events\n\n"
+    "Keep narrations brief (2-4 sentences) unless context suggests more "
+    "detail is needed."
+)
 
 
 def build_intent_parsing_prompt(
-    user_text: str, available_actions: list[str] | None = None, context: dict[str, Any] | None = None
+    user_text: str,
+    available_actions: list[str] | None = None,
+    context: dict[str, Any] | None = None,
 ) -> str:
     """Build a complete prompt for intent parsing.
 
@@ -315,7 +333,8 @@ def build_intent_parsing_prompt(
             prompt_parts.append(f"\nRecent events: {events_str}")
 
     prompt_parts.append(
-        "\nParse this command into the most appropriate game intent using the available functions."
+        "\nParse this command into the most appropriate game intent "
+        "using the available functions."
     )
 
     return "\n".join(prompt_parts)
@@ -334,7 +353,10 @@ def build_narration_prompt(
         Formatted prompt string
     """
     if not events:
-        return "Generate a brief observation that nothing significant has occurred recently."
+        return (
+            "Generate a brief observation that nothing significant "
+            "has occurred recently."
+        )
 
     prompt_parts = ["Generate a narrative for these simulation events:"]
 

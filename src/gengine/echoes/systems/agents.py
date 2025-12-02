@@ -121,7 +121,9 @@ class AgentSystem:
         options = self._calculate_scores(agent, district, faction, state)
 
         if force_strategic:
-            strategic_options = [option for option in options if option[0] in self._STRATEGIC_INTENTS]
+            strategic_options = [
+                option for option in options if option[0] in self._STRATEGIC_INTENTS
+            ]
             if strategic_options:
                 options = strategic_options
 
@@ -171,7 +173,9 @@ class AgentSystem:
             target_name = district.name
         else:
             target = district.id if district else (faction.id if faction else "city")
-            target_name = district.name if district else (faction.name if faction else "city")
+            target_name = (
+                district.name if district else (faction.name if faction else "city")
+            )
             detail = "gathers intelligence on city status"
         return AgentIntent(
             agent_id=agent.id,

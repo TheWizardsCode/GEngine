@@ -69,10 +69,14 @@ def run_difficulty_sweeps(
                 sys.stderr.write(f"[SKIP] Config not found: {config_root}\n")
             continue
 
-        output_path = output_dir / f"difficulty-{preset}-sweep.json" if output_dir else None
+        output_path = (
+            output_dir / f"difficulty-{preset}-sweep.json" if output_dir else None
+        )
 
         if verbose:
-            sys.stderr.write(f"\n[START] {preset.upper()} difficulty ({ticks} ticks, seed={seed})\n")
+            sys.stderr.write(
+                f"\n[START] {preset.upper()} difficulty ({ticks} ticks, seed={seed})\n"
+            )
 
         start = perf_counter()
         summary = run_headless_sim(
@@ -106,7 +110,9 @@ def run_difficulty_sweeps(
 
     total_elapsed = perf_counter() - start_total
     if verbose:
-        sys.stderr.write(f"\n[COMPLETE] {len(results)} presets in {total_elapsed:.1f}s\n")
+        sys.stderr.write(
+            f"\n[COMPLETE] {len(results)} presets in {total_elapsed:.1f}s\n"
+        )
 
     return results
 

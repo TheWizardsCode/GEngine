@@ -19,7 +19,9 @@ def test_agent_system_produces_deterministic_intents() -> None:
     rng = random.Random(42)
     intents_second = system.tick(state, rng=rng)
 
-    assert [intent.intent for intent in intents_first] == [intent.intent for intent in intents_second]
+    assert [intent.intent for intent in intents_first] == [
+        intent.intent for intent in intents_second
+    ]
     assert intents_first
 
 
@@ -30,7 +32,9 @@ def test_sim_engine_emits_agent_actions() -> None:
     reports = engine.advance_ticks(1)
 
     assert reports[0].agent_actions
-    assert any("inspects" in event or "negotiates" in event for event in reports[0].events)
+    assert any(
+        "inspects" in event or "negotiates" in event for event in reports[0].events
+    )
 
 
 def test_agent_scoring_logic_traits() -> None:
@@ -73,7 +77,10 @@ def test_agent_scoring_logic_traits() -> None:
     score_map_low = dict(scores_low)
 
     assert score_map["STABILIZE_UNREST"] > score_map_low["STABILIZE_UNREST"]
-    assert abs(score_map["STABILIZE_UNREST"] - score_map_low["STABILIZE_UNREST"] - 0.3) < 0.0001
+    assert (
+        abs(score_map["STABILIZE_UNREST"] - score_map_low["STABILIZE_UNREST"] - 0.3)
+        < 0.0001
+    )
 
 
 def test_agent_scoring_logic_environment() -> None:
@@ -97,7 +104,12 @@ def test_agent_scoring_logic_environment() -> None:
 
     assert score_map_high["STABILIZE_UNREST"] > score_map_low["STABILIZE_UNREST"]
     # Difference should be exactly 1.0 (the difference in unrest)
-    assert abs(score_map_high["STABILIZE_UNREST"] - score_map_low["STABILIZE_UNREST"] - 1.0) < 0.0001
+    assert (
+        abs(
+            score_map_high["STABILIZE_UNREST"] - score_map_low["STABILIZE_UNREST"] - 1.0
+        )
+        < 0.0001
+    )
 
 
 def test_agent_decision_edge_cases() -> None:
@@ -128,12 +140,17 @@ def test_agent_decision_edge_cases() -> None:
 
 
 def test_agent_decision_no_options() -> None:
-    """Verify behavior when no options are available (simulated by mocking _calculate_scores)."""
+    """Verify behavior when no options are available.
+
+    Simulated by mocking _calculate_scores.
+    """
     state = load_world_bundle()
     system = AgentSystem()
     rng = random.Random(42)
 
-    agent = Agent(id="test", name="Test", role="Tester", home_district=None, faction_id=None)
+    agent = Agent(
+        id="test", name="Test", role="Tester", home_district=None, faction_id=None
+    )
 
     # Mock _calculate_scores to return empty list
     # We can just assign a lambda to the instance method

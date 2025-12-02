@@ -13,7 +13,7 @@ from typing import Any, Callable
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from ..cli.shell import PROMPT, ShellBackend, ServiceBackend
+from ..cli.shell import PROMPT, ServiceBackend, ShellBackend
 from ..client import SimServiceClient
 from ..settings import SimulationConfig, load_simulation_config
 from .llm_client import LLMClient
@@ -148,7 +148,9 @@ class GatewaySettings:
     @classmethod
     def from_env(cls) -> "GatewaySettings":
         return cls(
-            service_url=os.environ.get("ECHOES_GATEWAY_SERVICE_URL", "http://localhost:8000"),
+            service_url=os.environ.get(
+                "ECHOES_GATEWAY_SERVICE_URL", "http://localhost:8000"
+            ),
             llm_service_url=os.environ.get("ECHOES_GATEWAY_LLM_URL"),
             host=os.environ.get("ECHOES_GATEWAY_HOST", "0.0.0.0"),
             port=int(os.environ.get("ECHOES_GATEWAY_PORT", "8100")),
@@ -241,11 +243,11 @@ def create_gateway_app(
                         }
                     )
                     continue
-                
+
                 # Check if this is a natural language command
                 command = message_data.get("command")
                 is_nl = message_data.get("natural_language", False)
-                
+
                 if command is None:
                     metrics.record_error("missing_command")
                     await websocket.send_json(
@@ -255,7 +257,6 @@ def create_gateway_app(
                         }
                     )
                     continue
-                
                 start_time = time.perf_counter()
                 try:
                     if is_nl and session.llm_client:
@@ -264,6 +265,9 @@ def create_gateway_app(
                         result = await asyncio.to_thread(session.execute_natural_language, command)
                         llm_latency = (time.perf_counter() - llm_start) * 1000
                         metrics.record_llm_request(llm_latency)
+                    else:
+                        metrics.command_requests += 1
+                        result = await asyncio.to_thread(session.execute, command)
                     else:
                         metrics.command_requests += 1
                         result = await asyncio.to_thread(session.execute, command)
@@ -343,7 +347,7 @@ class _GatewayManager:
 
 async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None:
     """Receive and parse message from WebSocket.
-    
+
     Returns dict with 'command' and optional 'natural_language' flag,
     or None if message is invalid.
     """
@@ -351,10 +355,10 @@ async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None
         message = await websocket.receive()
     except RuntimeError as exc:  # starlette raises RuntimeError after disconnect
         raise WebSocketDisconnect(code=1000) from exc
-    
+
     text = message.get("text")
     data = None
-    
+
     if text is not None:
         text = text.strip()
         if not text:
@@ -372,12 +376,15 @@ async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None
             data = json.loads(payload.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
             # Binary decoded as text command
-            return {"command": payload.decode("utf-8", errors="ignore"), "natural_language": False}
-    
+            return {
+                "command": payload.decode("utf-8", errors="ignore"),
+                "natural_language": False,
+            }
+
     if isinstance(data, dict):
         command = data.get("command")
         if isinstance(command, str):
             is_nl = data.get("natural_language", False)
             return {"command": command, "natural_language": bool(is_nl)}
-    
+
     return None

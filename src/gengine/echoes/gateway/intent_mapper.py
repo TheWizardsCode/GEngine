@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from ..llm import (
     CovertActionIntent,
     DeployResourceIntent,
     GameIntent,
     InspectIntent,
-    IntentType,
     InvokeAgentIntent,
     NegotiateIntent,
     PassPolicyIntent,
@@ -22,20 +20,20 @@ LOGGER = logging.getLogger("gengine.echoes.gateway.intent")
 
 class IntentMapper:
     """Converts GameIntent objects to simulation commands.
-    
+
     This mapper translates structured intents from the LLM into
     commands that can be executed through the shell backend.
     """
 
     def map_intent_to_command(self, intent: GameIntent) -> str:
         """Convert a GameIntent to a shell command string.
-        
+
         Args:
             intent: The parsed game intent
-            
+
         Returns:
             Shell command string that implements the intent
-            
+
         Raises:
             ValueError: If intent type is not supported
         """
@@ -60,14 +58,18 @@ class IntentMapper:
         """Map INSPECT intent to shell command."""
         target_type = intent.target_type
         target_id = intent.target_id
-        
+
         if target_type == "district":
             # Map to 'map <district_id>' command
             return f"map {target_id}"
         elif target_type in ("agent", "faction"):
             # For now, use summary to show agent/faction info
             # Future: add dedicated agent/faction detail commands
-            LOGGER.info("INSPECT %s '%s' - using summary (no dedicated command yet)", target_type, target_id)
+            LOGGER.info(
+                "INSPECT %s '%s' - using summary (no dedicated command yet)",
+                target_type,
+                target_id,
+            )
             return "summary"
         else:
             LOGGER.warning("Unknown INSPECT target_type: %s", target_type)
@@ -90,7 +92,8 @@ class IntentMapper:
         # Resource deployment requires action API not yet exposed via CLI
         # For now, log the intent and return a summary
         LOGGER.info(
-            "DEPLOY_RESOURCE intent: type=%s amount=%d district=%s (not yet implemented)",
+            "DEPLOY_RESOURCE intent: type=%s amount=%d district=%s "
+            "(not yet implemented)",
             intent.resource_type,
             intent.amount,
             intent.target_district,
@@ -135,7 +138,7 @@ class IntentMapper:
     def _map_request_report(self, intent: RequestReportIntent) -> str:
         """Map REQUEST_REPORT intent to shell command."""
         report_type = intent.report_type
-        
+
         if report_type == "summary":
             return "summary"
         elif report_type == "district":

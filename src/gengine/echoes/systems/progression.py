@@ -15,12 +15,8 @@ from typing import Dict, List, Optional
 
 from ..core import GameState
 from ..core.progression import (
-    AccessTier,
-    AgentProgressionState,
-    AgentSpecialization,
     ProgressionState,
     SkillDomain,
-    SPECIALIZATION_DOMAIN_MAP,
     calculate_agent_modifier,
     calculate_success_modifier,
 )
@@ -31,7 +27,9 @@ class ProgressionEvent:
     """Records a progression change during a tick."""
 
     tick: int
-    event_type: str  # "skill_gain", "reputation_change", "tier_unlock", "agent_progression"
+    event_type: (
+        str  # "skill_gain", "reputation_change", "tier_unlock", "agent_progression"
+    )
     domain: Optional[str] = None
     faction_id: Optional[str] = None
     agent_id: Optional[str] = None
@@ -238,7 +236,6 @@ class ProgressionSystem:
         exp_amount = base_exp * multiplier * self._settings.base_experience_rate
 
         # Add experience
-        old_level = progression.get_skill_level(domain)
         old_tier = progression.access_tier
         levels_gained = progression.add_skill_experience(domain, exp_amount)
 
@@ -252,7 +249,10 @@ class ProgressionSystem:
                     domain=domain.value,
                     amount=exp_amount,
                     new_level=new_level,
-                    detail=f"{domain.value.title()} skill increased to level {new_level}",
+                    detail=(
+                        f"{domain.value.title()} skill increased to level "
+                        f"{new_level}"
+                    ),
                 )
             )
 
@@ -486,7 +486,4 @@ class ProgressionSystem:
 
     def agent_roster_summary(self, state: GameState) -> List[Dict[str, object]]:
         """Return a list of agent progression summaries for display."""
-        return [
-            agent_prog.summary()
-            for agent_prog in state.agent_progression.values()
-        ]
+        return [agent_prog.summary() for agent_prog in state.agent_progression.values()]

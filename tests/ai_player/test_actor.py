@@ -485,6 +485,7 @@ class TestActorRegression100Ticks:
 
     def test_deterministic_100_tick_outcome(self) -> None:
         """100-tick run should be deterministic with fixed seed."""
+
         def run_session() -> float:
             engine = SimEngine()
             engine.initialize_state(world="default")

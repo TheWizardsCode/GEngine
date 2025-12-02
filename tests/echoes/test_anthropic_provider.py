@@ -1,7 +1,8 @@
 """Integration tests for Anthropic provider with mocked API responses."""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from gengine.echoes.llm.anthropic_provider import AnthropicProvider
 from gengine.echoes.llm.settings import LLMSettings
@@ -32,7 +33,7 @@ class TestAnthropicProvider:
         # Mock Anthropic API response with JSON
         mock_response = MagicMock()
         mock_response.content = [MagicMock()]
-        mock_response.content[0].text = '''{
+        mock_response.content[0].text = """{
             "intent_type": "INSPECT",
             "confidence": 0.95,
             "parameters": {
@@ -41,7 +42,7 @@ class TestAnthropicProvider:
                 "focus_areas": ["security", "morale"]
             },
             "narrative_context": "Checking security and morale in Perimeter Hollow"
-        }'''
+        }"""
         mock_response.model_dump_json.return_value = '{"mock": "response"}'
 
         with patch.object(
@@ -64,11 +65,13 @@ class TestAnthropicProvider:
         assert result.confidence == 0.95
 
     @pytest.mark.anyio
-    async def test_parse_intent_deploy_resource(self, provider: AnthropicProvider) -> None:
+    async def test_parse_intent_deploy_resource(
+        self, provider: AnthropicProvider
+    ) -> None:
         """Test parsing a deploy resource intent."""
         mock_response = MagicMock()
         mock_response.content = [MagicMock()]
-        mock_response.content[0].text = '''{
+        mock_response.content[0].text = """{
             "intent_type": "DEPLOY_RESOURCE",
             "confidence": 0.9,
             "parameters": {
@@ -77,7 +80,7 @@ class TestAnthropicProvider:
                 "target_district": "spire",
                 "purpose": "power infrastructure"
             }
-        }'''
+        }"""
         mock_response.model_dump_json.return_value = '{"mock": "response"}'
 
         with patch.object(
@@ -234,14 +237,16 @@ class TestAnthropicProvider:
         assert "Overloaded" in result.raw_response
 
     @pytest.mark.anyio
-    async def test_parse_intent_missing_intent_type(self, provider: AnthropicProvider) -> None:
+    async def test_parse_intent_missing_intent_type(
+        self, provider: AnthropicProvider
+    ) -> None:
         """Test handling response with missing intent_type."""
         mock_response = MagicMock()
         mock_response.content = [MagicMock()]
-        mock_response.content[0].text = '''{
+        mock_response.content[0].text = """{
             "confidence": 0.5,
             "parameters": {"some": "data"}
-        }'''
+        }"""
         mock_response.model_dump_json.return_value = '{"mock": "response"}'
 
         with patch.object(

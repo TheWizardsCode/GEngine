@@ -178,14 +178,14 @@ def create_llm_app(
     settings: LLMSettings | None = None,
 ) -> FastAPI:
     """Create FastAPI application for LLM service.
-    
+
     Parameters
     ----------
     provider
         Pre-configured LLM provider. If None, creates from settings.
     settings
         LLM settings. If None and provider is None, loads from environment.
-        
+
     Returns
     -------
     FastAPI
@@ -233,7 +233,7 @@ def create_llm_app(
     @app.post("/parse_intent", response_model=ParseIntentResponse)
     async def parse_intent(request: ParseIntentRequest) -> ParseIntentResponse:
         """Parse natural language input into structured intents.
-        
+
         Takes user input and game context, returns structured intent objects
         that can be routed to the simulation service.
         """
@@ -257,12 +257,12 @@ def create_llm_app(
             raise HTTPException(
                 status_code=500,
                 detail=f"Intent parsing failed: {str(e)}",
-            )
+            ) from e
 
     @app.post("/narrate", response_model=NarrateResponse)
     async def narrate(request: NarrateRequest) -> NarrateResponse:
         """Generate narrative description of game events.
-        
+
         Takes game events and context, returns natural language narrative
         suitable for presenting to the player.
         """
@@ -286,6 +286,6 @@ def create_llm_app(
             raise HTTPException(
                 status_code=500,
                 detail=f"Narration failed: {str(e)}",
-            )
+            ) from e
 
     return app

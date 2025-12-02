@@ -2,15 +2,15 @@
 
 from .models import Agent, City, District, EnvironmentState, Faction, ResourceStock
 from .progression import (
+    EXPERTISE_MAX_PIPS,
+    SPECIALIZATION_DOMAIN_MAP,
     AccessTier,
     AgentProgressionState,
     AgentSpecialization,
-    EXPERTISE_MAX_PIPS,
     ProgressionState,
     ReputationState,
     SkillDomain,
     SkillState,
-    SPECIALIZATION_DOMAIN_MAP,
     calculate_agent_modifier,
     calculate_success_modifier,
 )

@@ -142,7 +142,9 @@ def test_story_seed_persists_during_cooldown_window() -> None:
     seeds = analysis.get("story_seeds") or []
 
     assert seeds
-    energy_seed = next(seed for seed in seeds if seed["seed_id"] == "energy-quota-crisis")
+    energy_seed = next(
+        seed for seed in seeds if seed["seed_id"] == "energy-quota-crisis"
+    )
     cooldown = state.story_seeds["energy-quota-crisis"].cooldown_ticks
     assert energy_seed["last_trigger_tick"] == first_tick
     assert energy_seed["cooldown_remaining"] == cooldown - (followup_tick - first_tick)

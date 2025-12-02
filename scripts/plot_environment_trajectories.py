@@ -50,7 +50,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     runs = _collect_runs(args.run)
     if not runs:
         raise SystemExit(
-            "No telemetry files found. Provide --run LABEL=PATH or rerun the sweeps to generate JSON."
+            "No telemetry files found. Provide --run LABEL=PATH "
+            "or rerun the sweeps to generate JSON."
         )
 
     fig, (ax_pollution, ax_unrest) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
@@ -58,7 +59,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         ticks, pollution, unrest = _extract_series(path)
         if len(ticks) < 2:
             print(
-                f"Warning: {label} only provided {len(ticks)} sample(s); increase focus.history_length before capturing telemetry."
+                f"Warning: {label} only provided {len(ticks)} sample(s); "
+                "increase focus.history_length before capturing telemetry."
             )
         ax_pollution.plot(ticks, pollution, label=label)
         ax_unrest.plot(ticks, unrest, label=label)

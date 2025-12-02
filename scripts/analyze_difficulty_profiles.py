@@ -51,7 +51,9 @@ class DifficultyProfile:
         # Calculate faction balance as delta between faction legitimacies
         faction_leg = data.get("faction_legitimacy", {})
         leg_values = list(faction_leg.values())
-        faction_balance = max(leg_values) - min(leg_values) if len(leg_values) >= 2 else 0.0
+        faction_balance = (
+            max(leg_values) - min(leg_values) if len(leg_values) >= 2 else 0.0
+        )
 
         # Economic pressure from price volatility
         economy = data.get("last_economy", {})
@@ -161,9 +163,7 @@ def compare_profiles(profiles: dict[str, DifficultyProfile]) -> dict[str, Any]:
                 "✓ Unrest correctly increases with difficulty (harder = more unrest)"
             )
         else:
-            findings.append(
-                "⚠ Unrest does not consistently increase with difficulty"
-            )
+            findings.append("⚠ Unrest does not consistently increase with difficulty")
 
     # Check for extreme values
     for preset, profile in profiles.items():
@@ -171,7 +171,8 @@ def compare_profiles(profiles: dict[str, DifficultyProfile]) -> dict[str, Any]:
             findings.append(f"⚠ {preset}: Stability collapsed to 0 (may be too harsh)")
         if profile.anomalies > 100:
             findings.append(
-                f"⚠ {preset}: High anomaly count ({profile.anomalies}) indicates system stress"
+                f"⚠ {preset}: High anomaly count ({profile.anomalies}) "
+                "indicates system stress"
             )
 
     # Check differentiation between adjacent difficulties
@@ -181,8 +182,8 @@ def compare_profiles(profiles: dict[str, DifficultyProfile]) -> dict[str, Any]:
         stability_diff = abs(prof1.stability_end - prof2.stability_end)
         if stability_diff < 0.05:
             findings.append(
-                f"⚠ {p1} vs {p2}: Stability difference is minimal ({stability_diff:.3f}), "
-                "consider widening gap"
+                f"⚠ {p1} vs {p2}: Stability difference is minimal "
+                f"({stability_diff:.3f}), consider widening gap"
             )
 
     comparison["findings"] = findings

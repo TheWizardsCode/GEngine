@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import json
+import sys
 from importlib import util
 from pathlib import Path
-import sys
 
 import pytest
 
@@ -31,14 +31,29 @@ def minimal_config(tmp_path: Path) -> Path:
     config_root = tmp_path / "config"
     config_root.mkdir()
     (config_root / "simulation.yml").write_text(
-        "limits:\n  engine_max_ticks: 2\n  cli_run_cap: 2\n  cli_script_command_cap: 5\n  service_tick_cap: 2\n"
-        "lod:\n  mode: balanced\n  max_events_per_tick: 4\n  volatility_scale:\n    detailed: 1.0\n    balanced: 0.8\n    coarse: 0.5\nprofiling:\n  log_ticks: false\n"
-        "  history_window: 5\n  capture_subsystems: true\n"
+        "limits:\n"
+        "  engine_max_ticks: 2\n"
+        "  cli_run_cap: 2\n"
+        "  cli_script_command_cap: 5\n"
+        "  service_tick_cap: 2\n"
+        "lod:\n"
+        "  mode: balanced\n"
+        "  max_events_per_tick: 4\n"
+        "  volatility_scale:\n"
+        "    detailed: 1.0\n"
+        "    balanced: 0.8\n"
+        "    coarse: 0.5\n"
+        "profiling:\n"
+        "  log_ticks: false\n"
+        "  history_window: 5\n"
+        "  capture_subsystems: true\n"
     )
     return config_root
 
 
-def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path) -> None:
+def test_run_headless_sim_supports_batches(
+    tmp_path: Path, minimal_config: Path
+) -> None:
     output = tmp_path / "report.json"
 
     summary = run_headless_sim(
@@ -91,7 +106,9 @@ def test_run_headless_sim_supports_batches(tmp_path: Path, minimal_config: Path)
     assert data["post_mortem"]["environment"]
 
 
-def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_path: Path) -> None:
+def test_headless_cli_entrypoint(
+    monkeypatch, capsys, minimal_config: Path, tmp_path: Path
+) -> None:
     output = tmp_path / "batch.json"
     exit_code = headless_main(
         [
@@ -108,7 +125,7 @@ def test_headless_cli_entrypoint(monkeypatch, capsys, minimal_config: Path, tmp_
 
     assert exit_code == 0
     captured = capsys.readouterr()
-    assert "\"ticks_requested\": 1" in captured.out
+    assert '"ticks_requested": 1' in captured.out
     assert output.exists()
     saved = json.loads(output.read_text())
     assert "agent_actions" in saved

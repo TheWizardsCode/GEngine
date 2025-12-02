@@ -6,7 +6,6 @@ import pytest
 
 from gengine.echoes.llm.providers import (
     IntentParseResult,
-    LLMProvider,
     NarrateResult,
     StubProvider,
     create_provider,

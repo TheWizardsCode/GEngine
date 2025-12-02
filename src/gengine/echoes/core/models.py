@@ -36,6 +36,7 @@ class DistrictModifiers(BaseModel):
 
     model_config = {"validate_assignment": True}
 
+
 class DistrictCoordinates(BaseModel):
     """Planar or 3D coordinates for a district."""
 
@@ -138,7 +139,9 @@ class StorySeed(BaseModel):
 
     @field_validator("triggers")
     @classmethod
-    def _validate_triggers(cls, value: List[StorySeedTrigger]) -> List[StorySeedTrigger]:  # type: ignore[override]
+    def _validate_triggers(
+        cls, value: List[StorySeedTrigger]
+    ) -> List[StorySeedTrigger]:  # type: ignore[override]
         if not value:
             raise ValueError("story seed must define at least one trigger")
         return value

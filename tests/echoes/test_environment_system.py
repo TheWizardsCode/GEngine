@@ -106,7 +106,9 @@ def test_environment_system_reacts_to_faction_actions() -> None:
     )
 
     assert impact.faction_effects
-    assert any(effect["action"] == "SABOTAGE_RIVAL" for effect in impact.faction_effects)
+    assert any(
+        effect["action"] == "SABOTAGE_RIVAL" for effect in impact.faction_effects
+    )
     assert any("pollution" in event for event in impact.events)
 
 
@@ -168,10 +170,13 @@ def test_environment_diffusion_reports_extremes_and_samples() -> None:
     assert impact.diffusion_samples
     assert impact.extremes
     assert impact.average_pollution == pytest.approx(
-        sum(d.modifiers.pollution for d in state.city.districts) / len(state.city.districts)
+        sum(d.modifiers.pollution for d in state.city.districts)
+        / len(state.city.districts)
     )
     assert all(abs(sample["delta"]) <= 0.01 for sample in impact.diffusion_samples)
-    assert any(sample.get("neighbor_avg") is not None for sample in impact.diffusion_samples)
+    assert any(
+        sample.get("neighbor_avg") is not None for sample in impact.diffusion_samples
+    )
 
 
 def test_biodiversity_stability_feedback() -> None:
@@ -191,7 +196,11 @@ def test_biodiversity_stability_feedback() -> None:
         )
     )
 
-    impact = system.tick(state, rng=random.Random(3), economy_report=EconomyReport(prices={}, shortages={}))
+    impact = system.tick(
+        state,
+        rng=random.Random(3),
+        economy_report=EconomyReport(prices={}, shortages={}),
+    )
 
     assert state.environment.stability < 0.7
     assert impact.stability_effects["biodiversity_delta"] < 0

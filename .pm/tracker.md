@@ -1,11 +1,17 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-02T06:23:51Z
+**Last Updated:** 2025-12-02T18:55:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 8.4.1 (Content Pipeline Tooling & CI) COMPLETED** - GitHub Issue [#23](https://github.com/TheWizardsCode/GEngine/issues/23)
+  - Content build script (`scripts/build_content.py`) validates worlds, configs, and sweeps
+  - CI workflow (`.github/workflows/content-validation.yml`) runs on content file changes
+  - Designer workflow documented in `docs/gengine/content_designer_workflow.md`
+  - 17 tests covering all validation paths, all passing
+  - Clear error messages with entity reference validation
 - 🎉 **Task 10.1.2 (Strengthen AgentSystem Tests) COMPLETED**
   - Refactored `AgentSystem` to extract scoring logic for testability.
   - Added unit tests verifying trait influence (empathy, cunning, resolve) on decision scoring.
@@ -92,9 +98,9 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Core complete (8.1.1, 8.2.1, 8.3.1), need CI automation (8.3.2) and content pipeline (8.4.1)
+1. 🚀 **Phase 8 Deployment** - Core complete (8.1.1, 8.2.1, 8.3.1, 8.4.1), need CI automation (8.3.2) to finish
 2. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
-3. 🔧 **CI/CD Gap** - No automated workflows exist; high risk of regressions
+3. 🔧 **CI/CD Gap** - K8s validation workflow (8.3.2) still needed for deployment protection
 
 **Recommended Next 3 Parallel Tasks:**
 
@@ -105,37 +111,30 @@
    - Impact: Protects all environments from manifest errors
    - Estimated time: 1-2 days
 
-2. **8.3.3 - K8s Resource Tuning** (Priority: MEDIUM, Effort: Low)
-   - Why: Complete 8.3.1 resource sizing acceptance criteria
-   - Owner needed: DevOps/SRE-focused agent
-   - Parallelizable: Configuration work, independent of code
-   - Impact: Prevents resource exhaustion in production
-   - Estimated time: 4-6 hours
-   - Prerequisites: Smoke test data from 8.3.1
-
-3. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High)
+2. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High)
    - Why: Builds on completed AI foundation (9.1.1, 9.2.1)
    - Owner needed: AI/ML-focused agent with LLM experience
    - Parallelizable: AI/ML work, independent of infrastructure
    - Impact: Enables advanced AI testing capabilities
    - Estimated time: 3-5 days
 
-**Alternative (if no AI/ML owner available):**
-- **8.4.1 - Content Pipeline Tooling** instead of 9.3.1
-  - Priority: MEDIUM, Effort: Medium
-  - Unblocks content designers
-  - Estimated time: 2-3 days
+3. **10.1.3 - Expand SimEngine API Tests** (Priority: HIGH, Effort: Medium)
+   - Why: Improve core system test coverage
+   - Owner needed: Test-focused agent
+   - Parallelizable: Test work, independent of infrastructure
+   - Impact: Better regression detection for core engine
+   - Estimated time: 2-3 days
 
 **Key Risks:**
 
 - 🔴 **K8s CI validation missing** - Bad manifests can break deployment (8.3.2) - HIGH IMPACT
-- ⚠️ **Phase 8 content pipeline needs ownership** - Task 8.4.1 requires assignment
 - ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
+- ✅ **Phase 8 content pipeline complete** - Task 8.4.1 finished with build script, CI workflow, and documentation (2025-12-02)
 - ✅ **Phase 8 observability complete** - Task 8.3.1 Prometheus annotations and smoke tests added (2025-12-01)
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
 - ✅ **Containerization complete** - Docker/Compose and K8s manifests tested and documented
 - ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
-- ✅ **Clean repository state** - Issues #21, #24, #25 closed (verified 2025-12-01)
+- ✅ **Clean repository state** - Issues #21, #23, #24, #25 closed (verified 2025-12-02)
 
 |    ID | Task                                            | Status      | Priority | Responsible        | Updated    |
 | ----: | ----------------------------------------------- | ----------- | -------- | ------------------ | ---------- |
@@ -168,7 +167,7 @@
 | 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y)           | completed   | Medium   | devops-agent       | 2025-12-02 |
 | 8.3.3 | Gateway/LLM Prometheus Metrics (M8.3.x)         | not-started | Medium   | TBD (ask Ross)     | 2025-12-01 |
 | 8.3.4 | Integrate K8s Smoke Test into CI (M8.3.x)       | not-started | Medium   | TBD (ask Ross)     | 2025-12-01 |
-| 8.4.1 | Content pipeline tooling & CI (M8.4)            | not-started | Medium   | TBD (ask Ross)     | 2025-11-30 |
+| 8.4.1 | Content pipeline tooling & CI (M8.4)            | completed   | Medium   | devops-agent       | 2025-12-02 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1)        | completed   | Medium   | gamedev-agent      | 2025-11-30 |
 | 9.2.1 | Rule-based AI action layer (M9.2)               | completed   | Medium   | gamedev-agent      | 2025-12-01 |
 | 9.3.1 | LLM-enhanced AI decisions (M9.3)                | not-started | Medium   | TBD (ask Ross)     | 2025-11-30 |
@@ -717,16 +716,44 @@
 ### 8.4.1 — Content Pipeline Tooling & CI (M8.4)
 - **GitHub Issue:** [#23](https://github.com/TheWizardsCode/GEngine/issues/23)
 - **Description:** Implement content build tooling (`scripts/build_content.py`), CI validation hooks, and documentation so designers can author/test YAML and story seeds efficiently.
-- **Acceptance Criteria:** Content build step produces artifacts consumed by simulation; CI validates content on change; designer workflow documented.
+- **Acceptance Criteria:**
+  - ✅ Content build step produces artifacts consumed by simulation
+  - ✅ CI validates content on change (schema, references, integrity)
+  - ✅ Designer workflow documented
+  - ✅ Clear error messages for content validation failures
 - **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
-- **Dependencies:** Stable content schema and directory structure.
+- **Responsible:** devops-agent
+- **Status:** ✅ COMPLETED
+- **Dependencies:** Stable content schema and directory structure (✅ complete).
 - **Risks & Mitigations:**
   - Risk: Pipeline friction slows content iteration. Mitigation: Optimize for designer ergonomics, provide quick local commands.
-- **Next Steps:**
-  1. Implement build script.
-  2. Wire into CI.
-  3. Document designer workflow.
+- **Completion Notes:**
+  - **Build Script** (`scripts/build_content.py`):
+    - Validates world definitions (`world.yml` and `story_seeds.yml`) with entity reference checking
+    - Validates simulation configuration (`simulation.yml`) against Pydantic schema
+    - Validates difficulty sweep configurations (`content/config/sweeps/*/`)
+    - Outputs JSON manifest with validation results and file lists
+    - Clear error messages with icons (❌/✓) and bullet-point formatting
+    - Exit codes: 0 (success), 1 (validation errors), 2 (file/config errors)
+  - **CI Workflow** (`.github/workflows/content-validation.yml`):
+    - Triggers on push to main and PRs that modify content files
+    - Monitors: `content/**/*.yml`, `content/**/*.yaml`, `scripts/build_content.py`, `.github/workflows/content-*.yml`
+    - Runs validation via `uv run python scripts/build_content.py --verbose --output content-manifest.json`
+    - Uploads content manifest artifact for debugging
+    - Blocks PR merge on validation failures
+  - **Designer Documentation** (`docs/gengine/content_designer_workflow.md`):
+    - Content types and structure (worlds, configs, sweeps)
+    - YAML schema examples with annotations
+    - Local validation instructions with exit codes
+    - CI/CD validation details and artifact retrieval
+    - Troubleshooting section with common validation errors
+    - Best practices for content authors
+  - **Test Coverage** (`tests/scripts/test_build_content.py`):
+    - 17 tests covering all validation paths
+    - Tests for valid content, missing files, invalid schemas, bad entity references
+    - Integration tests validating real repository content
+    - All tests passing
+- **Last Updated:** 2025-12-02
 
 ### 9.1.1 — AI Observer Foundation Acceptance (M9.1)
 - **GitHub Issue:** [#19](https://github.com/TheWizardsCode/GEngine/issues/19)

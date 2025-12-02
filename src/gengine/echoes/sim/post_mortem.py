@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Mapping, Sequence
 
 from ..core import GameState
@@ -27,7 +27,9 @@ class PostMortemSummary:
 def generate_post_mortem_summary(state: GameState) -> Dict[str, Any]:
     """Build a deterministic recap that downstream tools can diff."""
 
-    history: List[Mapping[str, Any]] = list(state.metadata.get("director_history") or [])
+    history: List[Mapping[str, Any]] = list(
+        state.metadata.get("director_history") or []
+    )
     events: List[Dict[str, Any]] = list(state.metadata.get("director_events") or [])
     environment = _environment_snapshot(state)
     env_trend = _environment_trend(history, environment)
@@ -70,14 +72,26 @@ def _environment_trend(
         end_env = dict(fallback)
     trend: Dict[str, Any] = {
         "start": {
-            "stability": round(float(start_env.get("stability", fallback.get("stability", 0.0))), 3),
-            "unrest": round(float(start_env.get("unrest", fallback.get("unrest", 0.0))), 3),
-            "pollution": round(float(start_env.get("pollution", fallback.get("pollution", 0.0))), 3),
+            "stability": round(
+                float(start_env.get("stability", fallback.get("stability", 0.0))), 3
+            ),
+            "unrest": round(
+                float(start_env.get("unrest", fallback.get("unrest", 0.0))), 3
+            ),
+            "pollution": round(
+                float(start_env.get("pollution", fallback.get("pollution", 0.0))), 3
+            ),
         },
         "end": {
-            "stability": round(float(end_env.get("stability", fallback.get("stability", 0.0))), 3),
-            "unrest": round(float(end_env.get("unrest", fallback.get("unrest", 0.0))), 3),
-            "pollution": round(float(end_env.get("pollution", fallback.get("pollution", 0.0))), 3),
+            "stability": round(
+                float(end_env.get("stability", fallback.get("stability", 0.0))), 3
+            ),
+            "unrest": round(
+                float(end_env.get("unrest", fallback.get("unrest", 0.0))), 3
+            ),
+            "pollution": round(
+                float(end_env.get("pollution", fallback.get("pollution", 0.0))), 3
+            ),
         },
     }
     trend["delta"] = {
@@ -87,7 +101,9 @@ def _environment_trend(
     return trend
 
 
-def _faction_trends(history: List[Mapping[str, Any]], state: GameState) -> List[Dict[str, Any]]:
+def _faction_trends(
+    history: List[Mapping[str, Any]], state: GameState
+) -> List[Dict[str, Any]]:
     baseline: Dict[str, float] = {}
     latest: Dict[str, float] = {}
     for entry in history:
@@ -97,9 +113,15 @@ def _faction_trends(history: List[Mapping[str, Any]], state: GameState) -> List[
         if snapshot:
             latest = {k: round(float(v), 4) for k, v in snapshot.items()}
     if not baseline:
-        baseline = {faction_id: round(faction.legitimacy, 4) for faction_id, faction in state.factions.items()}
+        baseline = {
+            faction_id: round(faction.legitimacy, 4)
+            for faction_id, faction in state.factions.items()
+        }
     if not latest:
-        latest = {faction_id: round(faction.legitimacy, 4) for faction_id, faction in state.factions.items()}
+        latest = {
+            faction_id: round(faction.legitimacy, 4)
+            for faction_id, faction in state.factions.items()
+        }
     entries: List[Dict[str, Any]] = []
     for faction_id in sorted(set(baseline) | set(latest)):
         start_value = baseline.get(faction_id, 0.0)
@@ -135,7 +157,9 @@ def _featured_events(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return normalized
 
 
-def _story_seed_recap(state: GameState, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _story_seed_recap(
+    state: GameState, events: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     lifecycle = state.metadata.get("story_seed_lifecycle") or {}
     history = list(state.metadata.get("story_seed_lifecycle_history") or [])
     history_index: Dict[str, Dict[str, Any]] = {}
@@ -150,12 +174,22 @@ def _story_seed_recap(state: GameState, events: List[Dict[str, Any]]) -> List[Di
             event_index[seed_id] = event
     recaps: List[Dict[str, Any]] = []
     for seed_id, entry in lifecycle.items():
-        recaps.append(_seed_entry(seed_id, entry, state, history_index.get(seed_id), event_index.get(seed_id)))
+        recaps.append(
+            _seed_entry(
+                seed_id,
+                entry,
+                state,
+                history_index.get(seed_id),
+                event_index.get(seed_id),
+            )
+        )
     # Include seeds that only live in history (e.g., archived + pruned lifecycle)
     for seed_id, entry in history_index.items():
         if any(rec["seed_id"] == seed_id for rec in recaps):
             continue
-        recaps.append(_seed_entry(seed_id, entry, state, entry, event_index.get(seed_id)))
+        recaps.append(
+            _seed_entry(seed_id, entry, state, entry, event_index.get(seed_id))
+        )
     recaps.sort(key=lambda entry: entry.get("last_activity_tick", -1), reverse=True)
     return recaps[:5]
 
@@ -203,7 +237,9 @@ def _seed_entry(
         summary["district_id"] = district_id
     if event_reason:
         summary["reason"] = event_reason
-    cooldown = payload.get("cooldown_remaining") or _int_or_none(payload.get("cooldown_until"))
+    cooldown = payload.get("cooldown_remaining") or _int_or_none(
+        payload.get("cooldown_until")
+    )
     if isinstance(cooldown, (int, float)):
         summary["cooldown_remaining"] = int(max(cooldown, 0))
     return summary
@@ -234,8 +270,10 @@ def _post_mortem_notes(
         swing = faction_trends[0]
         if swing["delta"]:
             direction = "gained" if swing["delta"] > 0 else "lost"
+            delta_abs = abs(swing["delta"])
             notes.append(
-                f"Faction {swing['faction_id']} {direction} {abs(swing['delta']):.3f} legitimacy (start {swing['start']:.3f} → end {swing['end']:.3f})."
+                f"Faction {swing['faction_id']} {direction} {delta_abs:.3f} "
+                f"legitimacy (start {swing['start']:.3f} → end {swing['end']:.3f})."
             )
     archived = [seed for seed in seeds if seed.get("state") == "archived"]
     if archived:

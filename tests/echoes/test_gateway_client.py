@@ -44,7 +44,9 @@ def test_render_response_with_error(capsys) -> None:
 
 def test_main_with_script() -> None:
     """Verify that main() parses --script and delegates to _run_session."""
-    with patch("gengine.echoes.gateway.client._run_session", new_callable=AsyncMock) as mock_session:
+    with patch(
+        "gengine.echoes.gateway.client._run_session", new_callable=AsyncMock
+    ) as mock_session:
         result = main(["--script", "summary;exit"])
     assert result == 0
     mock_session.assert_called_once_with("ws://localhost:8100/ws", ["summary", "exit"])
@@ -52,15 +54,20 @@ def test_main_with_script() -> None:
 
 def test_main_uses_default_gateway_url() -> None:
     """Verify that main() uses the default gateway URL when no env is set."""
-    with patch("gengine.echoes.gateway.client._run_session", new_callable=AsyncMock) as mock_session:
+    with patch(
+        "gengine.echoes.gateway.client._run_session", new_callable=AsyncMock
+    ) as mock_session:
         main(["--script", "exit"])
     mock_session.assert_called_once_with("ws://localhost:8100/ws", ["exit"])
 
 
 def test_main_uses_env_gateway_url() -> None:
     """Verify that main() respects the ECHOES_GATEWAY_URL environment variable."""
-    with patch("gengine.echoes.gateway.client._run_session", new_callable=AsyncMock) as mock_session, patch.dict(
-        "os.environ", {"ECHOES_GATEWAY_URL": "ws://custom:9000/ws"}
+    with (
+        patch(
+            "gengine.echoes.gateway.client._run_session", new_callable=AsyncMock
+        ) as mock_session,
+        patch.dict("os.environ", {"ECHOES_GATEWAY_URL": "ws://custom:9000/ws"}),
     ):
         main(["--script", "exit"])
     mock_session.assert_called_once_with("ws://custom:9000/ws", ["exit"])
@@ -86,27 +93,37 @@ def test_render_response_with_empty_dict(capsys) -> None:
 
 def test_main_with_gateway_url_flag() -> None:
     """Verify that --gateway-url flag overrides the default URL."""
-    with patch("gengine.echoes.gateway.client._run_session", new_callable=AsyncMock) as mock_session:
+    with patch(
+        "gengine.echoes.gateway.client._run_session", new_callable=AsyncMock
+    ) as mock_session:
         main(["--gateway-url", "ws://custom:9000/ws", "--script", "exit"])
     mock_session.assert_called_once_with("ws://custom:9000/ws", ["exit"])
 
 
 def test_main_splits_script_commands() -> None:
     """Verify that --script semicolon-separated commands are parsed correctly."""
-    with patch("gengine.echoes.gateway.client._run_session", new_callable=AsyncMock) as mock_session:
+    with patch(
+        "gengine.echoes.gateway.client._run_session", new_callable=AsyncMock
+    ) as mock_session:
         main(["--script", "summary; next; exit"])
-    mock_session.assert_called_once_with("ws://localhost:8100/ws", ["summary", "next", "exit"])
+    mock_session.assert_called_once_with(
+        "ws://localhost:8100/ws", ["summary", "next", "exit"]
+    )
 
 
 def test_main_empty_script_strips_whitespace() -> None:
     """Verify that empty/whitespace-only commands are filtered out."""
-    with patch("gengine.echoes.gateway.client._run_session", new_callable=AsyncMock) as mock_session:
+    with patch(
+        "gengine.echoes.gateway.client._run_session", new_callable=AsyncMock
+    ) as mock_session:
         main(["--script", "; ; exit; ;"])
     mock_session.assert_called_once_with("ws://localhost:8100/ws", ["exit"])
 
 
 def test_main_no_script_runs_interactively() -> None:
     """Verify that main() without --script invokes asyncio.run."""
-    with patch("gengine.echoes.gateway.client._run_session", new_callable=AsyncMock) as mock_session:
+    with patch(
+        "gengine.echoes.gateway.client._run_session", new_callable=AsyncMock
+    ) as mock_session:
         main([])
     mock_session.assert_called_once_with("ws://localhost:8100/ws", [])
