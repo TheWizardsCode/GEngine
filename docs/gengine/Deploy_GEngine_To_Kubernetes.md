@@ -476,6 +476,119 @@ kubectl run -n "${GENGINE_NAMESPACE}" --rm -it --image=curlimages/curl test-curl
 kubectl get servicemonitors -n "${GENGINE_NAMESPACE}"
 ```
 
+## Resource Sizing
+
+GEngine services have differentiated resource allocations based on their
+workload characteristics. This section explains the rationale and methodology
+for tuning Kubernetes resource requests and limits.
+
+### Service Resource Profiles
+
+| Service | Role | CPU Profile | Memory Profile |
+|---------|------|-------------|----------------|
+| Simulation | Game logic, tick processing, state management | CPU-intensive (many subsystems per tick) | Higher (game state, telemetry) |
+| Gateway | WebSocket routing, HTTP proxying | Low (I/O bound) | Low-moderate (connection buffers) |
+| LLM | Natural language processing via external APIs | Moderate (I/O bound to LLM providers) | Higher (request/response context) |
+
+### Default Resource Allocations
+
+**Base Configuration** (`k8s/base/`):
+
+| Service | CPU Request | CPU Limit | Memory Request | Memory Limit |
+|---------|-------------|-----------|----------------|--------------|
+| Simulation | 300m | 750m | 384Mi | 768Mi |
+| Gateway | 150m | 400m | 192Mi | 384Mi |
+| LLM | 200m | 500m | 320Mi | 640Mi |
+
+**Local Overlay** (`k8s/overlays/local/`):
+Reduced resources for Minikube/local development (~50% of base).
+
+| Service | CPU Request | CPU Limit | Memory Request | Memory Limit |
+|---------|-------------|-----------|----------------|--------------|
+| Simulation | 200m | 500m | 256Mi | 512Mi |
+| Gateway | 100m | 250m | 128Mi | 256Mi |
+| LLM | 100m | 300m | 192Mi | 384Mi |
+
+**Staging Overlay** (`k8s/overlays/staging/`):
+Higher resources for production-like load testing (~2x base).
+
+| Service | CPU Request | CPU Limit | Memory Request | Memory Limit |
+|---------|-------------|-----------|----------------|--------------|
+| Simulation | 600m | 1500m | 768Mi | 1536Mi |
+| Gateway | 300m | 800m | 384Mi | 768Mi |
+| LLM | 400m | 1000m | 640Mi | 1280Mi |
+
+### Sizing Methodology
+
+The resource allocations were determined using:
+
+1. **Workload Analysis**: Each service's role was analyzed:
+   - Simulation processes multiple subsystems per tick (agents, factions,
+     economy, environment, narrator) requiring higher CPU
+   - Gateway handles WebSocket connections with minimal processing overhead
+   - LLM service buffers requests to external APIs, requiring memory for context
+
+2. **Conservative Baseline**: Base limits set to 2x typical observed usage
+   to provide headroom for traffic bursts without causing throttling
+
+3. **Request:Limit Ratio**: Approximately 1:2 ratio between requests and
+   limits allows burstable workloads while ensuring QoS under load
+
+4. **Environment Scaling**:
+   - Local: ~50% of base (fits in typical 4-8GB Minikube clusters)
+   - Staging: ~2x base (realistic load testing with headroom)
+
+### Tuning Resources
+
+To adjust resources for your environment:
+
+1. **Monitor Current Usage**:
+   ```bash
+   kubectl top pods -n "${GENGINE_NAMESPACE}"
+   ```
+
+2. **Check for Throttling or OOMKills**:
+   ```bash
+   kubectl describe pod -n "${GENGINE_NAMESPACE}" -l app.kubernetes.io/component=simulation
+   ```
+
+3. **Update Overlay Configuration**:
+   Edit the appropriate overlay's `kustomization.yaml` and redeploy:
+   ```bash
+   kubectl apply -k k8s/overlays/${GENGINE_DEPLOY_ENV}
+   ```
+
+4. **Validate with Smoke Tests**:
+   ```bash
+   ./scripts/k8s_smoke_test.sh --load
+   ```
+
+### Common Tuning Scenarios
+
+**High Tick Rate Simulations**:
+If running at higher tick rates (>10 ticks/sec), increase simulation CPU:
+```yaml
+- op: replace
+  path: /spec/template/spec/containers/0/resources/limits/cpu
+  value: "1000m"
+```
+
+**Many Concurrent Players**:
+For high connection counts, increase gateway memory:
+```yaml
+- op: replace
+  path: /spec/template/spec/containers/0/resources/limits/memory
+  value: "512Mi"
+```
+
+**LLM-Heavy Workflows**:
+If using LLM service extensively, increase memory for context buffering:
+```yaml
+- op: replace
+  path: /spec/template/spec/containers/0/resources/limits/memory
+  value: "1Gi"
+```
+
 ## Monitoring and Observability
 
 GEngine services are instrumented with Prometheus-compatible metrics endpoints

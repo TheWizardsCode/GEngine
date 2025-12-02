@@ -5,6 +5,14 @@
 # - Uses ClusterIP services with Ingress for external access
 # - Configures higher resource limits for staging workloads
 # - Uses image pull from registry
+#
+# Resource Sizing Rationale (Staging):
+# - Simulation: Highest resources (game logic, tick processing, state management)
+#   - 2x base limits for production-like load testing
+# - Gateway: Moderate resources (WebSocket routing, connection handling)
+#   - Scaled proportionally for multiple concurrent connections
+# - LLM: Higher memory for context/buffering, moderate CPU (I/O-bound API calls)
+#   - Memory-focused scaling for LLM request/response handling
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -15,60 +23,62 @@ resources:
 
 # Patches for staging environment
 patches:
-  # Increase resource limits for staging
+  # Simulation: Higher resources for staging workloads
   - target:
       kind: Deployment
       name: simulation
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/resources/requests/memory
-        value: "512Mi"
+        value: "768Mi"
       - op: replace
         path: /spec/template/spec/containers/0/resources/requests/cpu
-        value: "500m"
+        value: "600m"
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/memory
-        value: "1Gi"
+        value: "1536Mi"
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/cpu
-        value: "1000m"
+        value: "1500m"
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Always
 
+  # Gateway: Moderate resources for staging
   - target:
       kind: Deployment
       name: gateway
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/resources/requests/memory
-        value: "512Mi"
+        value: "384Mi"
       - op: replace
         path: /spec/template/spec/containers/0/resources/requests/cpu
-        value: "500m"
+        value: "300m"
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/memory
-        value: "1Gi"
+        value: "768Mi"
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/cpu
-        value: "1000m"
+        value: "800m"
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Always
 
+  # LLM: Higher memory for staging, moderate CPU
   - target:
       kind: Deployment
       name: llm
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/resources/requests/memory
-        value: "512Mi"
+        value: "640Mi"
       - op: replace
         path: /spec/template/spec/containers/0/resources/requests/cpu
-        value: "500m"
+        value: "400m"
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/memory
-        value: "1Gi"
+        value: "1280Mi"
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/cpu
         value: "1000m"
