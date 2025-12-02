@@ -40,13 +40,17 @@ spec:
           envFrom:
             - configMapRef:
                 name: gengine-config
+          # Simulation is the most resource-intensive service:
+          # - Runs game logic each tick with multiple subsystems
+          # - Maintains in-memory game state and telemetry
+          # - Higher CPU for tick processing, higher memory for state
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "384Mi"
+              cpu: "300m"
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "768Mi"
+              cpu: "750m"
           readinessProbe:
             httpGet:
               path: /healthz

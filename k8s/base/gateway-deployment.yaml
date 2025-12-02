@@ -40,13 +40,17 @@ spec:
           envFrom:
             - configMapRef:
                 name: gengine-config
+          # Gateway is lightweight:
+          # - Handles WebSocket connections and HTTP routing
+          # - Proxies requests to simulation and LLM services
+          # - Lower resource requirements than other services
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "192Mi"
+              cpu: "150m"
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "384Mi"
+              cpu: "400m"
           readinessProbe:
             httpGet:
               path: /healthz

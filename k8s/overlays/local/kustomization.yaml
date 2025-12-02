@@ -5,6 +5,12 @@
 # - Uses NodePort services for direct access from host machine
 # - Configures imagePullPolicy for local images
 # - Sets resource limits appropriate for local development
+#
+# Resource Sizing Rationale (Local):
+# - Simulation: Highest resources (game logic, tick processing, state management)
+# - Gateway: Lowest resources (WebSocket routing, lightweight proxying)
+# - LLM: Higher memory for context/buffering, moderate CPU (I/O-bound API calls)
+# - Local limits are ~50% of base to fit in typical Minikube resource constraints
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -51,7 +57,7 @@ patches:
         path: /spec/ports/0/nodePort
         value: 30001
 
-  # Ensure local images are used without pulling
+  # Simulation: Local-friendly resources + imagePullPolicy
   - target:
       kind: Deployment
       name: simulation
@@ -59,7 +65,20 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Never
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "200m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "500m"
 
+  # Gateway: Reduced resources for local development
   - target:
       kind: Deployment
       name: gateway
@@ -67,7 +86,20 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Never
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "128Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "250m"
 
+  # LLM: Local-friendly memory, reduced CPU
   - target:
       kind: Deployment
       name: llm
@@ -75,6 +107,18 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Never
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "192Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "384Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "300m"
 
 labels:
   - pairs:

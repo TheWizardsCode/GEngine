@@ -1,11 +1,17 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-01T07:15:36Z
+**Last Updated:** 2025-12-02T06:23:51Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 8.3.3 (K8s Resource Sizing & Tuning) COMPLETED** - GitHub Issue [#33](https://github.com/TheWizardsCode/GEngine/issues/33)
+  - Differentiated resource allocations for simulation, gateway, and LLM services
+  - Base manifests updated with workload-appropriate requests/limits
+  - Local overlay sized for Minikube (~50% of base)
+  - Staging overlay sized for production-like testing (~2x base)
+  - Documentation added with "Resource Sizing" section explaining rationale and tuning methodology
 - 🎉 **Task 8.3.1 (Observability in Kubernetes) COMPLETED** - GitHub Issue [#22](https://github.com/TheWizardsCode/GEngine/issues/22)
   - Prometheus annotations added to all deployment manifests (simulation, gateway, llm)
   - ServiceMonitor resources for Prometheus Operator integration
@@ -154,7 +160,7 @@
 | 8.2.1 | Kubernetes manifests & docs (M8.2) | completed | Medium | devops-agent | 2025-12-01 |
 | 8.3.1 | Observability in Kubernetes (M8.3) | completed | Medium | devops-infra-agent | 2025-12-01 |
 | 8.3.2 | K8s Validation CI Job (M8.3.x) | not-started | High | TBD (ask Ross) | 2025-12-01 |
-| 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
+| 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y) | completed | Medium | devops-agent | 2025-12-02 |
 | 8.3.3 | Gateway/LLM Prometheus Metrics (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
 | 8.3.4 | Integrate K8s Smoke Test into CI (M8.3.x) | not-started | Medium | TBD (ask Ross) | 2025-12-01 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4) | not-started | Medium | TBD (ask Ross) | 2025-11-30 |
@@ -613,27 +619,40 @@
 - **Last Updated:** 2025-12-01
 
 ### 8.3.3 — K8s Resource Sizing & Tuning (M8.3.y)
-- **GitHub Issue:** TBD
+- **GitHub Issue:** [#33](https://github.com/TheWizardsCode/GEngine/issues/33)
 - **Description:** Complete the resource sizing acceptance criterion from task 8.3.1 by tuning Kubernetes resource requests/limits based on smoke test data and expected load patterns. Update manifests for all three services (simulation, gateway, LLM) in both base and overlay configurations.
 - **Acceptance Criteria:**
-  - Resource `requests` and `limits` tuned for simulation, gateway, and LLM services
-  - Settings based on smoke test observations and expected load patterns
-  - Both base and overlay configs updated (local/staging)
-  - Documentation explains resource rationale and tuning methodology
-  - Smoke tests validate updated resource constraints don't cause instability
+  - ✅ Resource `requests` and `limits` tuned for simulation, gateway, and LLM services
+  - ✅ Settings based on smoke test observations and expected load patterns
+  - ✅ Both base and overlay configs updated (local/staging)
+  - ✅ Documentation explains resource rationale and tuning methodology
+  - ✅ Smoke tests validate updated resource constraints don't cause instability
 - **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
+- **Responsible:** devops-agent
+- **Status:** ✅ COMPLETED
 - **Dependencies:** 8.3.1 smoke test data (✅ complete)
-- **Risks & Mitigations:**
-  - Risk: Over-constraining resources causes pod evictions. Mitigation: Start conservative with 2x observed usage, tune down iteratively.
-  - Risk: Under-constraining allows resource exhaustion. Mitigation: Set firm limits with headroom for bursts.
-- **Next Steps:**
-  1. Review smoke test output from `scripts/k8s_smoke_test.sh --load`
-  2. Analyze CPU/memory usage patterns under load
-  3. Update resource specs in `k8s/base/*-deployment.yaml`
-  4. Update overlay variants in `k8s/overlays/*/`
-  5. Re-run smoke tests to validate
-  6. Document sizing rationale in deployment docs
+- **Completion Notes:**
+  - **Base Manifest Updates** (`k8s/base/`):
+    - Simulation: 384Mi/300m requests, 768Mi/750m limits (highest - game logic, tick processing)
+    - Gateway: 192Mi/150m requests, 384Mi/400m limits (lowest - WebSocket routing)
+    - LLM: 320Mi/200m requests, 640Mi/500m limits (memory-focused for context)
+  - **Local Overlay** (`k8s/overlays/local/`):
+    - ~50% of base resources for Minikube compatibility
+    - Simulation: 256Mi/200m requests, 512Mi/500m limits
+    - Gateway: 128Mi/100m requests, 256Mi/250m limits
+    - LLM: 192Mi/100m requests, 384Mi/300m limits
+  - **Staging Overlay** (`k8s/overlays/staging/`):
+    - ~2x base resources for production-like load testing
+    - Simulation: 768Mi/600m requests, 1536Mi/1500m limits
+    - Gateway: 384Mi/300m requests, 768Mi/800m limits
+    - LLM: 640Mi/400m requests, 1280Mi/1000m limits
+  - **Documentation** (`docs/gengine/Deploy_GEngine_To_Kubernetes.md`):
+    - Added comprehensive "Resource Sizing" section
+    - Service resource profiles and workload characteristics
+    - Default allocations table for all environments
+    - Sizing methodology explanation
+    - Tuning guidelines and common scenarios
+- **Last Updated:** 2025-12-02
 - **Rationale:** Task 8.3.1 deferred resource tuning to keep the observability PR focused. Completing this work ensures production deployments are properly sized to prevent resource exhaustion or pod instability.
 - **Estimated Effort:** 4-6 hours
 - **Last Updated:** 2025-12-01

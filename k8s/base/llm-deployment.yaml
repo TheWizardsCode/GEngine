@@ -46,12 +46,16 @@ spec:
           #     secretKeyRef:
           #       name: gengine-secrets
           #       key: llm-api-key
+          # LLM service processes natural language:
+          # - Higher memory for request/response context and buffering
+          # - Moderate CPU since LLM calls are I/O-bound (external APIs)
+          # - May need adjustment based on provider-specific requirements
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "320Mi"
+              cpu: "200m"
             limits:
-              memory: "512Mi"
+              memory: "640Mi"
               cpu: "500m"
           readinessProbe:
             httpGet:
