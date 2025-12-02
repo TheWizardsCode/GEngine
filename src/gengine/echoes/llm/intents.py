@@ -41,7 +41,8 @@ class InspectIntent(GameIntent):
     )
     target_id: str = Field(..., description="ID of the target to inspect")
     focus_areas: Optional[list[str]] = Field(
-        None, description="Specific aspects to focus on (e.g., ['pollution', 'stability'])"
+        None,
+        description="Specific aspects to focus on (e.g., ['pollution', 'stability'])",
     )
 
     @field_validator("target_type")
@@ -64,7 +65,8 @@ class NegotiateIntent(GameIntent):
         description="Negotiation levers (e.g., resource offers, policy promises)",
     )
     goal: Optional[str] = Field(
-        None, description="Desired outcome (e.g., 'increase legitimacy', 'reduce unrest')"
+        None,
+        description="Desired outcome (e.g., 'increase legitimacy', 'reduce unrest')",
     )
 
     @field_validator("targets")
@@ -84,7 +86,8 @@ class DeployResourceIntent(GameIntent):
     amount: float = Field(..., description="Amount to deploy", ge=0)
     target_district: str = Field(..., description="District ID to deploy to")
     purpose: Optional[str] = Field(
-        None, description="Purpose of deployment (e.g., 'stabilize', 'boost production')"
+        None,
+        description="Purpose of deployment (e.g., 'stabilize', 'boost production')",
     )
 
     @field_validator("resource_type")
@@ -120,9 +123,7 @@ class CovertActionIntent(GameIntent):
     parameters: dict[str, Any] = Field(
         default_factory=dict, description="Action-specific parameters"
     )
-    risk_level: Optional[str] = Field(
-        None, description="Risk level: low, medium, high"
-    )
+    risk_level: Optional[str] = Field(None, description="Risk level: low, medium, high")
 
     @field_validator("risk_level")
     @classmethod
@@ -155,9 +156,7 @@ class RequestReportIntent(GameIntent):
     filters: dict[str, Any] = Field(
         default_factory=dict, description="Filters for the report"
     )
-    include_history: bool = Field(
-        default=False, description="Include historical data"
-    )
+    include_history: bool = Field(default=False, description="Include historical data")
 
     @field_validator("report_type")
     @classmethod

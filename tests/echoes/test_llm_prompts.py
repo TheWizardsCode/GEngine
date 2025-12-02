@@ -42,9 +42,7 @@ class TestOpenAIFunctionSchemas:
     def test_negotiate_function_schema(self):
         """Test negotiate function has correct schema."""
         negotiate_func = next(
-            f
-            for f in OPENAI_INTENT_FUNCTIONS
-            if f["name"] == "negotiate_with_faction"
+            f for f in OPENAI_INTENT_FUNCTIONS if f["name"] == "negotiate_with_faction"
         )
         assert "targets" in negotiate_func["parameters"]["properties"]
         assert "levers" in negotiate_func["parameters"]["properties"]
@@ -70,7 +68,14 @@ class TestOpenAIFunctionSchemas:
         props = report_func["parameters"]["properties"]
         assert "report_type" in props
         # Check report type enum
-        expected_types = ["summary", "district", "faction", "agent", "environment", "director"]
+        expected_types = [
+            "summary",
+            "district",
+            "faction",
+            "agent",
+            "environment",
+            "director",
+        ]
         assert props["report_type"]["enum"] == expected_types
 
 
@@ -163,9 +168,7 @@ class TestBuildIntentParsingPrompt:
             "tick": 42,
             "recent_events": ["Pollution increased", "Agent recruited"],
         }
-        prompt = build_intent_parsing_prompt(
-            "stabilize the district", context=context
-        )
+        prompt = build_intent_parsing_prompt("stabilize the district", context=context)
         assert "Current district: industrial-tier" in prompt
         assert "Current tick: 42" in prompt
         assert "Recent events:" in prompt

@@ -40,7 +40,7 @@ def test_client_state_and_metrics() -> None:
 def test_client_submit_actions() -> None:
     client = build_client()
 
-    response = client.submit_actions([{ "intent": "noop" }])
+    response = client.submit_actions([{"intent": "noop"}])
 
     assert response["results"][0]["status"] == "noop"
     client.close()

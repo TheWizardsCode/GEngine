@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -128,7 +127,9 @@ def test_geometry_enrichment_derives_adjacency(tmp_path: Path) -> None:
 
     state = load_world_bundle("geom", content_root=tmp_path)
 
-    adjacency = {district.id: set(district.adjacent) for district in state.city.districts}
+    adjacency = {
+        district.id: set(district.adjacent) for district in state.city.districts
+    }
     assert adjacency["alpha"] == {"beta", "gamma"}
     assert adjacency["beta"] == {"alpha", "gamma"}
     assert adjacency["gamma"] == {"alpha", "beta"}
@@ -162,7 +163,9 @@ def test_geometry_enrichment_derives_adjacency(tmp_path: Path) -> None:
         ),
     ],
 )
-def test_story_seed_loader_validates_entity_references(tmp_path: Path, overrides: dict, message: str) -> None:
+def test_story_seed_loader_validates_entity_references(
+    tmp_path: Path, overrides: dict, message: str
+) -> None:
     world_root = _write_story_seed_world(tmp_path, world_name="seed-refs")
     _write_story_seeds_file(world_root, [_story_seed_payload(**overrides)])
 

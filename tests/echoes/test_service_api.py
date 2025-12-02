@@ -73,7 +73,11 @@ def test_state_endpoint_returns_post_mortem() -> None:
     }
     assert expected_keys <= payload.keys()
     assert payload["environment"]
-    assert set(payload["environment_trend"]["delta"]) == {"stability", "unrest", "pollution"}
+    assert set(payload["environment_trend"]["delta"]) == {
+        "stability",
+        "unrest",
+        "pollution",
+    }
     assert isinstance(payload["faction_trends"], list)
     assert isinstance(payload["featured_events"], list)
     assert isinstance(payload["story_seeds"], list)
@@ -126,6 +130,8 @@ def test_focus_endpoint_reports_state_and_validates() -> None:
     bad_response = client.post("/focus", json={"district_id": "unknown"})
     assert bad_response.status_code == 400
 
-    good_response = client.post("/focus", json={"district_id": payload["focus"]["district_id"]})
+    good_response = client.post(
+        "/focus", json={"district_id": payload["focus"]["district_id"]}
+    )
     assert good_response.status_code == 200
     assert "history" in good_response.json()

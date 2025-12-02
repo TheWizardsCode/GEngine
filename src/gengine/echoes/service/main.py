@@ -6,8 +6,8 @@ import os
 
 import uvicorn
 
-from .app import create_app
 from ..settings import load_simulation_config
+from .app import create_app
 
 
 def main() -> None:  # pragma: no cover - thin wrapper around uvicorn

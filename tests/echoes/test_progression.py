@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import random
-from typing import Dict, List
-
 import pytest
 
 from gengine.echoes.content import load_world_bundle
@@ -19,7 +16,6 @@ from gengine.echoes.core.progression import (
 )
 from gengine.echoes.sim import SimEngine
 from gengine.echoes.systems.progression import (
-    ProgressionEvent,
     ProgressionSettings,
     ProgressionSystem,
 )
@@ -265,7 +261,7 @@ class TestProgressionSystem:
             {"intent": "NEGOTIATE_FACTION", "agent_id": "agent-2"},
         ]
 
-        events = system.tick(state, agent_actions=agent_actions)
+        system.tick(state, agent_actions=agent_actions)
 
         # Progression should be initialized
         assert state.progression is not None
@@ -280,7 +276,7 @@ class TestProgressionSystem:
             {"faction_id": "cartel-of-mist", "action": "INVEST_DISTRICT"},
         ]
 
-        events = system.tick(state, faction_actions=faction_actions)
+        system.tick(state, faction_actions=faction_actions)
 
         assert state.progression is not None
         # Should have reputation changes
@@ -292,13 +288,15 @@ class TestProgressionSystem:
         system = ProgressionSystem()
 
         # Grant enough experience to level up
-        state.ensure_progression().skills[SkillDomain.INVESTIGATION.value].experience = 9.0
+        state.ensure_progression().skills[
+            SkillDomain.INVESTIGATION.value
+        ].experience = 9.0
 
         agent_actions = [
             {"intent": "INSPECT_DISTRICT", "agent_id": "agent-1"},
         ]
 
-        events = system.tick(state, agent_actions=agent_actions)
+        system.tick(state, agent_actions=agent_actions)
 
         # Should have recorded the level up event
         history = state.metadata.get("progression_history", [])
@@ -310,15 +308,13 @@ class TestProgressionSystem:
         progression = state.ensure_progression()
 
         # Default chance should be around 0.75
-        chance = system.calculate_action_success_chance(
-            progression, "INSPECT_DISTRICT"
-        )
+        chance = system.calculate_action_success_chance(progression, "INSPECT_DISTRICT")
         assert 0.5 <= chance <= 1.0
 
     def test_sabotage_affects_both_factions(self) -> None:
         state = load_world_bundle()
         system = ProgressionSystem()
-        
+
         faction_actions = [
             {
                 "faction_id": "cartel-of-mist",
@@ -327,7 +323,7 @@ class TestProgressionSystem:
             },
         ]
 
-        events = system.tick(state, faction_actions=faction_actions)
+        system.tick(state, faction_actions=faction_actions)
 
         # Both factions should have reputation changes
         assert "union-of-flux" in state.progression.reputation
@@ -395,7 +391,7 @@ class TestSimEngineProgression:
         engine = SimEngine()
         engine.initialize_state(world="default")
 
-        reports = engine.advance_ticks(5)
+        engine.advance_ticks(5)
 
         # Progression should be updated after ticks
         assert engine.state.progression is not None
@@ -504,15 +500,30 @@ class TestAgentSpecialization:
 
     def test_specialization_domain_mapping(self) -> None:
         from gengine.echoes.core.progression import (
-            AgentSpecialization,
             SPECIALIZATION_DOMAIN_MAP,
+            AgentSpecialization,
         )
 
-        assert SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.NEGOTIATOR] == SkillDomain.DIPLOMACY
-        assert SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.INVESTIGATOR] == SkillDomain.INVESTIGATION
-        assert SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.ANALYST] == SkillDomain.ECONOMICS
-        assert SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.OPERATOR] == SkillDomain.TACTICAL
-        assert SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.INFLUENCER] == SkillDomain.INFLUENCE
+        assert (
+            SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.NEGOTIATOR]
+            == SkillDomain.DIPLOMACY
+        )
+        assert (
+            SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.INVESTIGATOR]
+            == SkillDomain.INVESTIGATION
+        )
+        assert (
+            SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.ANALYST]
+            == SkillDomain.ECONOMICS
+        )
+        assert (
+            SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.OPERATOR]
+            == SkillDomain.TACTICAL
+        )
+        assert (
+            SPECIALIZATION_DOMAIN_MAP[AgentSpecialization.INFLUENCER]
+            == SkillDomain.INFLUENCE
+        )
 
 
 class TestAgentProgressionState:
@@ -564,8 +575,8 @@ class TestAgentProgressionState:
 
     def test_add_expertise_caps_at_max(self) -> None:
         from gengine.echoes.core.progression import (
-            AgentProgressionState,
             EXPERTISE_MAX_PIPS,
+            AgentProgressionState,
         )
 
         agent = AgentProgressionState(agent_id="agent-1")
@@ -631,12 +642,27 @@ class TestAgentProgressionState:
 
         assert AgentProgressionState(agent_id="a", stress=0.0).stress_label() == "calm"
         assert AgentProgressionState(agent_id="a", stress=0.2).stress_label() == "calm"
-        assert AgentProgressionState(agent_id="a", stress=0.3).stress_label() == "focused"
-        assert AgentProgressionState(agent_id="a", stress=0.5).stress_label() == "focused"
-        assert AgentProgressionState(agent_id="a", stress=0.6).stress_label() == "strained"
-        assert AgentProgressionState(agent_id="a", stress=0.75).stress_label() == "strained"
-        assert AgentProgressionState(agent_id="a", stress=0.8).stress_label() == "burned out"
-        assert AgentProgressionState(agent_id="a", stress=1.0).stress_label() == "burned out"
+        assert (
+            AgentProgressionState(agent_id="a", stress=0.3).stress_label() == "focused"
+        )
+        assert (
+            AgentProgressionState(agent_id="a", stress=0.5).stress_label() == "focused"
+        )
+        assert (
+            AgentProgressionState(agent_id="a", stress=0.6).stress_label() == "strained"
+        )
+        assert (
+            AgentProgressionState(agent_id="a", stress=0.75).stress_label()
+            == "strained"
+        )
+        assert (
+            AgentProgressionState(agent_id="a", stress=0.8).stress_label()
+            == "burned out"
+        )
+        assert (
+            AgentProgressionState(agent_id="a", stress=1.0).stress_label()
+            == "burned out"
+        )
 
     def test_role_label_rookie(self) -> None:
         from gengine.echoes.core.progression import (
@@ -787,7 +813,8 @@ class TestCalculateAgentModifier:
 
         prog = ProgressionState()
         mod = calculate_agent_modifier(prog, None)
-        # With level 1 skills, the modifier is 1.0 - 0.25 = 0.75 due to skill contribution
+        # With level 1 skills, the modifier is 1.0 - 0.25 = 0.75 due to skill
+        # contribution
         assert 0.7 <= mod <= 1.0
 
     def test_expertise_adds_bonus(self) -> None:
@@ -906,9 +933,7 @@ class TestProgressionSystemPerAgent:
         )
 
         state = load_world_bundle()
-        system = ProgressionSystem(
-            per_agent_settings=PerAgentProgressionSettings()
-        )
+        system = ProgressionSystem(per_agent_settings=PerAgentProgressionSettings())
 
         agent_actions = [
             {"intent": "INSPECT_DISTRICT", "agent_id": "agent-1"},

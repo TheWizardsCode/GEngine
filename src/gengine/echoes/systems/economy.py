@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict
 
 from ..core import GameState
 from ..core.models import District, ResourceStock
@@ -20,7 +20,9 @@ class EconomyReport:
 
     def to_dict(self) -> Dict[str, Dict[str, float | int]]:
         return {
-            "prices": {resource: round(price, 4) for resource, price in self.prices.items()},
+            "prices": {
+                resource: round(price, 4) for resource, price in self.prices.items()
+            },
             "shortages": self.shortages.copy(),
         }
 
@@ -43,7 +45,10 @@ class EconomySystem:
 
     # ------------------------------------------------------------------
     def _rebalance_district(self, district: District, rng: random.Random) -> None:
-        demand_mod = 1.0 + district.modifiers.prosperity * self._settings.demand_prosperity_weight
+        demand_mod = (
+            1.0
+            + district.modifiers.prosperity * self._settings.demand_prosperity_weight
+        )
         for stock in district.resources.values():
             regen_factor = max(
                 0.0, self._settings.regen_scale + rng.uniform(-0.05, 0.05)
@@ -53,13 +58,17 @@ class EconomySystem:
             delta = production - consumption
             stock.current = int(_clamp(stock.current + delta, 0, stock.capacity))
 
-    def _resource_demand(self, stock: ResourceStock, district: District, demand_mod: float) -> float:
+    def _resource_demand(
+        self, stock: ResourceStock, district: District, demand_mod: float
+    ) -> float:
         population_factor = max(
             district.population / self._settings.demand_population_scale,
             0.3,
         )
         base = self._resource_weight(stock.type)
-        unrest_penalty = 1.0 + district.modifiers.unrest * self._settings.demand_unrest_weight
+        unrest_penalty = (
+            1.0 + district.modifiers.unrest * self._settings.demand_unrest_weight
+        )
         return base * population_factor * demand_mod * unrest_penalty
 
     def _resource_weight(self, resource_type: str) -> float:

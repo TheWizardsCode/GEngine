@@ -83,9 +83,7 @@ class LLMStrategyConfig:
         if self.llm_timeout_seconds <= 0:
             raise ValueError("llm_timeout_seconds must be positive")
         if not 0.0 <= self.rule_priority_scaling <= 1.0:
-            raise ValueError(
-                "rule_priority_scaling must be between 0.0 and 1.0"
-            )
+            raise ValueError("rule_priority_scaling must be between 0.0 and 1.0")
 
 
 @dataclass
@@ -270,6 +268,7 @@ class LLMDecisionLayer:
             if loop is not None and loop.is_running():
                 # Already in async context - use thread to avoid nested loops
                 import concurrent.futures
+
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                     # Create a new event loop in the thread
                     future = executor.submit(self._run_in_new_loop, request)
@@ -376,7 +375,8 @@ class LLMDecisionLayer:
         if "multiple_stressed_factions" in factors:
             factions = request.state.get("faction_legitimacy", {})
             low_factions = [
-                f for f, leg in factions.items()
+                f
+                for f, leg in factions.items()
                 if leg < self._config.complexity_threshold_legitimacy
             ]
             return (
@@ -496,7 +496,8 @@ def evaluate_complexity(
     # Check faction stress
     faction_legitimacy = state.get("faction_legitimacy", {})
     stressed_factions = sum(
-        1 for leg in faction_legitimacy.values()
+        1
+        for leg in faction_legitimacy.values()
         if leg < config.complexity_threshold_legitimacy
     )
     if stressed_factions >= config.complexity_threshold_factions:

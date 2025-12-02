@@ -1,11 +1,11 @@
 """Tests for gateway LLM client."""
 
-import pytest
-import httpx
 from unittest.mock import Mock, patch
 
+import httpx
+
 from gengine.echoes.gateway.llm_client import LLMClient
-from gengine.echoes.llm import InspectIntent, IntentType
+from gengine.echoes.llm import InspectIntent
 
 
 class TestLLMClient:

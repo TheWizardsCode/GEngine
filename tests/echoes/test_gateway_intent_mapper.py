@@ -230,10 +230,10 @@ class TestIntentMapper:
     def test_map_unknown_intent_type(self):
         """Test mapping unknown intent type raises error."""
         mapper = IntentMapper()
-        
+
         # Create a mock intent that's not a recognized type
         class UnknownIntent:
             pass
-        
+
         with pytest.raises(ValueError, match="Unknown intent type"):
             mapper.map_intent_to_command(UnknownIntent())

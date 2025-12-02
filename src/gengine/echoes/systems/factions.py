@@ -157,9 +157,7 @@ class FactionSystem:
             unrest_delta = -0.05
             security_delta = 0.03
             prosperity_delta = 0.04
-            district.modifiers.unrest = _clamp(
-                district.modifiers.unrest + unrest_delta
-            )
+            district.modifiers.unrest = _clamp(district.modifiers.unrest + unrest_delta)
             district.modifiers.security = _clamp(
                 district.modifiers.security + security_delta
             )
@@ -194,9 +192,7 @@ class FactionSystem:
             district = self._select_district(rival, districts)
             if district is not None:
                 detail = f"agitates unrest in {district.name}"
-                district.modifiers.unrest = _clamp(
-                    district.modifiers.unrest + 0.02
-                )
+                district.modifiers.unrest = _clamp(district.modifiers.unrest + 0.02)
                 district_id = district.id
             else:
                 district_id = None
@@ -239,7 +235,9 @@ class FactionSystem:
         faction: Faction,
         factions: Dict[str, Faction],
     ) -> Faction | None:
-        rivals = [candidate for candidate in factions.values() if candidate.id != faction.id]
+        rivals = [
+            candidate for candidate in factions.values() if candidate.id != faction.id
+        ]
         if not rivals:
             return None
         return max(rivals, key=lambda rival: rival.legitimacy)

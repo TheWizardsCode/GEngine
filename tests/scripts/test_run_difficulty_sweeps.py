@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
+import sys
 from importlib import util
 from pathlib import Path
-import sys
 
 import pytest
 
-_MODULE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "run_difficulty_sweeps.py"
+_MODULE_PATH = (
+    Path(__file__).resolve().parents[2] / "scripts" / "run_difficulty_sweeps.py"
+)
 
 
 def _load_sweep_module():
@@ -33,9 +35,22 @@ def minimal_config(tmp_path: Path) -> Path:
     config_root = tmp_path / "config"
     config_root.mkdir()
     (config_root / "simulation.yml").write_text(
-        "limits:\n  engine_max_ticks: 5\n  cli_run_cap: 5\n  cli_script_command_cap: 10\n  service_tick_cap: 5\n"
-        "lod:\n  mode: balanced\n  max_events_per_tick: 4\n  volatility_scale:\n    detailed: 1.0\n    balanced: 0.8\n    coarse: 0.5\n"
-        "profiling:\n  log_ticks: false\n  history_window: 5\n  capture_subsystems: true\n"
+        "limits:\n"
+        "  engine_max_ticks: 5\n"
+        "  cli_run_cap: 5\n"
+        "  cli_script_command_cap: 10\n"
+        "  service_tick_cap: 5\n"
+        "lod:\n"
+        "  mode: balanced\n"
+        "  max_events_per_tick: 4\n"
+        "  volatility_scale:\n"
+        "    detailed: 1.0\n"
+        "    balanced: 0.8\n"
+        "    coarse: 0.5\n"
+        "profiling:\n"
+        "  log_ticks: false\n"
+        "  history_window: 5\n"
+        "  capture_subsystems: true\n"
     )
     return config_root
 
@@ -49,9 +64,22 @@ def difficulty_configs(tmp_path: Path) -> Path:
         preset_dir = sweeps_dir / f"difficulty-{preset}"
         preset_dir.mkdir(parents=True)
         (preset_dir / "simulation.yml").write_text(
-            "limits:\n  engine_max_ticks: 3\n  cli_run_cap: 3\n  cli_script_command_cap: 5\n  service_tick_cap: 3\n"
-            "lod:\n  mode: balanced\n  max_events_per_tick: 4\n  volatility_scale:\n    detailed: 1.0\n    balanced: 0.8\n    coarse: 0.5\n"
-            "profiling:\n  log_ticks: false\n  history_window: 5\n  capture_subsystems: true\n"
+            "limits:\n"
+            "  engine_max_ticks: 3\n"
+            "  cli_run_cap: 3\n"
+            "  cli_script_command_cap: 5\n"
+            "  service_tick_cap: 3\n"
+            "lod:\n"
+            "  mode: balanced\n"
+            "  max_events_per_tick: 4\n"
+            "  volatility_scale:\n"
+            "    detailed: 1.0\n"
+            "    balanced: 0.8\n"
+            "    coarse: 0.5\n"
+            "profiling:\n"
+            "  log_ticks: false\n"
+            "  history_window: 5\n"
+            "  capture_subsystems: true\n"
         )
 
     return sweeps_dir.parent.parent.parent
@@ -154,13 +182,19 @@ def test_sweep_main_cli(
 
     monkeypatch.chdir(Path(__file__).resolve().parents[2])
 
-    exit_code = main([
-        "--ticks", "3",
-        "--seed", "42",
-        "--output-dir", str(output_dir),
-        "--preset", "normal",
-        "--quiet",
-    ])
+    exit_code = main(
+        [
+            "--ticks",
+            "3",
+            "--seed",
+            "42",
+            "--output-dir",
+            str(output_dir),
+            "--preset",
+            "normal",
+            "--quiet",
+        ]
+    )
 
     assert exit_code == 0
     captured = capsys.readouterr()
@@ -175,14 +209,20 @@ def test_sweep_main_json_output(
 
     monkeypatch.chdir(Path(__file__).resolve().parents[2])
 
-    exit_code = main([
-        "--ticks", "3",
-        "--seed", "42",
-        "--output-dir", str(output_dir),
-        "--preset", "normal",
-        "--quiet",
-        "--json",
-    ])
+    exit_code = main(
+        [
+            "--ticks",
+            "3",
+            "--seed",
+            "42",
+            "--output-dir",
+            str(output_dir),
+            "--preset",
+            "normal",
+            "--quiet",
+            "--json",
+        ]
+    )
 
     assert exit_code == 0
     captured = capsys.readouterr()

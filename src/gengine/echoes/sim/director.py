@@ -28,7 +28,9 @@ class DirectorBridge:
         """Build and persist a director-friendly snapshot for ``tick``."""
 
         focus_state = focus_result.focus_state
-        spatial_weights = self._spatial_preview(focus_state.get("spatial_weights") or [])
+        spatial_weights = self._spatial_preview(
+            focus_state.get("spatial_weights") or []
+        )
         top_ranked = self._ranked_preview(focus_result)
         payload = {
             "tick": tick,
@@ -117,7 +119,9 @@ class NarrativeDirector:
         focus_center = feed.get("focus_center")
         hotspots = self._select_hotspots(feed)
         adjacency = self._adjacency_index(state)
-        coords = {district.id: district.coordinates for district in state.city.districts}
+        coords = {
+            district.id: district.coordinates for district in state.city.districts
+        }
         travel_reports: List[Dict[str, Any]] = []
         recommended: Dict[str, Any] | None = None
 
@@ -155,7 +159,8 @@ class NarrativeDirector:
                     "path": list(travel.get("path") or []),
                 }
 
-        # Fall back to the closest hotspot even if the score threshold filtered all entries.
+        # Fall back to the closest hotspot even if the score threshold
+        # filtered all entries.
         if not travel_reports:
             fallback = self._select_hotspots(feed, enforce_threshold=False)
             for hotspot in fallback:
@@ -171,7 +176,9 @@ class NarrativeDirector:
                         "severity": round(float(hotspot.get("severity", 0.0)), 3),
                         "focus_distance": hotspot.get("focus_distance"),
                         "in_focus_ring": hotspot.get("in_focus_ring"),
-                        "travel": self._plan_route(focus_center, target, adjacency, coords),
+                        "travel": self._plan_route(
+                            focus_center, target, adjacency, coords
+                        ),
                     }
                 )
                 break
@@ -207,7 +214,11 @@ class NarrativeDirector:
             district_id = entry.get("district_id")
             if not district_id:
                 continue
-            if enforce_threshold and float(entry.get("score", 0.0)) < self._settings.hotspot_score_threshold:
+            if (
+                enforce_threshold
+                and float(entry.get("score", 0.0))
+                < self._settings.hotspot_score_threshold
+            ):
                 continue
             hotspots.append(entry)
             if len(hotspots) >= self._settings.hotspot_limit:
@@ -315,7 +326,7 @@ class NarrativeDirector:
     ) -> float | None:
         total = 0.0
         missing = False
-        for left, right in zip(path, path[1:]):
+        for left, right in zip(path, path[1:], strict=False):
             distance = euclidean_distance(coords.get(left), coords.get(right))
             if distance is None:
                 missing = True
@@ -336,7 +347,9 @@ class NarrativeDirector:
                     lifecycle[seed_id] = entry
         return lifecycle
 
-    def _save_lifecycle(self, state: GameState, lifecycle: Dict[str, Dict[str, Any]]) -> None:
+    def _save_lifecycle(
+        self, state: GameState, lifecycle: Dict[str, Dict[str, Any]]
+    ) -> None:
         if lifecycle:
             state.metadata["story_seed_lifecycle"] = {
                 seed_id: dict(entry) for seed_id, entry in lifecycle.items()
@@ -381,7 +394,9 @@ class NarrativeDirector:
         tick: int,
     ) -> None:
         history = list(state.metadata.get("story_seed_lifecycle_history") or [])
-        history.append({"tick": tick, "seed_id": seed_id, "from": previous, "to": new_state})
+        history.append(
+            {"tick": tick, "seed_id": seed_id, "from": previous, "to": new_state}
+        )
         limit = getattr(self._settings, "lifecycle_history_limit", 10)
         if len(history) > limit:
             history = history[-limit:]
@@ -399,9 +414,15 @@ class NarrativeDirector:
             if current == "active":
                 expires = entry.get("state_expires")
                 duration = max(0, getattr(self._settings, "seed_active_ticks", 0))
-                if duration == 0 or (isinstance(expires, (int, float)) and tick >= int(expires)):
-                    resolve_duration = max(0, getattr(self._settings, "seed_resolve_ticks", 0))
-                    resolve_expires = tick + resolve_duration if resolve_duration else None
+                if duration == 0 or (
+                    isinstance(expires, (int, float)) and tick >= int(expires)
+                ):
+                    resolve_duration = max(
+                        0, getattr(self._settings, "seed_resolve_ticks", 0)
+                    )
+                    resolve_expires = (
+                        tick + resolve_duration if resolve_duration else None
+                    )
                     self._transition_state(
                         state,
                         lifecycle,
@@ -413,7 +434,9 @@ class NarrativeDirector:
             elif current == "resolving":
                 expires = entry.get("state_expires")
                 duration = max(0, getattr(self._settings, "seed_resolve_ticks", 0))
-                if duration == 0 or (isinstance(expires, (int, float)) and tick >= int(expires)):
+                if duration == 0 or (
+                    isinstance(expires, (int, float)) and tick >= int(expires)
+                ):
                     quiet_span = max(0, getattr(self._settings, "seed_quiet_ticks", 0))
                     quiet_until = tick + quiet_span if quiet_span else None
                     self._transition_state(
@@ -439,7 +462,11 @@ class NarrativeDirector:
                         seed_id,
                         "primed",
                         tick,
-                        updates={"state_expires": None, "quiet_until": None, "cooldown_until": None},
+                        updates={
+                            "state_expires": None,
+                            "quiet_until": None,
+                            "cooldown_until": None,
+                        },
                     )
 
         for seed_id in list(lifecycle.keys()):
@@ -549,13 +576,17 @@ class NarrativeDirector:
             for entry in hotspots
             if entry.get("district_id")
         }
-        district_lookup = {district.id: district.name for district in state.city.districts}
+        district_lookup = {
+            district.id: district.name for district in state.city.districts
+        }
         new_events: List[Dict[str, Any]] = []
         quiet_until = self._normalize_quiet_timer(state, tick)
         blocked_reasons: List[str] = []
         max_active = max(1, getattr(self._settings, "max_active_seeds", 1))
         active_count = sum(
-            1 for entry in lifecycle.values() if entry.get("state") in {"active", "resolving"}
+            1
+            for entry in lifecycle.values()
+            if entry.get("state") in {"active", "resolving"}
         )
         self._sync_contexts_with_lifecycle(contexts, lifecycle)
 
@@ -575,7 +606,9 @@ class NarrativeDirector:
                 blocked_reasons.append("max_active")
                 break
             seed_quiet_until = entry.get("quiet_until")
-            if isinstance(seed_quiet_until, (int, float)) and tick < int(seed_quiet_until):
+            if isinstance(seed_quiet_until, (int, float)) and tick < int(
+                seed_quiet_until
+            ):
                 blocked_reasons.append("seed_quiet")
                 continue
             last_tick = cooldowns.get(seed.id)
@@ -676,8 +709,16 @@ class NarrativeDirector:
         if len(active_matches) > self._settings.story_seed_limit:
             active_matches = active_matches[: self._settings.story_seed_limit]
 
-        cooldowns = {seed_id: value for seed_id, value in cooldowns.items() if seed_id in state.story_seeds}
-        contexts = {seed_id: payload for seed_id, payload in contexts.items() if seed_id in state.story_seeds}
+        cooldowns = {
+            seed_id: value
+            for seed_id, value in cooldowns.items()
+            if seed_id in state.story_seeds
+        }
+        contexts = {
+            seed_id: payload
+            for seed_id, payload in contexts.items()
+            if seed_id in state.story_seeds
+        }
 
         if active_matches:
             state.metadata["story_seeds_active"] = active_matches
@@ -745,9 +786,8 @@ class NarrativeDirector:
             if severity < trigger.min_severity:
                 continue
             focus_distance = entry.get("focus_distance")
-            if (
-                trigger.max_focus_distance is not None
-                and (focus_distance is None or focus_distance > trigger.max_focus_distance)
+            if trigger.max_focus_distance is not None and (
+                focus_distance is None or focus_distance > trigger.max_focus_distance
             ):
                 continue
             return {
@@ -778,7 +818,9 @@ class NarrativeDirector:
             "stakes": seed.stakes,
             "scope": seed.scope,
             "district_id": district_id,
-            "district_name": district_lookup.get(district_id, district_id) if district_id else None,
+            "district_name": district_lookup.get(district_id, district_id)
+            if district_id
+            else None,
             "reason": trigger_match.get("reason"),
             "score": trigger_match.get("score"),
             "severity": trigger_match.get("severity"),
@@ -796,7 +838,9 @@ class NarrativeDirector:
             event["travel_hint"] = seed.travel_hint.model_dump()
         return event
 
-    def _resolve_agents(self, state: GameState, agent_ids: Sequence[str]) -> List[Dict[str, Any]]:
+    def _resolve_agents(
+        self, state: GameState, agent_ids: Sequence[str]
+    ) -> List[Dict[str, Any]]:
         resolved: List[Dict[str, Any]] = []
         for agent_id in agent_ids[:3]:
             agent = state.agents.get(agent_id)
@@ -814,7 +858,9 @@ class NarrativeDirector:
             )
         return resolved
 
-    def _resolve_factions(self, state: GameState, faction_ids: Sequence[str]) -> List[Dict[str, Any]]:
+    def _resolve_factions(
+        self, state: GameState, faction_ids: Sequence[str]
+    ) -> List[Dict[str, Any]]:
         resolved: List[Dict[str, Any]] = []
         for faction_id in faction_ids[:3]:
             faction = state.factions.get(faction_id)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Optional
 
 from gengine.echoes.content import load_world_bundle
 from gengine.echoes.persistence import save_snapshot

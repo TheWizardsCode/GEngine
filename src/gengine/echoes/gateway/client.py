@@ -68,7 +68,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         asyncio.run(_run_session(args.gateway_url, script))
     except KeyboardInterrupt:  # pragma: no cover - interactive cancel
         return 0
-    except websockets.exceptions.ConnectionClosedError as exc:  # pragma: no cover - passthrough
+    except (
+        websockets.exceptions.ConnectionClosedError
+    ) as exc:  # pragma: no cover - passthrough
         print(f"Gateway connection closed: {exc}")
         return 1
     except OSError as exc:  # pragma: no cover - networking failure

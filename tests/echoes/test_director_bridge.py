@@ -68,8 +68,7 @@ def test_director_bridge_record_trims_history_and_clones_payloads() -> None:
     assert len(second_snapshot["spatial_weights"]) == 1
     assert second_snapshot["allocation"]["list_field"] == [1, 2, 3]
     assert (
-        second_snapshot["allocation"]["list_field"]
-        is not allocation["list_field"]
+        second_snapshot["allocation"]["list_field"] is not allocation["list_field"]
     ), "allocation list must be cloned"
     assert state.metadata["director_history"][-1]["tick"] == 6
     assert len(state.metadata["director_history"]) == 1

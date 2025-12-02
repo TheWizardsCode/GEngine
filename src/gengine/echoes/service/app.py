@@ -7,7 +7,6 @@ from typing import Any, Literal
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from ..core import GameState
 from ..settings import SimulationConfig, load_simulation_config
 from ..sim import SimEngine, TickReport
 from ..sim.engine import EngineNotInitializedError
@@ -50,7 +49,9 @@ def create_app(
 ) -> FastAPI:
     """Instantiate the FastAPI app backed by a ``SimEngine``."""
 
-    active_config = config or getattr(engine, "config", None) or load_simulation_config()
+    active_config = (
+        config or getattr(engine, "config", None) or load_simulation_config()
+    )
     sim = engine or SimEngine(config=active_config)
     _ensure_state(sim, auto_world)
 
@@ -111,7 +112,7 @@ def create_app(
             else:
                 focus = sim.set_focus(payload.district_id)
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         digest = sim.state.metadata.get("focus_digest", {})
         history = _focus_history(sim, sim.config.focus.history_limit)
         return FocusResponse(focus=focus, digest=digest, history=history)

@@ -7,7 +7,11 @@ from pathlib import Path
 import pytest
 
 from gengine.echoes.content import load_world_bundle
-from gengine.echoes.persistence.snapshot import _json_default, load_snapshot, save_snapshot
+from gengine.echoes.persistence.snapshot import (
+    _json_default,
+    load_snapshot,
+    save_snapshot,
+)
 
 
 def test_json_default_rejects_unknown_type() -> None:

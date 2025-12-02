@@ -5,20 +5,23 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fastapi.testclient import TestClient
+import httpx
 import pytest
+from fastapi.testclient import TestClient
 
 from gengine.echoes.cli import run_commands
 from gengine.echoes.cli.shell import (
+    PROMPT,
     EchoesShell,
     LocalBackend,
     ServiceBackend,
-    _render_focus_state,
+    _get_prompt,
     _render_director_feed,
+    _render_focus_state,
     _render_history,
     _render_summary,
-    _get_prompt,
-    PROMPT,
+)
+from gengine.echoes.cli.shell import (
     main as cli_main,
 )
 from gengine.echoes.client import SimServiceClient
@@ -119,7 +122,7 @@ def test_service_backend_close_releases_client() -> None:
     backend = ServiceBackend(client)
     backend.close()
     # Subsequent operations should fail if client is closed
-    with pytest.raises(Exception):
+    with pytest.raises((RuntimeError, httpx.HTTPError)):
         backend.summary()
 
 
@@ -129,7 +132,7 @@ def test_shell_save_with_no_path() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("save")
     assert "Usage: save" in result.output
 
@@ -140,10 +143,10 @@ def test_shell_load_with_invalid_syntax() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("load")
     assert "Usage: load" in result.output
-    
+
     result = shell.execute("load invalid")
     assert "Usage: load" in result.output
 
@@ -154,7 +157,7 @@ def test_shell_run_with_invalid_count() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("run notanumber")
     assert "Usage: run" in result.output
 
@@ -165,7 +168,7 @@ def test_shell_history_with_invalid_count() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("history notanumber")
     assert "Usage: history" in result.output
 
@@ -176,7 +179,7 @@ def test_shell_director_with_invalid_count() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("director notanumber")
     assert "Usage: director" in result.output
 
@@ -187,7 +190,7 @@ def test_shell_postmortem_with_args() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("postmortem extra")
     assert "Usage: postmortem" in result.output
 
@@ -198,7 +201,7 @@ def test_shell_unknown_command() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("nosuchcommand")
     assert "Unknown command" in result.output
     assert "nosuchcommand" in result.output
@@ -210,7 +213,7 @@ def test_shell_quit_is_alias_for_exit() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("quit")
     assert result.should_exit is True
     assert "Exiting" in result.output
@@ -222,7 +225,7 @@ def test_shell_next_with_args_rejected() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("next 5")
     assert "Usage: next" in result.output
 
@@ -233,7 +236,7 @@ def test_shell_run_without_count_rejected() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("run")
     assert "Usage: run" in result.output
 
@@ -344,7 +347,9 @@ def test_cli_main_script_service(monkeypatch, capsys) -> None:
 
     monkeypatch.setattr("gengine.echoes.cli.shell.SimServiceClient", FakeClient)
 
-    exit_code = cli_main(["--service-url", "http://fake", "--script", "summary;run 1;exit"])
+    exit_code = cli_main(
+        ["--service-url", "http://fake", "--script", "summary;run 1;exit"]
+    )
 
     assert exit_code == 0
     captured = capsys.readouterr()
@@ -408,7 +413,9 @@ def test_run_commands_respects_script_cap() -> None:
     )
     config = SimulationConfig(limits=limits)
 
-    outputs = run_commands(["summary", "summary", "summary"], engine=engine, config=config)
+    outputs = run_commands(
+        ["summary", "summary", "summary"], engine=engine, config=config
+    )
 
     assert outputs[-1].startswith("Safeguard: script exceeded 2 commands")
 
@@ -420,7 +427,7 @@ def test_cli_main_interactive(monkeypatch, capsys) -> None:
         try:
             return next(inputs)
         except StopIteration:  # pragma: no cover - defensive
-            raise EOFError
+            raise EOFError from None
 
     monkeypatch.setattr("builtins.input", fake_input)
 
@@ -859,7 +866,6 @@ def test_render_director_feed_includes_story_seed_matches() -> None:
     analysis = {
         "story_seeds": [
             {
-
                 "seed_id": "hollow-supply-chain",
                 "title": "Smuggling Lanes Exposed",
                 "district_id": "perimeter-hollow",
@@ -927,7 +933,7 @@ def test_service_backend_focus_state() -> None:
     client = SimServiceClient("http://test")
     client._client = client_test
     backend = ServiceBackend(client)
-    
+
     focus_data = backend.focus_state()
     assert isinstance(focus_data, dict)
     # Should have district_id or be empty dict
@@ -943,7 +949,7 @@ def test_service_backend_set_focus() -> None:
     client = SimServiceClient("http://test")
     client._client = client_test
     backend = ServiceBackend(client)
-    
+
     focus_data = backend.set_focus("industrial-tier")
     assert isinstance(focus_data, dict)
     # After setting focus, should have district_id
@@ -959,7 +965,7 @@ def test_service_backend_focus_history() -> None:
     client = SimServiceClient("http://test")
     client._client = client_test
     backend = ServiceBackend(client)
-    
+
     history = backend.focus_history()
     assert isinstance(history, list)
 
@@ -973,7 +979,7 @@ def test_service_backend_post_mortem() -> None:
     client = SimServiceClient("http://test")
     client._client = client_test
     backend = ServiceBackend(client)
-    
+
     data = backend.post_mortem()
     assert isinstance(data, dict)
 
@@ -984,7 +990,7 @@ def test_shell_focus_command() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("focus")
     assert result.output
     assert "focus" in result.output.lower() or "Center:" in result.output
@@ -996,7 +1002,7 @@ def test_shell_focus_set_command() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("focus industrial-tier")
     assert result.output
     assert "industrial-tier" in result.output
@@ -1008,7 +1014,7 @@ def test_shell_focus_clear_command() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     # Set focus first
     shell.execute("focus industrial-tier")
     # Then clear it
@@ -1022,7 +1028,7 @@ def test_shell_history_with_limit() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     # Run some ticks to generate history
     shell.execute("run 5")
     result = shell.execute("history 2")
@@ -1035,7 +1041,7 @@ def test_shell_director_with_limit() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     # Run some ticks to generate director feed
     shell.execute("run 5")
     result = shell.execute("director 2")
@@ -1048,7 +1054,7 @@ def test_shell_empty_command() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("")
     assert result.output == ""
 
@@ -1059,7 +1065,7 @@ def test_shell_history_with_no_data() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     # Don't run any ticks, so no history
     result = shell.execute("history")
     assert result.output == "No focus history recorded."
@@ -1071,7 +1077,7 @@ def test_shell_director_with_no_data() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend)
-    
+
     # Don't run any ticks, so no director feed
     result = shell.execute("director")
     assert result.output == "No director feed recorded."
@@ -1087,7 +1093,7 @@ def test_shell_load_snapshot_with_service_backend() -> None:
     client._client = client_test
     backend = ServiceBackend(client)
     shell = EchoesShell(backend)
-    
+
     result = shell.execute("load snapshot /tmp/fake.json")
     assert "Loading snapshots requires local backend" in result.output
 
@@ -1109,7 +1115,7 @@ def test_render_summary_with_pollution_extremes() -> None:
             },
         },
     }
-    
+
     rendered = _render_summary(summary)
     assert "avg pollution" in rendered
     assert "extremes" in rendered
@@ -1133,7 +1139,7 @@ def test_render_summary_with_diffusion_samples() -> None:
             ],
         },
     }
-    
+
     rendered = _render_summary(summary)
     assert "diffusion samples" in rendered
     assert "district-a" in rendered
@@ -1159,12 +1165,13 @@ def test_render_summary_with_spatial_weights() -> None:
             "spatial_metrics": {"distance_reference": 1.5},
         },
     }
-    
+
     rendered = _render_summary(summary)
     assert "coords" in rendered
     assert "adjacent" in rendered
     assert "spatial weights" in rendered
     assert "distance ref" in rendered
+
 
 def test_shell_with_rich_formatting_enabled() -> None:
     """Verify that shell can use rich formatting when enabled."""
@@ -1172,7 +1179,7 @@ def test_shell_with_rich_formatting_enabled() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend, enable_rich=True)
-    
+
     result = shell.execute("summary")
     assert result.output
     # Rich formatting should add visual elements
@@ -1187,7 +1194,7 @@ def test_shell_rich_director_command() -> None:
     engine.advance_ticks(10)
     backend = LocalBackend(engine)
     shell = EchoesShell(backend, enable_rich=True)
-    
+
     result = shell.execute("director")
     assert result.output
 
@@ -1198,7 +1205,7 @@ def test_shell_rich_map_command() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     shell = EchoesShell(backend, enable_rich=True)
-    
+
     result = shell.execute("map")
     assert result.output
     # Rich map should have visual elements
@@ -1206,6 +1213,7 @@ def test_shell_rich_map_command() -> None:
 
 
 # Tests for M7.2 Explanations CLI commands
+
 
 def test_timeline_command() -> None:
     """Test the timeline CLI command."""

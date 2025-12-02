@@ -10,7 +10,14 @@ from typing import Dict, Optional, Set
 import yaml
 from pydantic import ValidationError
 
-from ..core.models import Agent, City, District, DistrictCoordinates, EnvironmentState, Faction, StorySeed
+from ..core.models import (
+    Agent,
+    City,
+    DistrictCoordinates,
+    EnvironmentState,
+    Faction,
+    StorySeed,
+)
 from ..core.state import GameState
 
 DEFAULT_WORLD_NAME = "default"
@@ -69,13 +76,15 @@ def load_world_bundle(
     factions = {
         faction.id: faction
         for faction in (
-            Faction.model_validate(entry) for entry in factions_raw  # type: ignore[arg-type]
+            Faction.model_validate(entry)
+            for entry in factions_raw  # type: ignore[arg-type]
         )
     }
     agents = {
         agent.id: agent
         for agent in (
-            Agent.model_validate(entry) for entry in agents_raw  # type: ignore[arg-type]
+            Agent.model_validate(entry)
+            for entry in agents_raw  # type: ignore[arg-type]
         )
     }
     environment = EnvironmentState.model_validate(env_raw)
@@ -121,7 +130,11 @@ def _enrich_district_geometry(city: City, *, max_neighbors: int = 3) -> None:
         needed = max(0, max_neighbors - len(existing))
         if needed <= 0:
             continue
-        candidates = [other for other in city.districts if other.id != district.id and other.coordinates]
+        candidates = [
+            other
+            for other in city.districts
+            if other.id != district.id and other.coordinates
+        ]
         candidates.sort(key=lambda other: _distance(geometry, other.coordinates))  # type: ignore[arg-type]
         for candidate in candidates:
             if candidate.id in existing:
@@ -131,7 +144,9 @@ def _enrich_district_geometry(city: City, *, max_neighbors: int = 3) -> None:
                 break
         district.adjacent = existing
 
-    adjacency: Dict[str, set[str]] = {district.id: set(district.adjacent) for district in city.districts}
+    adjacency: Dict[str, set[str]] = {
+        district.id: set(district.adjacent) for district in city.districts
+    }
     for district in city.districts:
         for neighbor in list(adjacency[district.id]):
             adjacency.setdefault(neighbor, set()).add(district.id)
@@ -198,7 +213,9 @@ def _validate_story_seed_references(
             errors.append(f"unknown district '{trigger.district_id}' in trigger")
     if seed.travel_hint and seed.travel_hint.district_id:
         if seed.travel_hint.district_id not in districts:
-            errors.append(f"unknown district '{seed.travel_hint.district_id}' in travel_hint")
+            errors.append(
+                f"unknown district '{seed.travel_hint.district_id}' in travel_hint"
+            )
     for agent_id in seed.roles.agents:
         if agent_id not in agent_ids:
             errors.append(f"unknown agent '{agent_id}' in roles")
