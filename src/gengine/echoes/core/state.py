@@ -64,9 +64,7 @@ class GameState(BaseModel):
             )
         return self.agent_progression[agent_id]
 
-    def get_agent_progression(
-        self, agent_id: str
-    ) -> Optional[AgentProgressionState]:
+    def get_agent_progression(self, agent_id: str) -> Optional[AgentProgressionState]:
         """Get per-agent progression state if it exists, otherwise None."""
         return self.agent_progression.get(agent_id)
 

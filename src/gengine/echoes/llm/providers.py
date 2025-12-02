@@ -12,7 +12,7 @@ from .settings import LLMSettings
 @dataclass
 class IntentParseResult:
     """Result from parsing user input into structured intents.
-    
+
     Attributes
     ----------
     intents
@@ -31,7 +31,7 @@ class IntentParseResult:
 @dataclass
 class NarrateResult:
     """Result from generating narrative response.
-    
+
     Attributes
     ----------
     narrative
@@ -52,7 +52,7 @@ class LLMProvider(ABC):
 
     def __init__(self, settings: LLMSettings) -> None:
         """Initialize provider with settings.
-        
+
         Parameters
         ----------
         settings
@@ -67,14 +67,14 @@ class LLMProvider(ABC):
         context: dict[str, Any],
     ) -> IntentParseResult:
         """Parse user input into structured intents.
-        
+
         Parameters
         ----------
         user_input
             Natural language input from user
         context
             Game state context for intent parsing
-            
+
         Returns
         -------
         IntentParseResult
@@ -89,14 +89,14 @@ class LLMProvider(ABC):
         context: dict[str, Any],
     ) -> NarrateResult:
         """Generate narrative description of game events.
-        
+
         Parameters
         ----------
         events
             List of game events to narrate
         context
             Game state context for narrative generation
-            
+
         Returns
         -------
         NarrateResult
@@ -107,7 +107,7 @@ class LLMProvider(ABC):
 
 class StubProvider(LLMProvider):
     """Stub LLM provider for offline testing.
-    
+
     Returns deterministic responses without making API calls.
     Useful for testing and development without incurring API costs.
     """
@@ -123,25 +123,33 @@ class StubProvider(LLMProvider):
         intents = []
 
         if "inspect" in user_lower or "check" in user_lower or "status" in user_lower:
-            intents.append({
-                "type": "inspect",
-                "target": "district" if "district" in user_lower else "city",
-            })
+            intents.append(
+                {
+                    "type": "inspect",
+                    "target": "district" if "district" in user_lower else "city",
+                }
+            )
         elif "stabilize" in user_lower or "calm" in user_lower:
-            intents.append({
-                "type": "stabilize",
-                "target": "district",
-            })
+            intents.append(
+                {
+                    "type": "stabilize",
+                    "target": "district",
+                }
+            )
         elif "negotiate" in user_lower or "talk" in user_lower:
-            intents.append({
-                "type": "negotiate",
-                "target": "faction",
-            })
+            intents.append(
+                {
+                    "type": "negotiate",
+                    "target": "faction",
+                }
+            )
         else:
-            intents.append({
-                "type": "observe",
-                "target": "city",
-            })
+            intents.append(
+                {
+                    "type": "observe",
+                    "target": "city",
+                }
+            )
 
         return IntentParseResult(
             intents=intents,
@@ -175,17 +183,17 @@ class StubProvider(LLMProvider):
 
 def create_provider(settings: LLMSettings) -> LLMProvider:
     """Factory function to create LLM provider based on settings.
-    
+
     Parameters
     ----------
     settings
         LLM configuration settings
-        
+
     Returns
     -------
     LLMProvider
         Configured provider instance
-        
+
     Raises
     ------
     ValueError
@@ -197,9 +205,11 @@ def create_provider(settings: LLMSettings) -> LLMProvider:
         return StubProvider(settings)
     elif settings.provider == "openai":
         from .openai_provider import OpenAIProvider
+
         return OpenAIProvider(settings)
     elif settings.provider == "anthropic":
         from .anthropic_provider import AnthropicProvider
+
         return AnthropicProvider(settings)
     else:
         raise ValueError(f"Unsupported provider: {settings.provider}")

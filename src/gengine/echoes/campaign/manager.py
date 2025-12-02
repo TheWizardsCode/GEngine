@@ -11,11 +11,11 @@ Provides campaign lifecycle management:
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import uuid
 
 
 def _json_default(value: Any) -> Any:
@@ -191,7 +191,8 @@ class CampaignManager:
 
         metadata_path = campaign_dir / self.METADATA_FILENAME
         metadata_path.write_text(
-            json.dumps(campaign.to_dict(), indent=2, default=_json_default), encoding="utf-8"
+            json.dumps(campaign.to_dict(), indent=2, default=_json_default),
+            encoding="utf-8",
         )
 
         self._active_campaign = campaign
@@ -309,13 +310,17 @@ class CampaignManager:
         # Save metadata
         metadata_path = campaign_dir / self.METADATA_FILENAME
         metadata_path.write_text(
-            json.dumps(self._active_campaign.to_dict(), indent=2, default=_json_default), encoding="utf-8"
+            json.dumps(
+                self._active_campaign.to_dict(), indent=2, default=_json_default
+            ),
+            encoding="utf-8",
         )
 
         # Save snapshot
         snapshot_path = campaign_dir / self.SNAPSHOT_FILENAME
         snapshot_path.write_text(
-            json.dumps(state_snapshot, indent=2, default=_json_default), encoding="utf-8"
+            json.dumps(state_snapshot, indent=2, default=_json_default),
+            encoding="utf-8",
         )
 
         return snapshot_path
@@ -354,7 +359,8 @@ class CampaignManager:
         autosave_path = campaign_dir / autosave_name
 
         autosave_path.write_text(
-            json.dumps(state_snapshot, indent=2, default=_json_default), encoding="utf-8"
+            json.dumps(state_snapshot, indent=2, default=_json_default),
+            encoding="utf-8",
         )
 
         self._last_autosave_tick = tick
@@ -449,13 +455,17 @@ class CampaignManager:
         if post_mortem and self._settings.generate_postmortem_on_end:
             postmortem_path = campaign_dir / self.POSTMORTEM_FILENAME
             postmortem_path.write_text(
-                json.dumps(post_mortem, indent=2, default=_json_default), encoding="utf-8"
+                json.dumps(post_mortem, indent=2, default=_json_default),
+                encoding="utf-8",
             )
 
         # Update metadata
         metadata_path = campaign_dir / self.METADATA_FILENAME
         metadata_path.write_text(
-            json.dumps(self._active_campaign.to_dict(), indent=2, default=_json_default), encoding="utf-8"
+            json.dumps(
+                self._active_campaign.to_dict(), indent=2, default=_json_default
+            ),
+            encoding="utf-8",
         )
 
         ended_campaign = self._active_campaign

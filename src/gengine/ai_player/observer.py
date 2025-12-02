@@ -210,12 +210,14 @@ class Observer:
             self._check_story_seeds(state, story_seeds_activated)
             self._check_alerts(state, alerts, commentary)
 
-            tick_reports.append({
-                "tick": state.get("tick", 0),
-                "stability": state.get("stability", 1.0),
-                "faction_legitimacy": dict(state.get("faction_legitimacy", {})),
-                "story_seeds": list(state.get("story_seeds", [])),
-            })
+            tick_reports.append(
+                {
+                    "tick": state.get("tick", 0),
+                    "stability": state.get("stability", 1.0),
+                    "faction_legitimacy": dict(state.get("faction_legitimacy", {})),
+                    "story_seeds": list(state.get("story_seeds", [])),
+                }
+            )
 
         final_state = self._get_state()
         end_tick = final_state.get("tick", start_tick + ticks_advanced)
@@ -236,11 +238,13 @@ class Observer:
             )
             faction_swings[fid] = trend
 
-        commentary.extend(self._generate_commentary(
-            stability_trend,
-            faction_swings,
-            story_seeds_activated,
-        ))
+        commentary.extend(
+            self._generate_commentary(
+                stability_trend,
+                faction_swings,
+                story_seeds_activated,
+            )
+        )
 
         return ObservationReport(
             ticks_observed=ticks_advanced,
@@ -257,10 +261,10 @@ class Observer:
 
     def _get_state(self) -> dict[str, Any]:
         """Fetch current simulation state.
-        
+
         For remote connections, will raise an exception if connection fails.
         Callers should handle connection errors appropriately.
-        
+
         Returns
         -------
         dict
@@ -287,12 +291,12 @@ class Observer:
 
     def _advance_ticks(self, count: int) -> dict[str, Any]:
         """Advance simulation by count ticks.
-        
+
         Parameters
         ----------
         count
             Number of ticks to advance.
-            
+
         Returns
         -------
         dict
@@ -309,9 +313,7 @@ class Observer:
                 return self._client.tick(count)
             except Exception as e:
                 logger.error(f"Failed to advance ticks on remote service: {e}")
-                raise ConnectionError(
-                    f"Unable to advance simulation: {e}"
-                ) from e
+                raise ConnectionError(f"Unable to advance simulation: {e}") from e
 
     def _analyze_trend(
         self,
@@ -381,11 +383,13 @@ class Observer:
         for seed in current_seeds:
             seed_id = seed.get("seed_id") or seed.get("id")
             if seed_id and seed_id not in known_ids:
-                activated.append({
-                    "seed_id": seed_id,
-                    "tick": state.get("tick", 0),
-                    "district": seed.get("target_district") or seed.get("district"),
-                })
+                activated.append(
+                    {
+                        "seed_id": seed_id,
+                        "tick": state.get("tick", 0),
+                        "district": seed.get("target_district") or seed.get("district"),
+                    }
+                )
 
     def _check_alerts(
         self,
@@ -413,7 +417,7 @@ class Observer:
 
     def _extract_environment(self, state: dict[str, Any]) -> dict[str, float]:
         """Extract environment and system metrics from state.
-        
+
         Captures stability, environment impact, economy metrics, and agent counts
         to provide a comprehensive view of simulation health.
         """
@@ -422,27 +426,27 @@ class Observer:
         for key in ["stability", "unrest", "pollution", "biodiversity", "security"]:
             if key in state:
                 env[key] = state[key]
-        
+
         # Environment impact metrics
         env_impact = state.get("environment_impact", {})
         if isinstance(env_impact, dict):
             for key in ["avg_pollution", "biodiversity", "scarcity_pressure"]:
                 if key in env_impact:
                     env[f"impact_{key}"] = env_impact[key]
-        
+
         # Economy metrics
         economy = state.get("economy", {})
         if isinstance(economy, dict):
             for key in ["wealth_ratio", "supply_demand_ratio", "avg_capacity"]:
                 if key in economy:
                     env[f"economy_{key}"] = economy[key]
-        
+
         # Agent system metrics
         if "agent_count" in state:
             env["agent_count"] = state["agent_count"]
         if "agent_satisfaction_avg" in state:
             env["agent_satisfaction_avg"] = state["agent_satisfaction_avg"]
-        
+
         return env
 
     def _generate_commentary(
@@ -452,7 +456,7 @@ class Observer:
         story_seeds: list[dict[str, Any]],
     ) -> list[str]:
         """Generate structured natural language commentary on the observation.
-        
+
         Produces human-readable analysis of stability trends, faction dynamics,
         and narrative events with varying detail based on magnitude of changes.
         """

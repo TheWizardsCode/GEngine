@@ -1,9 +1,9 @@
 """Gameplay subsystems for Echoes of Emergence."""
 
 from .agents import AgentIntent, AgentSystem
-from .economy import EconomySystem, EconomyReport
-from .factions import FactionAction, FactionSystem
+from .economy import EconomyReport, EconomySystem
 from .environment import EnvironmentImpact, EnvironmentSystem
+from .factions import FactionAction, FactionSystem
 from .progression import (
     PerAgentProgressionSettings,
     ProgressionEvent,
@@ -12,11 +12,11 @@ from .progression import (
 )
 
 __all__ = [
-	"AgentIntent",
-	"AgentSystem",
-	"FactionAction",
-	"FactionSystem",
-	"EconomySystem",
+    "AgentIntent",
+    "AgentSystem",
+    "FactionAction",
+    "FactionSystem",
+    "EconomySystem",
     "EconomyReport",
     "EnvironmentImpact",
     "EnvironmentSystem",

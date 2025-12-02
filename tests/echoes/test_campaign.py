@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -247,8 +246,8 @@ class TestCampaignIntegration:
 
     def test_campaign_workflow(self, temp_dir):
         """Test complete campaign workflow."""
-        from gengine.echoes.sim import SimEngine
         from gengine.echoes.cli.shell import LocalBackend
+        from gengine.echoes.sim import SimEngine
 
         settings = CampaignSettings(
             campaigns_dir=temp_dir,
@@ -287,8 +286,8 @@ class TestCampaignIntegration:
 
     def test_campaign_autosave_on_advance(self, temp_dir):
         """Test that autosave happens when advancing ticks."""
-        from gengine.echoes.sim import SimEngine
         from gengine.echoes.cli.shell import LocalBackend
+        from gengine.echoes.sim import SimEngine
 
         settings = CampaignSettings(
             campaigns_dir=temp_dir,

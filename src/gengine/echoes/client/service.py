@@ -32,7 +32,9 @@ class SimServiceClient:
         response.raise_for_status()
         return response.json()
 
-    def state(self, detail: str = "summary", district_id: str | None = None) -> dict[str, Any]:
+    def state(
+        self, detail: str = "summary", district_id: str | None = None
+    ) -> dict[str, Any]:
         params: dict[str, Any] = {"detail": detail}
         if district_id is not None:
             params["district_id"] = district_id

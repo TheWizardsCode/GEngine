@@ -104,7 +104,9 @@ class EnvironmentSystem:
 
         biodiversity_snapshot = {
             "value": round(env.biodiversity, 4),
-            "delta": round(scarcity_biodiversity_delta + biodiversity_recovery_delta, 6),
+            "delta": round(
+                scarcity_biodiversity_delta + biodiversity_recovery_delta, 6
+            ),
             "scarcity_delta": round(scarcity_biodiversity_delta, 6),
             "recovery_delta": round(biodiversity_recovery_delta, 6),
         }
@@ -130,7 +132,9 @@ class EnvironmentSystem:
         if not report.shortages:
             return 0.0
         cap = float(self._settings.scarcity_pressure_cap)
-        capped = [min(float(duration), cap) / cap for duration in report.shortages.values()]
+        capped = [
+            min(float(duration), cap) / cap for duration in report.shortages.values()
+        ]
         return sum(capped)
 
     def _apply_scarcity_pressure(
@@ -156,13 +160,17 @@ class EnvironmentSystem:
             unrest_delta = pressure * self._settings.district_unrest_weight
             pollution_delta = pressure * self._settings.district_pollution_weight
             if unrest_delta:
-                district.modifiers.unrest = _clamp(district.modifiers.unrest + unrest_delta)
+                district.modifiers.unrest = _clamp(
+                    district.modifiers.unrest + unrest_delta
+                )
                 _record_delta(district_deltas, district.id, "unrest", unrest_delta)
             if pollution_delta:
                 district.modifiers.pollution = _clamp(
                     district.modifiers.pollution + pollution_delta
                 )
-                _record_delta(district_deltas, district.id, "pollution", pollution_delta)
+                _record_delta(
+                    district_deltas, district.id, "pollution", pollution_delta
+                )
         return biodiversity_delta
 
     def _apply_diffusion(
@@ -190,7 +198,9 @@ class EnvironmentSystem:
             neighbor_avg = _neighbor_average(district, lookup)
             target = avg_pollution
             if neighbor_avg is not None:
-                target = (neighbor_bias * neighbor_avg) + ((1.0 - neighbor_bias) * avg_pollution)
+                target = (neighbor_bias * neighbor_avg) + (
+                    (1.0 - neighbor_bias) * avg_pollution
+                )
             delta = (target - district.modifiers.pollution) * rate
             if abs(delta) < min_delta:
                 continue
@@ -214,7 +224,12 @@ class EnvironmentSystem:
                 )
             )
 
-        samples = [entry for _, entry in sorted(top_deltas, key=lambda item: item[0], reverse=True)[:3]]
+        samples = [
+            entry
+            for _, entry in sorted(top_deltas, key=lambda item: item[0], reverse=True)[
+                :3
+            ]
+        ]
         avg_pollution = sum(d.modifiers.pollution for d in districts) / len(districts)
         extremes = _pollution_extremes(districts)
         return applied, avg_pollution, extremes, samples
@@ -257,7 +272,8 @@ class EnvironmentSystem:
             )
             verb = "relief" if delta < 0 else "surge"
             events.append(
-                f"{action.faction_name} {descriptor} pollution in {district.name} ({verb})"
+                f"{action.faction_name} {descriptor} pollution "
+                f"in {district.name} ({verb})"
             )
         return events, effects
 
@@ -294,7 +310,9 @@ def _record_delta(
 
 
 def _neighbor_average(district: District, lookup: Dict[str, District]) -> float | None:
-    neighbors = [lookup[neighbor] for neighbor in district.adjacent if neighbor in lookup]
+    neighbors = [
+        lookup[neighbor] for neighbor in district.adjacent if neighbor in lookup
+    ]
     if not neighbors:
         return None
     return sum(neighbor.modifiers.pollution for neighbor in neighbors) / len(neighbors)

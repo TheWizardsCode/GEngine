@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     """Run the LLM service."""
     settings = LLMSettings.from_env()
-    
+
     try:
         settings.validate()
     except ValueError as e:
@@ -23,14 +23,14 @@ def main() -> None:
         raise
 
     app = create_llm_app(settings=settings)
-    
+
     host = "0.0.0.0"
     port = 8001  # Different port from simulation service (8000)
-    
+
     logger.info(f"Starting LLM service with provider '{settings.provider}'")
     if settings.model:
         logger.info(f"Using model: {settings.model}")
-    
+
     uvicorn.run(app, host=host, port=port)
 
 

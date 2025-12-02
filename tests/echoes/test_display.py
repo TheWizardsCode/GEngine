@@ -15,9 +15,9 @@ def test_render_summary_table_basic() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     summary = backend.summary()
-    
+
     output = display.render_summary_table(summary)
-    
+
     assert "World Status" in output
     assert "Stability" in output
     assert "Environment Impact" in output or len(output) > 0
@@ -28,15 +28,15 @@ def test_render_summary_table_with_story_seeds() -> None:
     config = load_simulation_config()
     engine = SimEngine(config=config)
     engine.initialize_state(world="default")
-    
+
     # Advance ticks to potentially trigger story seeds
     engine.advance_ticks(50)
     backend = LocalBackend(engine)
     summary = backend.summary()
-    
+
     output = display.render_summary_table(summary)
     assert output  # Should produce some output
-    
+
     # If story seeds are active, they should appear
     seeds = summary.get("story_seeds") or []
     if seeds:
@@ -51,11 +51,11 @@ def test_render_director_table() -> None:
     engine.advance_ticks(10)
     backend = LocalBackend(engine)
     summary = backend.summary()
-    
+
     feed = summary.get("director_feed") or {}
     history = summary.get("director_history") or []
     analysis = summary.get("director_analysis")
-    
+
     if feed:
         output = display.render_director_table(feed, history, analysis)
         assert output
@@ -69,9 +69,9 @@ def test_render_map_overlay() -> None:
     engine.initialize_state(world="default")
     backend = LocalBackend(engine)
     summary = backend.summary()
-    
+
     output = display.render_map_overlay(summary)
-    
+
     assert output
     assert "City Map" in output or "District" in output
 
@@ -84,9 +84,9 @@ def test_render_with_profiling_data() -> None:
     engine.advance_ticks(5)
     backend = LocalBackend(engine)
     summary = backend.summary()
-    
+
     output = display.render_summary_table(summary)
-    
+
     # Profiling should be present
     profiling = summary.get("profiling")
     if profiling:
@@ -108,8 +108,8 @@ def test_environment_panel_colors() -> None:
             "biodiversity": {"value": 0.4, "delta": -0.05},
         },
     }
-    
+
     output = display.render_summary_table(summary)
-    
+
     assert output
     assert "scarcity" in output.lower() or "pressure" in output.lower()

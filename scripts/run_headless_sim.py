@@ -58,14 +58,26 @@ def run_headless_sim(
         "faction_actions": sum(len(report.faction_actions) for report in reports),
         "faction_action_breakdown": _faction_breakdown(reports),
     }
-    summary["suppressed_events"] = sum(len(report.suppressed_events) for report in reports)
+    summary["suppressed_events"] = sum(
+        len(report.suppressed_events) for report in reports
+    )
     summary["director_feed"] = dict(engine.state.metadata.get("director_feed", {}))
-    summary["director_history"] = list(engine.state.metadata.get("director_history") or [])
-    summary["director_analysis"] = dict(engine.state.metadata.get("director_analysis") or {})
-    summary["director_events"] = list(engine.state.metadata.get("director_events") or [])
-    summary["director_pacing"] = dict(engine.state.metadata.get("director_pacing") or {})
+    summary["director_history"] = list(
+        engine.state.metadata.get("director_history") or []
+    )
+    summary["director_analysis"] = dict(
+        engine.state.metadata.get("director_analysis") or {}
+    )
+    summary["director_events"] = list(
+        engine.state.metadata.get("director_events") or []
+    )
+    summary["director_pacing"] = dict(
+        engine.state.metadata.get("director_pacing") or {}
+    )
     summary["story_seeds"] = list(engine.state.metadata.get("story_seeds_active") or [])
-    summary["story_seed_lifecycle"] = dict(engine.state.metadata.get("story_seed_lifecycle") or {})
+    summary["story_seed_lifecycle"] = dict(
+        engine.state.metadata.get("story_seed_lifecycle") or {}
+    )
     summary["story_seed_lifecycle_history"] = list(
         engine.state.metadata.get("story_seed_lifecycle_history") or []
     )
@@ -131,7 +143,9 @@ def _advance_in_batches(
             "ticks": len(step_reports),
             "ending_tick": last_report.tick if last_report else engine.state.tick,
             "agent_actions": sum(len(report.agent_actions) for report in step_reports),
-            "faction_actions": sum(len(report.faction_actions) for report in step_reports),
+            "faction_actions": sum(
+                len(report.faction_actions) for report in step_reports
+            ),
         }
         if last_report is not None:
             batch_payload["tick_ms"] = round(
@@ -213,8 +227,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Optional snapshot file to load instead of content",
     )
-    parser.add_argument("--ticks", "-t", type=int, default=200, help="Number of ticks to advance")
-    parser.add_argument("--seed", type=int, default=None, help="RNG seed override for determinism")
+    parser.add_argument(
+        "--ticks", "-t", type=int, default=200, help="Number of ticks to advance"
+    )
+    parser.add_argument(
+        "--seed", type=int, default=None, help="RNG seed override for determinism"
+    )
     parser.add_argument(
         "--lod",
         choices=["detailed", "balanced", "coarse"],

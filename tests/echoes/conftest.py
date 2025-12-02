@@ -1,8 +1,9 @@
 """Pytest configuration for echoes tests."""
 
 import pytest
-from gengine.echoes.settings import load_simulation_config
+
 from gengine.echoes.gateway.app import GatewaySettings
+from gengine.echoes.settings import load_simulation_config
 
 
 @pytest.fixture
@@ -21,4 +22,3 @@ def sim_config():
 def gateway_settings():
     """Return default gateway settings."""
     return GatewaySettings(service_url="local")
-

@@ -1,9 +1,9 @@
 """Integration tests for OpenAI provider with mocked API responses."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from gengine.echoes.llm import InspectIntent, NegotiateIntent
+import pytest
+
 from gengine.echoes.llm.openai_provider import OpenAIProvider
 from gengine.echoes.llm.settings import LLMSettings
 
@@ -93,7 +93,9 @@ class TestOpenAIProvider:
         assert intent["goal"] == "reduce protests"
 
     @pytest.mark.anyio
-    async def test_parse_intent_no_function_call(self, provider: OpenAIProvider) -> None:
+    async def test_parse_intent_no_function_call(
+        self, provider: OpenAIProvider
+    ) -> None:
         """Test handling response without function call."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -174,9 +176,7 @@ class TestOpenAIProvider:
         """Test narrating with no events."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = (
-            "The city remains quiet for now."
-        )
+        mock_response.choices[0].message.content = "The city remains quiet for now."
         mock_response.usage = MagicMock()
         mock_response.usage.total_tokens = 10
         mock_response.model_dump_json.return_value = '{"mock": "response"}'

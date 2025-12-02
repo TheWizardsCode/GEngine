@@ -9,17 +9,25 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, List, Mapping, Optional, Sequence
 
-from ..campaign import Campaign, CampaignManager, CampaignSettings as CampaignMgrSettings
+from ..campaign import CampaignManager
+from ..campaign import CampaignSettings as CampaignMgrSettings
+from ..client import SimServiceClient
 from ..core import GameState
 from ..persistence import save_snapshot
-from ..client import SimServiceClient
-from ..settings import SimulationConfig, SimulationLimits, CampaignSettings, load_simulation_config
+from ..settings import (
+    SimulationConfig,
+    SimulationLimits,
+    load_simulation_config,
+)
 from ..sim import SimEngine, TickReport
 
 try:
-    from . import display
     from io import StringIO
+
     from rich.console import Console
+
+    from . import display
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -75,7 +83,9 @@ class ShellBackend:
     def focus_state(self) -> dict[str, object]:  # pragma: no cover
         raise NotImplementedError
 
-    def set_focus(self, district_id: str | None) -> dict[str, object]:  # pragma: no cover
+    def set_focus(
+        self, district_id: str | None
+    ) -> dict[str, object]:  # pragma: no cover
         raise NotImplementedError
 
     def focus_history(self) -> List[dict[str, object]]:  # pragma: no cover
@@ -84,10 +94,14 @@ class ShellBackend:
     def post_mortem(self) -> dict[str, object]:  # pragma: no cover
         raise NotImplementedError
 
-    def query_timeline(self, count: int = 10) -> List[dict[str, object]]:  # pragma: no cover
+    def query_timeline(
+        self, count: int = 10
+    ) -> List[dict[str, object]]:  # pragma: no cover
         raise NotImplementedError
 
-    def explain(self, entity_type: str, entity_id: str) -> dict[str, object]:  # pragma: no cover
+    def explain(
+        self, entity_type: str, entity_id: str
+    ) -> dict[str, object]:  # pragma: no cover
         raise NotImplementedError
 
     def why(self, query: str) -> dict[str, object]:  # pragma: no cover
@@ -108,7 +122,9 @@ class ShellBackend:
         """Create a new campaign."""
         raise NotImplementedError
 
-    def campaign_resume(self, campaign_id: str) -> dict[str, object]:  # pragma: no cover
+    def campaign_resume(
+        self, campaign_id: str
+    ) -> dict[str, object]:  # pragma: no cover
         """Resume an existing campaign."""
         raise NotImplementedError
 
@@ -219,9 +235,7 @@ class LocalBackend(ShellBackend):
             name=name, world=world, description=description
         )
         # Save initial snapshot
-        self._campaign_manager.save_campaign(
-            self.state.snapshot(), self.state.tick
-        )
+        self._campaign_manager.save_campaign(self.state.snapshot(), self.state.tick)
         return campaign.to_dict()
 
     def campaign_resume(self, campaign_id: str) -> dict[str, object]:
@@ -436,9 +450,7 @@ class EchoesShell:
         reports = self.backend.advance_ticks(capped)
         output = _render_reports(reports)
         if capped < count:
-            prefix = (
-                f"Safeguard: run limited to {limit} ticks (requested {count})."
-            )
+            prefix = f"Safeguard: run limited to {limit} ticks (requested {count})."
             output = f"{prefix}\n{output}" if output else prefix
         return CommandResult(output)
 
@@ -499,7 +511,9 @@ class EchoesShell:
             return CommandResult("Usage: postmortem")
         payload = self.backend.post_mortem()
         if not payload:
-            return CommandResult("Post-mortem summary unavailable; run a few ticks first.")
+            return CommandResult(
+                "Post-mortem summary unavailable; run a few ticks first."
+            )
         return CommandResult(_render_post_mortem(payload))
 
     def _cmd_timeline(self, args: Sequence[str]) -> CommandResult:
@@ -520,8 +534,7 @@ class EchoesShell:
     def _cmd_explain(self, args: Sequence[str]) -> CommandResult:
         if len(args) < 2:
             return CommandResult(
-                "Usage: explain <type> <id>\n"
-                "Types: faction, agent, district, metric"
+                "Usage: explain <type> <id>\nTypes: faction, agent, district, metric"
             )
         entity_type = args[0].lower()
         entity_id = args[1]
@@ -711,27 +724,24 @@ def _render_summary(summary: dict[str, object]) -> str:
             max_info = extremes.get("max") or {}
             min_info = extremes.get("min") or {}
             if max_info and min_info:
+                max_poll = float(max_info.get("pollution", 0.0))
+                min_poll = float(min_info.get("pollution", 0.0))
                 lines.append(
                     "    extremes: "
-                    f"max {max_info.get('district')} {float(max_info.get('pollution', 0.0)):.3f}"
-                    ", "
-                    f"min {min_info.get('district')} {float(min_info.get('pollution', 0.0)):.3f}"
+                    f"max {max_info.get('district')} {max_poll:.3f}, "
+                    f"min {min_info.get('district')} {min_poll:.3f}"
                 )
         deltas = impact.get("district_deltas") or {}
         if deltas:
             sample_id, sample_delta = next(iter(deltas.items()))
             poll_delta = sample_delta.get("pollution", 0.0)
-            lines.append(
-                f"    sample delta: {sample_id} pollution {poll_delta:+.3f}"
-            )
+            lines.append(f"    sample delta: {sample_id} pollution {poll_delta:+.3f}")
         diffusion_samples = impact.get("diffusion_samples") or []
         if diffusion_samples:
             preview = []
             for sample in diffusion_samples[:2]:
                 delta = float(sample.get("delta", 0.0))
-                preview.append(
-                    f"{sample.get('district_id')}: {delta:+.3f}"
-                )
+                preview.append(f"{sample.get('district_id')}: {delta:+.3f}")
             if preview:
                 lines.append(f"    diffusion samples: {', '.join(preview)}")
         biodiversity = impact.get("biodiversity") or {}
@@ -745,23 +755,25 @@ def _render_summary(summary: dict[str, object]) -> str:
                 lines.append(f"    biodiversity: {value:.3f}{delta_text}")
                 stab = impact.get("stability_effects") or {}
                 stability_delta = stab.get("biodiversity_delta")
-                if isinstance(stability_delta, (int, float)) and abs(stability_delta) >= 1e-4:
+                if (
+                    isinstance(stability_delta, (int, float))
+                    and abs(stability_delta) >= 1e-4
+                ):
                     lines.append(f"    stability<-bio: {stability_delta:+.3f}")
         faction_effects = impact.get("faction_effects") or []
         if faction_effects:
             preview = []
             for effect in faction_effects[:2]:
+                delta = effect["pollution_delta"]
                 preview.append(
-                    f"{effect['faction']}->{effect['district']} ({effect['pollution_delta']:+.3f})"
+                    f"{effect['faction']}->{effect['district']} ({delta:+.3f})"
                 )
             lines.append(f"    faction effects: {', '.join(preview)}")
     focus = summary.get("focus")
     if isinstance(focus, dict) and focus.get("district_id"):
         neighbors = focus.get("neighbors") or []
         neighbor_text = ", ".join(neighbors) if neighbors else "none"
-        lines.append(
-            f"  focus -> {focus['district_id']} (neighbors: {neighbor_text})"
-        )
+        lines.append(f"  focus -> {focus['district_id']} (neighbors: {neighbor_text})")
         coords = focus.get("coordinates")
         if coords:
             lines.append(f"    coords: {_format_coordinates(coords)}")
@@ -802,10 +814,9 @@ def _render_summary(summary: dict[str, object]) -> str:
     director_feed = summary.get("director_feed")
     if isinstance(director_feed, dict) and director_feed:
         lines.append("  director feed:")
-        lines.append(
-            "    focus="
-            f"{director_feed.get('focus_center') or 'unset'} suppressed={director_feed.get('suppressed_count', 0)}"
-        )
+        focus_center = director_feed.get("focus_center") or "unset"
+        suppressed = director_feed.get("suppressed_count", 0)
+        lines.append(f"    focus={focus_center} suppressed={suppressed}")
         top_ranked = director_feed.get("top_ranked") or []
         if top_ranked:
             preview = []
@@ -818,9 +829,9 @@ def _render_summary(summary: dict[str, object]) -> str:
         if weights:
             preview = []
             for entry in weights[:2]:
-                preview.append(
-                    f"{entry.get('district_id', 'n/a')}:{float(entry.get('score', 0.0)):.2f}"
-                )
+                score = float(entry.get("score", 0.0))
+                district = entry.get("district_id", "n/a")
+                preview.append(f"{district}:{score:.2f}")
             if preview:
                 lines.append(f"    spatial: {', '.join(preview)}")
     analysis = summary.get("director_analysis")
@@ -856,16 +867,19 @@ def _render_summary(summary: dict[str, object]) -> str:
     pacing = summary.get("director_pacing")
     if isinstance(pacing, dict) and pacing:
         lines.append("  director pacing:")
+        active = pacing.get("active", 0)
+        resolving = pacing.get("resolving", 0)
+        max_active = pacing.get("max_active", 0)
         lines.append(
-            "    active/resolving -> "
-            f"{pacing.get('active', 0)}/{pacing.get('resolving', 0)} (max {pacing.get('max_active', 0)})"
+            f"    active/resolving -> {active}/{resolving} (max {max_active})"
         )
         quiet_until = pacing.get("global_quiet_until")
         quiet_remaining = pacing.get("global_quiet_remaining")
         if isinstance(quiet_until, (int, float)) and quiet_until > 0:
             if isinstance(quiet_remaining, (int, float)) and quiet_remaining > 0:
+                remaining = int(quiet_remaining)
                 lines.append(
-                    f"    quiet until tick {int(quiet_until)} ({int(quiet_remaining)} ticks)"
+                    f"    quiet until tick {int(quiet_until)} ({remaining} ticks)"
                 )
             else:
                 lines.append(f"    quiet until tick {int(quiet_until)}")
@@ -946,29 +960,26 @@ def _render_summary(summary: dict[str, object]) -> str:
     profiling = summary.get("profiling")
     if isinstance(profiling, dict) and profiling:
         lines.append("  profiling:")
+        p50 = profiling.get("tick_ms_p50", 0.0)
+        p95 = profiling.get("tick_ms_p95", 0.0)
+        pmax = profiling.get("tick_ms_max", 0.0)
         lines.append(
-            "    tick ms -> "
-            f"p50 {profiling.get('tick_ms_p50', 0.0):.2f} | "
-            f"p95 {profiling.get('tick_ms_p95', 0.0):.2f} | max {profiling.get('tick_ms_max', 0.0):.2f}"
+            f"    tick ms -> p50 {p50:.2f} | p95 {p95:.2f} | max {pmax:.2f}"
         )
         last_subs = profiling.get("last_subsystem_ms") or {}
         if last_subs:
             preview = ", ".join(
-                f"{name}:{value:.2f}ms"
-                for name, value in list(last_subs.items())[:3]
+                f"{name}:{value:.2f}ms" for name, value in list(last_subs.items())[:3]
             )
             lines.append(f"    last subsystems: {preview}")
         slowest = profiling.get("slowest_subsystem")
         if isinstance(slowest, dict) and slowest.get("name"):
             lines.append(
-                "    slowest: "
-                f"{slowest['name']} {slowest.get('ms', 0.0):.2f}ms"
+                f"    slowest: {slowest['name']} {slowest.get('ms', 0.0):.2f}ms"
             )
         anomalies = profiling.get("anomalies") or []
         if anomalies:
-            lines.append(
-                f"    anomalies: {', '.join(anomalies[:3])}"
-            )
+            lines.append(f"    anomalies: {', '.join(anomalies[:3])}")
     # Render progression summary if present
     progression = summary.get("progression")
     if isinstance(progression, dict) and progression:
@@ -977,7 +988,9 @@ def _render_summary(summary: dict[str, object]) -> str:
         avg_level = progression.get("average_level", 1.0)
         actions = progression.get("actions_taken", 0)
         total_exp = progression.get("total_experience", 0.0)
-        lines.append(f"    tier: {tier} | avg level: {avg_level:.1f} | exp: {total_exp:.0f}")
+        lines.append(
+            f"    tier: {tier} | avg level: {avg_level:.1f} | exp: {total_exp:.0f}"
+        )
         lines.append(f"    actions taken: {actions}")
         skills = progression.get("skills") or {}
         if skills:
@@ -996,6 +1009,7 @@ def _render_summary(summary: dict[str, object]) -> str:
             lines.append(f"    reputation: {', '.join(rep_bits)}")
     return "\n".join(lines)
 
+
 def _render_post_mortem(payload: Mapping[str, Any]) -> str:
     lines = ["Post-mortem recap:"]
     tick = payload.get("tick")
@@ -1008,16 +1022,19 @@ def _render_post_mortem(payload: Mapping[str, Any]) -> str:
         unrest = float(delta.get("unrest", 0.0))
         pollution = float(delta.get("pollution", 0.0))
         lines.append(
-            "  environment trend: "
-            f"stability {stability:+.3f}, unrest {unrest:+.3f}, pollution {pollution:+.3f}"
+            f"  environment trend: stability {stability:+.3f}, "
+            f"unrest {unrest:+.3f}, pollution {pollution:+.3f}"
         )
     factions = payload.get("faction_trends") or []
     if factions:
         lines.append("  faction swings:")
         for entry in factions[:3]:
+            start = entry["start"]
+            end = entry["end"]
+            faction_delta = entry["delta"]
             lines.append(
-                "    - "
-                f"{entry['faction_id']}: {entry['start']:.3f} → {entry['end']:.3f} ({entry['delta']:+.3f})"
+                f"    - {entry['faction_id']}: {start:.3f} → "
+                f"{end:.3f} ({faction_delta:+.3f})"
             )
     events = payload.get("featured_events") or []
     if events:
@@ -1075,12 +1092,15 @@ def _render_focus_state(focus: dict[str, object] | None) -> str:
         for entry in weights[:4]:
             distance = entry.get("distance")
             distance_text = (
-                f"{float(distance):.2f}" if isinstance(distance, (int, float)) else "n/a"
+                f"{float(distance):.2f}"
+                if isinstance(distance, (int, float))
+                else "n/a"
             )
+            score = float(entry.get("score", 0.0))
+            pop = float(entry.get("population_rank", 0.0))
             lines.append(
-                "    "
-                f"{entry['district_id']:<16} score {float(entry.get('score', 0.0)):.2f} "
-                f"pop {float(entry.get('population_rank', 0.0)):.2f} dist {distance_text}"
+                f"    {entry['district_id']:<16} score {score:.2f} "
+                f"pop {pop:.2f} dist {distance_text}"
             )
     return "\n".join(lines)
 
@@ -1118,10 +1138,13 @@ def _render_director_feed(
         lines.append(f"  ring: {', '.join(ring)}")
     allocation = feed.get("allocation") or {}
     if allocation:
+        focus_used = allocation.get("focus_used", 0)
+        focus_reserved = allocation.get("focus_reserved", 0)
+        global_used = allocation.get("global_used", 0)
+        global_reserved = allocation.get("global_reserved", 0)
         lines.append(
-            "  allocation -> "
-            f"focus {allocation.get('focus_used', 0)}/{allocation.get('focus_reserved', 0)} | "
-            f"global {allocation.get('global_used', 0)}/{allocation.get('global_reserved', 0)}"
+            f"  allocation -> focus {focus_used}/{focus_reserved} | "
+            f"global {global_used}/{global_reserved}"
         )
     weights = feed.get("spatial_weights") or []
     if weights:
@@ -1149,9 +1172,11 @@ def _render_director_feed(
     if history:
         lines.append("  recent snapshots:")
         for entry in reversed(history[-3:]):
+            focus = entry.get("focus_center") or "unset"
+            suppressed = entry.get("suppressed_count", 0)
             lines.append(
-                f"    tick {entry.get('tick')}: focus={entry.get('focus_center') or 'unset'} "
-                f"suppressed={entry.get('suppressed_count', 0)}"
+                f"    tick {entry.get('tick')}: focus={focus} "
+                f"suppressed={suppressed}"
             )
     if analysis:
         hotspots = analysis.get("hotspots") or []
@@ -1167,7 +1192,11 @@ def _render_director_feed(
                     if isinstance(hops, int):
                         detail += f"{hops} hops"
                     if isinstance(travel_time, (int, float)):
-                        detail = f"{detail} | {travel_time:.2f}t" if detail else f"{travel_time:.2f}t"
+                        detail = (
+                            f"{detail} | {travel_time:.2f}t"
+                            if detail
+                            else f"{travel_time:.2f}t"
+                        )
                     lines.append(f"    {prefix}: {detail or 'reachable'}")
                 else:
                     reason = travel.get("reason", "blocked")
@@ -1209,9 +1238,16 @@ def _render_director_feed(
                 if isinstance(tick, int):
                     snippet = f"{snippet} [tick {tick}]"
                 lines.append(snippet)
-                agent = next((agent for agent in event.get("agents", []) if agent.get("name")), None)
+                agent = next(
+                    (agent for agent in event.get("agents", []) if agent.get("name")),
+                    None,
+                )
                 faction = next(
-                    (faction for faction in event.get("factions", []) if faction.get("name")),
+                    (
+                        faction
+                        for faction in event.get("factions", [])
+                        if faction.get("name")
+                    ),
                     None,
                 )
                 participants: List[str] = []
@@ -1242,9 +1278,11 @@ def _render_reports(reports: Sequence[TickReport]) -> str:
     for report in reports:
         lines.append(f"Tick {report.tick} advanced.")
         env = report.environment
+        stb = env["stability"]
+        unr = env["unrest"]
+        poll = env["pollution"]
         lines.append(
-            "  env -> "
-            f"stb {env['stability']:.2f} | unrest {env['unrest']:.2f} | poll {env['pollution']:.2f}"
+            f"  env -> stb {stb:.2f} | unrest {unr:.2f} | poll {poll:.2f}"
         )
         if report.faction_legitimacy_delta:
             lines.append("  faction legitimacy:")
@@ -1260,7 +1298,8 @@ def _render_reports(reports: Sequence[TickReport]) -> str:
             prices = report.economy.get("prices", {})
             if prices:
                 sample = ", ".join(
-                    f"{resource}:{price:.2f}" for resource, price in sorted(prices.items())[:3]
+                    f"{resource}:{price:.2f}"
+                    for resource, price in sorted(prices.items())[:3]
                 )
                 lines.append(f"  market -> {sample}")
         if report.events:
@@ -1275,9 +1314,8 @@ def _render_reports(reports: Sequence[TickReport]) -> str:
                 f"suppressed {fb.get('suppressed', 0)}"
             )
         if report.suppressed_events:
-            lines.append(
-                f"  suppressed archive: {len(report.suppressed_events)} events held back"
-            )
+            count = len(report.suppressed_events)
+            lines.append(f"  suppressed archive: {count} events held back")
         if report.anomalies:
             lines.append(f"  anomalies: {', '.join(report.anomalies)}")
     return "\n".join(lines)
@@ -1304,14 +1342,23 @@ def _render_map(state: GameState, district_id: str | None) -> str:
         detail.append(f"  adjacent   : {neighbors}")
         return "\n".join(detail)
 
-    header = "| District ID      | District         |   Pop | Unrest | Poll | Prosper | Sec |"
-    divider = "+------------------+-----------------+-------+--------+------+---------+-----+"
+    header = (
+        "| District ID      | District         |   Pop | "
+        "Unrest | Poll | Prosper | Sec |"
+    )
+    divider = (
+        "+------------------+-----------------+-------+--------+------+---------+-----+"
+    )
     lines = ["City overview:", divider, header, divider]
     for district in state.city.districts:
+        unr = district.modifiers.unrest
+        poll = district.modifiers.pollution
+        pros = district.modifiers.prosperity
+        sec = district.modifiers.security
         lines.append(
-            f"| {district.id:<16} | {district.name:<15} | {district.population:5d} | "
-            f"{district.modifiers.unrest:0.2f} | {district.modifiers.pollution:0.2f} | "
-            f"{district.modifiers.prosperity:0.2f} | {district.modifiers.security:0.2f} |"
+            f"| {district.id:<16} | {district.name:<15} | "
+            f"{district.population:5d} | {unr:0.2f} | {poll:0.2f} | "
+            f"{pros:0.2f} | {sec:0.2f} |"
         )
     lines.append(divider)
     lines.append("Geometry overlay:")
@@ -1344,8 +1391,8 @@ def _format_coordinates(coords: Any | None) -> str:
     if coords is None:
         return "n/a"
     if hasattr(coords, "x") and hasattr(coords, "y"):
-        x = getattr(coords, "x")
-        y = getattr(coords, "y")
+        x = coords.x
+        y = coords.y
         z = getattr(coords, "z", None)
     elif isinstance(coords, dict):
         x = coords.get("x")
@@ -1424,7 +1471,9 @@ def _render_explanation(entity_type: str, result: Mapping[str, Any]) -> str:
         home = result.get("home_district")
         if home:
             lines.append(f"  Home: {home}")
-        lines.append(f"  Reasoning: {result.get('reasoning_summary', 'No recent activity')}")
+        lines.append(
+            f"  Reasoning: {result.get('reasoning_summary', 'No recent activity')}"
+        )
         needs = result.get("current_needs") or {}
         if needs:
             need_strs = [f"{k}:{v:.2f}" for k, v in list(needs.items())[:4]]
@@ -1659,7 +1708,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--rich",
         action="store_true",
-        help="Enable enhanced ASCII views with Rich formatting (tables, colors, panels)",
+        help="Enable enhanced ASCII views with Rich formatting",
     )
     parser.add_argument(
         "--campaign",
@@ -1696,7 +1745,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 snapshot_path = campaign_manager.get_snapshot_path(args.campaign)
                 if snapshot_path.exists():
                     engine.initialize_state(snapshot=snapshot_path)
-                print(f"Resumed campaign '{campaign.name}' at tick {campaign.last_tick}")
+                print(
+                    f"Resumed campaign '{campaign.name}' at tick {campaign.last_tick}"
+                )
             except (FileNotFoundError, ValueError) as exc:
                 print(f"Warning: Could not resume campaign: {exc}")
 

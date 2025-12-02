@@ -218,7 +218,9 @@ class ExplanationsManager:
                         CausalEvent(
                             tick=tick,
                             category=CausalCategory.FACTION,
-                            description=f"{name} {direction} {abs(delta):.3f} legitimacy",
+                            description=(
+                                f"{name} {direction} {abs(delta):.3f} legitimacy"
+                            ),
                             entity_id=faction_id,
                             entity_name=name,
                             metric="legitimacy",
@@ -233,7 +235,9 @@ class ExplanationsManager:
             for action in agent_actions:
                 agent_id = action.get("agent_id")
                 agent = state.agents.get(agent_id) if agent_id else None
-                agent_name = action.get("agent_name") or (agent.name if agent else agent_id)
+                agent_name = action.get("agent_name") or (
+                    agent.name if agent else agent_id
+                )
                 intent = action.get("intent", "acted")
                 target = action.get("target_name") or action.get("target")
 
@@ -293,7 +297,9 @@ class ExplanationsManager:
             for action in faction_actions:
                 faction_id = action.get("faction_id")
                 faction = state.factions.get(faction_id) if faction_id else None
-                faction_name = action.get("faction_name") or (faction.name if faction else faction_id)
+                faction_name = action.get("faction_name") or (
+                    faction.name if faction else faction_id
+                )
                 action_type = action.get("action", "acted")
                 target = action.get("target_name") or action.get("target")
 
@@ -381,7 +387,9 @@ class ExplanationsManager:
                             "district": district,
                             "stakes": stakes,
                             "agents": [a.get("name") for a in event.get("agents", [])],
-                            "factions": [f.get("name") for f in event.get("factions", [])],
+                            "factions": [
+                                f.get("name") for f in event.get("factions", [])
+                            ],
                         },
                     )
                 )
@@ -406,7 +414,7 @@ class ExplanationsManager:
         # Add to timeline
         self._timeline.append(entry)
         if len(self._timeline) > self._history_limit:
-            self._timeline = self._timeline[-self._history_limit:]
+            self._timeline = self._timeline[-self._history_limit :]
 
         # Index events by entity
         for event in events:
@@ -429,7 +437,7 @@ class ExplanationsManager:
         history = list(state.metadata.get("explanation_timeline_history") or [])
         history.append(entry.to_dict())
         if len(history) > self._history_limit:
-            history = history[-self._history_limit:]
+            history = history[-self._history_limit :]
         state.metadata["explanation_timeline_history"] = history
 
         # Store agent reasoning summaries
@@ -472,7 +480,10 @@ class ExplanationsManager:
         for event in relevant_events:
             if event.causes:
                 causes.extend(event.causes)
-            if event.category == CausalCategory.ECONOMY and metric in ("unrest", "stability"):
+            if event.category == CausalCategory.ECONOMY and metric in (
+                "unrest",
+                "stability",
+            ):
                 causes.append(event.description)
             if event.category == CausalCategory.FACTION and event.delta:
                 causes.append(event.description)
@@ -486,7 +497,9 @@ class ExplanationsManager:
 
         return {
             "metric": metric,
-            "current_value": round(current_value, 3) if current_value is not None else None,
+            "current_value": round(current_value, 3)
+            if current_value is not None
+            else None,
             "total_delta": round(total_delta, 4),
             "event_count": len(relevant_events),
             "causes": list(set(causes))[:10],
@@ -510,16 +523,14 @@ class ExplanationsManager:
 
         # Calculate legitimacy trend
         legitimacy_deltas = [
-            e.delta for e in faction_events
+            e.delta
+            for e in faction_events
             if e.delta is not None and e.metric == "legitimacy"
         ]
         trend = sum(legitimacy_deltas) if legitimacy_deltas else 0.0
 
         # Get actions
-        actions = [
-            e for e in faction_events
-            if e.metadata.get("action")
-        ]
+        actions = [e for e in faction_events if e.metadata.get("action")]
 
         return {
             "faction_id": faction_id,
@@ -612,14 +623,12 @@ class ExplanationsManager:
 
         # Get story seeds affecting this district
         story_seeds = [
-            e for e in district_events
-            if e.category == CausalCategory.STORY_SEED
+            e for e in district_events if e.category == CausalCategory.STORY_SEED
         ]
 
         # Get faction activities in this district
         faction_activity = [
-            e for e in district_events
-            if e.category == CausalCategory.FACTION
+            e for e in district_events if e.category == CausalCategory.FACTION
         ]
 
         return {
@@ -674,7 +683,10 @@ class ExplanationsManager:
 
         # Check for district queries
         for district in state.city.districts:
-            if district.id.lower() in query_lower or district.name.lower() in query_lower:
+            if (
+                district.id.lower() in query_lower
+                or district.name.lower() in query_lower
+            ):
                 return self.explain_district(state, district.id)
 
         # Default: return recent key changes
@@ -685,7 +697,10 @@ class ExplanationsManager:
         return {
             "query": query,
             "matched": False,
-            "suggestion": "Try asking about stability, unrest, pollution, a faction name, agent name, or district name",
+            "suggestion": (
+                "Try asking about stability, unrest, pollution, "
+                "a faction name, agent name, or district name"
+            ),
             "recent_changes": recent_changes[-10:],
         }
 
@@ -709,9 +724,11 @@ class ExplanationsManager:
             causes.append(f"unrest in {', '.join(high_unrest_districts[:2])}")
 
         # Check faction legitimacy
-        for faction_id, faction in state.factions.items():
+        for _faction_id, faction in state.factions.items():
             if faction.legitimacy < 0.3:
-                causes.append(f"{faction.name} legitimacy crisis ({faction.legitimacy:.2f})")
+                causes.append(
+                    f"{faction.name} legitimacy crisis ({faction.legitimacy:.2f})"
+                )
             elif faction.legitimacy > 0.8:
                 causes.append(f"{faction.name} dominance ({faction.legitimacy:.2f})")
 

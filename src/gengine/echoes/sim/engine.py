@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from collections import deque
 import math
+from collections import deque
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Deque, Literal, Sequence
@@ -13,16 +13,25 @@ from ..content import load_world_bundle
 from ..core import GameState
 from ..persistence import load_snapshot
 from ..settings import SimulationConfig, load_simulation_config
-from ..systems import AgentSystem, EconomySystem, EnvironmentSystem, FactionSystem, ProgressionSystem
+from ..systems import (
+    AgentSystem,
+    EconomySystem,
+    EnvironmentSystem,
+    FactionSystem,
+    ProgressionSystem,
+)
 from ..systems.progression import (
     PerAgentProgressionSettings as SystemPerAgentSettings,
+)
+from ..systems.progression import (
     ProgressionSettings as SystemProgressionSettings,
 )
 from .director import DirectorBridge, NarrativeDirector
 from .explanations import ExplanationsManager
 from .focus import FocusManager
 from .post_mortem import generate_post_mortem_summary
-from .tick import TickReport, advance_ticks as _advance_ticks
+from .tick import TickReport
+from .tick import advance_ticks as _advance_ticks
 
 ViewName = Literal["summary", "snapshot", "district", "post-mortem"]
 
@@ -57,7 +66,9 @@ class SimEngine:
             settings=self._create_progression_settings(),
             per_agent_settings=self._create_per_agent_settings(),
         )
-        self._tick_history: Deque[float] = deque(maxlen=self._config.profiling.history_window)
+        self._tick_history: Deque[float] = deque(
+            maxlen=self._config.profiling.history_window
+        )
 
     def _create_progression_settings(self) -> SystemProgressionSettings:
         """Convert config progression settings to system settings."""
@@ -127,14 +138,14 @@ class SimEngine:
         return self.state
 
     # ------------------------------------------------------------------
-    def advance_ticks(self, count: int = 1, *, seed: int | None = None) -> Sequence[TickReport]:
+    def advance_ticks(
+        self, count: int = 1, *, seed: int | None = None
+    ) -> Sequence[TickReport]:
         """Advance simulation time by ``count`` ticks using the tick driver."""
 
         limit = self._config.limits.engine_max_ticks
         if count > limit:
-            raise ValueError(
-                f"Requested {count} ticks exceeds engine limit of {limit}"
-            )
+            raise ValueError(f"Requested {count} ticks exceeds engine limit of {limit}")
 
         start = perf_counter()
         reports = _advance_ticks(
@@ -245,7 +256,9 @@ class SimEngine:
             self.state, agent_id, lookback=lookback
         )
 
-    def explain_district(self, district_id: str, *, lookback: int = 10) -> dict[str, Any]:
+    def explain_district(
+        self, district_id: str, *, lookback: int = 10
+    ) -> dict[str, Any]:
         """Explain changes in a district."""
         return self._explanations_manager.explain_district(
             self.state, district_id, lookback=lookback
@@ -316,7 +329,9 @@ class SimEngine:
         slowest_entry: dict[str, float] | None = None
         if last_subsystems:
             profiling_payload["last_subsystem_ms"] = last_subsystems
-            slowest_name, slowest_value = max(last_subsystems.items(), key=lambda item: item[1])
+            slowest_name, slowest_value = max(
+                last_subsystems.items(), key=lambda item: item[1]
+            )
             slowest_entry = {
                 "name": slowest_name,
                 "ms": slowest_value,
@@ -353,7 +368,9 @@ class SimEngine:
                     "name": district.name,
                     "population": district.population,
                     "modifiers": district.modifiers.model_dump(),
-                    "coordinates": district.coordinates.model_dump() if district.coordinates else None,
+                    "coordinates": district.coordinates.model_dump()
+                    if district.coordinates
+                    else None,
                     "adjacent": list(district.adjacent),
                 }
         raise ValueError(f"Unknown district '{district_id}'")

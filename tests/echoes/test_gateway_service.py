@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from gengine.echoes.gateway.app import GatewaySettings, create_gateway_app
 from gengine.echoes.cli.shell import LocalBackend
+from gengine.echoes.gateway.app import GatewaySettings, create_gateway_app
 from gengine.echoes.sim import SimEngine
 
 
@@ -107,17 +107,17 @@ def test_gateway_executes_multiple_commands(sim_config, gateway_settings) -> Non
     client = TestClient(app)
     with client.websocket_connect("/ws") as websocket:
         _ = websocket.receive_json()
-        
+
         websocket.send_json({"command": "summary"})
         result1 = websocket.receive_json()
         assert result1["type"] == "result"
         assert "Current world summary" in result1["output"]
-        
+
         websocket.send_json({"command": "next"})
         result2 = websocket.receive_json()
         assert result2["type"] == "result"
         assert "Tick" in result2["output"]
-        
+
         websocket.send_json({"command": "exit"})
         final = websocket.receive_json()
         assert final["should_exit"] is True
@@ -145,6 +145,7 @@ def test_gateway_handles_empty_string_command(sim_config, gateway_settings) -> N
 def test_gateway_settings_from_env() -> None:
     """Verify that GatewaySettings.from_env() reads environment variables."""
     import os
+
     old_env = {
         "ECHOES_GATEWAY_SERVICE_URL": os.environ.get("ECHOES_GATEWAY_SERVICE_URL"),
         "ECHOES_GATEWAY_HOST": os.environ.get("ECHOES_GATEWAY_HOST"),
@@ -154,7 +155,7 @@ def test_gateway_settings_from_env() -> None:
         os.environ["ECHOES_GATEWAY_SERVICE_URL"] = "http://test:9000"
         os.environ["ECHOES_GATEWAY_HOST"] = "127.0.0.1"
         os.environ["ECHOES_GATEWAY_PORT"] = "9100"
-        
+
         settings = GatewaySettings.from_env()
         assert settings.service_url == "http://test:9000"
         assert settings.host == "127.0.0.1"
@@ -168,7 +169,10 @@ def test_gateway_settings_from_env() -> None:
 
 
 def test_gateway_app_uses_service_backend_factory_by_default(sim_config) -> None:
-    """Verify that create_gateway_app creates service backend factory when none provided."""
+    """Verify that create_gateway_app creates service backend factory.
+
+    Tests that the default factory is used when none is provided.
+    """
     settings = GatewaySettings(service_url="http://localhost:8000")
     # Call without backend_factory to trigger the default factory creation
     app = create_gateway_app(config=sim_config, settings=settings)
@@ -188,7 +192,7 @@ def test_gateway_handles_invalid_json_bytes(sim_config, gateway_settings) -> Non
     with client.websocket_connect("/ws") as websocket:
         _ = websocket.receive_json()
         # Send invalid JSON as bytes
-        websocket.send_bytes(b'not valid json')
+        websocket.send_bytes(b"not valid json")
         response = websocket.receive_json()
         assert response["type"] == "result"
         websocket.send_text("exit")

@@ -8,7 +8,6 @@ from typing import Any
 
 from openai import AsyncOpenAI, OpenAIError
 
-from . import parse_intent
 from .prompts import (
     INTENT_PARSING_SYSTEM_PROMPT,
     NARRATION_SYSTEM_PROMPT,
@@ -94,7 +93,8 @@ class OpenAIProvider(LLMProvider):
             confidence = 0.9 if intents else 0.3
 
             logger.info(
-                f"OpenAI parsed intent: {len(intents)} intent(s) from '{user_input[:50]}...'"
+                f"OpenAI parsed intent: {len(intents)} intent(s) "
+                f"from '{user_input[:50]}...'"
             )
 
             return IntentParseResult(
@@ -132,9 +132,7 @@ class OpenAIProvider(LLMProvider):
         """
         try:
             # Convert event dicts to strings
-            event_strings = [
-                e.get("description", str(e)) for e in events
-            ]
+            event_strings = [e.get("description", str(e)) for e in events]
             prompt = build_narration_prompt(event_strings, context=context)
 
             response = await self.client.chat.completions.create(
@@ -218,50 +216,64 @@ class OpenAIProvider(LLMProvider):
 
         # Map function args to intent fields based on type
         if intent_type == "INSPECT":
-            intent_dict.update({
-                "target_type": args.get("target_type"),
-                "target_id": args.get("target_id"),
-                "focus_areas": args.get("focus_areas", []),
-            })
+            intent_dict.update(
+                {
+                    "target_type": args.get("target_type"),
+                    "target_id": args.get("target_id"),
+                    "focus_areas": args.get("focus_areas", []),
+                }
+            )
         elif intent_type == "NEGOTIATE":
-            intent_dict.update({
-                "targets": args.get("targets", []),
-                "levers": args.get("levers", {}),
-                "goal": args.get("goal", ""),
-            })
+            intent_dict.update(
+                {
+                    "targets": args.get("targets", []),
+                    "levers": args.get("levers", {}),
+                    "goal": args.get("goal", ""),
+                }
+            )
         elif intent_type == "DEPLOY_RESOURCE":
-            intent_dict.update({
-                "resource_type": args.get("resource_type"),
-                "amount": args.get("amount"),
-                "target_district": args.get("target_district"),
-                "purpose": args.get("purpose"),
-            })
+            intent_dict.update(
+                {
+                    "resource_type": args.get("resource_type"),
+                    "amount": args.get("amount"),
+                    "target_district": args.get("target_district"),
+                    "purpose": args.get("purpose"),
+                }
+            )
         elif intent_type == "PASS_POLICY":
-            intent_dict.update({
-                "policy_id": args.get("policy_id"),
-                "parameters": args.get("parameters", {}),
-                "duration_ticks": args.get("duration_ticks"),
-            })
+            intent_dict.update(
+                {
+                    "policy_id": args.get("policy_id"),
+                    "parameters": args.get("parameters", {}),
+                    "duration_ticks": args.get("duration_ticks"),
+                }
+            )
         elif intent_type == "COVERT_ACTION":
-            intent_dict.update({
-                "action_type": args.get("action_type"),
-                "target_district": args.get("target_district"),
-                "target_faction": args.get("target_faction"),
-                "parameters": args.get("parameters", {}),
-                "risk_level": args.get("risk_level"),
-            })
+            intent_dict.update(
+                {
+                    "action_type": args.get("action_type"),
+                    "target_district": args.get("target_district"),
+                    "target_faction": args.get("target_faction"),
+                    "parameters": args.get("parameters", {}),
+                    "risk_level": args.get("risk_level"),
+                }
+            )
         elif intent_type == "INVOKE_AGENT":
-            intent_dict.update({
-                "agent_id": args.get("agent_id"),
-                "action": args.get("action"),
-                "target": args.get("target"),
-                "parameters": args.get("parameters", {}),
-            })
+            intent_dict.update(
+                {
+                    "agent_id": args.get("agent_id"),
+                    "action": args.get("action"),
+                    "target": args.get("target"),
+                    "parameters": args.get("parameters", {}),
+                }
+            )
         elif intent_type == "REQUEST_REPORT":
-            intent_dict.update({
-                "report_type": args.get("report_type"),
-                "filters": args.get("filters", {}),
-                "include_history": args.get("include_history", False),
-            })
+            intent_dict.update(
+                {
+                    "report_type": args.get("report_type"),
+                    "filters": args.get("filters", {}),
+                    "include_history": args.get("include_history", False),
+                }
+            )
 
         return intent_dict

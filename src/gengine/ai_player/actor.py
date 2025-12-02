@@ -419,9 +419,9 @@ class AIActor:
             start_value=1.0,  # Assumed start
             end_value=stability,
             delta=stability - 1.0,
-            trend="stable" if abs(stability - 1.0) < 0.01 else (
-                "increasing" if stability > 1.0 else "decreasing"
-            ),
+            trend="stable"
+            if abs(stability - 1.0) < 0.01
+            else ("increasing" if stability > 1.0 else "decreasing"),
         )
 
         # Extract faction swings
@@ -432,9 +432,9 @@ class AIActor:
                 start_value=0.5,  # Assumed start
                 end_value=leg,
                 delta=leg - 0.5,
-                trend="stable" if abs(leg - 0.5) < 0.05 else (
-                    "increasing" if leg > 0.5 else "decreasing"
-                ),
+                trend="stable"
+                if abs(leg - 0.5) < 0.05
+                else ("increasing" if leg > 0.5 else "decreasing"),
             )
 
         return ObservationReport(
@@ -472,9 +472,7 @@ class AIActor:
 
         return {
             "action_counts": action_counts,
-            "priority_stats": {
-                k: round(v, 4) for k, v in priority_stats.items()
-            },
+            "priority_stats": {k: round(v, 4) for k, v in priority_stats.items()},
             "strategy_type": self._strategy.strategy_type.value,
             "final_state": {
                 "stability": final_state.get("stability", 1.0),

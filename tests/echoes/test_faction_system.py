@@ -59,7 +59,9 @@ def test_faction_system_can_sabotage_rivals() -> None:
     sabotage = None
     for _ in range(5):
         actions = system.tick(state, rng=rng)
-        sabotage = next((action for action in actions if action.action == "SABOTAGE_RIVAL"), None)
+        sabotage = next(
+            (action for action in actions if action.action == "SABOTAGE_RIVAL"), None
+        )
         if sabotage is not None:
             break
     assert sabotage is not None
@@ -79,7 +81,9 @@ def test_faction_system_invests_to_calm_unrest() -> None:
 
     actions = system.tick(state, rng=random.Random(2))
 
-    invest = next((action for action in actions if action.action == "INVEST_DISTRICT"), None)
+    invest = next(
+        (action for action in actions if action.action == "INVEST_DISTRICT"), None
+    )
     assert invest is not None
     target = next(d for d in state.city.districts if d.id == invest.target)
     assert target.modifiers.unrest < 0.9
@@ -97,7 +101,9 @@ def test_faction_system_recruits_when_resources_low() -> None:
 
     actions = system.tick(state, rng=random.Random(3))
 
-    recruit = next((action for action in actions if action.action == "RECRUIT_SUPPORT"), None)
+    recruit = next(
+        (action for action in actions if action.action == "RECRUIT_SUPPORT"), None
+    )
     assert recruit is not None
     assert recruit.resource_delta > 0
 

@@ -249,10 +249,9 @@ class TestObserverDetectsStabilityCrash:
         assert report.stability_trend.end_value <= 1.0
         assert isinstance(report.stability_trend.delta, float)
 
-        assert any(
-            "stability" in c.lower()
-            for c in report.commentary
-        ), "Commentary should mention stability"
+        assert any("stability" in c.lower() for c in report.commentary), (
+            "Commentary should mention stability"
+        )
 
     def test_observer_tracks_faction_legitimacy(self) -> None:
         """Observer should track faction legitimacy changes."""
@@ -341,8 +340,7 @@ class TestObserverAlertAndCommentaryEdgeCases:
         comments = observer._generate_commentary(stability_trend, {}, [])
 
         assert any(
-            "[STABILITY]" in c and "Declined significantly" in c
-            for c in comments
+            "[STABILITY]" in c and "Declined significantly" in c for c in comments
         )
         assert any("0.90" in c and "0.60" in c for c in comments)
 

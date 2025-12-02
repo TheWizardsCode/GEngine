@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
+import sys
 from importlib import util
 from pathlib import Path
-import sys
 
 import pytest
 
-_MODULE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "analyze_difficulty_profiles.py"
+_MODULE_PATH = (
+    Path(__file__).resolve().parents[2] / "scripts" / "analyze_difficulty_profiles.py"
+)
 
 
 def _load_analysis_module():
@@ -225,7 +227,9 @@ def test_analysis_main_json_output(
     assert "comparison" in data
 
 
-def test_analysis_main_no_telemetry(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+def test_analysis_main_no_telemetry(
+    tmp_path: Path, capsys: pytest.CaptureFixture
+) -> None:
     """Test CLI with no telemetry files."""
     exit_code = main(["--telemetry-dir", str(tmp_path)])
 
