@@ -84,7 +84,9 @@ done
 This block standardizes the working directory, target path, and document title
 while preserving pre-set values for CI or shared runners.
 
-<!-- expected_similarity="PLAN_REL_PATH.*emergent_story_game_implementation_plan.md" -->
+<!-- 
+expected_similarity="PLAN_REL_PATH.*emergent_story_game_implementation_plan.md"
+-->
 
 ```text
 VARIABLE        VALUE
@@ -206,6 +208,7 @@ full save/load from the start.
     - union_of_flux
     - cartel_of_mist
   ```
+
 - Story seed schema includes `id`, `triggers` (metrics + thresholds), `roles`
   (agent/faction selectors), `stakes`, `beats`, and `resolutions`, enabling the
   narrative director to ground prompts deterministically.
@@ -217,6 +220,7 @@ full save/load from the start.
 
 - Intents are JSON objects produced by the LLM service and validated by the
   simulation service before execution:
+
   ```json
   {
     "intent": "NEGOTIATE",
@@ -226,6 +230,7 @@ full save/load from the start.
     "narrative_context": "Broker truce over refinery protest"
   }
   ```
+
 - Core intent types: `INSPECT`, `NEGOTIATE`, `DEPLOY_RESOURCE`, `PASS_POLICY`,
   `COVERT_ACTION`, `INVOKE_AGENT`, `REQUEST_REPORT`; each documents required
   fields so the CLI gateway can surface correct affordances.
@@ -384,6 +389,8 @@ full save/load from the start.
   produces artifacts consumed by the simulation service.
 - Once the core loop is robust, iterate on art direction for ASCII layouts and
   on narrative tone via seed and prompt tuning.
+
+```bash
 EOF
 
 printf "Wrote %s\n" "${REPO_ROOT}/${PLAN_REL_PATH}"
@@ -392,7 +399,9 @@ printf "Wrote %s\n" "${REPO_ROOT}/${PLAN_REL_PATH}"
 This step replaces the plan file atomically so repeated executions always yield
 identical content and formatting.
 
-<!-- expected_similarity="Wrote .*emergent_story_game_implementation_plan.md" -->
+<!-- 
+expected_similarity="Wrote .*emergent_story_game_implementation_plan.md"
+-->
 
 ```text
 Wrote /workspaces/gengine/docs/simul/emergent_story_game_implementation_plan.md
@@ -446,7 +455,9 @@ else
 fi
 ```
 
-<!-- expected_similarity="PASS: Implementation plan matches canonical content" -->
+<!-- 
+expected_similarity="PASS: Implementation plan matches canonical content"
+-->
 
 ```text
 PASS: Implementation plan matches canonical content

@@ -10,7 +10,9 @@ This document describes how to test the GEngine agents project, including:
 - How to validate and test Kubernetes infrastructure.
 - Recommendations for improving the overall testing process.
 
-It assumes you are in the project root (the directory containing `pyproject.toml`, `pytest.ini`, and `docker-compose.yml`).
+It assumes you are in the project root (the directory containing `pyproject.toml`,
+
+`pytest.ini`, and `docker-compose.yml`).
 
 ## 2. Local Test Setup
 
@@ -23,7 +25,11 @@ pip install pytest
 # pip install -e ".[dev,test]"
 ```
 
-- Configure any environment variables used by tests (for example, fake LLM keys or gateway URLs). Prefer dummy values in test environments so that no real external calls are made.
+- Configure any environment variables used by tests
+
+  (for example, fake LLM keys or gateway URLs).
+
+  Prefer dummy values in test environments so that no real external calls are made.
 
 ## 3. Running the Test Suite
 
@@ -83,9 +89,15 @@ Typical files:
 
 Guidelines:
 
-- Keep tests **pure and fast** (no network or filesystem where possible).
-- Use descriptive test names (e.g. `test_chooses_defensive_action_on_low_health`).
-- Mock external dependencies, especially anything that would invoke LLMs or external services.
+- Keep tests **pure and fast**
+
+  (no network or filesystem where possible).
+- Use descriptive test names
+
+  (e.g. `test_chooses_defensive_action_on_low_health`).
+- Mock external dependencies, especially anything that would invoke LLMs
+
+  or external services.
 
 ### 4.2 Echoes tests (`tests/echoes/`)
 
@@ -143,24 +155,43 @@ Focus: scripts under `scripts/`, such as:
 
 Guidelines:
 
-- Encapsulate script logic into functions in `scripts/` (e.g. `main()` with injectable parameters) to keep tests simple and fast.
+- Encapsulate script logic into functions in `scripts/` (e.g. `main()` with
+
+  injectable parameters)
+
+  to keep tests simple and fast.
+
 - Use temporary directories and test configurations to avoid modifying real data.
-- Mock external systems (e.g., Docker, network, filesystem heavy operations) where necessary.
+
+- Mock external systems (e.g., Docker, network, filesystem heavy operations)
+
+  where necessary.
 
 ## 5. Config-Driven and Scenario Testing
 
 The project uses YAML and JSON configuration to describe simulations and builds:
 
-- `content/config/simulation.yml` and `content/config/sweeps/*` define simulation and sweep parameters.
-- `build/*.json` (e.g. difficulty and telemetry configs) define specific feature runs.
+- `content/config/simulation.yml` and `content/config/sweeps/*` define
+
+  simulation and sweep parameters.
+
+- `build/*.json` (e.g. difficulty and telemetry configs) define specific
+
+  feature runs.
 
 Testing recommendations:
 
-- Use small, self-contained configuration snippets for tests (either reusing existing configs or adding test-only ones under `tests/resources`).
+- Use small, self-contained configuration snippets for tests
+
+  (either reusing existing configs
+
+  or adding test-only ones under `tests/resources`).
 - Validate:
   - Parsing and schema of configs.
   - Behavior changes when altering key parameters.
-  - That sweep definitions are correctly interpreted by scripts in `scripts/`.
+  - That sweep definitions are correctly interpreted by scripts in
+
+  `scripts/`.
 
 ## 6. Kubernetes and Infrastructure Testing
 
@@ -174,18 +205,26 @@ The repository includes Kubernetes configuration under `k8s/`:
   - `ingress.yaml`
   - `namespace.yaml`
   - `kustomization.yaml`
-- `k8s/overlays/local/` and `k8s/overlays/staging/` contain environment-specific overrides.
+- `k8s/overlays/local/` and `k8s/overlays/staging/` contain
 
-Testing K8s infrastructure involves both **static checks** and **runtime smoke tests**.
+  environment-specific overrides.
+
+Testing K8s infrastructure involves both **static checks** and **runtime
+
+smoke tests**.
 
 ### 6.1 Static validation of manifests
 
-These tests ensure manifests are syntactically correct and compatible with the target Kubernetes version.
+These tests ensure manifests are syntactically correct and compatible
+
+with the target Kubernetes version.
 
 Examples (run from repo root):
 
 ```bash
-# Validate base manifests against the API server (cluster required)
+# Validate base manifests against the API server
+
+# (cluster required)
 kubectl apply --dry-run=server -k k8s/base
 
 # Validate overlays
@@ -230,13 +269,13 @@ kubectl get pods -n <namespace>
 kubectl get services -n <namespace>
 ```
 
-2. Port-forward the gateway or simulation service:
+1. Port-forward the gateway or simulation service:
 
 ```bash
 kubectl port-forward -n <namespace> svc/gateway 8080:80
 ```
 
-3. Run existing API tests against the forwarded port:
+1. Run existing API tests against the forwarded port:
 
 ```bash
 GENGINE_GATEWAY_URL=http://localhost:8080 pytest -v tests/echoes/test_service_api.py
@@ -252,10 +291,13 @@ For non-K8s integration:
 docker compose up -d
 ```
 
-Then run tests that depend on the gateway or simulation (pointing them at the compose services):
+Then run tests that depend on the gateway or simulation
+
+(pointing them at the compose services):
 
 ```bash
-GENGINE_GATEWAY_URL=http://localhost:<gateway-port> pytest -v tests/echoes/test_service_client.py
+GENGINE_GATEWAY_URL=http://localhost:<gateway-port> \
+pytest -v tests/echoes/test_service_client.py
 ```
 
 ## 7. CI Pipeline Expectations
@@ -279,7 +321,9 @@ kubectl apply --dry-run=server -k k8s/base
 ## 8. Adding New Tests
 
 1. Identify where your code lives under `src/gengine/...`.
-2. Add or extend tests in the corresponding directory under `tests/` (e.g., `tests/ai_player/` for AI logic, `tests/echoes/` for Echoes systems).
+2. Add or extend tests in the corresponding directory under `tests/`
+
+   (e.g., `tests/ai_player/` for AI logic, `tests/echoes/` for Echoes systems).
 3. Reuse fixtures in `conftest.py` rather than duplicating setup.
 4. Keep tests deterministic and independent of external services.
 5. Run targeted tests first, then the full suite:
@@ -310,7 +354,9 @@ pytest -v
   - Run `kubectl apply --dry-run=server -k k8s/base` and overlays.
   - Fail fast on invalid fields or schema mismatches.
 - Integrate Kubernetes linting:
-  - Use `kube-linter` (or similar) to enforce readiness/liveness probes, resource requests/limits, and basic security best practices.
+  - Use `kube-linter` (or similar) to enforce readiness/liveness probes,
+
+    resource requests/limits, and basic security best practices.
 - Introduce K8s smoke tests:
   - A small `pytest` suite that:
     - Asserts Deployments are ready.
@@ -337,4 +383,6 @@ pytest -m "integration and not k8s"
 pytest -m k8s
 ```
 
-- Keep this testing guide updated whenever new test types, scripts, or infra checks are added.
+- Keep this testing guide updated whenever new test types, scripts,
+
+  or infra checks are added.

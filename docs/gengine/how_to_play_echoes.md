@@ -21,10 +21,13 @@ uv run echoes-shell --world default
 - Use `--rich` to enable enhanced ASCII views with styled tables, color-coded
   panels, and improved readability (requires Rich library).
 - For scripted runs (handy for CI or quick experiments):
+
   ```bash
   uv run echoes-shell --world default --script "summary;run 5;map;exit"
   ```
+
 - For enhanced visualization during playtesting:
+
   ```bash
   uv run echoes-shell --world default --rich
   ```
@@ -58,28 +61,28 @@ ASCII output as the local shell and honors `--script` for CI-friendly runs.
 
 ## 2. Shell Commands
 
-| Command                   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `help`                    | Lists all available commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `summary`                 | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, biodiversity value/deltas, stability feedback, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). Also surfaces `story_seeds`, `director_events`, and a `director pacing` block that lists how many seeds are active versus resolving, whether a quiet timer is in effect, and which guardrails (max-active, seed quiet, global quiet) blocked fresh matches. |
-| `next`                    | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `run <n>`                 | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `map [district_id]`       | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district.                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `focus [district\|clear]` | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation.                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `history [count]`         | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown.                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `postmortem`              | Prints a deterministic recap: environment trend deltas, the three largest faction legitimacy swings, the latest director events, and the most recent story seed states. Use it before quitting to capture an epilogue without exporting the entire snapshot.                                                                                                                                                                                                                                                                                                                                                                |
-| `timeline [count]`        | Prints the causal timeline showing key events and their causes/effects. Each tick entry lists stability shifts, faction actions, story seed activations, and agent reasoning summaries. Useful for understanding "what happened and why".                                                                                                                                                                                                                                                                                                                                                                                    |
-| `explain <type> <id>`     | Query detailed explanations for entities. Types: `faction`, `agent`, `district`, `metric`. Examples: `explain faction union-of-flux` (shows legitimacy trend, recent actions), `explain agent agent-1` (reasoning factors, needs), `explain metric stability` (causes and delta history).                                                                                                                                                                                                                                                                                                                                   |
-| `why <query>`             | Answer "why did this happen?" style queries. Examples: `why stability`, `why did unrest rise`, `why union-of-flux`. The system searches for matching entities/metrics and returns causal explanations with contributing factors.                                                                                                                                                                                                                                                                                                                                                                                             |
-| `save <path>`             | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `load world <name>`       | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `load snapshot <path>`    | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `campaign list`           | Lists all saved campaigns with their IDs, names, worlds, tick counts, and status (active/ended).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `campaign new <name> [world]` | Creates a new campaign with the given name, optionally specifying a world (defaults to "default"). Initializes the world and saves an initial snapshot.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `campaign resume <id>`    | Resumes a saved campaign by ID. Loads the campaign's snapshot and continues from where you left off.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `campaign end`            | Ends the active campaign, saves a final snapshot, generates a post-mortem summary, and marks the campaign as complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `campaign status`         | Shows the status of the currently active campaign including name, world, current tick, and autosave interval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `exit` / `quit`           | Leave the shell.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Command                       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `help`                        | Lists all available commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `summary`                     | Shows city/tick stats, faction legitimacy, current market prices, the latest `environment_impact` snapshot (scarcity pressure, faction deltas, avg/min/max pollution, biodiversity value/deltas, stability feedback, diffusion samples), and the shared profiling block (tick ms p50/p95/max, last subsystem timings, the slowest subsystem, and anomaly tags). Also surfaces `story_seeds`, `director_events`, and a `director pacing` block that lists how many seeds are active versus resolving, whether a quiet timer is in effect, and which guardrails (max-active, seed quiet, global quiet) blocked fresh matches. |
+| `next`                        | Advances the simulation exactly 1 tick and prints an inline report (no arguments). Use `run` for larger batches.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `run <n>`                     | Advances the simulation by `n` ticks (must be provided) and prints the aggregate report.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `map [district_id]`           | Without arguments, prints a city-wide ASCII table plus a geometry overlay (coordinates + neighbor list). Provide an ID to see a detailed panel with modifiers, coordinates, and adjacency hints for that district.                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `focus [district\|clear]`     | Shows the current focus ring (district plus prioritized neighbors) or retargets it. The focus manager allocates more narrative budget to the selected ring; use `focus clear` to fall back to the default rotation.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `history [count]`             | Prints the ranked narrator history (latest entries first). Each entry shows the focus center, suppressed count, and the top scored archived beats; provide an optional count to limit how many entries are shown.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `postmortem`                  | Prints a deterministic recap: environment trend deltas, the three largest faction legitimacy swings, the latest director events, and the most recent story seed states. Use it before quitting to capture an epilogue without exporting the entire snapshot.                                                                                                                                                                                                                                                                                                                                                                |
+| `timeline [count]`            | Prints the causal timeline showing key events and their causes/effects. Each tick entry lists stability shifts, faction actions, story seed activations, and agent reasoning summaries. Useful for understanding "what happened and why".                                                                                                                                                                                                                                                                                                                                                                                   |
+| `explain <type> <id>`         | Query detailed explanations for entities. Types: `faction`, `agent`, `district`, `metric`. Examples: `explain faction union-of-flux` (shows legitimacy trend, recent actions), `explain agent agent-1` (reasoning factors, needs), `explain metric stability` (causes and delta history).                                                                                                                                                                                                                                                                                                                                   |
+| `why <query>`                 | Answer "why did this happen?" style queries. Examples: `why stability`, `why did unrest rise`, `why union-of-flux`. The system searches for matching entities/metrics and returns causal explanations with contributing factors.                                                                                                                                                                                                                                                                                                                                                                                            |
+| `save <path>`                 | Writes the current `GameState` snapshot to disk as JSON.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `load world <name>`           | Reloads an authored world from `content/worlds/<name>/world.yml` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `load snapshot <path>`        | Restores state from a JSON snapshot created via `save` (local engine mode only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `campaign list`               | Lists all saved campaigns with their IDs, names, worlds, tick counts, and status (active/ended).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `campaign new <name> [world]` | Creates a new campaign with the given name, optionally specifying a world (defaults to "default"). Initializes the world and saves an initial snapshot.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `campaign resume <id>`        | Resumes a saved campaign by ID. Loads the campaign's snapshot and continues from where you left off.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `campaign end`                | Ends the active campaign, saves a final snapshot, generates a post-mortem summary, and marks the campaign as complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `campaign status`             | Shows the status of the currently active campaign including name, world, current tick, and autosave interval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `exit` / `quit`               | Leave the shell.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
 quotes. The shell ignores blank lines and repeats the prompt after each command.
@@ -131,10 +134,12 @@ need the deterministic recap JSON that also appears in headless telemetry.
 - The tick report shows the tick number, global metrics, and notable events
   (e.g., "Industrial Tier pollution spike detected").
 - `summary` mirrors those metrics without advancing time and now includes both
+
   the `environment_impact` block (scarcity pressure, faction pollution deltas,
   diffusion state, average pollution, the latest extreme districts, the
   biodiversity snapshot with scarcity/recovery deltas, and the top diffusion
-  samples captured during the tick), profiling stats (tick duration percentiles plus the last
+  samples captured during the tick),
+  profiling stats (tick duration percentiles plus the last
   subsystem timings), and the focus digest preview (up to six curated events
   plus a suppressed count). Use `focus` to retarget which districts receive the
   larger per-tick budget whenever you need to spotlight a different hotspot.
@@ -465,7 +470,7 @@ move it during a tick.
 
 - **Role:** Localized protest energy.
 - **Tick influences:** Receives a -0.02 to 0.02 random drift, is clamped between
-  0 and 1, and triggers "<District> protests intensify" when it crosses 0.75.
+  0 and 1, and triggers "District protests intensify" when it crosses 0.75.
   The average also feeds the global unrest calculation.
 
 ### District Pollution
@@ -576,13 +581,13 @@ distinct gameplay experiences. Each preset lives in
 
 ### Available Difficulty Levels
 
-| Preset   | Description                                    | Stability | Pacing    |
-| -------- | ---------------------------------------------- | --------- | --------- |
-| Tutorial | Very forgiving, maximum regen, minimal demand  | High      | Slow      |
-| Easy     | Relaxed settings for learning core systems     | High      | Moderate  |
-| Normal   | Balanced challenge, intended gameplay          | Moderate  | Balanced  |
-| Hard     | Reduced regen, increased demand pressure       | Low       | Fast      |
-| Brutal   | Maximum challenge, overlapping crises          | Very Low  | Relentless|
+| Preset   | Description                                   | Stability | Pacing     |
+| -------- | --------------------------------------------- | --------- | ---------- |
+| Tutorial | Very forgiving, maximum regen, minimal demand | High      | Slow       |
+| Easy     | Relaxed settings for learning core systems    | High      | Moderate   |
+| Normal   | Balanced challenge, intended gameplay         | Moderate  | Balanced   |
+| Hard     | Reduced regen, increased demand pressure      | Low       | Fast       |
+| Brutal   | Maximum challenge, overlapping crises         | Very Low  | Relentless |
 
 ### Running Difficulty Sweeps
 
@@ -593,11 +598,13 @@ uv run python scripts/run_difficulty_sweeps.py --ticks 200 --seed 42 --output-di
 ```
 
 The sweep runner:
+
 - Executes simulations for each difficulty preset
 - Captures telemetry to `build/difficulty-{preset}-sweep.json`
 - Outputs a comparison table showing stability, unrest, pollution, and anomalies
 
 Key flags:
+
 - `--ticks/-t`: Number of ticks per preset (default: 200)
 - `--seed`: RNG seed for deterministic comparisons (default: 42)
 - `--preset/-p`: Specific preset(s) to run (can be repeated)
@@ -612,11 +619,13 @@ uv run python scripts/analyze_difficulty_profiles.py --telemetry-dir build
 ```
 
 The analysis script:
+
 - Loads telemetry from each difficulty capture
 - Compares stability trends, faction balance, economic pressure, and narrative density
 - Generates findings about difficulty progression and potential tuning issues
 
 Example analysis output identifies:
+
 - Whether stability decreases correctly with difficulty
 - If unrest/pollution scale as expected
 - Adjacent difficulties that need more differentiation
@@ -627,16 +636,19 @@ Example analysis output identifies:
 Each difficulty config adjusts several key parameters:
 
 **Economy block:**
+
 - `regen_scale`: Resource regeneration multiplier (higher = easier)
 - `demand_*_weight`: Consumption pressure (lower = easier)
 - `shortage_threshold`: When shortages register (higher = more forgiving)
 
 **Environment block:**
+
 - `scarcity_*_weight`: How scarcity affects unrest/pollution (lower = gentler)
 - `biodiversity_recovery_rate`: Ecosystem bounce-back (higher = more resilient)
 - `faction_sabotage_pollution_spike`: Sabotage severity (lower = less punishing)
 
 **Director block:**
+
 - `max_active_seeds`: Overlapping crises (fewer = calmer)
 - `global_quiet_ticks`: Buffer between crises (more = breathing room)
 - `seed_*_ticks`: How long story arcs stay active (longer = more deliberate)
@@ -674,13 +686,13 @@ These metrics influence action success rates and unlock new gameplay options.
 
 Players develop expertise in five core skill domains:
 
-| Domain        | Description                                         | Key Actions                     |
-| ------------- | --------------------------------------------------- | ------------------------------- |
-| Diplomacy     | Faction negotiations and dialogue effectiveness    | Negotiate, lobby                |
-| Investigation | District inspections and information gathering     | Inspect, request reports        |
-| Economics     | Resource management and trade optimization         | Invest, economic actions        |
-| Tactical      | Security operations and covert actions             | Stabilize, support security     |
-| Influence     | Story seed triggers and NPC reactions              | Recruit, general influence      |
+| Domain        | Description                                     | Key Actions                 |
+| ------------- | ----------------------------------------------- | --------------------------- |
+| Diplomacy     | Faction negotiations and dialogue effectiveness | Negotiate, lobby            |
+| Investigation | District inspections and information gathering  | Inspect, request reports    |
+| Economics     | Resource management and trade optimization      | Invest, economic actions    |
+| Tactical      | Security operations and covert actions          | Stabilize, support security |
+| Influence     | Story seed triggers and NPC reactions           | Recruit, general influence  |
 
 Skills range from level 1 (novice) to level 100 (master). Experience is gained
 through actions, with multipliers per domain configurable in `simulation.yml`.
@@ -689,11 +701,11 @@ through actions, with multipliers per domain configurable in `simulation.yml`.
 
 As average skill levels increase, players unlock higher access tiers:
 
-| Tier        | Average Level | Unlocks                                        |
-| ----------- | ------------- | ---------------------------------------------- |
-| Novice      | 0             | Default access, basic districts and commands   |
-| Established | 50            | Advanced districts, some restricted actions    |
-| Elite       | 100           | Full access to all districts and commands      |
+| Tier        | Average Level | Unlocks                                      |
+| ----------- | ------------- | -------------------------------------------- |
+| Novice      | 0             | Default access, basic districts and commands |
+| Established | 50            | Advanced districts, some restricted actions  |
+| Elite       | 100           | Full access to all districts and commands    |
 
 The CLI `summary` command shows current tier and average skill level.
 
@@ -701,13 +713,13 @@ The CLI `summary` command shows current tier and average skill level.
 
 Reputation with each faction ranges from -1.0 (hostile) to +1.0 (allied):
 
-| Range          | Relationship | Effect on Actions                              |
-| -------------- | ------------ | ---------------------------------------------- |
-| 0.75 to 1.0    | Allied       | +25% success chance                            |
-| 0.25 to 0.75   | Friendly     | +10% success chance                            |
-| -0.25 to 0.25  | Neutral      | No modifier                                    |
-| -0.75 to -0.25 | Unfriendly   | -10% success chance                            |
-| -1.0 to -0.75  | Hostile      | -25% success chance                            |
+| Range          | Relationship | Effect on Actions   |
+| -------------- | ------------ | ------------------- |
+| 0.75 to 1.0    | Allied       | +25% success chance |
+| 0.25 to 0.75   | Friendly     | +10% success chance |
+| -0.25 to 0.25  | Neutral      | No modifier         |
+| -0.75 to -0.25 | Unfriendly   | -10% success chance |
+| -1.0 to -0.75  | Hostile      | -25% success chance |
 
 Reputation changes based on faction actions each tick. Positive actions
 (lobbying, investing) improve reputation, while sabotage hurts reputation with
@@ -717,7 +729,7 @@ the target faction.
 
 After running ticks, the `summary` command displays progression state:
 
-```
+```text
 progression:
   access_tier: novice
   average_level: 1.2
@@ -771,13 +783,13 @@ current condition.
 
 Each agent has a primary specialization aligned with the skill domains:
 
-| Specialization | Primary Domain | Best Used For                          |
-| ------------- | -------------- | -------------------------------------- |
-| Negotiator    | Diplomacy      | Faction talks, council lobbying        |
-| Investigator  | Investigation  | District inspections, intelligence     |
-| Analyst       | Economics      | Resource management, trade operations  |
-| Operator      | Tactical       | Security ops, covert actions           |
-| Influencer    | Influence      | Story seeds, NPC manipulation          |
+| Specialization | Primary Domain | Best Used For                         |
+| -------------- | -------------- | ------------------------------------- |
+| Negotiator     | Diplomacy      | Faction talks, council lobbying       |
+| Investigator   | Investigation  | District inspections, intelligence    |
+| Analyst        | Economics      | Resource management, trade operations |
+| Operator       | Tactical       | Security ops, covert actions          |
+| Influencer     | Influence      | Story seeds, NPC manipulation         |
 
 #### Agent Stats
 
@@ -788,6 +800,7 @@ Each agent tracks:
 - **Stress** (0.0-1.0): Rises with failures and hazardous missions, slowly recovers
 
 Stress labels help quickly assess agent condition:
+
 - **Calm** (0-20%): Ready for any mission
 - **Focused** (20-50%): Normal operational state
 - **Strained** (50-75%): Consider lighter assignments
@@ -797,7 +810,7 @@ Stress labels help quickly assess agent condition:
 
 The `summary` command shows agent progression when available:
 
-```
+```text
 agent_progression:
   agent-1:
     role: Experienced Investigator
@@ -867,13 +880,13 @@ uv run echoes-shell --campaign abc123
 
 ### Campaign Commands
 
-| Command                   | Description                                                |
-| ------------------------- | ---------------------------------------------------------- |
-| `campaign list`           | Show all saved campaigns with IDs, names, and status       |
-| `campaign new <name> [world]` | Create a new campaign (world defaults to "default")    |
-| `campaign resume <id>`    | Resume a saved campaign by its ID                          |
-| `campaign end`            | End the active campaign and generate a post-mortem         |
-| `campaign status`         | Show details about the currently active campaign           |
+| Command                       | Description                                          |
+| ----------------------------- | ---------------------------------------------------- |
+| `campaign list`               | Show all saved campaigns with IDs, names, and status |
+| `campaign new <name> [world]` | Create a new campaign (world defaults to "default")  |
+| `campaign resume <id>`        | Resume a saved campaign by its ID                    |
+| `campaign end`                | End the active campaign and generate a post-mortem   |
+| `campaign status`             | Show details about the currently active campaign     |
 
 ### Autosave
 

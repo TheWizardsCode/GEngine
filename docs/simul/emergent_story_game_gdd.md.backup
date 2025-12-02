@@ -4,7 +4,7 @@
 
 **Working Title:** Echoes of Emergence
 
-**Elevator Pitch:**
+**Elevator Pitch:**  
 
 A story-driven simulation game where you act as a subtle catalyst
 
@@ -49,10 +49,8 @@ toward different futures.
 
 ## Progress Log (Updated 2025-11-30)
 
-- ✅ **Phase 5 M5.3 – Pacing & lifecycle polish** shipped: the
-NarrativeDirector
-  now enforces deterministic lifecycle states (`primed → active → resolving
-→
+- ✅ **Phase 5 M5.3 – Pacing & lifecycle polish** shipped: the NarrativeDirector
+  now enforces deterministic lifecycle states (`primed → active → resolving →
 archived`), applies per-seed and global quiet timers, records
   `director_pacing` + lifecycle history snapshots, and exposes the new
   telemetry in CLI/service/headless surfaces so designers can audit pacing
@@ -79,7 +77,7 @@ archived`), applies per-seed and global quiet timers, records
 
 ## 2. Setting & Tone
 
-**World:**
+**World:**  
 A mid-futuristic city-state built on a terraformed frontier world.
 
 The city is surrounded by unstable wild zones filled with experimental ecologies
@@ -100,7 +98,7 @@ drive tension.
 - **Industrial Belt:** Power plants, processing facilities, logistics.
 - **Perimeter Wilds:** Semi-controlled wilderness, terraforming sites, ruins.
 
-**Tone:**
+**Tone:**  
 Reflective, grounded science fiction.
 
 Emphasis on cause-and-effect, unintended consequences, and moral ambiguity
@@ -256,12 +254,10 @@ Each important, player-facing field agent has
 an `AgentProgressionState` keyed by `agent_id`
 and containing:
 
-- **Specialization:** a primary role tag (e.g., negotiator, investigator,
-operator,
+- **Specialization:** a primary role tag (e.g., negotiator, investigator, operator,
 influencer)
 aligned with the global skill domains.
-- **Expertise Pips:** a tiny bounded track (0–5) per relevant action family
-(e.g., negotiation,
+- **Expertise Pips:** a tiny bounded track (0–5) per relevant action family (e.g., negotiation,
 reconnaissance,
 covert ops)
 that grows when an agent repeatedly succeeds at that kind of assignment.
@@ -280,69 +276,49 @@ from CLI/service/headless surfaces.
 
 **Inputs & Updates:**
 
-The `ProgressionSystem.tick(...)` already consumes `agent_actions` reports from
-the AgentSystem and writes to the global `ProgressionState`.
-Per-agent progression layers onto this flow without changing the public
-contract:
+The `ProgressionSystem.tick(...)` already consumes `agent_actions` reports from the AgentSystem and writes to the global `ProgressionState`.
+Per-agent progression layers onto this flow without changing the public contract:
 
-- Each agent action carries an `agent_id`, an `intent` (e.g.,
-`NEGOTIATE_FACTION`, `INSPECT_DISTRICT`, `SABOTAGE_RIVAL`),
+- Each agent action carries an `agent_id`, an `intent` (e.g., `NEGOTIATE_FACTION`, `INSPECT_DISTRICT`, `SABOTAGE_RIVAL`),
 and a simple success flag or outcome rating.
 - On each tick, for every action with an `agent_id`:
   - Ensure an `AgentProgressionState` exists for that `agent_id` on `GameState`.
-  - Map `intent` to a domain family (negotiation, investigation, tactical,
-influence) using the same mapping table
+  - Map `intent` to a domain family (negotiation, investigation, tactical, influence) using the same mapping table
 as global skills.
   - **On success:**
     - Increment the corresponding expertise pip up to a small cap (e.g., 0–5).
-    - Nudge reliability upward, with diminishing returns as it approaches the
-cap.
+    - Nudge reliability upward, with diminishing returns as it approaches the cap.
     - Apply a small stress bump only for hazardous or overextended assignments.
   - **On failure or aborted missions:**
     - Increment the relevant failure counter and raise stress/burnout.
-    - Slightly reduce reliability, bounded so one bad mission does not erase a
-long good
+    - Slightly reduce reliability, bounded so one bad mission does not erase a long good
 streak.
-  - Record a compact telemetry event (e.g., `agent_progression` with agent id,
-domain, expertise delta, stress delta)
+  - Record a compact telemetry event (e.g., `agent_progression` with agent id, domain, expertise delta, stress delta)
 for debugging and post-mortems.
 
-The global `ProgressionState` continues to grant skill experience and adjust
-faction reputation as it does today;
+The global `ProgressionState` continues to grant skill experience and adjust faction reputation as it does today;
 per-agent updates are an additive layer.
 
 **Mechanical Effects & Tuning Envelope:**
 
-- **Expertise Bonus:** agents with higher expertise in a domain contribute a
-modest positive modifier to success odds for actions they personally execute
-(e.g., ±5–10% around the base rate shaped by global skills + reputation).
-This bonus should never exceed the effect of the global skill/reputation
-combination.
-- **Reliability:** can bias outcome variance – highly reliable agents produce
-fewer wild swings (fewer critical failures/critical successes),
+- **Expertise Bonus:** agents with higher expertise in a domain contribute a modest positive modifier to success odds for actions they personally execute
+(e.g., ±5–10% around the base rate shaped by global skills + reputation). This bonus should never exceed the effect of the global skill/reputation combination.
+- **Reliability:** can bias outcome variance – highly reliable agents produce fewer wild swings (fewer critical failures/critical successes),
 while unreliable agents are swingier but not strictly worse at the mean.
-- **Stress / Burnout:** pushes in the opposite direction of expertise if
-ignored:
-  - At low to moderate levels, stress adds flavor text and gentle nudges but no
-hard
+- **Stress / Burnout:** pushes in the opposite direction of expertise if ignored:
+  - At low to moderate levels, stress adds flavor text and gentle nudges but no hard
 blocks.
-  - At high levels, it introduces small penalties to the agent’s effective
-modifier and increases the chance of partial success or noisy outputs
+  - At high levels, it introduces small penalties to the agent’s effective modifier and increases the chance of partial success or noisy outputs
 from agent-AI tooling.
-  - Stress should have **clear recovery paths** (time off, low-risk tasks) to
-avoid irreversible
+  - Stress should have **clear recovery paths** (time off, low-risk tasks) to avoid irreversible
 death spirals.
 
 Safe tuning guidelines for early iterations:
 
-- Cap expertise bonuses to a narrow band (e.g., `+0.05` to `+0.1` to the final
-modifier at max expertise).
-- Cap stress penalties similarly (e.g., `-0.05` to `-0.1` at worst), and ensure
-they never stack with other maluses to make actions impossible.
-- Ensure that even a brand-new, unstressed agent with no expertise still has a
-viable chance to succeed when global skills and reputation are neutral.
-- Prefer linear or gently diminishing gains over exponential curves so there is
-no “god agent” that trivializes the game.
+- Cap expertise bonuses to a narrow band (e.g., `+0.05` to `+0.1` to the final modifier at max expertise).
+- Cap stress penalties similarly (e.g., `-0.05` to `-0.1` at worst), and ensure they never stack with other maluses to make actions impossible.
+- Ensure that even a brand-new, unstressed agent with no expertise still has a viable chance to succeed when global skills and reputation are neutral.
+- Prefer linear or gently diminishing gains over exponential curves so there is no “god agent” that trivializes the game.
 
 **Player-Facing Surfaces:**
 
@@ -350,26 +326,15 @@ no “god agent” that trivializes the game.
   - Role label (e.g., "Veteran Negotiator", "Rookie Operative").
   - A small set of pips or bars for their key domain expertise.
   - A one- or two-word stress state ("calm", "strained", "burned out").
-  - A short textual note referencing recent missions (pulled from history
-counters/telemetry).
+  - A short textual note referencing recent missions (pulled from history counters/telemetry).
 - **Assignment Decisions:**
-  - When choosing who to send on a mission, players are nudged to balance using
-their best specialists versus resting overstressed agents.
-  - The system should **never** require pixel-perfect optimization; it should
-reward intuitive choices (“send the calm negotiator to the tense council
-hearing”) while keeping failure and surprise in play.
-- **Post-Mortems & Explanations:** recap views (CLI `postmortem`,
-timeline/explanation queries) include short notes such as:
-  - "Agent ILYA’s long run of successful negotiations made this deal more
-likely to succeed."
-  - "Agent SERA was burned out, slightly reducing the odds of a clean
-infiltration."
+  - When choosing who to send on a mission, players are nudged to balance using their best specialists versus resting overstressed agents.
+  - The system should **never** require pixel-perfect optimization; it should reward intuitive choices (“send the calm negotiator to the tense council hearing”) while keeping failure and surprise in play.
+- **Post-Mortems & Explanations:** recap views (CLI `postmortem`, timeline/explanation queries) include short notes such as:
+  - "Agent ILYA’s long run of successful negotiations made this deal more likely to succeed."
+  - "Agent SERA was burned out, slightly reducing the odds of a clean infiltration."
 
-This per-agent layer lives firmly in the **moment-to-moment** ring (which agent
-you send) and the **mid-term management** ring (how you rotate and care for
-your roster), while the existing global progression continues to drive the
-**long-term campaign arc** (which districts/commands unlock, how factions treat
-you overall).
+This per-agent layer lives firmly in the **moment-to-moment** ring (which agent you send) and the **mid-term management** ring (how you rotate and care for your roster), while the existing global progression continues to drive the **long-term campaign arc** (which districts/commands unlock, how factions treat you overall).
 
 ### 4.2 Faction & Institution System
 
@@ -385,8 +350,7 @@ you overall).
 **Faction State:**
 
 - Resources: credits, influence, technology level, territory, key agents.
-- Ideology: axes like centralization vs. decentralization, AI autonomy vs.
-human oversight, growth vs. sustainability.
+- Ideology: axes like centralization vs. decentralization, AI autonomy vs. human oversight, growth vs. sustainability.
 - Stress/legitimacy: how secure and accepted their rule or presence is.
 
 **Faction AI:**
@@ -408,15 +372,13 @@ human oversight, growth vs. sustainability.
 
 - Temporary alliances when a single faction gets too dominant.
 - Internal coups when leadership repeatedly fails or contradicts core ideology.
-- Splinter groups forming new factions with more extreme positions, generating
-fresh narrative threads.
+- Splinter groups forming new factions with more extreme positions, generating fresh narrative threads.
 
 ### 4.3 Economy & Resource Simulation
 
 **Key Resources:**
 
-- Energy, food, clean water, housing capacity, security, data bandwidth, and
-social capital.
+- Energy, food, clean water, housing capacity, security, data bandwidth, and social capital.
 
 **Model:**
 
@@ -450,8 +412,7 @@ social capital.
 **Simulation:**
 
 - Simple local rules (growth/decay, diffusion) driving complex global patterns.
-- Human activity (construction, extraction, neglect) alters environmental
-variables.
+- Human activity (construction, extraction, neglect) alters environmental variables.
 - Resource scarcity now pipes through the EnvironmentSystem: the economy's
   shortage counters produce a configurable pressure signal that nudges district
   unrest/pollution and, in turn, global stability. Designers can modulate the
@@ -501,8 +462,7 @@ variables.
   hop counts, distances, and estimated travel times between the current focus
   center and the highest-scored districts so story seeds can factor in actual
   movement costs instead of abstract ring distance alone.
-- The first trio of authored seeds ships in
-`content/worlds/default/story_seeds.yml`,
+- The first trio of authored seeds ships in `content/worlds/default/story_seeds.yml`,
   and each evaluation pulls from the travel planner output plus the narrator's
   ranked archive to determine where those seeds should anchor.
 - The validation pipeline will derive adjacency whenever coordinates change so
@@ -520,19 +480,16 @@ variables.
 **Story Seeds:**
 
 - Authored narrative modules triggered by specific conditions:
-  - Examples: "Energy Crisis," "AI Governance Vote," "Plague Cluster," "Rogue
-Terraformer," "Citizen Referendum."
+  - Examples: "Energy Crisis," "AI Governance Vote," "Plague Cluster," "Rogue Terraformer," "Citizen Referendum."
 - Each seed defines:
-  - Preconditions/Triggers (e.g., energy shortfall, pollution threshold,
-faction stress).
+  - Preconditions/Triggers (e.g., energy shortfall, pollution threshold, faction stress).
   - Key roles (which agents or factions it prefers to attach to).
   - Stakes and possible trajectories.
   - Resolution templates (success, failure, partial, ambiguous).
 
 **Narrative Director / Weaving Layer:**
 
-- Monitors global metrics: stability, inequality, tech risk, environmental
-health, factional polarization, player reputation.
+- Monitors global metrics: stability, inequality, tech risk, environmental health, factional polarization, player reputation.
 - Activates seeds that are thematically and systemically appropriate.
 - Seeds attach to **existing** agents and factions to avoid feeling bolted on.
 - Balances pacing: prevents overload and ensures moments of calm reflection.
@@ -580,8 +537,7 @@ resolving → archived` with per-seed cooldown windows, per-seed quiet timers,
   the loader, which validates every referenced district, agent, faction, and
   followup id (alongside the existing Pydantic checks) so designer errors
   surface before runtime.
-- Lifecycle expectations: seeds move through `primed → active → resolving
-→
+- Lifecycle expectations: seeds move through `primed → active → resolving →
 archived`. Cooldowns and quiet-period rules throttle how many can be active
   per focus window, while telemetry/CLI history log each transition so
   playtesters can trace overlapping crises. Post-mortems (M5.4) already pull
@@ -593,26 +549,22 @@ archived`. Cooldowns and quiet-period rules throttle how many can be active
 
 - No single canonical ending.
 - Final state is a composition of:
-  - Governance model: centralized, distributed, corporate, communal,
-authoritarian.
+  - Governance model: centralized, distributed, corporate, communal, authoritarian.
   - Environmental status: recovering, stable, degraded, catastrophic.
   - Faction power: dominance, balance, fragmented chaos.
   - Key NPC fates and relationships.
-- Endings are presented as narrated vignettes and visual snapshots of the city,
-referencing specific events from the playthrough.
+- Endings are presented as narrated vignettes and visual snapshots of the city, referencing specific events from the playthrough.
 
 ### 5.2 Player Role in the Story
 
 **Identity:**
 
-- The player is an **Intermediary**: a licensed mediator and systems analyst
-able to move through multiple strata of society.
+- The player is an **Intermediary**: a licensed mediator and systems analyst able to move through multiple strata of society.
 
 **Capabilities:**
 
 - Dialogue choices that leverage knowledge, empathy, leverage, or threats.
-- Investigation tools: data scraping, surveillance (with limits), physical
-scouting.
+- Investigation tools: data scraping, surveillance (with limits), physical scouting.
 - Policy influence: testify at hearings, lobby key figures, leak documents.
 - Direct action: covert operations, rescue missions, sabotage.
 
@@ -620,8 +572,7 @@ scouting.
 
 - Choose which crises to prioritize or ignore.
 - Shape perceptions (rumors, public statements, media manipulation).
-- Decide whether to work within existing structures, subvert them, or burn them
-down.
+- Decide whether to work within existing structures, subvert them, or burn them down.
 
 ---
 
@@ -629,8 +580,7 @@ down.
 
 **Perspective & Controls:**
 
-- **City Map:** ASCII grid of districts, control zones, environmental heatmaps
-expressed via characters/shading.
+- **City Map:** ASCII grid of districts, control zones, environmental heatmaps expressed via characters/shading.
 - **Relationships Graph:** text lists and simple ASCII node-edge diagrams.
 - **Faction Influence Map:** textual summaries and bar-like ASCII charts.
 - **Event Feed:** scrolling log of headlines, rumors, and system alerts.
@@ -650,8 +600,7 @@ expressed via characters/shading.
 
 - "Why did this happen?" tools:
   - Event timelines showing key causes and effects.
-  - Inspectable agents with summarized reasoning (e.g., "Joined protest because
-rent ↑, trust in Council ↓, trust in Underground ↑").
+  - Inspectable agents with summarized reasoning (e.g., "Joined protest because rent ↑, trust in Council ↓, trust in Underground ↑").
   - Policy tooltips explaining projected and actual impacts.
 - Focus manager UI: expose the current focus district, its prioritized
   neighbors, the number of beats allocated to the ring vs. the global pool, and
@@ -670,10 +619,8 @@ rent ↑, trust in Council ↓, trust in Underground ↑").
 
 **Meta-Progression:**
 
-- Unlock new starting configurations, factions, and story seeds by completing
-campaigns.
-- Optional modifiers (e.g., hard mode, ecology focus, minimal governance) for
-advanced players.
+- Unlock new starting configurations, factions, and story seeds by completing campaigns.
+- Optional modifiers (e.g., hard mode, ecology focus, minimal governance) for advanced players.
 
 ---
 
@@ -693,16 +640,14 @@ advanced players.
 
 **Long-Term Goals:**
 
-- Guide the city toward a target sociopolitical equilibrium (e.g., egalitarian
-commons, efficient technocracy, pluralistic balance).
+- Guide the city toward a target sociopolitical equilibrium (e.g., egalitarian commons, efficient technocracy, pluralistic balance).
 - Ensure survival of particular values or communities across crises.
 
 **Progression Systems:**
 
 - **Skills:** negotiation, investigation, systems hacking, logistics, stealth.
 - **Access:** higher security clearance, new districts, deeper network layers.
-- **Reputation:** recognised as trustworthy, radical, technocrat, populist,
-manipulator, etc.
+- **Reputation:** recognised as trustworthy, radical, technocrat, populist, manipulator, etc.
 
 ---
 
@@ -716,8 +661,7 @@ manipulator, etc.
 **Design Principle:**
 
 - Failure should reveal how the system works rather than simply punish.
-- Post-mortem screen visualizes key causal chains leading to failure (e.g.,
-policies passed, crises mishandled, alliances broken).
+- Post-mortem screen visualizes key causal chains leading to failure (e.g., policies passed, crises mishandled, alliances broken).
 
 **Replayability Drivers:**
 
@@ -738,8 +682,7 @@ policies passed, crises mishandled, alliances broken).
   - Economy
   - Environment
   - Narrative Director
-- Presentation tier now includes the **gateway service**:
-`gengine.echoes.gateway`
+- Presentation tier now includes the **gateway service**: `gengine.echoes.gateway`
   fronts the simulation service with a WebSocket endpoint, provisions
   `EchoesShell` instances per session, proxies commands via `SimServiceClient`,
   and streams ASCII output plus exit flags back to clients. It runs alongside
@@ -748,21 +691,18 @@ policies passed, crises mishandled, alliances broken).
 
 **Data-Driven Content:**
 
-- Agents, factions, districts, events, and story seeds defined in external data
-files (e.g. YAML) for ease of iteration by design.
+- Agents, factions, districts, events, and story seeds defined in external data files (e.g. YAML) for ease of iteration by design.
 
 **Performance Strategy:**
 
 - Level of Detail (LOD) for simulation:
   - Detailed simulation in the players current and adjacent districts.
   - Coarser approximations in distant or inactive regions.
-- Important agents get deeper reasoning passes; background populations are
-approximated statistically.
+- Important agents get deeper reasoning passes; background populations are approximated statistically.
 - Safeguards and profiling: `content/config/simulation.yml` configures the LOD
   mode (detailed/balanced/coarse), engine/service tick caps, CLI run/script
   limits, and the profiling window. A dedicated TickCoordinator now sequences
-  agents → factions → economy → environment, captures per-subsystem
-timings,
+  agents → factions → economy → environment, captures per-subsystem timings,
   highlights the slowest subsystem, and tags anomalies (subsystem errors or
   event-budget clamps) in shared metadata so the CLI summary, FastAPI
   `/metrics`, and headless telemetry all surface the same block without extra
@@ -788,21 +728,14 @@ timings,
 
 **LLM Integration:**
 
-- The CLI is backed by a large language model that interprets free-form player
-text into structured in-game intents (movement, inspection, dialogue, policy
-actions, covert operations).
-- All LLM-generated text (NPC dialogue, headlines, summaries) is grounded in
-and constrained by the current simulation state to avoid contradictions.
-- The game exposes a clearly defined "action API" that the LLM can call; the
-simulation remains the single source of truth for world changes.
-- LLM context is scoped to relevant slices of state (for example, current
-district, involved agents and factions, active story seeds) to balance
-coherence, performance, and cost.
+- The CLI is backed by a large language model that interprets free-form player text into structured in-game intents (movement, inspection, dialogue, policy actions, covert operations).
+- All LLM-generated text (NPC dialogue, headlines, summaries) is grounded in and constrained by the current simulation state to avoid contradictions.
+- The game exposes a clearly defined "action API" that the LLM can call; the simulation remains the single source of truth for world changes.
+- LLM context is scoped to relevant slices of state (for example, current district, involved agents and factions, active story seeds) to balance coherence, performance, and cost.
 
 **Save/Load:**
 
-- Entire simulation state is serializable to support long campaigns and
-experiment-focused players.
+- Entire simulation state is serializable to support long campaigns and experiment-focused players.
 
 **AI Player for Testing and Validation:**
 
@@ -826,18 +759,12 @@ experiment-focused players.
 
 ## 10. Open Design Questions
 
-- How transparent should agent decision-making be to preserve mystery while
-maintaining fairness?
-- What is the ideal ratio of authored story content to fully emergent
-situations?
+- How transparent should agent decision-making be to preserve mystery while maintaining fairness?
+- What is the ideal ratio of authored story content to fully emergent situations?
 - Should there be a "main" narrative spine or purely emergent story arcs?
-- How hard should it be for the player to drive the city toward an ideal
-outcome vs. accepting messy compromises?
+- How hard should it be for the player to drive the city toward an ideal outcome vs. accepting messy compromises?
 - How much simulation depth can we expose without overwhelming new players?
 
 ---
 
-_This document is intended as a foundation. Future iterations should expand
-into production-focused sections such as controls, camera, UI flow, content
-pipelines, audio direction, art style, and technical stack once the core
-simulation and narrative design are validated._
+_This document is intended as a foundation. Future iterations should expand into production-focused sections such as controls, camera, UI flow, content pipelines, audio direction, art style, and technical stack once the core simulation and narrative design are validated._

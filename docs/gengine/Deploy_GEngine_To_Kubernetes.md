@@ -131,7 +131,9 @@ cd "${GENGINE_REPO_ROOT}"
 docker build -t "gengine:${GENGINE_IMAGE_TAG}" --target runtime .
 ```
 
-<!-- expected_similarity="Successfully built\|Successfully tagged\|exporting to image" -->
+<!-- 
+expected_similarity="Successfully built\|Successfully tagged\|exporting to image"
+-->
 
 Representative output:
 
@@ -483,11 +485,11 @@ for monitoring and alerting.
 
 Each service exposes metrics that can be scraped by Prometheus:
 
-| Service    | Port | Metrics Endpoint | Description                      |
-|------------|------|------------------|----------------------------------|
+| Service    | Port | Metrics Endpoint | Description                        |
+| ---------- | ---- | ---------------- | ---------------------------------- |
 | Simulation | 8000 | `/metrics`       | Tick count, environment, profiling |
 | Gateway    | 8100 | `/healthz`       | Service health and connection info |
-| LLM        | 8001 | `/healthz`       | Service health status            |
+| LLM        | 8001 | `/healthz`       | Service health status              |
 
 ### Prometheus Annotations
 
@@ -562,6 +564,7 @@ metrics endpoints:
 ```
 
 The smoke test verifies:
+
 - All pods are running and ready
 - Health endpoints respond with HTTP 200
 - Metrics endpoints are accessible
@@ -598,6 +601,7 @@ validation:
    applied successfully.
 
 The workflow runs on:
+
 - Pull requests modifying `k8s/**/*.yaml` or `.github/workflows/k8s-*.yml`
 - Pushes to main modifying the same paths
 
@@ -607,7 +611,7 @@ Validation failures will block PR merge.
 
 You can run the same validation locally before pushing changes.
 
-#### Prerequisites
+#### Prerequisites for Local Validation
 
 Install the required tools:
 
@@ -696,9 +700,13 @@ kind delete cluster --name gengine-validation
 
 ## Next Steps
 
-- [Create_Local_Kubernetes_With_Minikube.md](Create_Local_Kubernetes_With_Minikube.md) -
+- [Minikube Setup](Create_Local_Kubernetes_With_Minikube.md) -
+
   Provision a local Kubernetes cluster if not already done.
-- [how_to_play_echoes.md](how_to_play_echoes.md) - Learn how to interact with
+- [How to Play Echoes](how_to_play_echoes.md) - Learn how to interact with
+
   the simulation via CLI or API.
-- [llm_service_usage.md](llm_service_usage.md) - Configure real LLM providers
-  for natural language processing.
+
+- [LLM Service Usage](llm_service_usage.md) - Configure real LLM
+
+  providers for natural language processing.
