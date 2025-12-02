@@ -3,10 +3,29 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from prometheus_client import generate_latest
 
 from gengine.echoes.gateway.app import GatewaySettings, GatewayMetrics, create_gateway_app
 from gengine.echoes.cli.shell import LocalBackend
 from gengine.echoes.sim import SimEngine
+
+
+def _parse_prometheus_metrics(text: str) -> dict[str, float]:
+    """Parse Prometheus text format into a dict of metric name -> value."""
+    metrics = {}
+    for line in text.strip().split("\n"):
+        if line.startswith("#") or not line:
+            continue
+        # Parse lines like "gateway_requests_total 0.0"
+        parts = line.split()
+        if len(parts) >= 2:
+            name = parts[0]
+            try:
+                value = float(parts[-1])
+                metrics[name] = value
+            except ValueError:
+                pass
+    return metrics
 
 
 def test_gateway_healthcheck(sim_config, gateway_settings) -> None:
@@ -24,7 +43,7 @@ def test_gateway_healthcheck(sim_config, gateway_settings) -> None:
 
 
 def test_gateway_metrics_endpoint(sim_config, gateway_settings) -> None:
-    """Verify that the /metrics endpoint returns expected structure."""
+    """Verify that the /metrics endpoint returns Prometheus format."""
     app = create_gateway_app(
         backend_factory=_local_backend_factory(sim_config),
         config=sim_config,
@@ -33,31 +52,17 @@ def test_gateway_metrics_endpoint(sim_config, gateway_settings) -> None:
     client = TestClient(app)
     response = client.get("/metrics")
     assert response.status_code == 200
-    data = response.json()
     
-    # Check service identification
-    assert data["service"] == "gateway"
-    assert data["service_url"] == "local"
+    # Check content type is Prometheus text format
+    assert "text/plain" in response.headers.get("content-type", "")
     
-    # Check requests section
-    assert "requests" in data
-    assert data["requests"]["total"] == 0
-    assert "by_type" in data["requests"]
+    # Parse Prometheus format
+    metrics = _parse_prometheus_metrics(response.text)
     
-    # Check errors section
-    assert "errors" in data
-    assert data["errors"]["total"] == 0
-    
-    # Check latency section
-    assert "latency_ms" in data
-    assert "avg" in data["latency_ms"]
-    
-    # Check connections section
-    assert "connections" in data
-    assert data["connections"]["active"] == 0
-    
-    # Check LLM integration section
-    assert "llm_integration" in data
+    # Check key metrics exist
+    assert "gateway_requests_total" in metrics
+    assert "gateway_errors_total" in metrics
+    assert "gateway_active_connections" in metrics
 
 
 def test_gateway_metrics_track_websocket_connections(sim_config, gateway_settings) -> None:
@@ -71,8 +76,8 @@ def test_gateway_metrics_track_websocket_connections(sim_config, gateway_setting
     
     # Initial metrics
     response = client.get("/metrics")
-    initial = response.json()
-    assert initial["connections"]["total"] == 0
+    initial = _parse_prometheus_metrics(response.text)
+    assert initial.get("gateway_connections_total", 0) == 0
     
     # Connect and disconnect
     with client.websocket_connect("/ws") as websocket:
@@ -82,9 +87,9 @@ def test_gateway_metrics_track_websocket_connections(sim_config, gateway_setting
     
     # Check metrics after connection
     response = client.get("/metrics")
-    data = response.json()
-    assert data["connections"]["total"] == 1
-    assert data["connections"]["disconnections"] == 1
+    data = _parse_prometheus_metrics(response.text)
+    assert data.get("gateway_connections_total", 0) == 1
+    assert data.get("gateway_disconnections_total", 0) == 1
 
 
 def test_gateway_metrics_track_commands(sim_config, gateway_settings) -> None:
@@ -104,12 +109,12 @@ def test_gateway_metrics_track_commands(sim_config, gateway_settings) -> None:
         _ = websocket.receive_json()
     
     response = client.get("/metrics")
-    data = response.json()
+    data = _parse_prometheus_metrics(response.text)
     
     # Should have recorded the "summary" command (exit is not counted because it exits)
     # Actually both are recorded
-    assert data["requests"]["total"] >= 1
-    assert data["requests"]["commands"] >= 1
+    assert data.get("gateway_requests_total", 0) >= 1
+    assert data.get("gateway_command_requests_total", 0) >= 1
 
 
 def test_gateway_websocket_summary_and_exit(sim_config, gateway_settings) -> None:
@@ -313,74 +318,50 @@ def _local_backend_factory(config):
 
 
 class TestGatewayMetrics:
-    """Tests for GatewayMetrics class."""
-
-    def test_initial_state(self) -> None:
-        """Metrics start at zero."""
-        metrics = GatewayMetrics()
-        assert metrics.total_requests == 0
-        assert metrics.total_errors == 0
-        assert metrics.active_connections == 0
+    """Tests for GatewayMetrics class with Prometheus."""
 
     def test_record_request(self) -> None:
-        """Recording a request increments counters and stores latency."""
+        """Recording a request increments counters."""
         metrics = GatewayMetrics()
-        metrics.record_request("command", 50.0)
+        metrics.record_request("command", 0.050)  # 50ms in seconds
         
-        assert metrics.total_requests == 1
-        assert metrics.requests_by_type["command"] == 1
-        assert len(metrics.latencies) == 1
-        assert metrics.latencies[0] == 50.0
+        # Verify by checking Prometheus output
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "gateway_requests_total 1.0" in output
+        assert 'gateway_requests_by_type_total{request_type="command"} 1.0' in output
 
     def test_record_error(self) -> None:
         """Recording an error increments error counters."""
         metrics = GatewayMetrics()
         metrics.record_error("execution_error")
         
-        assert metrics.total_errors == 1
-        assert metrics.errors_by_type["execution_error"] == 1
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "gateway_errors_total 1.0" in output
+        assert 'gateway_errors_by_type_total{error_type="execution_error"} 1.0' in output
 
     def test_record_llm_request(self) -> None:
         """Recording an LLM request tracks separately."""
         metrics = GatewayMetrics()
-        metrics.record_llm_request(100.0)
+        metrics.record_llm_request(0.100)  # 100ms in seconds
         
-        assert metrics.llm_requests == 1
-        assert len(metrics.llm_latencies) == 1
-        assert metrics.llm_latencies[0] == 100.0
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "gateway_llm_requests_total 1.0" in output
 
-    def test_latency_stats_empty(self) -> None:
-        """Empty latencies return zeros."""
+    def test_connection_tracking(self) -> None:
+        """Connection open/close updates gauges and counters."""
         metrics = GatewayMetrics()
-        data = metrics.to_dict()
+        metrics.connection_opened()
         
-        assert data["latency_ms"]["avg"] == 0.0
-        assert data["latency_ms"]["min"] == 0.0
-        assert data["latency_ms"]["max"] == 0.0
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "gateway_active_connections 1.0" in output
+        assert "gateway_connections_total 1.0" in output
+        
+        metrics.connection_closed()
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "gateway_active_connections 0.0" in output
+        assert "gateway_disconnections_total 1.0" in output
 
-    def test_latency_stats_calculated(self) -> None:
-        """Latency statistics are calculated correctly."""
+    def test_registry_property(self) -> None:
+        """Registry property returns the collector registry."""
         metrics = GatewayMetrics()
-        for i in range(10):
-            metrics.record_request("test", float(i * 10))
-        
-        data = metrics.to_dict()
-        assert data["latency_ms"]["min"] == 0.0
-        assert data["latency_ms"]["max"] == 90.0
-        assert data["latency_ms"]["avg"] == 45.0
-
-    def test_to_dict_structure(self) -> None:
-        """to_dict returns expected structure."""
-        metrics = GatewayMetrics()
-        metrics.record_request("command", 50.0)
-        metrics.record_error("test_error")
-        metrics.active_connections = 2
-        
-        data = metrics.to_dict()
-        
-        assert "requests" in data
-        assert "errors" in data
-        assert "latency_ms" in data
-        assert "connections" in data
-        assert "llm_integration" in data
-        assert data["connections"]["active"] == 2
+        assert metrics.registry is not None

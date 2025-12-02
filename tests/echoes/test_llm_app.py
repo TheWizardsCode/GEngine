@@ -3,9 +3,28 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from prometheus_client import generate_latest
 
 from gengine.echoes.llm.app import create_llm_app, LLMMetrics
 from gengine.echoes.llm.settings import LLMSettings
+
+
+def _parse_prometheus_metrics(text: str) -> dict[str, float]:
+    """Parse Prometheus text format into a dict of metric name -> value."""
+    metrics = {}
+    for line in text.strip().split("\n"):
+        if line.startswith("#") or not line:
+            continue
+        # Parse lines like "llm_requests_total 0.0"
+        parts = line.split()
+        if len(parts) >= 2:
+            name = parts[0]
+            try:
+                value = float(parts[-1])
+                metrics[name] = value
+            except ValueError:
+                pass
+    return metrics
 
 
 class TestLLMApp:
@@ -23,39 +42,23 @@ class TestLLMApp:
         assert data["provider"] == "stub"
 
     def test_metrics_endpoint(self) -> None:
-        """Verify that /metrics endpoint returns expected structure."""
+        """Verify that /metrics endpoint returns Prometheus format."""
         settings = LLMSettings(provider="stub")
         app = create_llm_app(settings=settings)
         client = TestClient(app)
 
         response = client.get("/metrics")
         assert response.status_code == 200
-        data = response.json()
         
-        # Check service identification
-        assert data["service"] == "llm"
+        # Check content type is Prometheus text format
+        assert "text/plain" in response.headers.get("content-type", "")
         
-        # Check requests section
-        assert "requests" in data
-        assert data["requests"]["total"] == 0
-        assert data["requests"]["parse_intent"] == 0
-        assert data["requests"]["narrate"] == 0
+        # Parse Prometheus format
+        metrics = _parse_prometheus_metrics(response.text)
         
-        # Check errors section
-        assert "errors" in data
-        assert data["errors"]["total"] == 0
-        
-        # Check latency section
-        assert "latency_ms" in data
-        assert "parse_intent" in data["latency_ms"]
-        assert "narrate" in data["latency_ms"]
-        
-        # Check provider section
-        assert "provider" in data
-        assert data["provider"]["name"] == "stub"
-        
-        # Check token usage section
-        assert "token_usage" in data
+        # Check key metrics exist
+        assert "llm_requests_total" in metrics
+        assert "llm_errors_total" in metrics
 
     def test_metrics_track_parse_intent(self) -> None:
         """Verify that parse_intent requests are tracked in metrics."""
@@ -69,11 +72,10 @@ class TestLLMApp:
         )
 
         response = client.get("/metrics")
-        data = response.json()
+        metrics = _parse_prometheus_metrics(response.text)
         
-        assert data["requests"]["total"] == 1
-        assert data["requests"]["parse_intent"] == 1
-        assert data["latency_ms"]["parse_intent"]["avg"] > 0
+        assert metrics.get("llm_requests_total", 0) == 1
+        assert metrics.get("llm_parse_intent_requests_total", 0) == 1
 
     def test_metrics_track_narrate(self) -> None:
         """Verify that narrate requests are tracked in metrics."""
@@ -87,11 +89,10 @@ class TestLLMApp:
         )
 
         response = client.get("/metrics")
-        data = response.json()
+        metrics = _parse_prometheus_metrics(response.text)
         
-        assert data["requests"]["total"] == 1
-        assert data["requests"]["narrate"] == 1
-        assert data["latency_ms"]["narrate"]["avg"] > 0
+        assert metrics.get("llm_requests_total", 0) == 1
+        assert metrics.get("llm_narrate_requests_total", 0) == 1
 
     def test_parse_intent_basic(self) -> None:
         settings = LLMSettings(provider="stub")
@@ -212,78 +213,50 @@ class TestLLMApp:
 
 
 class TestLLMMetrics:
-    """Tests for LLMMetrics class."""
-
-    def test_initial_state(self) -> None:
-        """Metrics start at zero."""
-        metrics = LLMMetrics()
-        assert metrics.total_requests == 0
-        assert metrics.total_errors == 0
-        assert metrics.parse_intent_requests == 0
-        assert metrics.narrate_requests == 0
+    """Tests for LLMMetrics class with Prometheus."""
 
     def test_record_parse_intent(self) -> None:
         """Recording a parse_intent request increments counters."""
         metrics = LLMMetrics()
-        metrics.record_parse_intent(50.0, input_tokens=100, output_tokens=50)
+        metrics.record_parse_intent(0.050, input_tokens=100, output_tokens=50)  # 50ms in seconds
         
-        assert metrics.total_requests == 1
-        assert metrics.parse_intent_requests == 1
-        assert len(metrics.parse_intent_latencies) == 1
-        assert metrics.total_input_tokens == 100
-        assert metrics.total_output_tokens == 50
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_requests_total 1.0" in output
+        assert "llm_parse_intent_requests_total 1.0" in output
+        assert "llm_input_tokens_total 100.0" in output
+        assert "llm_output_tokens_total 50.0" in output
 
     def test_record_narrate(self) -> None:
         """Recording a narrate request increments counters."""
         metrics = LLMMetrics()
-        metrics.record_narrate(75.0, input_tokens=200, output_tokens=100)
+        metrics.record_narrate(0.075, input_tokens=200, output_tokens=100)  # 75ms in seconds
         
-        assert metrics.total_requests == 1
-        assert metrics.narrate_requests == 1
-        assert len(metrics.narrate_latencies) == 1
-        assert metrics.total_input_tokens == 200
-        assert metrics.total_output_tokens == 100
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_requests_total 1.0" in output
+        assert "llm_narrate_requests_total 1.0" in output
+        assert "llm_input_tokens_total 200.0" in output
+        assert "llm_output_tokens_total 100.0" in output
 
     def test_record_error(self) -> None:
         """Recording an error increments error counters."""
         metrics = LLMMetrics()
         metrics.record_error("parse_intent", "ValueError")
         
-        assert metrics.total_errors == 1
-        assert metrics.parse_intent_errors == 1
-        assert metrics.errors_by_type["parse_intent:ValueError"] == 1
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_errors_total 1.0" in output
+        assert "llm_parse_intent_errors_total 1.0" in output
+        assert 'llm_errors_by_type_total{endpoint="parse_intent",error_type="ValueError"} 1.0' in output
 
-    def test_latency_stats_empty(self) -> None:
-        """Empty latencies return zeros."""
+    def test_record_narrate_error(self) -> None:
+        """Recording a narrate error increments narrate error counter."""
         metrics = LLMMetrics()
-        data = metrics.to_dict()
+        metrics.record_error("narrate", "RuntimeError")
         
-        assert data["latency_ms"]["parse_intent"]["avg"] == 0.0
-        assert data["latency_ms"]["narrate"]["avg"] == 0.0
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_errors_total 1.0" in output
+        assert "llm_narrate_errors_total 1.0" in output
 
-    def test_latency_stats_calculated(self) -> None:
-        """Latency statistics are calculated correctly."""
+    def test_registry_property(self) -> None:
+        """Registry property returns the collector registry."""
         metrics = LLMMetrics()
-        for i in range(10):
-            metrics.record_parse_intent(float(i * 10))
-        
-        data = metrics.to_dict()
-        assert data["latency_ms"]["parse_intent"]["min"] == 0.0
-        assert data["latency_ms"]["parse_intent"]["max"] == 90.0
-        assert data["latency_ms"]["parse_intent"]["avg"] == 45.0
-
-    def test_to_dict_structure(self) -> None:
-        """to_dict returns expected structure."""
-        metrics = LLMMetrics()
-        metrics.record_parse_intent(50.0)
-        metrics.record_error("parse_intent", "TestError")
-        
-        data = metrics.to_dict(provider="openai", model="gpt-4")
-        
-        assert "requests" in data
-        assert "errors" in data
-        assert "latency_ms" in data
-        assert "provider" in data
-        assert "token_usage" in data
-        assert data["provider"]["name"] == "openai"
-        assert data["provider"]["model"] == "gpt-4"
+        assert metrics.registry is not None

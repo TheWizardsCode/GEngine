@@ -7,13 +7,21 @@ import contextlib
 import json
 import logging
 import os
-import time
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from dataclasses import dataclass
+from typing import Callable
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import Response
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 
-from ..cli.shell import PROMPT, ShellBackend, ServiceBackend
+from ..cli.shell import PROMPT, ServiceBackend, ShellBackend
 from ..client import SimServiceClient
 from ..settings import SimulationConfig, load_simulation_config
 from .llm_client import LLMClient
@@ -23,117 +31,154 @@ LOGGER = logging.getLogger("gengine.echoes.gateway")
 BackendFactory = Callable[[], ShellBackend]
 
 
-@dataclass
 class GatewayMetrics:
-    """Metrics tracking for the gateway service.
+    """Prometheus metrics tracking for the gateway service.
     
     Note on message counters:
     - websocket_messages: All messages received via WebSocket (including invalid)
     - natural_language_requests: Valid natural language commands executed
     - command_requests: Valid regular commands executed
     
-    The sum of natural_language_requests + command_requests will be <= websocket_messages
-    since invalid messages are counted in websocket_messages but not the request counters.
+    The sum of natural_language_requests + command_requests will be
+    <= websocket_messages since invalid messages are counted in
+    websocket_messages but not the request counters.
     """
 
-    # Request counts
-    total_requests: int = 0
-    requests_by_type: dict[str, int] = field(default_factory=dict)
-    websocket_messages: int = 0  # All messages received (including invalid)
-    natural_language_requests: int = 0  # Valid NL commands processed
-    command_requests: int = 0  # Valid regular commands processed
+    def __init__(self, registry: CollectorRegistry | None = None) -> None:
+        """Initialize Prometheus metrics with optional custom registry."""
+        self._registry = registry or CollectorRegistry()
+        
+        # Request counters
+        self._total_requests = Counter(
+            "gateway_requests_total",
+            "Total number of requests processed",
+            registry=self._registry,
+        )
+        self._requests_by_type = Counter(
+            "gateway_requests_by_type_total",
+            "Requests by type",
+            ["request_type"],
+            registry=self._registry,
+        )
+        self._websocket_messages = Counter(
+            "gateway_websocket_messages_total",
+            "Total WebSocket messages received (including invalid)",
+            registry=self._registry,
+        )
+        self._natural_language_requests = Counter(
+            "gateway_natural_language_requests_total",
+            "Valid natural language commands processed",
+            registry=self._registry,
+        )
+        self._command_requests = Counter(
+            "gateway_command_requests_total",
+            "Valid regular commands processed",
+            registry=self._registry,
+        )
 
-    # Error tracking
-    total_errors: int = 0
-    errors_by_type: dict[str, int] = field(default_factory=dict)
+        # Error counters
+        self._total_errors = Counter(
+            "gateway_errors_total",
+            "Total number of errors",
+            registry=self._registry,
+        )
+        self._errors_by_type = Counter(
+            "gateway_errors_by_type_total",
+            "Errors by type",
+            ["error_type"],
+            registry=self._registry,
+        )
 
-    # Latency tracking (in ms)
-    latencies: list[float] = field(default_factory=list)
-    max_latency_samples: int = 1000
+        # Latency histogram (in seconds for Prometheus convention)
+        self._request_latency = Histogram(
+            "gateway_request_latency_seconds",
+            "Request latency in seconds",
+            ["request_type"],
+            buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+            registry=self._registry,
+        )
 
-    # Connection tracking
-    active_connections: int = 0
-    total_connections: int = 0
-    total_disconnections: int = 0
+        # Connection gauges
+        self._active_connections = Gauge(
+            "gateway_active_connections",
+            "Number of active WebSocket connections",
+            registry=self._registry,
+        )
+        self._total_connections = Counter(
+            "gateway_connections_total",
+            "Total number of WebSocket connections",
+            registry=self._registry,
+        )
+        self._total_disconnections = Counter(
+            "gateway_disconnections_total",
+            "Total number of WebSocket disconnections",
+            registry=self._registry,
+        )
 
-    # LLM integration stats
-    llm_requests: int = 0
-    llm_errors: int = 0
-    llm_latencies: list[float] = field(default_factory=list)
+        # LLM integration metrics
+        self._llm_requests = Counter(
+            "gateway_llm_requests_total",
+            "Total LLM service requests",
+            registry=self._registry,
+        )
+        self._llm_errors = Counter(
+            "gateway_llm_errors_total",
+            "Total LLM service errors",
+            registry=self._registry,
+        )
+        self._llm_latency = Histogram(
+            "gateway_llm_latency_seconds",
+            "LLM service request latency in seconds",
+            buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0],
+            registry=self._registry,
+        )
 
-    def record_request(self, request_type: str, latency_ms: float) -> None:
+    @property
+    def registry(self) -> CollectorRegistry:
+        """Return the Prometheus registry."""
+        return self._registry
+
+    def record_request(self, request_type: str, latency_seconds: float) -> None:
         """Record a request with its type and latency."""
-        self.total_requests += 1
-        self.requests_by_type[request_type] = self.requests_by_type.get(request_type, 0) + 1
-        self._add_latency(latency_ms)
+        self._total_requests.inc()
+        self._requests_by_type.labels(request_type=request_type).inc()
+        self._request_latency.labels(request_type=request_type).observe(latency_seconds)
 
     def record_error(self, error_type: str) -> None:
         """Record an error by type."""
-        self.total_errors += 1
-        self.errors_by_type[error_type] = self.errors_by_type.get(error_type, 0) + 1
+        self._total_errors.inc()
+        self._errors_by_type.labels(error_type=error_type).inc()
 
-    def record_llm_request(self, latency_ms: float) -> None:
+    def record_websocket_message(self) -> None:
+        """Record a WebSocket message received."""
+        self._websocket_messages.inc()
+
+    def record_natural_language_request(self) -> None:
+        """Record a natural language request."""
+        self._natural_language_requests.inc()
+
+    def record_command_request(self) -> None:
+        """Record a regular command request."""
+        self._command_requests.inc()
+
+    def record_llm_request(self, latency_seconds: float) -> None:
         """Record an LLM service request."""
-        self.llm_requests += 1
-        if len(self.llm_latencies) >= self.max_latency_samples:
-            self.llm_latencies.pop(0)
-        self.llm_latencies.append(latency_ms)
+        self._llm_requests.inc()
+        self._llm_latency.observe(latency_seconds)
 
     def record_llm_error(self) -> None:
         """Record an LLM service error."""
-        self.llm_errors += 1
+        self._llm_errors.inc()
 
-    def _add_latency(self, latency_ms: float) -> None:
-        """Add latency sample, maintaining max samples."""
-        if len(self.latencies) >= self.max_latency_samples:
-            self.latencies.pop(0)
-        self.latencies.append(latency_ms)
+    def connection_opened(self) -> None:
+        """Record a new connection."""
+        self._active_connections.inc()
+        self._total_connections.inc()
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert metrics to dictionary for JSON serialization."""
-        latency_stats = self._calculate_latency_stats(self.latencies)
-        llm_latency_stats = self._calculate_latency_stats(self.llm_latencies)
-
-        return {
-            "requests": {
-                "total": self.total_requests,
-                "by_type": dict(self.requests_by_type),
-                "websocket_messages": self.websocket_messages,  # All messages (including invalid)
-                "natural_language": self.natural_language_requests,  # Valid NL commands
-                "commands": self.command_requests,  # Valid regular commands
-            },
-            "errors": {
-                "total": self.total_errors,
-                "by_type": dict(self.errors_by_type),
-            },
-            "latency_ms": latency_stats,
-            "connections": {
-                "active": self.active_connections,
-                "total": self.total_connections,
-                "disconnections": self.total_disconnections,
-            },
-            "llm_integration": {
-                "requests": self.llm_requests,
-                "errors": self.llm_errors,
-                "latency_ms": llm_latency_stats,
-            },
-        }
-
-    def _calculate_latency_stats(self, latencies: list[float]) -> dict[str, float]:
-        """Calculate latency statistics from samples."""
-        if not latencies:
-            return {"avg": 0.0, "min": 0.0, "max": 0.0, "p50": 0.0, "p95": 0.0}
-
-        sorted_latencies = sorted(latencies)
-        n = len(sorted_latencies)
-
-        return {
-            "avg": round(sum(latencies) / n, 2),
-            "min": round(min(latencies), 2),
-            "max": round(max(latencies), 2),
-            "p50": round(sorted_latencies[n // 2], 2),
-            "p95": round(sorted_latencies[int(n * 0.95)] if n >= 20 else sorted_latencies[-1], 2),
-        }
+    def connection_closed(self) -> None:
+        """Record a connection closure."""
+        self._active_connections.dec()
+        self._total_disconnections.inc()
 
 
 @dataclass
@@ -162,6 +207,7 @@ def create_gateway_app(
     settings: GatewaySettings | None = None,
 ) -> FastAPI:
     """Build the FastAPI application that fronts CLI sessions."""
+    import time
 
     active_config = config or load_simulation_config()
     active_settings = settings or GatewaySettings.from_env()
@@ -181,7 +227,7 @@ def create_gateway_app(
     app.state.gateway_metrics = metrics
 
     @app.get("/healthz")
-    def healthcheck() -> dict[str, str]:  # pragma: no cover - trivial
+    async def healthcheck() -> dict[str, str]:  # pragma: no cover - trivial
         health = {
             "status": "ok",
             "service_url": active_settings.service_url,
@@ -191,20 +237,17 @@ def create_gateway_app(
         return health
 
     @app.get("/metrics")
-    def get_metrics() -> dict[str, Any]:
-        """Return gateway metrics for Prometheus scraping."""
-        return {
-            "service": "gateway",
-            "service_url": active_settings.service_url,
-            "llm_service_url": active_settings.llm_service_url,
-            **metrics.to_dict(),
-        }
+    async def get_metrics() -> Response:
+        """Return gateway metrics in Prometheus text format."""
+        return Response(
+            content=generate_latest(metrics.registry),
+            media_type=CONTENT_TYPE_LATEST,
+        )
 
     @app.websocket("/ws")
     async def websocket_handler(websocket: WebSocket) -> None:
         await websocket.accept()
-        metrics.active_connections += 1
-        metrics.total_connections += 1
+        metrics.connection_opened()
         try:
             session = manager.open_session()
         except Exception as exc:  # pragma: no cover - catastrophic setup failure
@@ -212,8 +255,7 @@ def create_gateway_app(
             metrics.record_error("session_open_failed")
             await websocket.send_json({"type": "error", "error": str(exc)})
             await websocket.close()
-            metrics.active_connections -= 1
-            metrics.total_disconnections += 1
+            metrics.connection_closed()
             return
 
         try:
@@ -231,7 +273,7 @@ def create_gateway_app(
                     message_data = await _receive_message(websocket)
                 except WebSocketDisconnect:
                     break
-                metrics.websocket_messages += 1
+                metrics.record_websocket_message()
                 if message_data is None:
                     metrics.record_error("invalid_payload")
                     await websocket.send_json(
@@ -259,13 +301,15 @@ def create_gateway_app(
                 start_time = time.perf_counter()
                 try:
                     if is_nl and session.llm_client:
-                        metrics.natural_language_requests += 1
+                        metrics.record_natural_language_request()
                         llm_start = time.perf_counter()
-                        result = await asyncio.to_thread(session.execute_natural_language, command)
-                        llm_latency = (time.perf_counter() - llm_start) * 1000
+                        result = await asyncio.to_thread(
+                            session.execute_natural_language, command
+                        )
+                        llm_latency = time.perf_counter() - llm_start
                         metrics.record_llm_request(llm_latency)
                     else:
-                        metrics.command_requests += 1
+                        metrics.record_command_request()
                         result = await asyncio.to_thread(session.execute, command)
                 except Exception as exc:  # pragma: no cover - unexpected failure
                     LOGGER.exception("Gateway session crashed: %s", exc)
@@ -280,9 +324,9 @@ def create_gateway_app(
                     )
                     continue
                 
-                latency_ms = (time.perf_counter() - start_time) * 1000
+                latency_seconds = time.perf_counter() - start_time
                 request_type = "natural_language" if is_nl else "command"
-                metrics.record_request(request_type, latency_ms)
+                metrics.record_request(request_type, latency_seconds)
                 
                 await websocket.send_json(
                     {
@@ -298,8 +342,7 @@ def create_gateway_app(
         except WebSocketDisconnect:
             LOGGER.info("Gateway session %s disconnected", session.session_id)
         finally:
-            metrics.active_connections -= 1
-            metrics.total_disconnections += 1
+            metrics.connection_closed()
             await asyncio.to_thread(session.close)
             with contextlib.suppress(WebSocketDisconnect):
                 await websocket.close()
@@ -338,7 +381,9 @@ class _GatewayManager:
                 LOGGER.warning("LLM service unhealthy at %s", self._llm_service_url)
                 if self._metrics:
                     self._metrics.record_llm_error()
-        return GatewaySession(backend, limits=self._config.limits, llm_client=llm_client)
+        return GatewaySession(
+            backend, limits=self._config.limits, llm_client=llm_client
+        )
 
 
 async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None:
@@ -372,7 +417,8 @@ async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None
             data = json.loads(payload.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
             # Binary decoded as text command
-            return {"command": payload.decode("utf-8", errors="ignore"), "natural_language": False}
+            decoded = payload.decode("utf-8", errors="ignore")
+            return {"command": decoded, "natural_language": False}
     
     if isinstance(data, dict):
         command = data.get("command")
