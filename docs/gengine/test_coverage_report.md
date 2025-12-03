@@ -1,70 +1,100 @@
 # Test Coverage & Quality Report: Core Systems
 
-**Date:** December 2, 2025
+**Date:** December 3, 2025
 **Scope:** Core Simulation Systems (`src/gengine/echoes/sim`, `src/gengine/echoes/systems`)
 
 ## 1. Executive Summary
 
-The core simulation systems (`SimEngine`, `AgentSystem`, `FactionSystem`, etc.) have high *line coverage* (85-99%), indicating that most code paths are executed during testing. However, the *quality* of these tests is primarily "smoke testing" or "happy path" verification. They ensure the system runs without crashing and produces deterministic output, but they often fail to verify the *correctness* of the underlying logic, edge cases, or complex state transitions.
+The core simulation systems (`SimEngine`, `AgentSystem`, `FactionSystem`, etc.) now have excellent test coverage (91% overall) with comprehensive behavioral verification. All critical gaps identified in the previous report have been addressed through tasks 10.1.2-10.1.8.
 
-Significant gaps exist in testing the AI Player, Gateway, and LLM integration layers, which have near-zero coverage.
+**Key Improvements (December 2025):**
+- SimEngine API coverage expanded from 85% to 98% with error paths and all public APIs tested
+- FactionSystem tests decoupled from brittle RNG seeds using deterministic mock injection
+- Persistence fidelity tests ensure save/load cycles preserve all state
+- Cross-system integration scenarios verify agent→faction→economy chains
+- Performance guardrails have regression tests with timing thresholds
+- AI/LLM systems now have comprehensive mock-based testing (78+ new tests)
 
 ## 2. Coverage Analysis
 
 | Component             | Line Coverage | Assessment                                                                                       |
 | :-------------------- | :------------ | :----------------------------------------------------------------------------------------------- |
-| **SimEngine**         | 85%           | Good line coverage, but misses error handling and new API endpoints (Explanations, Progression). |
-| **AgentSystem**       | 95%           | High coverage. Logic verification tests added for traits, environment influence, and edge cases. |
-| **FactionSystem**     | 95%           | High coverage, tests specific behaviors but relies on brittle RNG seeding.                       |
-| **EconomySystem**     | 99%           | Excellent line coverage.                                                                         |
-| **EnvironmentSystem** | 96%           | Excellent line coverage.                                                                         |
-| **ProgressionSystem** | 96%           | Excellent line coverage.                                                                         |
-| **AI Player / LLM**   | 0-20%         | **Critical Gap**. These systems are effectively untested.                                        |
+| **SimEngine**         | 98%           | ✅ Excellent coverage including error handling, Explanations API, and Progression API.           |
+| **AgentSystem**       | 99%           | ✅ High coverage with logic verification for traits, environment influence, and edge cases.      |
+| **FactionSystem**     | 95%           | ✅ High coverage with deterministic RNG injection; state transitions verified against config.    |
+| **EconomySystem**     | 99%           | ✅ Excellent line coverage.                                                                      |
+| **EnvironmentSystem** | 96%           | ✅ Excellent line coverage.                                                                      |
+| **ProgressionSystem** | 96%           | ✅ Excellent line coverage.                                                                      |
+| **AI Player / LLM**   | 74-97%        | ✅ Comprehensive mock-based testing; no external API calls required.                             |
 
-## 3. Detailed Gap Analysis
+## 3. Completed Improvements
 
-### 3.1. Simulation Engine (`SimEngine`)
-*   **Missing API Tests**: The `SimEngine` exposes several methods that are not tested:
-    *   `initialize_state`: Error handling for missing arguments.
-    *   `director_feed`: Completely untested.
-    *   `Explanations API`: `query_timeline`, `explain_metric`, etc., are not verified at the engine level.
-    *   `Progression API`: `progression_summary`, `calculate_success_chance`, etc., are not verified.
-*   **Error Handling**: `ValueError` checks for invalid inputs (e.g., unknown views) are missing.
-*   **Integration**: The interaction between `SimEngine` and the `ProgressionSystem` is not explicitly verified (e.g., does a tick actually update progression?).
+### 3.1. Simulation Engine (`SimEngine`) — Task 10.1.3 ✅
+*   **API Tests Added**: All public `SimEngine` methods are now tested:
+    *   `initialize_state`: Error handling for missing arguments verified
+    *   `director_feed`: Fully tested with structure and content assertions
+    *   `Explanations API`: `query_timeline`, `explain_metric`, `explain_faction`, `explain_agent`, `explain_district`, `why` all tested
+    *   `Progression API`: `progression_summary`, `calculate_success_chance`, `agent_roster_summary` all tested
+*   **Error Handling**: `ValueError` checks for invalid views, uninitialized state, and tick limits all verified
+*   **Integration**: Tests confirm progression state updates when ticks advance
 
-### 3.2. Agent System (`AgentSystem`)
-*   **Logic Verification**: ✅ Tests now verify trait influence (e.g., empathy -> stabilize) and environment modifiers.
-*   **Edge Cases**: ✅ Tests now cover agents with missing districts/factions and no-option scenarios.
+### 3.2. Agent System (`AgentSystem`) — Task 10.1.2 ✅
+*   **Logic Verification**: ✅ Tests verify trait influence (e.g., empathy → stabilize) and environment modifiers
+*   **Edge Cases**: ✅ Tests cover agents with missing districts/factions and no-option scenarios
 
-### 3.3. Faction System (`FactionSystem`)
-*   **Brittle Tests**: Tests rely on specific `random.Random` seeds to force outcomes. If the internal order of checks changes, these tests will break even if the logic is correct.
-*   **State Transitions**: While some state changes are checked (e.g., legitimacy change), the exact magnitude of change is often not verified against the configuration.
+### 3.3. Faction System (`FactionSystem`) — Task 10.1.4 ✅
+*   **Deterministic Tests**: ✅ Tests use `DeterministicRNG` injection instead of magic seed values
+*   **State Transitions**: ✅ All action effects (lobby, sabotage, invest, recruit) verified against config deltas
+*   **Cooldown Behavior**: ✅ Cooldown prevention tested
 
-### 3.4. General Gaps
-*   **Persistence**: `save/load` cycles are not rigorously tested to ensure 100% state fidelity.
-*   **Integration**: Few tests verify the chain of cause-and-effect across systems (e.g., Agent Action -> District Modifier -> Faction Reaction -> Economy Shift).
-*   **Performance**: No benchmarks or stress tests to verify the engine stays within tick limits under load.
+### 3.4. Persistence (`GameState` Snapshots) — Task 10.1.5 ✅
+*   **Round-Trip Tests**: ✅ `save → load → save` cycles confirm structural and field equivalence
+*   **Subsystem Fidelity**: ✅ Tests cover city/districts, factions, agents, environment, progression, agent progression, metadata, and story seeds
+*   **Backwards Compatibility**: ✅ Tests for missing optional fields and unknown future fields
 
-## 4. Recommendations
+### 3.5. Cross-System Integration — Task 10.1.6 ✅
+*   **Scenario Tests**: ✅ 7 integration scenarios covering:
+    *   Unrest spike → faction intervention → economic impact
+    *   Resource scarcity → environment pressure → pollution cascade
+    *   Faction rivalry → district effects → legitimacy shifts
+    *   Multi-tick state consistency (50+ ticks)
+    *   Economy-environment feedback loops
+    *   Pollution diffusion across districts
+*   **Markers**: All marked with `@pytest.mark.integration` or `@pytest.mark.slow`
 
-### 4.1. Immediate Improvements (High Priority)
-1.  **Verify Logic, Not Just Execution**:
-    *   ✅ Refactor `AgentSystem` tests to mock the RNG or use statistical verification to ensure traits influence decisions as expected.
-    *   ✅ Add unit tests for `AgentSystem._decide` that test specific input combinations (e.g., "High Unrest + High Empathy = High Score for Stabilize").
-2.  **Expand SimEngine Coverage**:
-    *   Add tests for all `SimEngine` public methods, including Explanations and Progression APIs.
-    *   Test error conditions (invalid inputs, uninitialized state).
-3.  **Decouple Faction Tests from RNG**:
-    *   Inject a mock RNG or deterministic "Dice" object to force specific decision paths without relying on magic seeds.
+### 3.6. Performance Guardrails — Task 10.1.7 ✅
+*   **Tick Limit Enforcement**: ✅ Engine, CLI, and service tick limits verified
+*   **Timing Tests**: ✅ Multi-tick runs verified under generous thresholds (100 ticks < 10s)
+*   **Markers**: Performance tests marked with `@pytest.mark.slow`
 
-### 4.2. Strategic Improvements (Medium Priority)
-1.  **Integration Testing**:
-    *   Create a "Scenario" test suite that runs the engine for N ticks and asserts complex state outcomes (e.g., "A faction collapse scenario").
-2.  **AI/LLM Mocking**:
-    *   Implement mock providers for LLM services to enable testing of `gengine.echoes.llm` and `gengine.ai_player` without making real API calls.
-3.  **Property-Based Testing**:
-    *   Use `hypothesis` or similar to generate random valid GameStates and ensure the engine never crashes or produces invalid states (e.g., negative resources).
+### 3.7. AI/LLM Mocking — Task 10.1.8 ✅
+*   **Mock Providers**: ✅ `ConfigurableMockProvider` and `AIPlayerMockProvider` for OpenAI/Anthropic
+*   **Gateway Integration**: ✅ Gateway → LLM → Simulation flow tested with mocks
+*   **Coverage Paths**: ✅ Success, failure, timeout, rate-limit, and retry paths all covered
+*   **CI-Friendly**: ✅ No external network calls; no credentials required
 
-### 4.3. Long-Term
-1.  **Performance Regression Testing**: Add tests that fail if tick execution time exceeds a threshold.
-2.  **Snapshot Fidelity**: Test that `save() -> load() -> save()` produces identical files.
+## 4. Remaining Recommendations
+
+### 4.1. Future Improvements (Low Priority)
+1.  **Property-Based Testing**:
+    *   Consider using `hypothesis` to generate random valid GameStates and ensure the engine never crashes or produces invalid states (e.g., negative resources).
+2.  **Mutation Testing**:
+    *   Use mutation testing tools to verify test effectiveness beyond line coverage.
+3.  **Load Testing**:
+    *   Add stress tests for concurrent service requests and large world simulations.
+
+## 5. Test Inventory
+
+| Test File                              | Tests | Description                                      |
+| :------------------------------------- | ----: | :----------------------------------------------- |
+| `test_sim_engine.py`                   |    49 | SimEngine API, error paths, views, progression   |
+| `test_faction_system.py`               |    14 | FactionSystem with deterministic RNG             |
+| `test_snapshot_persistence.py`         |    21 | Save/load fidelity for all subsystems            |
+| `test_integration_scenarios.py`        |     7 | Cross-system behavior chains                     |
+| `test_performance_guardrails.py`       |    14 | Tick limits and timing thresholds                |
+| `test_llm_mock_providers.py`           |    26 | Mock LLM providers for OpenAI/Anthropic          |
+| `test_gateway_llm_integration.py`      |    24 | Gateway ↔ LLM ↔ Sim flow                         |
+| `test_llm_mocked_actor.py`             |    28 | AI player actor with mocked LLM                  |
+
+**Total Test Count:** 849 tests (up from 683)
+**Overall Coverage:** 90.95% (exceeds 90% threshold)
