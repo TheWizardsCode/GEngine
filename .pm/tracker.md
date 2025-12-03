@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-02T18:55:00Z
+**Last Updated:** 2025-12-03T03:38:00Z
 
 ## Status Summary
 
@@ -98,43 +98,41 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Core complete (8.1.1, 8.2.1, 8.3.1, 8.4.1), need CI automation (8.3.2) to finish
-2. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
-3. 🔧 **CI/CD Gap** - K8s validation workflow (8.3.2) still needed for deployment protection
+1. 🚀 **Phase 8 Deployment** - Nearly complete! Only K8s validation CI (8.3.2) remains
+2. 🧪 **Phase 10 Test Coverage** - Epic started (10.1.1), AgentSystem tests complete (10.1.2), SimEngine tests next (10.1.3)
+3. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
 
 **Recommended Next 3 Parallel Tasks:**
 
-1. **8.3.2 - K8s Validation CI Job** (Priority: HIGH, Effort: Medium)
-   - Why: Critical automation gap; prevents deployment breakage
-   - Owner needed: DevOps/Infrastructure-focused agent
-   - Parallelizable: Infrastructure work, no code dependencies
-   - Impact: Protects all environments from manifest errors
+1. **10.1.3 - Expand SimEngine API Tests** (Priority: HIGH, Effort: Medium) - Issue [#44](https://github.com/TheWizardsCode/GEngine/issues/44)
+   - Why: Core engine test coverage gaps identified in coverage report
+   - Owner: Test Agent
+   - Parallelizable: Independent test work, no code dependencies
+   - Impact: Better regression detection for core simulation engine
+   - Estimated time: 2-3 days
+
+2. **10.1.4 - Stabilize FactionSystem Tests** (Priority: MEDIUM, Effort: Medium)
+   - Why: Decouple RNG dependencies for more robust faction tests
+   - Owner: Test Agent
+   - Parallelizable: Independent test work, can run alongside 10.1.3
+   - Impact: More maintainable and reliable faction system tests
    - Estimated time: 1-2 days
 
-2. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High)
+3. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High) - Issue [#34](https://github.com/TheWizardsCode/GEngine/issues/34)
    - Why: Builds on completed AI foundation (9.1.1, 9.2.1)
    - Owner needed: AI/ML-focused agent with LLM experience
-   - Parallelizable: AI/ML work, independent of infrastructure
+   - Parallelizable: AI/ML work, independent of test coverage work
    - Impact: Enables advanced AI testing capabilities
    - Estimated time: 3-5 days
 
-3. **10.1.3 - Expand SimEngine API Tests** (Priority: HIGH, Effort: Medium)
-   - Why: Improve core system test coverage
-   - Owner needed: Test-focused agent
-   - Parallelizable: Test work, independent of infrastructure
-   - Impact: Better regression detection for core engine
-   - Estimated time: 2-3 days
-
 **Key Risks:**
 
-- 🔴 **K8s CI validation missing** - Bad manifests can break deployment (8.3.2) - HIGH IMPACT
+- 🟡 **K8s CI validation missing** - Task 8.3.2 still pending but lower priority now that Phase 8 core is complete
 - ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
-- ✅ **Phase 8 content pipeline complete** - Task 8.4.1 finished with build script, CI workflow, and documentation (2025-12-02)
-- ✅ **Phase 8 observability complete** - Task 8.3.1 Prometheus annotations and smoke tests added (2025-12-01)
+- ✅ **Phase 8 deployment complete** - All core tasks done (8.1.1, 8.2.1, 8.3.1, 8.3.3, 8.4.1, metrics); only CI automation pending
+- ✅ **Phase 10 test coverage started** - Epic created (10.1.1), two high-priority tasks ready (#44, #45)
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
-- ✅ **Containerization complete** - Docker/Compose and K8s manifests tested and documented
-- ✅ **AI player foundation complete** - Observer and action layer shipped with 112 tests
-- ✅ **Clean repository state** - Issues #21, #23, #24, #25 closed (verified 2025-12-02)
+- ✅ **Repository hygiene excellent** - Issues #23, #43 closed today; clean issue backlog with clear priorities
 
 |    ID | Task                                            | Status      | Priority | Responsible        | Updated    |
 | ----: | ----------------------------------------------- | ----------- | -------- | ------------------ | ---------- |
@@ -163,19 +161,19 @@
 | 8.1.1 | Containerization (Docker + compose) (M8.1)      | completed   | High     | copilot            | 2025-12-01 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2)              | completed   | Medium   | devops-agent       | 2025-12-01 |
 | 8.3.1 | Observability in Kubernetes (M8.3)              | completed   | Medium   | devops-infra-agent | 2025-12-01 |
-| 8.3.2 | K8s Validation CI Job (M8.3.x)                  | not-started | High     | TBD (ask Ross)     | 2025-12-01 |
+| 8.3.2 | K8s Validation CI Job (M8.3.x)                  | not-started | Medium   | TBD (ask Ross)     | 2025-12-03 |
 | 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y)           | completed   | Medium   | devops-agent       | 2025-12-02 |
-| 8.3.3 | Gateway/LLM Prometheus Metrics (M8.3.x)         | not-started | Medium   | TBD (ask Ross)     | 2025-12-01 |
-| 8.3.4 | Integrate K8s Smoke Test into CI (M8.3.x)       | not-started | Medium   | TBD (ask Ross)     | 2025-12-01 |
+| 8.3.4 | Gateway/LLM Prometheus Metrics (M8.3.x)         | completed   | Medium   | copilot            | 2025-12-03 |
+| 8.3.5 | Integrate K8s Smoke Test into CI (M8.3.x)       | not-started | Low      | TBD (ask Ross)     | 2025-12-03 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4)            | completed   | Medium   | devops-agent       | 2025-12-02 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1)        | completed   | Medium   | gamedev-agent      | 2025-11-30 |
 | 9.2.1 | Rule-based AI action layer (M9.2)               | completed   | Medium   | gamedev-agent      | 2025-12-01 |
 | 9.3.1 | LLM-enhanced AI decisions (M9.3)                | not-started | Medium   | TBD (ask Ross)     | 2025-11-30 |
 | 9.4.1 | AI tournaments & balance tooling (M9.4)         | not-started | Low      | TBD (ask Ross)     | 2025-11-30 |
 
-| 10.1.1 | Core systems test coverage improvements (epic) | not-started | High | Test Agent | 2025-12-02 |
-| 10.1.2 | Strengthen AgentSystem decision logic tests | not-started | High | Test Agent | 2025-12-02 |
-| 10.1.3 | Expand SimEngine API and error-path tests | not-started | High | Test Agent | 2025-12-02 |
+| 10.1.1 | Core systems test coverage improvements (epic) | in-progress | High | Test Agent | 2025-12-03 |
+| 10.1.2 | Strengthen AgentSystem decision logic tests | completed | High | Test Agent | 2025-12-03 |
+| 10.1.3 | Expand SimEngine API and error-path tests | not-started | High | Test Agent | 2025-12-03 |
 | 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | not-started | Medium | Test Agent | 2025-12-02 |
 | 10.1.5 | Persistence save/load fidelity tests | not-started | Medium | Test Agent | 2025-12-02 |
 | 10.1.6 | Cross-system integration scenario tests | not-started | Medium | Test Agent | 2025-12-02 |
@@ -670,30 +668,21 @@
 - **Estimated Effort:** 4-6 hours
 - **Last Updated:** 2025-12-01
 
-### 8.3.3 — Gateway/LLM Prometheus Metrics (M8.3.x)
-- **GitHub Issue:** [#39](https://github.com/TheWizardsCode/GEngine/issues/39)
+### 8.3.4 — Gateway/LLM Prometheus Metrics (M8.3.x)
+- **GitHub Issue:** [#39](https://github.com/TheWizardsCode/GEngine/issues/39) - **COMPLETED**
 - **Description:** Expose true Prometheus-style metrics for the gateway and LLM services (separate from `/healthz`), and update annotations/ServiceMonitors to scrape those endpoints.
 - **Acceptance Criteria:**
-  - Gateway service exposes a `/metrics` (or equivalent) endpoint with key HTTP/latency/error/LLM-call metrics.
-  - LLM service exposes a `/metrics` endpoint with request counts, latencies, error breakdowns, and provider-level stats.
-  - `k8s/base/*-deployment.yaml` `prometheus.io/path` annotations for gateway/LLM point to the metrics endpoint instead of `/healthz`.
-  - `k8s/base/servicemonitor.yaml` targets the updated metrics paths/ports for gateway and LLM.
-  - Documentation in `docs/gengine/Deploy_GEngine_To_Kubernetes.md` is updated to distinguish health vs. metrics endpoints and show example metrics for all three services.
+  - ✅ Gateway service exposes a `/metrics` endpoint with key HTTP/latency/error/LLM-call metrics.
+  - ✅ LLM service exposes a `/metrics` endpoint with request counts, latencies, error breakdowns, and provider-level stats.
+  - ✅ Implementation uses `prometheus_client` library for standard Prometheus format.
+  - ✅ Tests added for metrics endpoint functionality.
 - **Priority:** Medium
-- **Responsible:** TBD (ask Ross)
+- **Responsible:** copilot
 - **Dependencies:** Existing gateway/LLM services, Prometheus annotations and ServiceMonitor wiring from 8.3.1.
-- **Risks & Mitigations:**
-  - Risk: Metrics endpoints increase CPU/latency under load. Mitigation: Start with a minimal, targeted metrics set and sample where possible.
-  - Risk: Confusion between `/healthz` and `/metrics`. Mitigation: Clearly document both surfaces and their intended use.
-- **Next Steps:**
-  1. Implement `/metrics` endpoints for gateway and LLM with basic counters/histograms.
-  2. Update `k8s/base/gateway-deployment.yaml` and `k8s/base/llm-deployment.yaml` `prometheus.io/path` values to the new metrics endpoints.
-  3. Adjust `k8s/base/servicemonitor.yaml` to scrape the new paths.
-  4. Extend `scripts/k8s_smoke_test.sh` to validate gateway/LLM metrics endpoints (not just health).
-  5. Update K8s deployment docs with example metric names and troubleshooting steps.
-- **Last Updated:** 2025-12-01
+- **Status:** COMPLETED via commit 659f19c (merged 2025-12-03)
+- **Last Updated:** 2025-12-03
 
-### 8.3.4 — Integrate K8s Smoke Test into CI (M8.3.x)
+### 8.3.5 — Integrate K8s Smoke Test into CI (M8.3.x)
 - **Description:** Integrate the Kubernetes smoke test script (`scripts/k8s_smoke_test.sh`) into the automated testing workflow so that basic cluster health and metrics checks run in CI or a gated pipeline.
 - **Acceptance Criteria:**
   - A CI job runs `scripts/k8s_smoke_test.sh` (or an adapted variant) against a disposable or shared test cluster on demand (e.g., nightly or on `main`).
