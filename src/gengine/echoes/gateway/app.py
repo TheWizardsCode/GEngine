@@ -337,15 +337,9 @@ class _GatewayManager:
             # Check LLM service health
             if not llm_client.healthcheck():
                 LOGGER.warning("LLM service unhealthy at %s", self._llm_service_url)
-<<<<<<< HEAD
                 if self._metrics:
                     self._metrics.record_llm_error()
         return GatewaySession(backend, limits=self._config.limits, llm_client=llm_client)
-=======
-        return GatewaySession(
-            backend, limits=self._config.limits, llm_client=llm_client
-        )
->>>>>>> origin/main
 
 
 async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None:
