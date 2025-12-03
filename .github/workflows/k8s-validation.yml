@@ -87,6 +87,10 @@ jobs:
           kubectl cluster-info
           kubectl get nodes
 
+      - name: Create gengine namespace
+        run: |
+          kubectl apply --dry-run=server -f k8s/base/namespace.yaml
+
       - name: Dry-run validate base manifests
         run: |
           echo "Validating k8s/base with --dry-run=server..."
