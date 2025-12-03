@@ -7,8 +7,9 @@ This module includes comprehensive tests for:
 """
 
 from __future__ import annotations
+
 import pytest
-from gengine.echoes.settings import SimulationConfig, SimulationLimits
+
 from gengine.echoes.sim import SimEngine
 from gengine.echoes.sim.engine import EngineNotInitializedError
 
