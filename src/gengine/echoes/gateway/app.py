@@ -268,9 +268,6 @@ def create_gateway_app(
                     else:
                         metrics.command_requests += 1
                         result = await asyncio.to_thread(session.execute, command)
-                    else:
-                        metrics.command_requests += 1
-                        result = await asyncio.to_thread(session.execute, command)
                 except Exception as exc:  # pragma: no cover - unexpected failure
                     LOGGER.exception("Gateway session crashed: %s", exc)
                     metrics.record_error("execution_error")
