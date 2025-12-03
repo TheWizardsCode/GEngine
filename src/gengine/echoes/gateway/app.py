@@ -257,11 +257,17 @@ def create_gateway_app(
                         }
                     )
                     continue
+                start_time = time.perf_counter()
                 try:
                     if is_nl and session.llm_client:
-                        result = await asyncio.to_thread(
-                            session.execute_natural_language, command
-                        )
+                        metrics.natural_language_requests += 1
+                        llm_start = time.perf_counter()
+                        result = await asyncio.to_thread(session.execute_natural_language, command)
+                        llm_latency = (time.perf_counter() - llm_start) * 1000
+                        metrics.record_llm_request(llm_latency)
+                    else:
+                        metrics.command_requests += 1
+                        result = await asyncio.to_thread(session.execute, command)
                     else:
                         metrics.command_requests += 1
                         result = await asyncio.to_thread(session.execute, command)
