@@ -3,9 +3,31 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from prometheus_client import generate_latest
 
-from gengine.echoes.llm.app import create_llm_app
+from gengine.echoes.llm.app import (
+    LLMMetrics,
+    create_llm_app,
+)
 from gengine.echoes.llm.settings import LLMSettings
+
+
+def _parse_prometheus_metrics(text: str) -> dict[str, float]:
+    """Parse Prometheus text format into a dict of metric name -> value."""
+    metrics = {}
+    for line in text.strip().split("\n"):
+        if line.startswith("#") or not line:
+            continue
+        # Parse lines like "llm_requests_total 0.0"
+        parts = line.split()
+        if len(parts) >= 2:
+            name = parts[0]
+            try:
+                value = float(parts[-1])
+                metrics[name] = value
+            except ValueError:
+                pass
+    return metrics
 
 
 class TestLLMApp:
@@ -21,6 +43,59 @@ class TestLLMApp:
         data = response.json()
         assert data["status"] == "ok"
         assert data["provider"] == "stub"
+
+    def test_metrics_endpoint(self) -> None:
+        """Verify that /metrics endpoint returns Prometheus format."""
+        settings = LLMSettings(provider="stub")
+        app = create_llm_app(settings=settings)
+        client = TestClient(app)
+
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        
+        # Check content type is Prometheus text format
+        assert "text/plain" in response.headers.get("content-type", "")
+        
+        # Parse Prometheus format
+        metrics = _parse_prometheus_metrics(response.text)
+        
+        # Check key metrics exist
+        assert "llm_requests_total" in metrics
+        assert "llm_errors_total" in metrics
+
+    def test_metrics_track_parse_intent(self) -> None:
+        """Verify that parse_intent requests are tracked in metrics."""
+        settings = LLMSettings(provider="stub")
+        app = create_llm_app(settings=settings)
+        client = TestClient(app)
+
+        client.post(
+            "/parse_intent",
+            json={"user_input": "check status", "context": {}},
+        )
+
+        response = client.get("/metrics")
+        metrics = _parse_prometheus_metrics(response.text)
+        
+        assert metrics.get("llm_requests_total", 0) == 1
+        assert metrics.get("llm_parse_intent_requests_total", 0) == 1
+
+    def test_metrics_track_narrate(self) -> None:
+        """Verify that narrate requests are tracked in metrics."""
+        settings = LLMSettings(provider="stub")
+        app = create_llm_app(settings=settings)
+        client = TestClient(app)
+
+        client.post(
+            "/narrate",
+            json={"events": [{"type": "test"}], "context": {}},
+        )
+
+        response = client.get("/metrics")
+        metrics = _parse_prometheus_metrics(response.text)
+        
+        assert metrics.get("llm_requests_total", 0) == 1
+        assert metrics.get("llm_narrate_requests_total", 0) == 1
 
     def test_parse_intent_basic(self) -> None:
         settings = LLMSettings(provider="stub")
@@ -138,3 +213,61 @@ class TestLLMApp:
         )
 
         assert response.status_code == 422  # Validation error
+
+
+class TestLLMMetrics:
+    """Tests for LLMMetrics class with Prometheus."""
+
+    def test_record_parse_intent(self) -> None:
+        """Recording a parse_intent request increments counters."""
+        metrics = LLMMetrics()
+        metrics.record_parse_intent(
+            0.050, input_tokens=100, output_tokens=50
+        )  # 50ms in seconds
+        
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_requests_total 1.0" in output
+        assert "llm_parse_intent_requests_total 1.0" in output
+        assert "llm_input_tokens_total 100.0" in output
+        assert "llm_output_tokens_total 50.0" in output
+
+    def test_record_narrate(self) -> None:
+        """Recording a narrate request increments counters."""
+        metrics = LLMMetrics()
+        metrics.record_narrate(
+            0.075, input_tokens=200, output_tokens=100
+        )  # 75ms in seconds
+        
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_requests_total 1.0" in output
+        assert "llm_narrate_requests_total 1.0" in output
+        assert "llm_input_tokens_total 200.0" in output
+        assert "llm_output_tokens_total 100.0" in output
+
+    def test_record_error(self) -> None:
+        """Recording an error increments error counters."""
+        metrics = LLMMetrics()
+        metrics.record_error("parse_intent", "ValueError")
+        
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_errors_total 1.0" in output
+        assert "llm_parse_intent_errors_total 1.0" in output
+        expected_metric = (
+            'llm_errors_by_type_total{endpoint="parse_intent",error_type="ValueError"} '
+            '1.0'
+        )
+        assert expected_metric in output
+
+    def test_record_narrate_error(self) -> None:
+        """Recording a narrate error increments narrate error counter."""
+        metrics = LLMMetrics()
+        metrics.record_error("narrate", "RuntimeError")
+        
+        output = generate_latest(metrics.registry).decode("utf-8")
+        assert "llm_errors_total 1.0" in output
+        assert "llm_narrate_errors_total 1.0" in output
+
+    def test_registry_property(self) -> None:
+        """Registry property returns the collector registry."""
+        metrics = LLMMetrics()
+        assert metrics.registry is not None

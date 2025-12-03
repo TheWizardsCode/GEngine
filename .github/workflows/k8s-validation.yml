@@ -12,12 +12,12 @@ on:
     branches:
       - main
     paths:
-      - 'k8s/**/*.yaml'
-      - '.github/workflows/k8s-*.yml'
+      - "k8s/**/*.yaml"
+      - ".github/workflows/k8s-*.yml"
   pull_request:
     paths:
-      - 'k8s/**/*.yaml'
-      - '.github/workflows/k8s-*.yml'
+      - "k8s/**/*.yaml"
+      - ".github/workflows/k8s-*.yml"
 
 permissions:
   contents: read
@@ -86,6 +86,10 @@ jobs:
         run: |
           kubectl cluster-info
           kubectl get nodes
+
+      - name: Create gengine namespace (real)
+        run: |
+          kubectl apply -f k8s/base/namespace.yaml
 
       - name: Dry-run validate base manifests
         run: |

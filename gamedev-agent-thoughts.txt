@@ -525,3 +525,88 @@ All acceptance criteria for Issue #24 are met. The implementation is production-
 
 ### Task 9.3.1 Status: COMPLETED
 All acceptance criteria for Issue #34 are met.
+
+
+## Issue #39 - Dedicated Metrics Endpoints for Gateway and LLM Services - 2025-12-02T19:00 UTC
+=========================================================
+
+### Initial Assessment
+- Working branch: copilot/add-dedicated-metrics-endpoints
+- Current commit: fc3318b
+- Repository synced and clean
+
+### Acceptance Criteria from Issue:
+1. Gateway exposes `/metrics` endpoint with request counts, latencies, error breakdowns, provider-level stats
+2. LLM service exposes `/metrics` endpoint with request counts, latencies, error breakdowns, provider-level stats
+3. Prometheus annotations point to `/metrics` instead of `/healthz`
+4. ServiceMonitor targets updated to metrics paths/ports
+5. Documentation distinguishes health vs. metrics endpoints
+
+### Implementation Plan:
+1. [ ] Add `/metrics` endpoint to gateway/app.py with tracking of:
+   - Request counts (total, by endpoint, by result type)
+   - Request latencies
+   - Error counts
+   - Active WebSocket connections
+   - LLM service integration stats
+2. [ ] Add `/metrics` endpoint to llm/app.py with tracking of:
+   - Request counts (total, by endpoint)
+   - Request latencies
+   - Error counts
+   - Provider-level stats
+   - Token usage
+3. [ ] Update k8s/base/gateway-deployment.yaml: prometheus.io/path → /metrics
+4. [ ] Update k8s/base/llm-deployment.yaml: prometheus.io/path → /metrics
+5. [ ] Update k8s/base/servicemonitor.yaml: gateway and LLM paths → /metrics
+6. [ ] Update docs/gengine/Deploy_GEngine_To_Kubernetes.md
+7. [ ] Run tests to verify no regressions
+
+
+### Implementation Complete
+
+**Files Modified:**
+1. `src/gengine/echoes/gateway/app.py` - Added GatewayMetrics class and /metrics endpoint
+   - GatewayMetrics tracks: request counts, latencies, errors, connections, LLM integration
+   - /metrics endpoint returns JSON with all metrics for Prometheus
+   - Metrics tracked during WebSocket handler execution
+
+2. `src/gengine/echoes/llm/app.py` - Added LLMMetrics class and /metrics endpoint
+   - LLMMetrics tracks: request counts, latencies, errors, provider stats, token usage
+   - /metrics endpoint returns JSON with all metrics for Prometheus
+   - Metrics tracked for both parse_intent and narrate endpoints
+
+3. `k8s/base/gateway-deployment.yaml` - Updated prometheus.io/path from /healthz to /metrics
+4. `k8s/base/llm-deployment.yaml` - Updated prometheus.io/path from /healthz to /metrics
+5. `k8s/base/servicemonitor.yaml` - Updated gateway and LLM paths from /healthz to /metrics
+
+6. `docs/gengine/Deploy_GEngine_To_Kubernetes.md` - Comprehensive documentation update
+   - Added Health Check Endpoints section explaining /healthz purpose
+   - Added Metrics Endpoints section explaining /metrics purpose
+   - Added Example Metrics Responses showing JSON structure for all 3 services
+   - Updated Prometheus Annotations section
+   - Updated verification commands
+
+7. `tests/echoes/test_gateway_service.py` - Added 9 new tests:
+   - test_gateway_metrics_endpoint
+   - test_gateway_metrics_track_websocket_connections
+   - test_gateway_metrics_track_commands
+   - TestGatewayMetrics class with 7 tests
+
+8. `tests/echoes/test_llm_app.py` - Added 11 new tests:
+   - test_metrics_endpoint
+   - test_metrics_track_parse_intent
+   - test_metrics_track_narrate
+   - TestLLMMetrics class with 8 tests
+
+**Test Results:**
+- Gateway/LLM tests: 39 passed (19 original + 20 new)
+- Coverage: gateway/app.py 89%, llm/app.py 91%
+
+**Acceptance Criteria Status:**
+1. ✅ Gateway exposes /metrics endpoint with request counts, latencies, error breakdowns, connections, LLM integration stats
+2. ✅ LLM service exposes /metrics endpoint with request counts, latencies, error breakdowns, provider stats, token usage
+3. ✅ Prometheus annotations point to /metrics (updated gateway-deployment.yaml, llm-deployment.yaml)
+4. ✅ ServiceMonitor targets updated to /metrics paths (updated servicemonitor.yaml)
+5. ✅ Documentation distinguishes health vs. metrics endpoints with example responses
+
+### Task Complete: Issue #39 - Dedicated Metrics Endpoints for Gateway and LLM Services

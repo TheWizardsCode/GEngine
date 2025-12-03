@@ -592,17 +592,99 @@ If using LLM service extensively, increase memory for context buffering:
 ## Monitoring and Observability
 
 GEngine services are instrumented with Prometheus-compatible metrics endpoints
-for monitoring and alerting.
+for monitoring and alerting. Health checks (`/healthz`) are separate from
+metrics collection (`/metrics`) to allow independent control of readiness
+probes and observability scraping.
+
+### Health Check Endpoints
+
+Health checks are used for Kubernetes liveness and readiness probes:
+
+| Service    | Port | Health Endpoint | Description                           |
+| ---------- | ---- | --------------- | ------------------------------------- |
+| Simulation | 8000 | `/healthz`      | Returns `{"status": "ok"}`            |
+| Gateway    | 8100 | `/healthz`      | Returns status and upstream URLs      |
+| LLM        | 8001 | `/healthz`      | Returns status, provider, and model   |
 
 ### Metrics Endpoints
 
-Each service exposes metrics that can be scraped by Prometheus:
+Each service exposes dedicated metrics for Prometheus scraping:
 
 | Service    | Port | Metrics Endpoint | Description                        |
 | ---------- | ---- | ---------------- | ---------------------------------- |
 | Simulation | 8000 | `/metrics`       | Tick count, environment, profiling |
-| Gateway    | 8100 | `/healthz`       | Service health and connection info |
-| LLM        | 8001 | `/healthz`       | Service health status              |
+| Gateway    | 8100 | `/metrics`       | Request counts, latencies, connections, LLM integration |
+| LLM        | 8001 | `/metrics`       | Request counts, latencies, errors, provider stats, token usage |
+
+### Example Metrics Responses
+
+**Simulation Service** (`/metrics`):
+```json
+{
+  "tick": 42,
+  "environment": {
+    "temperature": 0.5,
+    "instability": 0.2,
+    "tension": 0.3
+  },
+  "profiling": {
+    "tick_ms_p50": 12.5,
+    "tick_ms_p95": 25.0,
+    "tick_ms_max": 45.0
+  }
+}
+```
+
+**Gateway Service** (`/metrics`) - Prometheus text format:
+```text
+# HELP gateway_requests_total Total number of requests processed
+# TYPE gateway_requests_total counter
+gateway_requests_total 150.0
+# HELP gateway_requests_by_type_total Requests by type
+# TYPE gateway_requests_by_type_total counter
+gateway_requests_by_type_total{request_type="command"} 120.0
+gateway_requests_by_type_total{request_type="natural_language"} 30.0
+# HELP gateway_errors_total Total number of errors
+# TYPE gateway_errors_total counter
+gateway_errors_total 2.0
+# HELP gateway_active_connections Number of active WebSocket connections
+# TYPE gateway_active_connections gauge
+gateway_active_connections 3.0
+# HELP gateway_request_latency_seconds Request latency in seconds
+# TYPE gateway_request_latency_seconds histogram
+gateway_request_latency_seconds_bucket{request_type="command",le="0.1"} 80.0
+gateway_request_latency_seconds_bucket{request_type="command",le="0.5"} 115.0
+gateway_request_latency_seconds_bucket{request_type="command",le="+Inf"} 120.0
+gateway_request_latency_seconds_count{request_type="command"} 120.0
+gateway_request_latency_seconds_sum{request_type="command"} 5.46
+```
+
+**LLM Service** (`/metrics`) - Prometheus text format:
+```text
+# HELP llm_requests_total Total number of requests processed
+# TYPE llm_requests_total counter
+llm_requests_total 100.0
+# HELP llm_parse_intent_requests_total Total parse_intent requests
+# TYPE llm_parse_intent_requests_total counter
+llm_parse_intent_requests_total 80.0
+# HELP llm_narrate_requests_total Total narrate requests
+# TYPE llm_narrate_requests_total counter
+llm_narrate_requests_total 20.0
+# HELP llm_errors_total Total number of errors
+# TYPE llm_errors_total counter
+llm_errors_total 1.0
+# HELP llm_input_tokens_total Total input tokens used
+# TYPE llm_input_tokens_total counter
+llm_input_tokens_total 50000.0
+# HELP llm_output_tokens_total Total output tokens used
+# TYPE llm_output_tokens_total counter
+llm_output_tokens_total 15000.0
+# HELP llm_parse_intent_latency_seconds parse_intent request latency in seconds
+# TYPE llm_parse_intent_latency_seconds histogram
+llm_parse_intent_latency_seconds_bucket{le="1.0"} 75.0
+llm_parse_intent_latency_seconds_bucket{le="5.0"} 80.0
+llm_parse_intent_latency_seconds_bucket{le="+Inf"} 80.0
+```
 
 ### Prometheus Annotations
 
@@ -612,7 +694,7 @@ All deployments are annotated for automatic Prometheus discovery:
 annotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "<service-port>"
-  prometheus.io/path: "/metrics"  # or "/healthz"
+  prometheus.io/path: "/metrics"
 ```
 
 ### Verifying Prometheus Scraping
@@ -624,25 +706,17 @@ To confirm Prometheus is scraping your services:
 if [[ "${GENGINE_DEPLOY_ENV}" == "local" ]]; then
   MINIKUBE_IP=$(minikube ip)
   curl -s "http://${MINIKUBE_IP}:30000/metrics" | jq .
+  curl -s "http://${MINIKUBE_IP}:30100/metrics" | jq .
+  curl -s "http://${MINIKUBE_IP}:30001/metrics" | jq .
 fi
 
 # Using kubectl proxy or port-forward
 kubectl port-forward -n "${GENGINE_NAMESPACE}" svc/simulation 8000:8000 &
+kubectl port-forward -n "${GENGINE_NAMESPACE}" svc/gateway 8100:8100 &
+kubectl port-forward -n "${GENGINE_NAMESPACE}" svc/llm 8001:8001 &
 curl -s http://localhost:8000/metrics | jq .
-```
-
-Expected output:
-
-```json
-{
-  "tick": 0,
-  "environment": {
-    "temperature": 0.0,
-    "instability": 0.0,
-    "tension": 0.0
-  },
-  "profiling": {}
-}
+curl -s http://localhost:8100/metrics | jq .
+curl -s http://localhost:8001/metrics | jq .
 ```
 
 ### Prometheus Operator Integration

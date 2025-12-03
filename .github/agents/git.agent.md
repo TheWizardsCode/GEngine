@@ -38,6 +38,7 @@ as described in Atlassian's guide
 - **Pre-merge hygiene**
   - Ensure the working tree is clean before switching branches.
   - Verify there are no uncommitted changes that would be lost.
+  - Ensure dev dependencies are installed (to avoid pytest configuration errors).
   - Run tests (for example `pytest -v`) and basic checks before proposing
     a merge.
 
@@ -77,6 +78,8 @@ arguments so they can run non-interactively.
   - `git rebase origin/main`
 
 - Run tests before merge:
+  - Activate virtual environment if present (e.g. `source .venv/bin/activate`)
+  - `pip install -e .[dev]` (ensure test dependencies like pytest-cov are present)
   - `pytest -v`
 
 - Merge feature branch into main locally:
