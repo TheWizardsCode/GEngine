@@ -204,12 +204,23 @@
 
 | 10.1.1 | Core systems test coverage improvements (epic) | completed | High | Test Agent | 2025-12-03 |
 | 10.1.2 | Strengthen AgentSystem decision logic tests | completed | High | Test Agent | 2025-12-03 |
+<<<<<<< HEAD
 | 10.1.3 | Expand SimEngine API and error-path tests | completed | High | Test Agent | 2025-12-03 |
 | 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.5 | Persistence save/load fidelity tests | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.6 | Cross-system integration scenario tests | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.7 | Performance and tick-limit regression tests | completed | Low | Test Agent | 2025-12-03 |
 | 10.1.8 | AI/LLM mocking and coverage for gateways | completed | Medium | Test Agent | 2025-12-03 |
+=======
+| 10.1.3 | Expand SimEngine API and error-path tests | not-started | High | Test Agent | 2025-12-03 |
+| 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | not-started | Medium | Test Agent | 2025-12-02 |
+| 10.1.5 | Persistence save/load fidelity tests | not-started | Medium | Test Agent | 2025-12-02 |
+| 10.1.6 | Cross-system integration scenario tests | not-started | Medium | Test Agent | 2025-12-02 |
+| 10.1.7 | Performance and tick-limit regression tests | not-started | Low | Test Agent | 2025-12-02 |
+| 10.1.8 | AI/LLM mocking and coverage for gateways | not-started | Medium | Test Agent | 2025-12-02 |
+| 10.2.1 | Harden difficulty sweep runtime & monitoring | not-started | Low | Gamedev Agent | 2025-12-02 |
+| 10.2.2 | AI player LLM robustness & failure telemetry | not-started | Low | Gamedev Agent | 2025-12-02 |
+>>>>>>> origin/main
 
 ## Task Details
 
