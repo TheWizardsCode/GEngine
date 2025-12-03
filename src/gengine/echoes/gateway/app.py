@@ -32,8 +32,10 @@ class GatewayMetrics:
     - natural_language_requests: Valid natural language commands executed
     - command_requests: Valid regular commands executed
     
-    The sum of natural_language_requests + command_requests will be <= websocket_messages
-    since invalid messages are counted in websocket_messages but not the request counters.
+    The sum of natural_language_requests + command_requests will be <= \
+        websocket_messages.
+    Invalid messages are counted in websocket_messages but not the request \
+        counters.
     """
 
     # Request counts
@@ -64,7 +66,9 @@ class GatewayMetrics:
     def record_request(self, request_type: str, latency_ms: float) -> None:
         """Record a request with its type and latency."""
         self.total_requests += 1
-        self.requests_by_type[request_type] = self.requests_by_type.get(request_type, 0) + 1
+        self.requests_by_type[request_type] = (
+            self.requests_by_type.get(request_type, 0) + 1
+        )
         self._add_latency(latency_ms)
 
     def record_error(self, error_type: str) -> None:
@@ -98,7 +102,8 @@ class GatewayMetrics:
             "requests": {
                 "total": self.total_requests,
                 "by_type": dict(self.requests_by_type),
-                "websocket_messages": self.websocket_messages,  # All messages (including invalid)
+                # All messages (including invalid)
+                "websocket_messages": self.websocket_messages,
                 "natural_language": self.natural_language_requests,  # Valid NL commands
                 "commands": self.command_requests,  # Valid regular commands
             },
@@ -132,7 +137,9 @@ class GatewayMetrics:
             "min": round(min(latencies), 2),
             "max": round(max(latencies), 2),
             "p50": round(sorted_latencies[n // 2], 2),
-            "p95": round(sorted_latencies[int(n * 0.95)] if n >= 20 else sorted_latencies[-1], 2),
+            "p95": round(
+                sorted_latencies[int(n * 0.95)] if n >= 20 else sorted_latencies[-1], 2
+            ),
         }
 
 
@@ -262,7 +269,9 @@ def create_gateway_app(
                     if is_nl and session.llm_client:
                         metrics.natural_language_requests += 1
                         llm_start = time.perf_counter()
-                        result = await asyncio.to_thread(session.execute_natural_language, command)
+                        result = await asyncio.to_thread(
+                            session.execute_natural_language, command
+                        )
                         llm_latency = (time.perf_counter() - llm_start) * 1000
                         metrics.record_llm_request(llm_latency)
                     else:
@@ -339,7 +348,9 @@ class _GatewayManager:
                 LOGGER.warning("LLM service unhealthy at %s", self._llm_service_url)
                 if self._metrics:
                     self._metrics.record_llm_error()
-        return GatewaySession(backend, limits=self._config.limits, llm_client=llm_client)
+        return GatewaySession(
+            backend, limits=self._config.limits, llm_client=llm_client
+        )
 
 
 async def _receive_message(websocket: WebSocket) -> dict[str, str | bool] | None:

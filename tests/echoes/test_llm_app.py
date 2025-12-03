@@ -5,7 +5,10 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from prometheus_client import generate_latest
 
-from gengine.echoes.llm.app import create_llm_app, LLMMetrics
+from gengine.echoes.llm.app import (
+    LLMMetrics,
+    create_llm_app,
+)
 from gengine.echoes.llm.settings import LLMSettings
 
 
@@ -218,7 +221,9 @@ class TestLLMMetrics:
     def test_record_parse_intent(self) -> None:
         """Recording a parse_intent request increments counters."""
         metrics = LLMMetrics()
-        metrics.record_parse_intent(0.050, input_tokens=100, output_tokens=50)  # 50ms in seconds
+        metrics.record_parse_intent(
+            0.050, input_tokens=100, output_tokens=50
+        )  # 50ms in seconds
         
         output = generate_latest(metrics.registry).decode("utf-8")
         assert "llm_requests_total 1.0" in output
@@ -229,7 +234,9 @@ class TestLLMMetrics:
     def test_record_narrate(self) -> None:
         """Recording a narrate request increments counters."""
         metrics = LLMMetrics()
-        metrics.record_narrate(0.075, input_tokens=200, output_tokens=100)  # 75ms in seconds
+        metrics.record_narrate(
+            0.075, input_tokens=200, output_tokens=100
+        )  # 75ms in seconds
         
         output = generate_latest(metrics.registry).decode("utf-8")
         assert "llm_requests_total 1.0" in output
@@ -245,7 +252,11 @@ class TestLLMMetrics:
         output = generate_latest(metrics.registry).decode("utf-8")
         assert "llm_errors_total 1.0" in output
         assert "llm_parse_intent_errors_total 1.0" in output
-        assert 'llm_errors_by_type_total{endpoint="parse_intent",error_type="ValueError"} 1.0' in output
+        expected_metric = (
+            'llm_errors_by_type_total{endpoint="parse_intent",error_type="ValueError"} '
+            '1.0'
+        )
+        assert expected_metric in output
 
     def test_record_narrate_error(self) -> None:
         """Recording a narrate error increments narrate error counter."""

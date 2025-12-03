@@ -5,7 +5,11 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from gengine.echoes.cli.shell import LocalBackend
-from gengine.echoes.gateway.app import GatewaySettings, GatewayMetrics, create_gateway_app
+from gengine.echoes.gateway.app import (
+    GatewayMetrics,
+    GatewaySettings,
+    create_gateway_app,
+)
 from gengine.echoes.sim import SimEngine
 
 
@@ -60,7 +64,10 @@ def test_gateway_metrics_endpoint(sim_config, gateway_settings) -> None:
     assert "llm_integration" in data
 
 
-def test_gateway_metrics_track_websocket_connections(sim_config, gateway_settings) -> None:
+def test_gateway_metrics_track_websocket_connections(
+    sim_config,
+    gateway_settings,
+) -> None:
     """Verify that WebSocket connections are tracked in metrics."""
     app = create_gateway_app(
         backend_factory=_local_backend_factory(sim_config),
