@@ -3,9 +3,46 @@
 from __future__ import annotations
 
 import json
+import unittest
 from unittest.mock import AsyncMock, patch
 
-from gengine.echoes.gateway.client import _render_response, main
+from gengine.echoes.gateway.client import _render_response, _run_session, main
+
+
+class TestGatewayClientSession(unittest.IsolatedAsyncioTestCase):
+    """Tests for the async session handling."""
+
+    async def test_run_session_executes_script(self) -> None:
+        """Verify that _run_session connects, sends commands, and handles responses."""
+        url = "ws://test"
+        script = ["cmd1", "cmd2"]
+
+        with patch("gengine.echoes.gateway.client.websockets.connect") as mock_connect:
+            mock_ws = AsyncMock()
+            # Mock the context manager
+            mock_connect.return_value.__aenter__.return_value = mock_ws
+
+            # Sequence of messages received:
+            # 1. Welcome message
+            # 2. Response to cmd1
+            # 3. Response to cmd2 (with should_exit=True to stop the loop)
+            mock_ws.recv.side_effect = [
+                json.dumps({"output": "Welcome"}),
+                json.dumps({"output": "Result1"}),
+                json.dumps({"output": "Result2", "should_exit": True}),
+            ]
+
+            await _run_session(url, script)
+
+            # Verify connect called with url
+            mock_connect.assert_called_with(url)
+
+            # Verify sends
+            # 1. cmd1
+            # 2. cmd2
+            assert mock_ws.send.call_count == 2
+            mock_ws.send.assert_any_call(json.dumps({"command": "cmd1"}))
+            mock_ws.send.assert_any_call(json.dumps({"command": "cmd2"}))
 
 
 def test_render_response_with_valid_json() -> None:
