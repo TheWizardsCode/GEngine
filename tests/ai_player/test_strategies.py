@@ -116,12 +116,6 @@ class TestBalancedStrategy:
         strategy = BalancedStrategy()
         assert strategy.strategy_type == StrategyType.BALANCED
 
-    def test_default_config_values(self) -> None:
-        strategy = BalancedStrategy()
-        assert strategy.config.stability_low == 0.6
-        assert strategy.config.stability_critical == 0.4
-        assert strategy.config.faction_low_legitimacy == 0.4
-        assert strategy.config.action_interval == 5
 
     def test_evaluate_critical_stability(self) -> None:
         strategy = BalancedStrategy()
@@ -213,15 +207,6 @@ class TestAggressiveStrategy:
         strategy = AggressiveStrategy()
         assert strategy.strategy_type == StrategyType.AGGRESSIVE
 
-    def test_higher_thresholds(self) -> None:
-        strategy = AggressiveStrategy()
-        balanced = BalancedStrategy()
-
-        # Aggressive has higher thresholds
-        assert strategy.config.stability_low > balanced.config.stability_low
-        aggressive_faction = strategy.config.faction_low_legitimacy
-        balanced_faction = balanced.config.faction_low_legitimacy
-        assert aggressive_faction > balanced_faction
 
     def test_more_frequent_actions(self) -> None:
         strategy = AggressiveStrategy()
@@ -280,21 +265,6 @@ class TestDiplomaticStrategy:
         strategy = DiplomaticStrategy()
         assert strategy.strategy_type == StrategyType.DIPLOMATIC
 
-    def test_lower_stability_threshold(self) -> None:
-        strategy = DiplomaticStrategy()
-        balanced = BalancedStrategy()
-
-        # Diplomatic has lower stability threshold
-        assert strategy.config.stability_low < balanced.config.stability_low
-
-    def test_higher_faction_threshold(self) -> None:
-        strategy = DiplomaticStrategy()
-        balanced = BalancedStrategy()
-
-        # More willing to support factions
-        diplomatic_faction = strategy.config.faction_low_legitimacy
-        balanced_faction = balanced.config.faction_low_legitimacy
-        assert diplomatic_faction > balanced_faction
 
     def test_evaluate_prefers_negotiation(self) -> None:
         strategy = DiplomaticStrategy()

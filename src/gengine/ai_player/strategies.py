@@ -260,11 +260,12 @@ class BalancedStrategy(BaseStrategy):
     ) -> None:
         if config is None:
             config = StrategyConfig(
-                stability_low=0.6,
-                stability_critical=0.4,
+                stability_low=0.7,
+                stability_critical=0.5,
                 faction_low_legitimacy=0.4,
                 action_interval=5,
                 inspect_interval=10,
+                resource_deploy_amount=75.0,
             )
         super().__init__(session_id=session_id, config=config)
 
@@ -448,12 +449,12 @@ class AggressiveStrategy(BaseStrategy):
     ) -> None:
         if config is None:
             config = StrategyConfig(
-                stability_low=0.7,  # Higher threshold
-                stability_critical=0.5,
-                faction_low_legitimacy=0.5,  # Higher threshold
-                action_interval=3,  # More frequent
+                stability_low=0.8,  # Still higher than balanced
+                stability_critical=0.55,
+                faction_low_legitimacy=0.2,
+                action_interval=3,
                 inspect_interval=8,
-                resource_deploy_amount=75.0,  # Larger deployments
+                resource_deploy_amount=125.0,
             )
         super().__init__(session_id=session_id, config=config)
 
@@ -469,7 +470,7 @@ class AggressiveStrategy(BaseStrategy):
 
         # Always prioritize direct action when stability is low
         if stability < self._config.stability_low:
-            # Deploy resources aggressively
+            # Deploy resources aggressively, ignore negotiation
             district = self._get_most_critical_district(state)
             intent = self._create_intent(
                 IntentType.DEPLOY_RESOURCE,
@@ -481,7 +482,7 @@ class AggressiveStrategy(BaseStrategy):
             decisions.append(
                 StrategyDecision(
                     intent=intent,
-                    priority=0.95,
+                    priority=1.0,
                     rationale=f"Aggressive intervention at stability {stability:.2f}",
                     strategy_type=self.strategy_type,
                     tick=tick,
@@ -489,25 +490,22 @@ class AggressiveStrategy(BaseStrategy):
                 )
             )
 
-        # Critical stability - double down
+        # Critical stability - triple down
         if stability < self._config.stability_critical:
-            districts = self._get_multiple_districts(state, 2)
+            districts = self._get_multiple_districts(state, 3)
             for i, district in enumerate(districts):
                 intent = self._create_intent(
                     IntentType.DEPLOY_RESOURCE,
                     resource_type="materials",
-                    amount=self._config.resource_deploy_amount * 1.5,
+                    amount=self._config.resource_deploy_amount * 2.0,
                     target_district=district,
-                    purpose="critical_intervention",
+                    purpose="crisis_response",
                 )
                 decisions.append(
                     StrategyDecision(
                         intent=intent,
-                        priority=1.0 - (i * 0.05),
-                        rationale=(
-                            f"Critical stability {stability:.2f}, "
-                            "multi-district intervention"
-                        ),
+                        priority=1.0,
+                        rationale=f"Triple-down crisis response in {district}",
                         strategy_type=self.strategy_type,
                         tick=tick,
                         state_snapshot=state_metrics,
@@ -608,6 +606,15 @@ class DiplomaticStrategy(BaseStrategy):
     - Emphasizes long-term stability through diplomacy
     """
 
+    def _get_most_unstable_district(self, state: dict[str, Any]) -> str | None:
+        # Find the district with the highest unrest
+        districts = state.get("districts", [])
+        if not districts:
+            return None
+        # Assume 'unrest' is a float value in each district dict
+        most_unstable = max(districts, key=lambda d: d.get("unrest", 0.0))
+        return most_unstable.get("id")
+
     strategy_type = StrategyType.DIPLOMATIC
 
     def __init__(
@@ -617,13 +624,13 @@ class DiplomaticStrategy(BaseStrategy):
     ) -> None:
         if config is None:
             config = StrategyConfig(
-                stability_low=0.55,  # Lower threshold
+                stability_low=0.55,
                 stability_critical=0.35,
-                faction_low_legitimacy=0.5,  # Higher threshold for support
+                faction_low_legitimacy=0.6,
                 faction_critical_legitimacy=0.3,
-                action_interval=4,
-                inspect_interval=8,
-                resource_deploy_amount=30.0,  # Smaller, targeted deployments
+                action_interval=6,
+                inspect_interval=10,
+                resource_deploy_amount=40.0,
             )
         super().__init__(session_id=session_id, config=config)
 
@@ -642,6 +649,7 @@ class DiplomaticStrategy(BaseStrategy):
         for faction_id, legitimacy in factions.items():
             is_low_legitimacy = legitimacy < self._config.faction_low_legitimacy
             if is_low_legitimacy and self._should_act(tick):
+                # Always negotiate first, never deploy unless critical
                 intent = self._create_intent(
                     IntentType.NEGOTIATE,
                     targets=[faction_id],
@@ -649,13 +657,13 @@ class DiplomaticStrategy(BaseStrategy):
                     goal="build_relationship",
                 )
                 is_critical = legitimacy < self._config.faction_critical_legitimacy
-                priority = 0.9 if is_critical else 0.7
+                priority = 1.0 if is_critical else 0.8
                 decisions.append(
                     StrategyDecision(
                         intent=intent,
                         priority=priority,
                         rationale=(
-                            f"Building relationship with {faction_id} "
+                            f"Diplomatic negotiation with {faction_id} "
                             f"({legitimacy:.2f})"
                         ),
                         strategy_type=self.strategy_type,
@@ -663,6 +671,27 @@ class DiplomaticStrategy(BaseStrategy):
                         state_snapshot=state_metrics,
                     )
                 )
+        # Only deploy resources if stability is extremely low
+        stability = state_metrics["stability"]
+        if stability < self._config.stability_critical:
+            district = self._get_most_unstable_district(state)
+            intent = self._create_intent(
+                IntentType.DEPLOY_RESOURCE,
+                resource_type="materials",
+                amount=self._config.resource_deploy_amount,
+                target_district=district,
+                purpose="last_resort_support",
+            )
+            decisions.append(
+                StrategyDecision(
+                    intent=intent,
+                    priority=0.6,
+                    rationale=f"Last resort support deployment at stability {stability:.2f}",
+                    strategy_type=self.strategy_type,
+                    tick=tick,
+                    state_snapshot=state_metrics,
+                )
+            )
 
         # Stability through diplomacy first
         if stability < self._config.stability_low:

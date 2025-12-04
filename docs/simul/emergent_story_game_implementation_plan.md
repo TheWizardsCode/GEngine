@@ -1,3 +1,15 @@
+## 9. Automated Balance Workflow and Strategy Tuning
+
+To ensure robust game balance and support data-driven strategy design, implement an automated workflow:
+
+- **Batch Simulation Sweeps:** Run large numbers of simulations with varied parameters, world configs, and strategy settings using the AI tournament tooling.
+- **Result Aggregation:** Collect and store outcomes (win rates, stability, actions, story seeds, etc.) for each run in structured files or a database.
+- **Analysis & Reporting:** Use scripts to analyze aggregated results, identify dominant strategies, balance issues, and underutilized content.
+- **Strategy Evolution:** Automatically tune or generate new strategy parameters based on analysis (e.g., via optimization, evolutionary algorithms, or machine learning).
+- **Continuous Integration:** Integrate this workflow into CI pipelines to regularly validate game balance and surface regressions.
+- **Designer Feedback Loop:** Surface actionable insights to designers for manual tuning, scenario creation, and content iteration.
+
+This approach enables rapid, repeatable balance iteration and supports both manual and automated strategy development.
 # Plan: Implement "Echoes of Emergence" (CLI + LLM Sim)
 
 A staged implementation that builds a solid simulation core, then layers on
