@@ -1,11 +1,24 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-03T03:45:00Z
+**Last Updated:** 2025-12-04T04:35:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 9.3.1 (LLM-Enhanced AI Decisions) COMPLETED** - GitHub Issue [#34](https://github.com/TheWizardsCode/GEngine/issues/34)
+  - HybridStrategy implementation routes routine decisions to rules and complex choices to LLM
+  - Budget enforcement via LLMStrategyConfig prevents runaway costs
+  - 91 new tests covering hybrid strategy, LLM decision layer, and complexity evaluation
+  - Telemetry tracks decision_source ("rule" vs "llm"), call counts, latency, and fallback rates
+  - Coverage at 94% for AI player module
+  - Documentation updated in README with examples and configuration guide
+- 🎉 **Task 8.3.2 (K8s Validation CI Job) COMPLETED** - GitHub Issue [#31](https://github.com/TheWizardsCode/GEngine/issues/31)
+  - CI workflow `.github/workflows/k8s-validation.yml` validates all K8s manifests
+  - kubectl apply --dry-run=server validation using Kind cluster
+  - kubeconform linting for schema validation
+  - Validates base manifests and both local/staging overlays
+  - Workflow runs on K8s manifest changes and blocks PRs on failures
 - 🎉 **Phase 10.1 (Core Systems Test Coverage) COMPLETED** - GitHub Issue [#45](https://github.com/TheWizardsCode/GEngine/issues/45)
   - All child tasks 10.1.2–10.1.8 completed
   - Test count increased from 683 to 849 tests (+166 new tests)
@@ -129,41 +142,38 @@
 
 **Current Priorities:**
 
-1. 🚀 **Phase 8 Deployment** - Nearly complete! Only K8s validation CI (8.3.2) remains
+1. ✅ **Phase 8 Deployment** - COMPLETE! All tasks including K8s validation CI completed
 2. ✅ **Phase 10 Test Coverage** - COMPLETE! All child tasks 10.1.2–10.1.8 completed, 849 tests at 90.95% coverage
-3. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
+3. ✅ **Phase 9 AI Testing Core** - COMPLETE! Observer (9.1.1), action layer (9.2.1), and LLM-enhanced (9.3.1) all shipped
 
-**Recommended Next 3 Parallel Tasks:**
+**Recommended Next Tasks:**
 
-1. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High) - Issue [#34](https://github.com/TheWizardsCode/GEngine/issues/34)
-   - Why: Builds on completed AI foundation (9.1.1, 9.2.1) and new mock testing infrastructure (10.1.8)
-   - Owner needed: AI/ML-focused agent with LLM experience
-   - Parallelizable: AI/ML work, independent of deployment work
-   - Impact: Enables advanced AI testing capabilities
-   - Estimated time: 3-5 days
-
-2. **8.3.2 - K8s Validation CI Job** (Priority: MEDIUM, Effort: Medium) - Issue [#31](https://github.com/TheWizardsCode/GEngine/issues/31)
-   - Why: Catch K8s manifest errors early in CI
-   - Owner needed: DevOps agent
-   - Parallelizable: Independent CI work
-   - Impact: Better deployment safety
-   - Estimated time: 1-2 days
-
-3. **9.4.1 - AI Tournaments & Balance Tooling** (Priority: LOW, Effort: High)
-   - Why: Builds on completed AI action layer (9.2.1)
+1. **9.4.1 - AI Tournaments & Balance Tooling** (Priority: MEDIUM, Effort: High)
+   - Why: Final Phase 9 task; all AI infrastructure complete (observer, actor, hybrid strategy)
    - Owner needed: Gamedev agent
-   - Parallelizable: Independent tooling work
    - Impact: Balance validation and AI testing at scale
    - Estimated time: 3-5 days
 
+2. **8.3.5 - Integrate K8s Smoke Test into CI** (Priority: LOW, Effort: Low)
+   - Why: Automate existing smoke test script in CI
+   - Owner needed: DevOps agent
+   - Impact: Automated K8s deployment validation
+   - Estimated time: 1 day
+
+3. **10.2.1 - Harden Difficulty Sweep Runtime & Monitoring** (Priority: LOW, Effort: Medium)
+   - Why: Improve testing infrastructure robustness
+   - Owner needed: Gamedev agent
+   - Impact: Better balance validation tooling
+   - Estimated time: 2-3 days
+
 **Key Risks:**
 
-- 🟡 **K8s CI validation missing** - Task 8.3.2 still pending but lower priority now that Phase 8 core is complete
-- ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
-- ✅ **Phase 8 deployment complete** - All core tasks done (8.1.1, 8.2.1, 8.3.1, 8.3.3, 8.4.1, metrics); only CI automation pending
+- ✅ **Phase 8 deployment COMPLETE** - All tasks done including K8s validation CI (8.1.1, 8.2.1, 8.3.1, 8.3.2, 8.3.3, 8.3.4, 8.4.1)
+- ✅ **Phase 9 core AI COMPLETE** - All core AI tasks shipped: observer (9.1.1), actor (9.2.1), LLM-enhanced (9.3.1)
 - ✅ **Phase 10 test coverage COMPLETE** - Epic 10.1.1 and all child tasks (10.1.2–10.1.8) completed; 849 tests at 90.95% coverage
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
-- ✅ **Repository hygiene excellent** - Issues #23, #43, #45 addressed; clean issue backlog with clear priorities
+- ✅ **Repository hygiene excellent** - Issues #23, #31, #34, #43, #45 addressed; clean issue backlog with clear priorities
+- 🟢 **No major blockers** - All high-priority work complete; only optional enhancements and polish tasks remain
 
 |    ID | Task                                            | Status      | Priority | Responsible        | Updated    |
 | ----: | ----------------------------------------------- | ----------- | -------- | ------------------ | ---------- |
@@ -192,35 +202,26 @@
 | 8.1.1 | Containerization (Docker + compose) (M8.1)      | completed   | High     | copilot            | 2025-12-01 |
 | 8.2.1 | Kubernetes manifests & docs (M8.2)              | completed   | Medium   | devops-agent       | 2025-12-01 |
 | 8.3.1 | Observability in Kubernetes (M8.3)              | completed   | Medium   | devops-infra-agent | 2025-12-01 |
-| 8.3.2 | K8s Validation CI Job (M8.3.x)                  | not-started | Medium   | TBD (ask Ross)     | 2025-12-03 |
+| 8.3.2 | K8s Validation CI Job (M8.3.x)                  | completed   | Medium   | copilot            | 2025-12-04 |
 | 8.3.3 | K8s Resource Sizing & Tuning (M8.3.y)           | completed   | Medium   | devops-agent       | 2025-12-02 |
 | 8.3.4 | Gateway/LLM Prometheus Metrics (M8.3.x)         | completed   | Medium   | copilot            | 2025-12-03 |
 | 8.3.5 | Integrate K8s Smoke Test into CI (M8.3.x)       | not-started | Low      | TBD (ask Ross)     | 2025-12-03 |
 | 8.4.1 | Content pipeline tooling & CI (M8.4)            | completed   | Medium   | devops-agent       | 2025-12-02 |
 | 9.1.1 | AI Observer foundation acceptance (M9.1)        | completed   | Medium   | gamedev-agent      | 2025-11-30 |
 | 9.2.1 | Rule-based AI action layer (M9.2)               | completed   | Medium   | gamedev-agent      | 2025-12-01 |
-| 9.3.1 | LLM-enhanced AI decisions (M9.3)                | not-started | Medium   | TBD (ask Ross)     | 2025-11-30 |
+| 9.3.1 | LLM-enhanced AI decisions (M9.3)                | completed   | Medium   | gamedev-agent      | 2025-12-04 |
 | 9.4.1 | AI tournaments & balance tooling (M9.4)         | not-started | Low      | TBD (ask Ross)     | 2025-11-30 |
 
 | 10.1.1 | Core systems test coverage improvements (epic) | completed | High | Test Agent | 2025-12-03 |
 | 10.1.2 | Strengthen AgentSystem decision logic tests | completed | High | Test Agent | 2025-12-03 |
-<<<<<<< HEAD
 | 10.1.3 | Expand SimEngine API and error-path tests | completed | High | Test Agent | 2025-12-03 |
 | 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.5 | Persistence save/load fidelity tests | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.6 | Cross-system integration scenario tests | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.7 | Performance and tick-limit regression tests | completed | Low | Test Agent | 2025-12-03 |
 | 10.1.8 | AI/LLM mocking and coverage for gateways | completed | Medium | Test Agent | 2025-12-03 |
-=======
-| 10.1.3 | Expand SimEngine API and error-path tests | not-started | High | Test Agent | 2025-12-03 |
-| 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | not-started | Medium | Test Agent | 2025-12-02 |
-| 10.1.5 | Persistence save/load fidelity tests | not-started | Medium | Test Agent | 2025-12-02 |
-| 10.1.6 | Cross-system integration scenario tests | not-started | Medium | Test Agent | 2025-12-02 |
-| 10.1.7 | Performance and tick-limit regression tests | not-started | Low | Test Agent | 2025-12-02 |
-| 10.1.8 | AI/LLM mocking and coverage for gateways | not-started | Medium | Test Agent | 2025-12-02 |
 | 10.2.1 | Harden difficulty sweep runtime & monitoring | not-started | Low | Gamedev Agent | 2025-12-02 |
 | 10.2.2 | AI player LLM robustness & failure telemetry | not-started | Low | Gamedev Agent | 2025-12-02 |
->>>>>>> origin/main
 
 ## Task Details
 
