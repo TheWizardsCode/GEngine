@@ -885,6 +885,174 @@ kubectl apply --dry-run=server -k k8s/overlays/staging
 kind delete cluster --name gengine-validation
 ```
 
+## CI Smoke Tests
+
+In addition to manifest validation, GEngine includes end-to-end smoke tests
+that deploy the services to a Kind cluster and verify they are functioning
+correctly. These smoke tests provide deeper validation than dry-run checks
+by testing actual service health, metrics endpoints, and Prometheus annotations.
+
+### Smoke Test Workflow
+
+The `.github/workflows/k8s-smoke-test.yml` workflow performs comprehensive
+end-to-end testing:
+
+1. **Creates a Kind cluster** – Spins up a temporary Kubernetes cluster
+2. **Builds and loads Docker image** – Builds the GEngine image and loads it
+   into the Kind cluster
+3. **Deploys using Kustomize** – Applies the `k8s/overlays/local` overlay
+4. **Waits for rollout** – Ensures all deployments are ready
+5. **Runs smoke test script** – Executes `scripts/k8s_smoke_test.sh` to verify:
+   - All pods are running and ready
+   - Health endpoints respond with HTTP 200
+   - Metrics endpoints are accessible
+   - Prometheus annotations are correctly configured
+6. **Captures debug logs** – On failure, collects pod logs and events for
+   troubleshooting
+
+### When CI Smoke Tests Run
+
+The smoke test workflow runs on:
+
+- **Pushes to main** – When any of these paths change:
+  - `k8s/**/*.yaml` (Kubernetes manifests)
+  - `scripts/k8s_smoke_test.sh` (smoke test script)
+  - `Dockerfile` (container image)
+  - `.github/workflows/k8s-smoke-test.yml` (workflow itself)
+- **Nightly schedule** – Runs at 3:00 AM UTC every day
+- **Manual trigger** – Can be invoked via GitHub Actions UI
+
+**Note:** Smoke tests do NOT run on every PR to avoid heavy K8s resource
+usage. For PR validation, rely on the `k8s-validation.yml` workflow which
+performs schema linting and dry-run validation.
+
+### Manually Triggering Smoke Tests
+
+To manually trigger the smoke test workflow:
+
+1. Go to the repository's **Actions** tab on GitHub
+2. Select **K8s Smoke Test** from the workflow list
+3. Click **Run workflow**
+4. Optionally configure:
+   - **Run load test**: Enable the `--load` flag to run basic load testing
+   - **Debug on failure**: Capture extra debug logs if the test fails
+5. Click **Run workflow** to start
+
+### Running Smoke Tests Locally
+
+You can run the same smoke tests locally to validate changes before pushing.
+
+#### Prerequisites for Local Smoke Tests
+
+Ensure you have:
+
+- **Docker** – For building container images
+- **kubectl** – For interacting with Kubernetes
+- **Kind** – For creating local Kubernetes clusters
+- **curl** – For health check requests
+
+Install Kind if not already installed:
+
+```bash
+# Install kind (Linux)
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+# Verify installation
+kind version
+```
+
+#### Local Smoke Test Procedure
+
+Run these commands to replicate the CI smoke test locally:
+
+```bash
+# Set environment variables
+export GENGINE_IMAGE_TAG="latest"
+export GENGINE_NAMESPACE="gengine"
+
+# Create a Kind cluster
+kind create cluster --name gengine-smoke-test --wait 120s
+
+# Build the Docker image
+docker build -t "gengine:${GENGINE_IMAGE_TAG}" --target runtime .
+
+# Load the image into Kind
+kind load docker-image "gengine:${GENGINE_IMAGE_TAG}" --name gengine-smoke-test
+
+# Deploy GEngine (update image tag first if needed)
+kubectl apply -k k8s/overlays/local
+
+# Wait for deployments to be ready
+kubectl rollout status deployment -n "${GENGINE_NAMESPACE}" --timeout=180s
+
+# Run the smoke test script
+./scripts/k8s_smoke_test.sh --namespace "${GENGINE_NAMESPACE}"
+
+# Optional: Run with load test
+./scripts/k8s_smoke_test.sh --namespace "${GENGINE_NAMESPACE}" --load
+
+# Cleanup when done
+kubectl delete -k k8s/overlays/local
+kind delete cluster --name gengine-smoke-test
+```
+
+#### Quick Local Smoke Test with Minikube
+
+If you already have a Minikube cluster running (see
+[Create_Local_Kubernetes_With_Minikube.md](Create_Local_Kubernetes_With_Minikube.md)):
+
+```bash
+# Ensure Minikube is running
+minikube status
+
+# Build and load the image
+docker build -t "gengine:latest" --target runtime .
+minikube image load "gengine:latest"
+
+# Deploy and test
+kubectl apply -k k8s/overlays/local
+kubectl rollout status deployment -n gengine --timeout=120s
+./scripts/k8s_smoke_test.sh
+```
+
+### Smoke Test Script Options
+
+The `scripts/k8s_smoke_test.sh` script accepts these options:
+
+| Option        | Description                                      | Default   |
+| ------------- | ------------------------------------------------ | --------- |
+| `--namespace` | Kubernetes namespace to test                     | `gengine` |
+| `--load`      | Run basic load test against health/metrics endpoints | disabled  |
+
+Exit codes:
+
+| Code | Meaning                    |
+| ---- | -------------------------- |
+| 0    | All smoke tests passed     |
+| 1    | Prerequisites not met      |
+| 2    | Pod health check failed    |
+| 3    | Endpoint checks failed     |
+
+### Troubleshooting Smoke Test Failures
+
+If the smoke test fails in CI:
+
+1. **Check the workflow logs** – The "Capture debug logs on failure" step
+   includes pod descriptions, logs, and cluster events
+
+2. **Common issues:**
+   - **Pods not starting**: Check for image pull errors or resource constraints
+   - **Health checks failing**: Verify services are binding to correct ports
+   - **Timeout errors**: Increase rollout timeout or check for slow startup
+
+3. **Reproduce locally** – Use the local smoke test procedure above to
+   debug the issue in an interactive environment
+
+4. **Check recent changes** – Review commits that modified K8s manifests,
+   Dockerfile, or service code
+
 ## Next Steps
 
 - [Minikube Setup](Create_Local_Kubernetes_With_Minikube.md) -

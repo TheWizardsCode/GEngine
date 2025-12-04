@@ -1,0 +1,150 @@
+# Kubernetes Smoke Test Workflow
+# Runs end-to-end smoke tests against a Kind cluster to validate deployments.
+#
+# Triggers:
+#   - On push to main when K8s manifests or smoke test script change
+#   - Nightly at 3:00 AM UTC
+#   - Manual dispatch via workflow_dispatch
+#
+# This workflow does NOT run on every PR to avoid heavy K8s usage.
+# For manifest validation on PRs, see k8s-validation.yml.
+
+name: K8s Smoke Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "k8s/**/*.yaml"
+      - "scripts/k8s_smoke_test.sh"
+      - "Dockerfile"
+      - ".github/workflows/k8s-smoke-test.yml"
+  schedule:
+    # Run nightly at 3:00 AM UTC (offset from other workflows)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      run_load_test:
+        description: 'Run load test (--load flag)'
+        required: false
+        default: 'false'
+        type: boolean
+      debug_on_failure:
+        description: 'Capture extra debug logs on failure'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  GENGINE_IMAGE_TAG: latest
+  GENGINE_NAMESPACE: gengine
+
+jobs:
+  smoke-test:
+    name: K8s Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: gengine-smoke-test
+          wait: 120s
+
+      - name: Verify cluster is ready
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          echo "Cluster is ready."
+
+      - name: Build Docker image
+        run: |
+          echo "Building GEngine Docker image..."
+          docker build -t "gengine:${GENGINE_IMAGE_TAG}" --target runtime .
+          echo "Docker image built successfully."
+
+      - name: Load image into Kind cluster
+        run: |
+          echo "Loading image into Kind cluster..."
+          kind load docker-image "gengine:${GENGINE_IMAGE_TAG}" --name gengine-smoke-test
+          echo "Image loaded successfully."
+
+      - name: Deploy GEngine to Kind cluster
+        run: |
+          echo "Deploying GEngine to Kind cluster..."
+          kubectl apply -k k8s/overlays/local
+          echo "Deployment applied."
+
+      - name: Wait for deployments to be ready
+        run: |
+          echo "Waiting for deployments to be ready..."
+          kubectl rollout status deployment -n "${GENGINE_NAMESPACE}" --timeout=180s
+          echo "All deployments are ready."
+
+      - name: Verify pods are running
+        run: |
+          echo "Verifying pods are running..."
+          kubectl get pods -n "${GENGINE_NAMESPACE}" -o wide
+          kubectl get services -n "${GENGINE_NAMESPACE}"
+
+      - name: Run smoke test script
+        id: smoke_test
+        run: |
+          echo "Running Kubernetes smoke test..."
+          # Make the script executable
+          chmod +x scripts/k8s_smoke_test.sh
+
+          # Determine if load test should be run
+          LOAD_FLAG=""
+          if [[ "${{ github.event.inputs.run_load_test }}" == "true" ]]; then
+            LOAD_FLAG="--load"
+          fi
+
+          # Run the smoke test
+          ./scripts/k8s_smoke_test.sh --namespace "${GENGINE_NAMESPACE}" ${LOAD_FLAG}
+
+      - name: Capture debug logs on failure
+        if: failure() && (github.event.inputs.debug_on_failure != 'false')
+        run: |
+          echo "=========================================="
+          echo "SMOKE TEST FAILED - Capturing debug info"
+          echo "=========================================="
+
+          echo ""
+          echo "=== Pod Status ==="
+          kubectl get pods -n "${GENGINE_NAMESPACE}" -o wide || true
+
+          echo ""
+          echo "=== Pod Descriptions ==="
+          kubectl describe pods -n "${GENGINE_NAMESPACE}" || true
+
+          echo ""
+          echo "=== Simulation Logs ==="
+          kubectl logs -n "${GENGINE_NAMESPACE}" -l app.kubernetes.io/component=simulation --tail=100 || true
+
+          echo ""
+          echo "=== Gateway Logs ==="
+          kubectl logs -n "${GENGINE_NAMESPACE}" -l app.kubernetes.io/component=gateway --tail=100 || true
+
+          echo ""
+          echo "=== LLM Logs ==="
+          kubectl logs -n "${GENGINE_NAMESPACE}" -l app.kubernetes.io/component=llm --tail=100 || true
+
+          echo ""
+          echo "=== Events ==="
+          kubectl get events -n "${GENGINE_NAMESPACE}" --sort-by='.lastTimestamp' || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Cleaning up..."
+          kubectl delete -k k8s/overlays/local --ignore-not-found=true || true
+          echo "Cleanup complete."
