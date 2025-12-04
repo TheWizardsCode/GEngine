@@ -61,18 +61,18 @@ for this repository.
    - Prefer descriptive test names and minimal mocking consistent with existing
      style.
 
-4. **Run tests**
-   - Use `pytest -v` for broad runs, or narrower selections (e.g.
-     `pytest -v tests/echoes/test_service_api.py`) when iterating on a specific
-     area.
+4. **Run tests and lint**
+   - Always run `pytest -v` and `ruff check` (or project-standard lint command) after making any code or test changes.
+   - We should always be at 90% coverage for critical surfaces and 80%+ for everything else. If below these levels or if any tests fail, debug and fix the issues before proceeding.
+   - Do not commit or push code until all tests pass and lint is clean.
+   - Use narrower selections (e.g. `pytest -v tests/echoes/test_service_api.py`) when iterating on a specific area.
    - Capture the command(s) run and summarize results.
 
 5. **Report & iterate**
    - For any failures, explain whether they appear to be due to:
      - test issues (incorrect expectations or assumptions), or
      - product issues (real bugs in `src/`).
-   - Propose minimal, targeted changes; do not modify `src/` unless explicitly
-     requested by the user.
+   - Propose minimal, targeted changes; do not modify code outside of `src/tests` unless explicitly requested by the user.
 
 ## Boundaries
 

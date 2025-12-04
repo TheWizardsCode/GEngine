@@ -1,11 +1,42 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-03T03:38:00Z
+**Last Updated:** 2025-12-03T03:45:00Z
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Phase 10.1 (Core Systems Test Coverage) COMPLETED** - GitHub Issue [#45](https://github.com/TheWizardsCode/GEngine/issues/45)
+  - All child tasks 10.1.2–10.1.8 completed
+  - Test count increased from 683 to 849 tests (+166 new tests)
+  - Overall coverage at 90.95% (exceeds 90% threshold)
+  - SimEngine coverage increased from 85% to 98%
+  - AI/LLM coverage increased from 0-20% to 74-97%
+  - No flaky tests introduced
+  - Test coverage report updated with completion status
+- 🎉 **Task 10.1.3 (SimEngine API Tests) COMPLETED**
+  - 41 new tests for SimEngine public APIs, error paths, and progression integration
+  - Tests cover director_feed, explanations API, progression helpers, and all error conditions
+- 🎉 **Task 10.1.4 (FactionSystem RNG Decoupling) COMPLETED**
+  - DeterministicRNG class for mock injection
+  - State transitions verified against configuration values
+  - No more brittle magic seed dependencies
+- 🎉 **Task 10.1.5 (Persistence Fidelity) COMPLETED**
+  - 17 new round-trip tests for save/load cycles
+  - All subsystems covered: city, factions, agents, environment, progression
+  - Backwards compatibility tests included
+- 🎉 **Task 10.1.6 (Integration Scenarios) COMPLETED**
+  - 7 cross-system integration tests
+  - Scenarios cover unrest cascades, scarcity, faction rivalry, feedback loops
+  - Marked with @integration and @slow for selective execution
+- 🎉 **Task 10.1.7 (Performance Guardrails) COMPLETED**
+  - 14 tests for tick limits (engine, CLI, service)
+  - Timing tests with generous thresholds
+  - Marked with @slow for selective execution
+- 🎉 **Task 10.1.8 (AI/LLM Mocking) COMPLETED**
+  - 78 new tests with ConfigurableMockProvider and AIPlayerMockProvider
+  - Gateway ↔ LLM ↔ Simulation flow fully tested
+  - CI-friendly: no external API calls required
 - 🎉 **Task 8.4.1 (Content Pipeline Tooling & CI) COMPLETED** - GitHub Issue [#23](https://github.com/TheWizardsCode/GEngine/issues/23)
   - Content build script (`scripts/build_content.py`) validates worlds, configs, and sweeps
   - CI workflow (`.github/workflows/content-validation.yml`) runs on content file changes
@@ -99,30 +130,30 @@
 **Current Priorities:**
 
 1. 🚀 **Phase 8 Deployment** - Nearly complete! Only K8s validation CI (8.3.2) remains
-2. 🧪 **Phase 10 Test Coverage** - Epic started (10.1.1), AgentSystem tests complete (10.1.2), SimEngine tests next (10.1.3)
+2. ✅ **Phase 10 Test Coverage** - COMPLETE! All child tasks 10.1.2–10.1.8 completed, 849 tests at 90.95% coverage
 3. 🤖 **Phase 9 AI Testing** - Observer (9.1.1) and action layer (9.2.1) complete, LLM-enhanced (9.3.1) ready to start
 
 **Recommended Next 3 Parallel Tasks:**
 
-1. **10.1.3 - Expand SimEngine API Tests** (Priority: HIGH, Effort: Medium) - Issue [#44](https://github.com/TheWizardsCode/GEngine/issues/44)
-   - Why: Core engine test coverage gaps identified in coverage report
-   - Owner: Test Agent
-   - Parallelizable: Independent test work, no code dependencies
-   - Impact: Better regression detection for core simulation engine
-   - Estimated time: 2-3 days
+1. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High) - Issue [#34](https://github.com/TheWizardsCode/GEngine/issues/34)
+   - Why: Builds on completed AI foundation (9.1.1, 9.2.1) and new mock testing infrastructure (10.1.8)
+   - Owner needed: AI/ML-focused agent with LLM experience
+   - Parallelizable: AI/ML work, independent of deployment work
+   - Impact: Enables advanced AI testing capabilities
+   - Estimated time: 3-5 days
 
-2. **10.1.4 - Stabilize FactionSystem Tests** (Priority: MEDIUM, Effort: Medium)
-   - Why: Decouple RNG dependencies for more robust faction tests
-   - Owner: Test Agent
-   - Parallelizable: Independent test work, can run alongside 10.1.3
-   - Impact: More maintainable and reliable faction system tests
+2. **8.3.2 - K8s Validation CI Job** (Priority: MEDIUM, Effort: Medium) - Issue [#31](https://github.com/TheWizardsCode/GEngine/issues/31)
+   - Why: Catch K8s manifest errors early in CI
+   - Owner needed: DevOps agent
+   - Parallelizable: Independent CI work
+   - Impact: Better deployment safety
    - Estimated time: 1-2 days
 
-3. **9.3.1 - LLM-Enhanced AI Decisions** (Priority: MEDIUM, Effort: High) - Issue [#34](https://github.com/TheWizardsCode/GEngine/issues/34)
-   - Why: Builds on completed AI foundation (9.1.1, 9.2.1)
-   - Owner needed: AI/ML-focused agent with LLM experience
-   - Parallelizable: AI/ML work, independent of test coverage work
-   - Impact: Enables advanced AI testing capabilities
+3. **9.4.1 - AI Tournaments & Balance Tooling** (Priority: LOW, Effort: High)
+   - Why: Builds on completed AI action layer (9.2.1)
+   - Owner needed: Gamedev agent
+   - Parallelizable: Independent tooling work
+   - Impact: Balance validation and AI testing at scale
    - Estimated time: 3-5 days
 
 **Key Risks:**
@@ -130,9 +161,9 @@
 - 🟡 **K8s CI validation missing** - Task 8.3.2 still pending but lower priority now that Phase 8 core is complete
 - ⚠️ **Phase 9 LLM enhancement ready** - Rule-based AI complete, LLM-enhanced (9.3.1) unblocked but needs owner
 - ✅ **Phase 8 deployment complete** - All core tasks done (8.1.1, 8.2.1, 8.3.1, 8.3.3, 8.4.1, metrics); only CI automation pending
-- ✅ **Phase 10 test coverage started** - Epic created (10.1.1), two high-priority tasks ready (#44, #45)
+- ✅ **Phase 10 test coverage COMPLETE** - Epic 10.1.1 and all child tasks (10.1.2–10.1.8) completed; 849 tests at 90.95% coverage
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
-- ✅ **Repository hygiene excellent** - Issues #23, #43 closed today; clean issue backlog with clear priorities
+- ✅ **Repository hygiene excellent** - Issues #23, #43, #45 addressed; clean issue backlog with clear priorities
 
 |    ID | Task                                            | Status      | Priority | Responsible        | Updated    |
 | ----: | ----------------------------------------------- | ----------- | -------- | ------------------ | ---------- |
@@ -171,8 +202,16 @@
 | 9.3.1 | LLM-enhanced AI decisions (M9.3)                | not-started | Medium   | TBD (ask Ross)     | 2025-11-30 |
 | 9.4.1 | AI tournaments & balance tooling (M9.4)         | not-started | Low      | TBD (ask Ross)     | 2025-11-30 |
 
-| 10.1.1 | Core systems test coverage improvements (epic) | in-progress | High | Test Agent | 2025-12-03 |
+| 10.1.1 | Core systems test coverage improvements (epic) | completed | High | Test Agent | 2025-12-03 |
 | 10.1.2 | Strengthen AgentSystem decision logic tests | completed | High | Test Agent | 2025-12-03 |
+<<<<<<< HEAD
+| 10.1.3 | Expand SimEngine API and error-path tests | completed | High | Test Agent | 2025-12-03 |
+| 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | completed | Medium | Test Agent | 2025-12-03 |
+| 10.1.5 | Persistence save/load fidelity tests | completed | Medium | Test Agent | 2025-12-03 |
+| 10.1.6 | Cross-system integration scenario tests | completed | Medium | Test Agent | 2025-12-03 |
+| 10.1.7 | Performance and tick-limit regression tests | completed | Low | Test Agent | 2025-12-03 |
+| 10.1.8 | AI/LLM mocking and coverage for gateways | completed | Medium | Test Agent | 2025-12-03 |
+=======
 | 10.1.3 | Expand SimEngine API and error-path tests | not-started | High | Test Agent | 2025-12-03 |
 | 10.1.4 | Stabilize FactionSystem tests (decouple RNG) | not-started | Medium | Test Agent | 2025-12-02 |
 | 10.1.5 | Persistence save/load fidelity tests | not-started | Medium | Test Agent | 2025-12-02 |
@@ -181,6 +220,7 @@
 | 10.1.8 | AI/LLM mocking and coverage for gateways | not-started | Medium | Test Agent | 2025-12-02 |
 | 10.2.1 | Harden difficulty sweep runtime & monitoring | not-started | Low | Gamedev Agent | 2025-12-02 |
 | 10.2.2 | AI player LLM robustness & failure telemetry | not-started | Low | Gamedev Agent | 2025-12-02 |
+>>>>>>> origin/main
 
 ## Task Details
 

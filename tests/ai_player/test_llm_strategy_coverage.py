@@ -1,17 +1,20 @@
 """Additional tests for LLM strategy coverage."""
 
 import asyncio
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+
 from gengine.ai_player.llm_strategy import (
     LLMDecisionLayer,
-    LLMStrategyConfig,
     LLMDecisionRequest,
+    LLMStrategyConfig,
+    create_llm_decision_layer,
     evaluate_complexity,
-    create_llm_decision_layer
 )
-from gengine.echoes.llm.providers import LLMProvider
 from gengine.echoes.llm.intents import IntentType
+from gengine.echoes.llm.providers import LLMProvider
+
 
 @pytest.fixture
 def mock_provider():
@@ -115,7 +118,13 @@ def test_parse_intent_negotiate(layer):
 
 def test_parse_intent_deploy(layer):
     mock_result = Mock()
-    mock_result.intents = [{"type": "deploy", "resource_type": "materials", "amount": 100}]
+    mock_result.intents = [
+        {
+            "type": "deploy",
+            "resource_type": "materials",
+            "amount": 100,
+        }
+    ]
     intent = layer._parse_intent_from_result(mock_result, "sess")
     assert intent.intent == IntentType.DEPLOY_RESOURCE
     assert intent.amount == 100.0
@@ -162,7 +171,7 @@ def test_call_llm_error_no_fallback(layer, request_data):
     layer._config.fallback_on_error = False
     layer._provider.parse_intent.side_effect = Exception("LLM Error")
     
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="LLM Error"):
         asyncio.run(layer._call_llm(request_data))
 
 def test_create_llm_decision_layer_default():
@@ -181,7 +190,8 @@ def test_request_decision_sync(layer, request_data):
     # Since request_decision calls asyncio.run, we can mock _call_llm if we want,
     # but mocking the provider is better integration test.
     
-    # However, asyncio.run won't work if we are already in a loop (which pytest-asyncio might do)
+    # However, asyncio.run won't work if we are already in a loop
+    # (which pytest-asyncio might do)
     # But this test is synchronous.
     
     # We need to make sure the provider returns a future-like object or coroutine

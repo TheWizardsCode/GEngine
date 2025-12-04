@@ -1,10 +1,13 @@
 """Tests for OpenAIProvider coverage."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
+
+import pytest
+
 from gengine.echoes.llm.openai_provider import OpenAIProvider
 from gengine.echoes.llm.settings import LLMSettings
+
 
 @pytest.fixture
 def settings():
@@ -33,12 +36,16 @@ def test_parse_intent_inspect(provider):
     mock_response.model_dump_json.return_value = "{}"
     mock_message = Mock()
     mock_message.function_call.name = "inspect_target"
-    mock_message.function_call.arguments = '{"target_type": "district", "target_id": "d1", "focus_areas": ["pollution"]}'
+    mock_message.function_call.arguments = (
+        '{"target_type": "district", "target_id": "d1", "focus_areas": ["pollution"]}'
+    )
     mock_response.choices = [Mock(message=mock_message)]
     
     provider.client.chat.completions.create.return_value = mock_response
     
-    result = asyncio.run(provider.parse_intent("check district d1", {"session_id": "test"}))
+    result = asyncio.run(
+        provider.parse_intent("check district d1", {"session_id": "test"})
+    )
     
     assert len(result.intents) == 1
     intent = result.intents[0]
@@ -52,7 +59,9 @@ def test_parse_intent_negotiate(provider):
     mock_response.model_dump_json.return_value = "{}"
     mock_message = Mock()
     mock_message.function_call.name = "negotiate_with_faction"
-    mock_message.function_call.arguments = '{"targets": ["f1"], "goal": "peace"}'
+    mock_message.function_call.arguments = (
+        '{"targets": ["f1"], "goal": "peace"}'
+    )
     mock_response.choices = [Mock(message=mock_message)]
     
     provider.client.chat.completions.create.return_value = mock_response
@@ -70,7 +79,9 @@ def test_parse_intent_deploy(provider):
     mock_response.model_dump_json.return_value = "{}"
     mock_message = Mock()
     mock_message.function_call.name = "deploy_resource"
-    mock_message.function_call.arguments = '{"resource_type": "money", "amount": 100, "target_district": "d1"}'
+    mock_message.function_call.arguments = (
+        '{"resource_type": "money", "amount": 100, "target_district": "d1"}'
+    )
     mock_response.choices = [Mock(message=mock_message)]
     
     provider.client.chat.completions.create.return_value = mock_response
@@ -87,7 +98,9 @@ def test_parse_intent_pass_policy(provider):
     mock_response.model_dump_json.return_value = "{}"
     mock_message = Mock()
     mock_message.function_call.name = "pass_policy"
-    mock_message.function_call.arguments = '{"policy_id": "p1", "duration_ticks": 10}'
+    mock_message.function_call.arguments = (
+        '{"policy_id": "p1", "duration_ticks": 10}'
+    )
     mock_response.choices = [Mock(message=mock_message)]
     
     provider.client.chat.completions.create.return_value = mock_response
@@ -104,7 +117,9 @@ def test_parse_intent_covert_action(provider):
     mock_response.model_dump_json.return_value = "{}"
     mock_message = Mock()
     mock_message.function_call.name = "covert_action"
-    mock_message.function_call.arguments = '{"action_type": "spy", "target_faction": "f1"}'
+    mock_message.function_call.arguments = (
+        '{"action_type": "spy", "target_faction": "f1"}'
+    )
     mock_response.choices = [Mock(message=mock_message)]
     
     provider.client.chat.completions.create.return_value = mock_response
