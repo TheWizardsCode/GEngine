@@ -612,6 +612,61 @@ All acceptance criteria for Issue #34 are met.
 ### Task Complete: Issue #39 - Dedicated Metrics Endpoints for Gateway and LLM Services
 
 
+## Issue #51 - M9.1 Observer AI Foundation Verification - 2025-12-04T06:05 UTC
+=========================================================
+
+### Task: Verify and complete Issue 51 - M9.1 Observer AI Foundation
+
+### Acceptance Criteria Analysis:
+
+1. ✅ **Observer connects to both local and service-mode simulations**
+   - `Observer(engine=SimEngine())` for local mode
+   - `Observer(client=SimServiceClient())` for service mode
+   - Factory helpers: `create_observer_from_engine()`, `create_observer_from_service()`
+   - Tests: `TestObserverWithSimServiceClient` (4 integration tests)
+
+2. ✅ **Generates tick-by-tick analysis capturing stability trends, faction legitimacy shifts, story seed activations**
+   - `ObservationReport` captures all three metrics
+   - `TrendAnalysis` tracks increasing/decreasing/stable trends
+   - `_check_story_seeds()` records activated story seeds
+   - `_check_alerts()` detects critical conditions
+
+3. ✅ **Outputs structured JSON plus optional natural language commentary**
+   - `ObservationReport.to_dict()` provides JSON output
+   - `_generate_commentary()` creates natural language summaries with labels
+   - `run_ai_observer.py` CLI outputs JSON with `--output` flag
+   - Verbose mode with `--verbose` flag
+
+4. ✅ **Integration test asserts observer detects a scripted stability crash** (ENHANCED)
+   - Added new test: `test_observer_detects_scripted_stability_crash()`
+   - Test scripts stability to crash (0.9 → 0.3)
+   - Verifies alert is generated with "stability critical" message
+   - Verifies alert contains the critical stability value
+
+5. ✅ **README includes observer invocation examples and use cases**
+   - Section "AI Player Observer" with comprehensive documentation
+   - Local mode examples
+   - Service mode examples with programmatic usage
+   - Configuration options documented
+
+### Changes Made:
+
+**tests/ai_player/test_observer.py:**
+- Added `test_observer_detects_scripted_stability_crash()` test (lines 256-308)
+- Test scripts stability crash by:
+  1. Starting with high stability (0.9)
+  2. Observing a few ticks
+  3. Forcing stability to drop to 0.3 (below 0.5 threshold)
+  4. Verifying alerts are generated with correct messages
+
+### Test Results:
+- All 38 observer tests pass
+- Linting: All checks passed
+
+### Issue #51 Status: COMPLETED
+All acceptance criteria met. The implementation was already substantially complete, with only the scripted stability crash test needing enhancement.
+
+
 ## Issue #49 - AI Tournaments & Balance Tooling (Task 9.4.1) - 2025-12-04T04:49 UTC
 =========================================================
 

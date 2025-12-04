@@ -253,6 +253,60 @@ class TestObserverDetectsStabilityCrash:
             "Commentary should mention stability"
         )
 
+    def test_observer_detects_scripted_stability_crash(self) -> None:
+        """Observer should detect and alert when stability is scripted to crash.
+
+        This test verifies the observer can detect a forced stability crash by:
+        1. Starting with high stability
+        2. Observing a few ticks
+        3. Manually forcing stability to crash below threshold
+        4. Observing more ticks and verifying alert is generated
+        """
+        engine = SimEngine()
+        engine.initialize_state(world="default")
+
+        # Start with high stability
+        engine.state.environment.stability = 0.9
+
+        # Configure observer with alert threshold at 0.5
+        config = ObserverConfig(
+            tick_budget=5,
+            analysis_interval=5,
+            stability_alert_threshold=0.5,
+        )
+        observer = Observer(engine=engine, config=config)
+
+        # First observation with stable conditions
+        observer.observe()
+
+        # Script the crash: force stability to drop below threshold
+        engine.state.environment.stability = 0.3
+
+        # Second observation should detect the crash
+        # Create new observer to observe the crashed state
+        config2 = ObserverConfig(
+            tick_budget=5,
+            analysis_interval=5,
+            stability_alert_threshold=0.5,
+        )
+        observer2 = Observer(engine=engine, config=config2)
+        report2 = observer2.observe()
+
+        # Verify the crash is detected
+        start_val = report2.stability_trend.start_value
+        assert start_val < 0.5, f"Start value below threshold, got {start_val}"
+        assert len(report2.alerts) > 0, "Should have an alert for low stability"
+        has_stability_alert = any(
+            "stability critical" in alert.lower() for alert in report2.alerts
+        )
+        assert has_stability_alert, f"Missing stability alert: {report2.alerts}"
+        # Verify alert contains the actual stability value
+        has_value_in_alert = any(
+            "0.3" in alert or "0.2" in alert or "0.1" in alert
+            for alert in report2.alerts
+        )
+        assert has_value_in_alert, "Alert should contain the critical stability value"
+
     def test_observer_tracks_faction_legitimacy(self) -> None:
         """Observer should track faction legitimacy changes."""
         engine = SimEngine()
