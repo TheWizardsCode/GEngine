@@ -1,0 +1,72 @@
+# Batch Simulation Sweep Configuration
+# Defines parameter ranges for multi-dimensional simulation sweeps.
+# Used by scripts/run_batch_sweeps.py for balance analysis and regression testing.
+
+# Parameter Grid - each combination is tested (Cartesian product)
+parameters:
+  # AI strategies to test
+  strategies:
+    - balanced
+    - aggressive
+    - diplomatic
+
+  # Difficulty presets (maps to content/config/sweeps/difficulty-<preset>/)
+  difficulties:
+    - normal
+
+  # Random seeds for deterministic reproducibility
+  # Can be explicit list or range definition
+  seeds:
+    - 42
+    - 123
+    - 456
+
+  # World bundles to test (from content/worlds/)
+  worlds:
+    - default
+
+  # Tick budgets for simulation length
+  tick_budgets:
+    - 100
+
+# Parallel execution settings
+parallel:
+  # Maximum worker processes (null = auto-detect based on CPU count)
+  max_workers: null
+
+  # Timeout per individual sweep in seconds
+  timeout_per_sweep: 300
+
+# Output configuration
+output:
+  # Directory for sweep result JSON files
+  dir: build/batch_sweeps
+
+  # Include full telemetry in output (increases file size)
+  include_telemetry: true
+
+  # Include game state summary in output
+  include_summary: true
+
+# Sampling configuration for large parameter spaces
+# When enabled, samples from the grid instead of full Cartesian product
+sampling:
+  # Sampling mode: "full" (all combinations), "random", "latin_hypercube"
+  mode: full
+
+  # Number of samples to take (only used when mode != "full")
+  sample_count: 100
+
+  # Random seed for sampling reproducibility
+  sample_seed: 42
+
+# Metadata included in every sweep output
+metadata:
+  # Include git commit hash if available
+  include_git_commit: true
+
+  # Include timestamp
+  include_timestamp: true
+
+  # Include runtime environment info
+  include_runtime_info: true
