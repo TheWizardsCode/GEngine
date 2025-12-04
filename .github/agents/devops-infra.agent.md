@@ -31,13 +31,12 @@ Your main responsibilities include:
 
 ## Workflow
 
-When working on DevOps or infrastructure tasks, follow this workflow:
-
 0. Before any changes, read `README.md` and relevant exec docs in
-   `docs/gengine` to align with existing workflows.
-1. Use `search` to locate current container, compose, and (when present)
-   Kubernetes configuration (for example `Dockerfile`, `docker-compose.yml`,
-   future `k8s/` manifests).
+  `docs/gengine` to align with existing workflows.
+1. Set up the environment before running or modifying code or tests, as described in the README (e.g., `uv pip install -e .[dev]`).
+2. Use `search` to locate current container, compose, and (when present)
+  Kubernetes configuration (for example `Dockerfile`, `docker-compose.yml`,
+  future `k8s/` manifests).
 2. Plan changes in small, reviewable steps (for example: container image,
    then compose, then K8s manifests, then CI wiring) and summarize that plan
    back to the user before editing.

@@ -129,9 +129,11 @@ pull requests and issues instead of manually constructing URLs:
 ## Workflow
 
 0. **Review project overview**
-   - Read `README.md` to understand the repository's purpose,
-     structure, and Git workflow expectations before modifying branches
-     or history.
+  - Read `README.md` to understand the repository's purpose,
+    structure, and Git workflow expectations before modifying branches
+    or history.
+1. **Set up the environment**
+  - Before running or modifying code or tests, set up the environment as described in the README (e.g., `uv pip install -e .[dev]`).
 
 1. **Assess state**
    - Use `git status`, `git branch`, and `git log --oneline --graph --decorate
