@@ -1326,6 +1326,7 @@ The project has closely followed the implementation plan with excellent tracking
 
 ### 11.2.1 — Result Aggregation and Storage (M11.2)
 
+- **GitHub Issue:** [#61](https://github.com/TheWizardsCode/GEngine/issues/61)
 - **Description:** Implement result aggregation and storage layer that collects sweep outputs into a queryable database or structured file format. Support historical tracking of sweep runs to enable trend analysis and regression detection across balance iterations.
 - **Acceptance Criteria:**
   - Script `scripts/aggregate_sweep_results.py` ingests batch sweep JSON outputs and produces aggregated summary data.
