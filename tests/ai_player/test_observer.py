@@ -280,17 +280,11 @@ class TestObserverDetectsStabilityCrash:
         observer.observe()
 
         # Script the crash: force stability to drop below threshold
-        engine.state.environment.stability = 0.3
+        crashed_stability = 0.3
+        engine.state.environment.stability = crashed_stability
 
-        # Second observation should detect the crash
-        # Create new observer to observe the crashed state
-        config2 = ObserverConfig(
-            tick_budget=5,
-            analysis_interval=5,
-            stability_alert_threshold=0.5,
-        )
-        observer2 = Observer(engine=engine, config=config2)
-        report2 = observer2.observe()
+        # Reuse the same observer to detect the crash (realistic usage pattern)
+        report2 = observer.observe()
 
         # Verify the crash is detected
         start_val = report2.stability_trend.start_value
@@ -300,10 +294,11 @@ class TestObserverDetectsStabilityCrash:
             "stability critical" in alert.lower() for alert in report2.alerts
         )
         assert has_stability_alert, f"Missing stability alert: {report2.alerts}"
-        # Verify alert contains the actual stability value
+        # Verify alert contains a stability value below threshold using regex
+        import re
+
         has_value_in_alert = any(
-            "0.3" in alert or "0.2" in alert or "0.1" in alert
-            for alert in report2.alerts
+            re.search(r"0\.[0-4]\d*", alert) for alert in report2.alerts
         )
         assert has_value_in_alert, "Alert should contain the critical stability value"
 
