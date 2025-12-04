@@ -39,8 +39,8 @@ as described in Atlassian's guide
   - Ensure the working tree is clean before switching branches.
   - Verify there are no uncommitted changes that would be lost.
   - Ensure dev dependencies are installed (to avoid pytest configuration errors).
-  - Run tests (for example `pytest -v`) and basic checks before proposing
-    a merge.
+  - Run tests (for example `pytest -v`) and lint checks (e.g. `ruff check`) before proposing a commit or merge.
+  - Do not commit, merge, or push code until all tests pass and lint is clean.
 
 - **Merge orchestration**
   - Guide the user through updating `main`, merging the feature branch,

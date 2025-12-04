@@ -19,7 +19,6 @@ from gengine.echoes.service import create_app
 from gengine.echoes.settings import SimulationConfig, SimulationLimits
 from gengine.echoes.sim import SimEngine
 
-
 # --------------------------------------------------------------------------
 # Engine tick-limit enforcement tests
 # --------------------------------------------------------------------------
@@ -121,7 +120,9 @@ class TestCLITickLimits:
         assert result.output.count("Tick") == 3
 
     def test_cli_run_command_exceeds_limit_is_clamped(self) -> None:
-        """Running ticks exceeding cli_run_cap should be clamped with safeguard message."""
+        """
+        Running ticks exceeding cli_run_cap should be clamped with safeguard message.
+        """
         limits = SimulationLimits(
             engine_max_ticks=20,
             cli_run_cap=3,

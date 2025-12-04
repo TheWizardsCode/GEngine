@@ -6,8 +6,7 @@ to simulation, with comprehensive mocking to ensure no real API calls are made.
 
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import httpx
 import pytest
@@ -28,7 +27,6 @@ from gengine.echoes.llm import (
     parse_intent,
 )
 from gengine.echoes.sim import SimEngine
-
 
 # ==============================================================================
 # Fixtures
@@ -309,7 +307,10 @@ class TestGatewayAppLLMFlow:
             websocket.send_json({"command": "summary", "natural_language": False})
             response = websocket.receive_json()
             assert response["type"] == "result"
-            assert "summary" in response["output"].lower() or "Current" in response["output"]
+            assert (
+                "summary" in response["output"].lower()
+                or "Current" in response["output"]
+            )
             websocket.send_json({"command": "exit"})
             _ = websocket.receive_json()
 
@@ -437,7 +438,7 @@ class TestIntentParsingEdgeCases:
             "session_id": "test",
             # Missing target_type and target_id
         }
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValueError):  # Pydantic ValidationError
             parse_intent(data)
 
     def test_parse_intent_unknown_type_raises(self) -> None:

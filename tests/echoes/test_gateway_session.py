@@ -1,11 +1,14 @@
 """Tests for GatewaySession."""
 
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
+
 import pytest
-from gengine.echoes.gateway.session import GatewaySession
-from gengine.echoes.cli.shell import ShellBackend, CommandResult
+
+from gengine.echoes.cli.shell import CommandResult, ShellBackend
 from gengine.echoes.gateway.llm_client import LLMClient
+from gengine.echoes.gateway.session import GatewaySession
 from gengine.echoes.llm.intents import GameIntent, IntentType
+
 
 class MockIntent(GameIntent):
     pass
@@ -75,7 +78,8 @@ def test_execute_natural_language_success(session, mock_llm_client):
     # Mock narration
     mock_llm_client.narrate.return_value = "Narrated output"
     
-    # Mock shell execution (we can't easily mock the internal shell, so we rely on backend mocks)
+    # Mock shell execution (we can't easily mock the internal shell,
+    # so we rely on backend mocks)
     # "summary" command will call backend.summary()
     
     result = session.execute_natural_language("check status")
@@ -89,7 +93,9 @@ def test_execute_natural_language_parse_fail_fallback(session, mock_llm_client):
     mock_llm_client.parse_intent.return_value = None
     
     # "status" should fallback to "summary"
-    result = session.execute_natural_language("status")
+    result = session.execute_natural_language(
+        "status"
+    )
     
     # Should execute summary
     assert result.output  # Summary output
@@ -108,7 +114,9 @@ def test_execute_natural_language_map_fail(session, mock_llm_client):
     mock_llm_client.parse_intent.return_value = intent
     
     session.intent_mapper = Mock()
-    session.intent_mapper.map_intent_to_command.side_effect = ValueError("Mapping error")
+    session.intent_mapper.map_intent_to_command.side_effect = ValueError(
+        "Mapping error"
+    )
     
     result = session.execute_natural_language("do something")
     

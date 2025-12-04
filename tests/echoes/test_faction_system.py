@@ -240,7 +240,10 @@ def test_invest_improves_district_metrics() -> None:
     # Verify district was modified as expected
     assert abs(target_district.modifiers.unrest - (initial_unrest - 0.05)) < 0.0001
     assert abs(target_district.modifiers.security - (initial_security + 0.03)) < 0.0001
-    assert abs(target_district.modifiers.prosperity - (initial_prosperity + 0.04)) < 0.0001
+    assert (
+        abs(target_district.modifiers.prosperity - (initial_prosperity + 0.04))
+        < 0.0001
+    )
 
 
 def test_invest_costs_resources_and_gains_legitimacy() -> None:
@@ -398,8 +401,12 @@ def test_sabotage_costs_actor_legitimacy() -> None:
         
         actions = system.tick(state, rng=DeterministicRNG(100.0))
         sabotage = next(
-            (a for a in actions if a.action == "SABOTAGE_RIVAL" and a.faction_id == union.id),
-            None
+            (
+                a
+                for a in actions
+                if a.action == "SABOTAGE_RIVAL" and a.faction_id == union.id
+            ),
+            None,
         )
         if sabotage is not None:
             # Verify actor's losses

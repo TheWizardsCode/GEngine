@@ -84,10 +84,19 @@ def _create_minimal_city() -> City:
                 name="District One",
                 population=10000,
                 resources={
-                    "energy": ResourceStock(type="energy", capacity=100, current=50, regen=2.0),
-                    "materials": ResourceStock(type="materials", capacity=80, current=40, regen=1.5),
+                    "energy": ResourceStock(
+                        type="energy", capacity=100, current=50, regen=2.0
+                    ),
+                    "materials": ResourceStock(
+                        type="materials", capacity=80, current=40, regen=1.5
+                    ),
                 },
-                modifiers=DistrictModifiers(pollution=0.3, unrest=0.2, prosperity=0.6, security=0.5),
+                modifiers=DistrictModifiers(
+                    pollution=0.3,
+                    unrest=0.2,
+                    prosperity=0.6,
+                    security=0.5,
+                ),
                 coordinates=DistrictCoordinates(x=1.0, y=2.0, z=3.0),
                 adjacent=["district-2"],
             ),
@@ -96,9 +105,16 @@ def _create_minimal_city() -> City:
                 name="District Two",
                 population=20000,
                 resources={
-                    "food": ResourceStock(type="food", capacity=60, current=30, regen=3.0),
+                    "food": ResourceStock(
+                        type="food", capacity=60, current=30, regen=3.0
+                    ),
                 },
-                modifiers=DistrictModifiers(pollution=0.5, unrest=0.4, prosperity=0.4, security=0.6),
+                modifiers=DistrictModifiers(
+                    pollution=0.5,
+                    unrest=0.4,
+                    prosperity=0.4,
+                    security=0.6,
+                ),
                 coordinates=DistrictCoordinates(x=5.0, y=6.0),
                 adjacent=["district-1"],
             ),
@@ -187,8 +203,12 @@ def _create_rich_game_state() -> GameState:
 
     # Create progression state with skills and reputation
     progression = ProgressionState(access_tier=AccessTier.ESTABLISHED)
-    progression.skills[SkillDomain.DIPLOMACY.value] = SkillState(level=5, experience=25.0)
-    progression.skills[SkillDomain.INVESTIGATION.value] = SkillState(level=3, experience=15.0)
+    progression.skills[SkillDomain.DIPLOMACY.value] = SkillState(
+        level=5, experience=25.0
+    )
+    progression.skills[SkillDomain.INVESTIGATION.value] = SkillState(
+        level=3, experience=15.0
+    )
     progression.reputation["faction-alpha"] = ReputationState(value=0.5)
     progression.reputation["faction-beta"] = ReputationState(value=-0.3)
     progression.total_experience = 150.0
@@ -199,7 +219,10 @@ def _create_rich_game_state() -> GameState:
         "agent-1": AgentProgressionState(
             agent_id="agent-1",
             specialization=AgentSpecialization.INVESTIGATOR,
-            expertise={SkillDomain.INVESTIGATION.value: 3, SkillDomain.TACTICAL.value: 1},
+            expertise={
+                SkillDomain.INVESTIGATION.value: 3,
+                SkillDomain.TACTICAL.value: 1,
+            },
             reliability=0.75,
             stress=0.2,
             missions_completed=10,
@@ -311,7 +334,10 @@ def test_city_districts_fidelity(tmp_path: Path) -> None:
         assert rest_district.adjacent == orig_district.adjacent
 
         # Resources
-        assert set(rest_district.resources.keys()) == set(orig_district.resources.keys())
+        assert (
+            set(rest_district.resources.keys())
+            == set(orig_district.resources.keys())
+        )
         for res_key in orig_district.resources:
             orig_res = orig_district.resources[res_key]
             rest_res = rest_district.resources[res_key]
@@ -445,7 +471,10 @@ def test_progression_state_fidelity(tmp_path: Path) -> None:
     # Reputation
     assert set(rest_prog.reputation.keys()) == set(orig_prog.reputation.keys())
     for rep_key in orig_prog.reputation:
-        assert rest_prog.reputation[rep_key].value == orig_prog.reputation[rep_key].value
+        assert (
+            rest_prog.reputation[rep_key].value
+            == orig_prog.reputation[rep_key].value
+        )
 
 
 def test_agent_progression_fidelity(tmp_path: Path) -> None:
@@ -456,7 +485,10 @@ def test_agent_progression_fidelity(tmp_path: Path) -> None:
     save_snapshot(original, path)
     restored = load_snapshot(path)
 
-    assert set(restored.agent_progression.keys()) == set(original.agent_progression.keys())
+    assert (
+        set(restored.agent_progression.keys())
+        == set(original.agent_progression.keys())
+    )
 
     for agent_id in original.agent_progression:
         orig_ap = original.agent_progression[agent_id]
@@ -528,13 +560,24 @@ def test_story_seeds_fidelity(tmp_path: Path) -> None:
         assert rest_seed.followups == orig_seed.followups
 
         # Resolution templates
-        assert rest_seed.resolution_templates.success == orig_seed.resolution_templates.success
-        assert rest_seed.resolution_templates.failure == orig_seed.resolution_templates.failure
-        assert rest_seed.resolution_templates.partial == orig_seed.resolution_templates.partial
+        assert (
+            rest_seed.resolution_templates.success
+            == orig_seed.resolution_templates.success
+        )
+        assert (
+            rest_seed.resolution_templates.failure
+            == orig_seed.resolution_templates.failure
+        )
+        assert (
+            rest_seed.resolution_templates.partial
+            == orig_seed.resolution_templates.partial
+        )
 
         # Triggers
         assert len(rest_seed.triggers) == len(orig_seed.triggers)
-        for orig_trig, rest_trig in zip(orig_seed.triggers, rest_seed.triggers, strict=True):
+        for orig_trig, rest_trig in zip(
+            orig_seed.triggers, rest_seed.triggers, strict=True
+        ):
             assert rest_trig.district_id == orig_trig.district_id
             assert rest_trig.min_score == orig_trig.min_score
 

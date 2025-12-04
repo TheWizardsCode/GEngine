@@ -9,14 +9,12 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from gengine.ai_player import ActorConfig, AIActor
 from gengine.ai_player.actor import create_actor_from_engine
 from gengine.ai_player.llm_strategy import (
-    LLMBudgetState,
     LLMDecisionLayer,
     LLMDecisionRequest,
     LLMDecisionResponse,
@@ -25,20 +23,17 @@ from gengine.ai_player.llm_strategy import (
     evaluate_complexity,
 )
 from gengine.ai_player.strategies import (
-    BalancedStrategy,
     HybridStrategy,
     StrategyType,
     create_strategy,
 )
 from gengine.echoes.llm.intents import (
-    DeployResourceIntent,
     InspectIntent,
     NegotiateIntent,
 )
 from gengine.echoes.llm.providers import IntentParseResult, StubProvider
 from gengine.echoes.llm.settings import LLMSettings
 from gengine.echoes.sim import SimEngine
-
 
 # ==============================================================================
 # Mock Provider for AI Player Tests
@@ -478,10 +473,9 @@ class TestAIActorMockedLLM:
             strategy=hybrid,
         )
 
-        report = actor.run()
-
-        assert report.ticks_run == 10
-        assert report.strategy_type == StrategyType.HYBRID
+        result = actor.run()
+        assert result.ticks_run == 10
+        assert result.strategy_type == StrategyType.HYBRID
         assert hybrid._llm_decisions > 0
 
     def test_actor_hybrid_budget_exhaustion(
@@ -514,10 +508,9 @@ class TestAIActorMockedLLM:
             strategy=hybrid,
         )
 
-        report = actor.run()
-
+        result = actor.run()
         # Should complete successfully
-        assert report.ticks_run == 30
+        assert result.ticks_run == 30
         # Budget should be exhausted
         assert hybrid._llm_layer.budget.calls_used == 2
         # Should have used rules after budget exhaustion
@@ -552,8 +545,7 @@ class TestAIActorMockedLLM:
             strategy=hybrid,
         )
 
-        report = actor.run()
-
+        actor.run()
         # Check telemetry includes hybrid-specific info
         strategy_telemetry = hybrid.telemetry
         assert "llm_budget" in strategy_telemetry
@@ -586,7 +578,9 @@ class TestComplexityEvaluationScenarios:
     def default_config(self) -> LLMStrategyConfig:
         return LLMStrategyConfig()
 
-    def test_multiple_complexity_factors(self, default_config: LLMStrategyConfig) -> None:
+    def test_multiple_complexity_factors(
+        self, default_config: LLMStrategyConfig
+    ) -> None:
         """State can trigger multiple complexity factors."""
         state = {
             "stability": 0.3,  # Critical stability
@@ -671,7 +665,9 @@ class TestComplexityEvaluationScenarios:
         assert "faction_legitimacy_spread" not in factors
         assert "multiple_stressed_factions" not in factors
 
-    def test_story_seeds_as_list_of_dicts(self, default_config: LLMStrategyConfig) -> None:
+    def test_story_seeds_as_list_of_dicts(
+        self, default_config: LLMStrategyConfig
+    ) -> None:
         """Story seeds must be list of dicts to count."""
         config = LLMStrategyConfig(complexity_threshold_seeds=2)
 

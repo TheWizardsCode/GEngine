@@ -50,10 +50,7 @@ class TestUnrestSpikeCascade:
         seed = 42
 
         # Record initial state
-        initial_stability = state.environment.stability
-        initial_faction_legitimacy = {
-            fid: f.legitimacy for fid, f in state.factions.items()
-        }
+        # Removed unused variables: initial_stability, initial_faction_legitimacy
 
         # Run simulation for 30 ticks
         all_reports = []
@@ -140,8 +137,7 @@ class TestScarcityToEnvironmentCascade:
         seed = 123
 
         # Record initial environmental state
-        initial_pollution = state.environment.pollution
-        initial_biodiversity = state.environment.biodiversity
+        # Removed unused variables: initial_pollution, initial_biodiversity
 
         # Run for 20 ticks to allow shortage buildup
         all_reports = []
@@ -153,7 +149,7 @@ class TestScarcityToEnvironmentCascade:
         # ASSERTIONS: Verify scarcity cascade
 
         # 1. Shortages should have been detected eventually
-        shortage_ticks = [r for r in all_reports if r.economy.get("shortages")]
+        # Removed unused variable: shortage_ticks
         # Shortages may or may not be triggered depending on economy dynamics
         # The key is that the system handles it gracefully
 
@@ -339,8 +335,8 @@ class TestAgentFactionDistrictInteraction:
         faction_invest_count = 0
 
         for i in range(25):
-            reports = engine.advance_ticks(1, seed=seed + i)
-            for report in reports:
+            report_batch = engine.advance_ticks(1, seed=seed + i)
+            for report in report_batch:
                 # Count agent stabilization actions
                 for action in report.agent_actions:
                     if "STABILIZE" in str(action.get("intent", "")):
@@ -407,7 +403,7 @@ class TestEconomyEnvironmentFeedbackLoop:
         stability_history = [state.environment.stability]
 
         for i in range(30):
-            reports = engine.advance_ticks(1, seed=seed + i)
+            engine.advance_ticks(1, seed=seed + i)
             stability_history.append(state.environment.stability)
 
         # ASSERTIONS: Verify feedback loop behavior
