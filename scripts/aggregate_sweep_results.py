@@ -244,8 +244,8 @@ def init_database(db_path: Path) -> sqlite3.Connection:
             ON sweep_runs(git_commit);
 
         -- Insert schema version if not exists
-        INSERT OR IGNORE INTO schema_version (version) VALUES (1);
-    """
+        INSERT OR IGNORE INTO schema_version (version) VALUES ({schema_version});
+    """.format(schema_version=SCHEMA_VERSION)
     )
 
     conn.commit()
