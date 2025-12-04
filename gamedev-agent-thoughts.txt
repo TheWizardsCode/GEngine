@@ -610,3 +610,110 @@ All acceptance criteria for Issue #34 are met.
 5. ✅ Documentation distinguishes health vs. metrics endpoints with example responses
 
 ### Task Complete: Issue #39 - Dedicated Metrics Endpoints for Gateway and LLM Services
+
+
+## Issue #49 - AI Tournaments & Balance Tooling (Task 9.4.1) - 2025-12-04T04:49 UTC
+=========================================================
+
+### Initial Assessment
+- Working branch: copilot/resulting-meadowlark
+- Repository synced and clean
+- All 822 tests pass
+- Coverage: 92.12%
+
+### Acceptance Criteria from Issue:
+1. Tournament script runs 100+ games in parallel with configurable strategies
+2. Comparative reports surface win rate deltas and balance anomalies
+3. Analysis identifies unused story seeds or overpowered actions
+4. Documentation guides designers through balance iteration workflow
+5. CI integration runs nightly tournaments and archives results
+
+### Implementation Plan:
+
+1. **scripts/run_ai_tournament.py** - Tournament runner
+   - Execute N parallel games using ProcessPoolExecutor
+   - Support configurable strategies: BALANCED, AGGRESSIVE, DIPLOMATIC, HYBRID
+   - Support different world configs and random seeds
+   - Capture per-game telemetry: final stability, story seed activations, actions taken
+   - Aggregate results into structured JSON reports
+   - CLI interface similar to run_difficulty_sweeps.py
+
+2. **scripts/analyze_ai_games.py** - Analysis script
+   - Read tournament results JSON
+   - Calculate win rates per strategy (based on final stability threshold)
+   - Identify story seeds that never triggered
+   - Flag dominant strategies and balance outliers
+   - Generate human-readable summary reports
+
+3. **tests/ai_player/test_tournament.py** - Tournament tests
+   - Test tournament runner with small game count
+   - Test result aggregation
+   - Test parallel execution
+
+4. **tests/ai_player/test_analysis.py** - Analysis tests
+   - Test win rate calculation
+   - Test unused seed detection
+   - Test outlier detection
+
+5. **.github/workflows/ai-tournament.yml** - CI workflow
+   - Nightly tournament runs
+   - Archive results as artifacts
+
+6. **Documentation Updates**
+   - docs/gengine/how_to_play_echoes.md - balance iteration workflow
+   - docs/simul/emergent_story_game_implementation_plan.md - mark M9.4 complete
+
+### Implementation Log:
+
+[2025-12-04T04:49 UTC] Started implementation
+
+**Step 1: Created scripts/run_ai_tournament.py**
+- Tournament runner with ProcessPoolExecutor for parallel game execution
+- GameResult, TournamentConfig, TournamentReport dataclasses
+- run_single_game() function for isolated game execution
+- run_tournament() with stats aggregation per strategy
+- CLI interface with --games, --ticks, --strategies, --seed, --output, --verbose
+
+**Step 2: Created scripts/analyze_ai_games.py**
+- Analysis module for tournament results
+- BalanceAnomaly, AnalysisReport dataclasses
+- analyze_win_rates(), analyze_actions(), analyze_story_seeds() functions
+- detect_anomalies() for identifying balance issues
+- generate_recommendations() for actionable guidance
+- CLI interface with --input, --world, --output, --json
+
+**Step 3: Created tests/scripts/test_ai_tournament.py**
+- 19 tests covering GameResult, TournamentConfig, TournamentReport
+- run_single_game and run_tournament tests
+- Tournament determinism tests
+- CLI tests
+
+**Step 4: Created tests/scripts/test_ai_analysis.py**
+- 29 tests covering BalanceAnomaly, AnalysisReport
+- Win rate, action, and story seed analysis tests
+- Anomaly detection and recommendation tests
+- CLI tests
+
+**Step 5: Created .github/workflows/ai-tournament.yml**
+- Nightly tournament workflow (2:00 AM UTC)
+- Manual trigger with configurable games/ticks
+- Archives results for 90 days
+
+**Step 6: Updated documentation**
+- docs/gengine/how_to_play_echoes.md: Added Section 13 (AI Tournaments & Balance Tooling)
+- docs/simul/emergent_story_game_implementation_plan.md: Marked M9.4 complete
+- README.md: Added AI Tournaments section
+
+**Test Results:**
+- All 870 tests pass (822 existing + 48 new)
+- Coverage: 92.10%
+- Linting: All checks passed
+
+### Task 9.4.1 Status: COMPLETED
+
+All acceptance criteria met:
+✅ Tournament script runs 100+ games in parallel with configurable strategies
+✅ Comparative reports surface win rate deltas and balance anomalies
+✅ Analysis identifies unused story seeds or overpowered actions
+✅ Documentation guides designers through balance iteration workflow
+✅ CI integration runs nightly tournaments and archives results

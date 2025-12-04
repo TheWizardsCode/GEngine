@@ -1,0 +1,68 @@
+name: AI Tournament
+
+on:
+  schedule:
+    # Run nightly at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      games:
+        description: 'Number of games to run'
+        required: false
+        default: '100'
+      ticks:
+        description: 'Ticks per game'
+        required: false
+        default: '100'
+
+permissions:
+  contents: read
+
+jobs:
+  tournament:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run AI tournament
+        run: |
+          python scripts/run_ai_tournament.py \
+            --games ${{ github.event.inputs.games || '100' }} \
+            --ticks ${{ github.event.inputs.ticks || '100' }} \
+            --strategies balanced aggressive diplomatic \
+            --seed 42 \
+            --verbose \
+            --output build/tournament-results.json
+
+      - name: Analyze tournament results
+        run: |
+          python scripts/analyze_ai_games.py \
+            --input build/tournament-results.json \
+            --world default \
+            --output build/tournament-analysis.json
+
+      - name: Archive tournament results
+        uses: actions/upload-artifact@v4
+        with:
+          name: tournament-results-${{ github.run_id }}
+          path: |
+            build/tournament-results.json
+            build/tournament-analysis.json
+          retention-days: 90
+
+      - name: Print analysis summary
+        run: |
+          python scripts/analyze_ai_games.py \
+            --input build/tournament-results.json \
+            --world default

@@ -1330,15 +1330,50 @@ service names as hostnames:
 - Gateway → Simulation: `http://simulation:8000`
 - Gateway → LLM: `http://llm:8001`
 
+## AI Tournaments & Balance Tooling
+
+Phase 9 M9.4 provides tournament infrastructure for automated balance testing:
+
+### Running Tournaments
+
+```bash
+# Run 100 games with default strategies
+uv run python scripts/run_ai_tournament.py --games 100 --output build/tournament.json
+
+# Run with specific strategies and more ticks
+uv run python scripts/run_ai_tournament.py \
+    --games 50 --ticks 200 --strategies balanced aggressive diplomatic --verbose
+```
+
+### Analyzing Results
+
+```bash
+# Analyze tournament results
+uv run python scripts/analyze_ai_games.py --input build/tournament.json
+
+# Compare against authored story seeds
+uv run python scripts/analyze_ai_games.py --input build/tournament.json --world default
+```
+
+The analysis identifies:
+- Win rate deltas between strategies
+- Dominant or underperforming strategies
+- Unused story seeds
+- Overpowered actions
+
+### CI Integration
+
+The `.github/workflows/ai-tournament.yml` workflow runs nightly tournaments
+and archives results. Trigger manual runs via the GitHub Actions UI.
+
+See `docs/gengine/how_to_play_echoes.md` Section 13 for the complete balance
+iteration workflow.
+
 ## Next Steps
 
 1. **Phase 8 – Kubernetes Deployment** – create Kubernetes manifests for local
    minikube deployment, enabling multi-container orchestration and service
    discovery. Docker containerization is complete (see Docker section above).
-2. **Phase 9 M9.4 – AI tournaments and balance tooling** – create tournament
-   scripts that run multiple AI strategies in parallel, aggregate comparative
-   reports (win rates, stability curves, story seed coverage), and identify
-   balance outliers. See the Phase 9 section of the implementation plan.
 
 Progress is tracked in the implementation plan document; update this README as
 new phases land (CLI tooling, services, Kubernetes manifests, etc.).

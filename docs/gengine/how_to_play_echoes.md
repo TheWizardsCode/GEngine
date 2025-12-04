@@ -951,3 +951,170 @@ Post-mortem summary:
 
 The post-mortem is saved alongside the campaign data for later review. Ended
 campaigns can still be resumed if you want to continue playing.
+
+## 13. AI Tournaments & Balance Tooling
+
+The repository includes AI tournament infrastructure for automated balance
+testing and validation. Tournaments run multiple AI players with different
+strategies in parallel, then aggregate results to identify balance anomalies.
+
+### Running Tournaments
+
+Run a tournament with default settings:
+
+```bash
+uv run python scripts/run_ai_tournament.py \
+    --games 100 --ticks 100 --output build/tournament.json
+```
+
+The tournament script supports several options:
+
+| Flag           | Description                                          |
+| -------------- | ---------------------------------------------------- |
+| `--games/-g`   | Total number of games to run (default: 100)          |
+| `--ticks/-t`   | Ticks per game (default: 100)                        |
+| `--strategies` | Strategies to test (balanced, aggressive, diplomatic)|
+| `--seed`       | Base random seed for deterministic runs (default: 42)|
+| `--workers`    | Max parallel workers (default: auto)                 |
+| `--output/-o`  | Path to write JSON results                           |
+| `--verbose/-v` | Print progress during tournament                     |
+
+Example output shows win rates and stability metrics per strategy:
+
+```
+================================================================================
+AI TOURNAMENT RESULTS
+================================================================================
+
+Games: 100/100 completed (0 failed)
+Total duration: 45.2s
+
+Strategy     Win Rate   Avg Stab   Min Stab   Max Stab   Avg Actions
+--------------------------------------------------------------------------------
+balanced        65.0%      0.720      0.450      1.000          5.2
+aggressive      72.0%      0.680      0.380      1.000          8.1
+diplomatic      58.0%      0.750      0.520      1.000          3.4
+--------------------------------------------------------------------------------
+```
+
+### Analyzing Results
+
+After running a tournament, analyze the results for balance insights:
+
+```bash
+uv run python scripts/analyze_ai_games.py \
+    --input build/tournament.json --world default
+```
+
+The analysis script:
+
+- Compares win rates across strategies
+- Identifies dominant strategies (win rate delta > 15%)
+- Flags unused or underused story seeds
+- Detects overpowered actions
+- Generates actionable recommendations
+
+Example analysis output:
+
+```
+================================================================================
+AI TOURNAMENT ANALYSIS REPORT
+================================================================================
+
+Tournament: 100 games, 100 ticks each
+Strategies: balanced, aggressive, diplomatic
+
+--------------------------------------------------------------------------------
+WIN RATE ANALYSIS
+--------------------------------------------------------------------------------
+Best strategy: aggressive (72.0%)
+Worst strategy: diplomatic (58.0%)
+Win rate delta: 14.0%
+Balance status: ✓ Balanced
+
+--------------------------------------------------------------------------------
+ACTION ANALYSIS
+--------------------------------------------------------------------------------
+Most used: INSPECT (450 times)
+Least used: NEGOTIATE (120 times)
+
+--------------------------------------------------------------------------------
+RECOMMENDATIONS
+--------------------------------------------------------------------------------
+1. No significant balance issues detected - system appears well-tuned
+================================================================================
+```
+
+### Balance Iteration Workflow
+
+When tuning game balance, follow this workflow:
+
+1. **Run baseline tournament**: Capture initial metrics with `--seed 42` for
+   reproducibility.
+
+   ```bash
+   uv run python scripts/run_ai_tournament.py \
+       --games 100 --output build/baseline.json
+   ```
+
+2. **Analyze baseline**: Review strategy balance, action distribution, and seed
+   coverage.
+
+   ```bash
+   uv run python scripts/analyze_ai_games.py \
+       --input build/baseline.json --world default
+   ```
+
+3. **Adjust parameters**: Based on analysis findings, modify config values in
+   `content/config/simulation.yml`:
+
+   - Strategy thresholds affect AI decision-making
+   - Economy settings influence resource pressure
+   - Director pacing controls narrative density
+
+4. **Run comparison tournament**: Use the same seed for deterministic comparison.
+
+   ```bash
+   uv run python scripts/run_ai_tournament.py \
+       --games 100 --output build/tuned.json --seed 42
+   ```
+
+5. **Compare results**: Diff the analysis reports to validate improvements.
+
+   ```bash
+   # Compare win rates between runs
+   python scripts/analyze_ai_games.py --input build/baseline.json --json > /tmp/a.json
+   python scripts/analyze_ai_games.py --input build/tuned.json --json > /tmp/b.json
+   diff /tmp/a.json /tmp/b.json
+   ```
+
+6. **Iterate**: Repeat steps 3-5 until balance metrics fall within acceptable
+   ranges.
+
+### CI Integration
+
+The repository includes a GitHub Actions workflow (`.github/workflows/ai-tournament.yml`)
+that runs nightly tournaments:
+
+- Executes 100 games with all strategies
+- Archives results as artifacts for 90 days
+- Prints analysis summary in the job log
+
+To trigger a manual tournament run, use the GitHub Actions UI and select
+"Run workflow" with optional game/tick counts.
+
+### Interpreting Anomalies
+
+The analysis script flags several types of balance issues:
+
+| Anomaly Type         | Severity | Meaning                                    |
+| -------------------- | -------- | ------------------------------------------ |
+| `dominant_strategy`  | High     | One strategy wins > 20% more than others   |
+| `strategy_imbalance` | Medium   | Win rate delta between 15-20%              |
+| `dominant_action`    | Medium   | One action accounts for > 50% of all uses  |
+| `unused_story_seeds` | High/Low | Story seeds never triggered during games   |
+| `low_seed_coverage`  | Medium   | Less than 50% of seeds were activated      |
+| `low_activity`       | Low      | A strategy averages < 1 action per game    |
+
+Recommendations are generated automatically based on detected anomalies. Use
+them as starting points for parameter tuning rather than prescriptive fixes.
