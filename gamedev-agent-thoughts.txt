@@ -82,13 +82,12 @@ Task: Implement M9.2 Rule-Based AI Action Layer as defined in the implementation
 - Suppressed events: 343
 - Story seeds activated: spire-data-leak, hollow-supply-chain, energy-quota-crisis
 
-<<<<<<< HEAD
 ### Key Design Decisions
 1. Strategies work with summary API (which returns counts not lists) - graceful fallback to default districts
 2. _should_act/_should_inspect allow action on first tick
 3. Remote client uses submit_actions() not action() method
 4. Faction legitimacy accessed via state.factions dict, not state.factions list
-=======
+
 **Playtest Instructions:**
 1. Start shell: `uv run echoes-shell --world default`
 2. Run simulation: `run 20`
@@ -390,8 +389,6 @@ Updated docs/gengine/how_to_play_echoes.md Section 11.4:
 All 523 tests pass with modifiers enabled.
 
 ### Task 7.1.3 Status: COMPLETED
-
->>>>>>> main
 
 
 ## Issue #24 Verification - 2025-12-01T06:10 UTC
@@ -772,3 +769,89 @@ All acceptance criteria met:
 ✅ Analysis identifies unused story seeds or overpowered actions
 ✅ Documentation guides designers through balance iteration workflow
 ✅ CI integration runs nightly tournaments and archives results
+
+
+## Issue #56 - Content Pipeline CI Integration (M8.4) - 2025-12-04T07:03 UTC
+=========================================================
+Commit: e1fae13
+
+### Task: Review and validate Content Pipeline CI Integration for Issue #56
+
+### Acceptance Criteria from Issue:
+1. CI workflow that runs `scripts/build_content.py` on PRs modifying content files
+2. Content validation catching schema errors, missing references, and malformed YAML
+3. Story seed validation verifying all referenced districts, agents, factions, and followup IDs exist
+4. Clear error messages when validation fails
+5. Documentation explaining the content validation workflow
+
+### Review Findings:
+
+**1. CI Workflow - `.github/workflows/content-validation.yml`** ✅ COMPLETE
+- Triggers on:
+  - Push to main: `content/**/*.yml`, `content/**/*.yaml`, `scripts/build_content.py`, `.github/workflows/content-*.yml`
+  - Pull requests: Same paths
+- Installs Python 3.12 and uv
+- Runs `uv run python scripts/build_content.py --verbose --output content-manifest.json`
+- Uploads content-manifest artifact (7-day retention)
+- Properly fails PR merge on validation errors
+
+**2. Content Validation - `scripts/build_content.py`** ✅ COMPLETE
+- Schema validation: Uses `load_world_bundle()` which validates City, Faction, Agent, StorySeed models
+- Missing references: Validates via `_validate_story_seed_references()`
+- Malformed YAML: Catches `yaml.YAMLError` and reports
+- Exit codes: 0=success, 1=validation errors, 2=file errors
+- Validates worlds, simulation config, and sweep configs
+
+**3. Story Seed Validation - `src/gengine/echoes/content/loader.py`** ✅ COMPLETE
+- `_validate_story_seed_references()` checks:
+  - `preferred_districts`: All district IDs exist in world.yml
+  - `triggers[].district_id`: All trigger district IDs exist
+  - `travel_hint.district_id`: Travel hint district exists
+  - `roles.agents`: All agent IDs exist in world.yml
+  - `roles.factions`: All faction IDs exist in world.yml
+- `_validate_story_seed_followups()` checks:
+  - All followup IDs reference existing story seeds
+
+**4. Clear Error Messages** ✅ COMPLETE
+- `print_validation_errors()` formats errors with ❌ prefix and bullet points
+- Error messages include:
+  - File path that failed
+  - Schema validation errors with location (e.g., "Schema validation error at city.districts.0.id: ...")
+  - Entity reference errors (e.g., "unknown district 'X' in preferred_districts")
+  - Followup errors (e.g., "seed-a references unknown followup 'seed-b'")
+- Example output from tests:
+  ```
+  ❌ Validation failed: /path/to/bad-world
+     • unknown district 'unknown-district' in preferred_districts
+  ```
+
+**5. Documentation - `docs/gengine/content_designer_workflow.md`** ✅ COMPLETE
+- Section "Local Validation" (lines 162-196): build_content.py usage
+- Section "CI/CD Validation" (lines 198-212): Workflow triggers, steps, and reference
+- Section "Troubleshooting" (lines 214-301): Common errors with examples
+- Section "Best Practices" (lines 303-318): Content authoring guidelines
+- Exit codes documented
+- Test commands documented
+
+### Test Verification:
+```bash
+uv run python scripts/build_content.py --verbose
+# Output: ✓ All content validated successfully (12 files)
+
+uv run pytest tests/scripts/test_build_content.py -v
+# Output: 17 passed
+
+uv run pytest tests/echoes/test_content_loader.py -v
+# Output: 14 passed
+```
+
+### Issue #56 Status: COMPLETE ✅
+
+All acceptance criteria are fully met:
+1. ✅ CI workflow runs build_content.py on content file changes
+2. ✅ Content validation catches schema errors, missing refs, malformed YAML
+3. ✅ Story seed validation verifies all entity references
+4. ✅ Clear error messages with file paths and specific issues
+5. ✅ Documentation explains workflow, troubleshooting, and best practices
+
+**Recommendation:** Issue #56 can be closed. No code changes required.
