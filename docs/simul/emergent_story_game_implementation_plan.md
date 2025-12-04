@@ -10,6 +10,17 @@ To ensure robust game balance and support data-driven strategy design, implement
 - **Designer Feedback Loop:** Surface actionable insights to designers for manual tuning, scenario creation, and content iteration.
 
 This approach enables rapid, repeatable balance iteration and supports both manual and automated strategy development.
+
+## 10. Strategy Parameter Tuning (Future)
+
+To further refine AI behavior, implement a system for tuning internal strategy parameters:
+
+- **Parameter Exposure:** Expose internal strategy parameters (e.g., aggression thresholds, risk tolerance, resource prioritization) in the simulation configuration.
+- **Sweep Integration:** Extend the batch sweep infrastructure to support sweeping over these new strategy parameters.
+- **Optimization:** Use the sweep results to identify optimal parameter sets for different scenarios and difficulty levels.
+- **Dynamic Adjustment:** (Optional) Allow strategies to dynamically adjust their parameters during gameplay based on performance and context.
+
+This will allow for more granular control over AI behavior and enable the creation of more diverse and challenging opponents.
 # Plan: Implement "Echoes of Emergence" (CLI + LLM Sim)
 
 A staged implementation that builds a solid simulation core, then layers on
