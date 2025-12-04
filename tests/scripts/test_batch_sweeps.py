@@ -31,6 +31,9 @@ BatchSweepReport = _driver.BatchSweepReport
 generate_parameter_grid = _driver.generate_parameter_grid
 run_single_sweep = _driver.run_single_sweep
 run_batch_sweeps = _driver.run_batch_sweeps
+write_sweep_outputs = _driver.write_sweep_outputs
+_calculate_stats = _driver._calculate_stats
+_build_metadata = _driver._build_metadata
 main = _driver.main
 
 
@@ -453,6 +456,125 @@ class TestRunBatchSweeps:
 
         assert "timestamp" in report.metadata
         assert "runtime" in report.metadata
+
+
+class TestInternalHelpers:
+    """Tests for internal helper functions used by batch sweeps."""
+
+    def test_calculate_stats_mixed_success_and_failure(self) -> None:
+        """_calculate_stats correctly aggregates successful results only."""
+        params = SweepParameters(
+            strategy="balanced",
+            difficulty="normal",
+            seed=42,
+            world="default",
+            tick_budget=10,
+        )
+        success1 = SweepResult(
+            sweep_id=1,
+            parameters=params,
+            final_stability=0.2,
+            actions_taken=5,
+            ticks_run=10,
+        )
+        success2 = SweepResult(
+            sweep_id=2,
+            parameters=params,
+            final_stability=0.8,
+            actions_taken=15,
+            ticks_run=10,
+        )
+        failure = SweepResult(
+            sweep_id=3,
+            parameters=params,
+            final_stability=0.0,
+            actions_taken=0,
+            ticks_run=0,
+            error="failed",
+        )
+
+        stats = _calculate_stats([success1, success2, failure], lambda r: r.parameters.strategy)
+
+        assert "balanced" in stats
+        s = stats["balanced"]
+        assert s["count"] == 3
+        assert s["completed"] == 2
+        assert s["failed"] == 1
+        assert pytest.approx(s["avg_stability"]) == 0.5
+        assert s["min_stability"] == 0.2
+        assert s["max_stability"] == 0.8
+        assert pytest.approx(s["avg_actions"]) == 10.0
+        assert s["total_actions"] == 20
+
+    def test_build_metadata_includes_git_and_runtime(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """_build_metadata includes git commit hash and runtime details."""
+
+        class DummyCompletedProcess:
+            def __init__(self) -> None:
+                self.returncode = 0
+                self.stdout = "abc123\n"
+
+        def fake_run(*_args, **_kwargs):  # type: ignore[no-untyped-def]
+            return DummyCompletedProcess()
+
+        monkeypatch.setattr(_driver.subprocess, "run", fake_run)
+
+        config = BatchSweepConfig(max_workers=4)
+        metadata = _build_metadata(config)
+
+        assert metadata["git_commit"] == "abc123"
+        assert "timestamp" in metadata
+        assert "runtime" in metadata
+        assert metadata["runtime"]["max_workers"] == 4
+
+
+class TestWriteSweepOutputs:
+    """Tests for writing sweep output files."""
+
+    def test_write_sweep_outputs_creates_expected_files(self, tmp_path: Path) -> None:
+        params = SweepParameters(
+            strategy="balanced",
+            difficulty="normal",
+            seed=42,
+            world="default",
+            tick_budget=10,
+        )
+        result = SweepResult(
+            sweep_id=1,
+            parameters=params,
+            final_stability=0.75,
+            actions_taken=10,
+            ticks_run=10,
+        )
+
+        report = BatchSweepReport(
+            config={"strategies": ["balanced"]},
+            total_sweeps=1,
+            completed_sweeps=1,
+            failed_sweeps=0,
+            results=[result],
+            strategy_stats={"balanced": {"count": 1}},
+            difficulty_stats={"normal": {"count": 1}},
+            total_duration_seconds=1.0,
+            metadata={"timestamp": "2025-01-01T00:00:00Z"},
+        )
+
+        output_dir = tmp_path / "outputs"
+        write_sweep_outputs(report, output_dir, verbose=False)
+
+        sweep_file = output_dir / "sweep_0001_balanced_normal_seed42_tick10.json"
+        summary_file = output_dir / "batch_sweep_summary.json"
+
+        assert sweep_file.exists()
+        assert summary_file.exists()
+
+        sweep_data = json.loads(sweep_file.read_text())
+        assert sweep_data["sweep_id"] == 1
+        assert sweep_data["parameters"]["strategy"] == "balanced"
+
+        summary_data = json.loads(summary_file.read_text())
+        assert summary_data["total_sweeps"] == 1
+        assert len(summary_data["sweeps"]) == 1
 
 
 class TestBatchSweepReport:
