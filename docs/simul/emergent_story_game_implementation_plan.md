@@ -684,22 +684,21 @@ playthrough validation.
   - ✅ Documentation includes prompt and trade-off guidance
   - ✅ Telemetry distinguishes rule-based vs. LLM-driven decisions
 
-- **M9.4 AI tournaments and balance tooling** (1-2 days): Create
+- ✅ **M9.4 AI tournaments and balance tooling** (COMPLETED): Created
   `scripts/run_ai_tournament.py` that executes N parallel games with varied AI
-  strategies, world configs, and random seeds. Aggregate results into
+  strategies, world configs, and random seeds. Aggregates results into
   comparative reports (win rates, average stability curves, story seed coverage,
-  resource efficiency). Add analysis scripts under `scripts/analyze_ai_games.py`
-  that identify dominant strategies, balance outliers, and underutilized content
-.
-  Document tournament workflow and balance iteration loops in the README.
+  resource efficiency). Added `scripts/analyze_ai_games.py` that identifies
+  dominant strategies, balance outliers, and underutilized content. Documented
+  tournament workflow and balance iteration loops in gameplay guide.
 
-  **Acceptance Criteria:**
+  **Acceptance Criteria (all met):**
 
-  - Tournament script runs 100+ games in parallel with configurable strategies
-  - Comparative reports surface win rate deltas and balance anomalies
-  - Analysis identifies unused story seeds or overpowered actions
-  - Documentation guides designers through balance iteration workflow
-  - CI integration runs nightly tournaments and archives results
+  - ✅ Tournament script runs 100+ games in parallel with configurable strategies
+  - ✅ Comparative reports surface win rate deltas and balance anomalies
+  - ✅ Analysis identifies unused story seeds or overpowered actions
+  - ✅ Documentation guides designers through balance iteration workflow
+  - ✅ CI integration runs nightly tournaments and archives results
 
 **Phase 9 Dependencies:**
 
