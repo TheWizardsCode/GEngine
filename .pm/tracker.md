@@ -146,6 +146,13 @@
   
 **Previous Updates:**
 
+- 🎉 **Task 11.1.1 (Batch Simulation Sweep Infrastructure) COMPLETED** - GitHub Issue [#58](https://github.com/TheWizardsCode/GEngine/issues/58)
+  - Script `run_batch_sweeps.py` with multi-dimensional parameter grids
+  - Parallel execution support using multiprocessing (configurable worker count)
+  - JSON output with game results, telemetry, and full metadata
+  - Configuration file `content/config/batch_sweeps.yml` for sweep definitions
+  - 37 comprehensive tests covering grid generation, execution, output validation
+  - Documentation updated in README and how-to-play guide
 - ✅ Task 7.4.1 (Campaign UX Flows) **COMPLETED** by gamedev-agent (2025-11-30)
   - Campaign module with create/list/resume/end/autosave functionality
   - CLI commands: campaign new/list/resume/end/status plus --campaign flag
@@ -166,10 +173,11 @@
 1. ✅ **Phase 8 Deployment** - COMPLETE! All 6 tasks delivered (containerization, K8s, observability, content pipeline)
 2. ✅ **Phase 10 Test Coverage** - COMPLETE! Epic 10.1.1 and all 7 child tasks delivered, 849 tests at 90.95% coverage
 3. ✅ **Phase 9 AI Testing Core** - COMPLETE! All 4 tasks delivered (observer, action layer, LLM-enhanced, tournaments)
+4. 🚧 **Phase 11 Balance Tooling** - IN PROGRESS (Milestone 11.1 complete, moving to 11.2)
 
-**Project Status: 🎉 ALL PLANNED WORK COMPLETE**
+**Project Status: 📊 Phase 11 Balance Tooling in Progress**
 
-All major phases (1-10) have been delivered. Only optional polish tasks remain (8.3.5, 10.2.1, 10.2.2).
+Phases 1-10 complete. Phase 11 (Balance Tooling Enhancements) underway with first milestone delivered.
 
 ## Discrepancies Between Plan and Actual State
 
@@ -448,7 +456,7 @@ The project has closely followed the implementation plan with excellent tracking
 | 10.1.6 | Cross-system integration scenario tests | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.7 | Performance and tick-limit regression tests | completed | Low | Test Agent | 2025-12-03 |
 | 10.1.8 | AI/LLM mocking and coverage for gateways | completed | Medium | Test Agent | 2025-12-03 |
-| 11.1.1 | Batch simulation sweep infrastructure (M11.1) | not-started | Medium | gamedev-agent | 2025-12-04 |
+| 11.1.1 | Batch simulation sweep infrastructure (M11.1) | ✅ completed | Medium | gamedev-agent | 2025-12-04 |
 | 11.2.1 | Result aggregation and storage (M11.2) | not-started | Medium | gamedev-agent | 2025-12-04 |
 | 11.3.1 | Analysis and balance reporting (M11.3) | not-started | High | gamedev-agent | 2025-12-04 |
 | 11.4.1 | Strategy parameter optimization (M11.4) | not-started | Low | gamedev-agent | 2025-12-04 |
@@ -1297,25 +1305,23 @@ The project has closely followed the implementation plan with excellent tracking
 ### 11.1.1 — Batch Simulation Sweep Infrastructure (M11.1)
 
 - **GitHub Issue:** [#58](https://github.com/TheWizardsCode/GEngine/issues/58)
+- **Status:** ✅ **COMPLETED** (2025-12-04)
 - **Description:** Build infrastructure to run large batches of simulation sweeps with configurable parameter ranges (difficulty presets, strategy mixes, world variations, random seeds) and parallel execution. This extends existing tournament and difficulty sweep tooling to support broader parameter space exploration for balance analysis.
-- **Acceptance Criteria:**
-  - Script `scripts/run_batch_sweeps.py` supports multi-dimensional parameter grids (strategies, difficulties, seeds, worlds, tick budgets).
-  - Parallel execution using Python multiprocessing or similar to maximize throughput on multi-core hardware.
-  - JSON output per sweep run includes game results, telemetry, and parameter metadata.
-  - Configuration file (e.g., `content/config/batch_sweeps.yml`) defines sweep parameter ranges and defaults.
-  - Documentation describes sweep configuration format and execution workflow.
-  - At least 10 tests covering parameter grid generation, parallel execution, and output validation.
+- **Acceptance Criteria:** ✅ ALL MET
+  - ✅ Script `scripts/run_batch_sweeps.py` supports multi-dimensional parameter grids (strategies, difficulties, seeds, worlds, tick budgets).
+  - ✅ Parallel execution using Python multiprocessing with configurable worker count.
+  - ✅ JSON output per sweep run includes game results, telemetry, and parameter metadata.
+  - ✅ Configuration file `content/config/batch_sweeps.yml` defines sweep parameter ranges and defaults.
+  - ✅ Documentation describes sweep configuration format and execution workflow.
+  - ✅ 37 tests covering parameter grid generation, parallel execution, output validation, and edge cases.
 - **Priority:** Medium
 - **Responsible:** gamedev-agent
 - **Dependencies:** 9.4.1 (AI tournaments), 7.3.1 (difficulty sweeps), core simulation stability.
-- **Risks & Mitigations:**
-  - Risk: Large parameter grids generate excessive data. Mitigation: Support sampling modes and configurable grid density.
-  - Risk: Parallel execution causes resource contention. Mitigation: Add worker pool size configuration and resource limits.
-- **Next Steps:**
-  1. Design parameter grid configuration schema.
-  2. Implement batch sweep runner with parallel execution.
-  3. Add output format and metadata tracking.
-  4. Create test suite covering edge cases (empty grids, single parameter, error handling).
+- **Completion Notes:**
+  - Implemented via commits d67ccc4, 6325b0b, f252c65 merged in 7b9c029
+  - Supports sampling modes to control grid density
+  - Worker pool configuration prevents resource contention
+  - Helper modules for grid generation and result formatting
 - **Last Updated:** 2025-12-04
 
 ### 11.2.1 — Result Aggregation and Storage (M11.2)
