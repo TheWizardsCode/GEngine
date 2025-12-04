@@ -148,7 +148,7 @@
 
 **Recommended Next Tasks:**
 
-1. **9.4.1 - AI Tournaments & Balance Tooling** (Priority: MEDIUM, Effort: High)
+1. **9.4.1 - AI Tournaments & Balance Tooling** (Priority: MEDIUM, Effort: High) - Issue [#49](https://github.com/TheWizardsCode/GEngine/issues/49)
    - Why: Final Phase 9 task; all AI infrastructure complete (observer, actor, hybrid strategy)
    - Owner needed: Gamedev agent
    - Impact: Balance validation and AI testing at scale
