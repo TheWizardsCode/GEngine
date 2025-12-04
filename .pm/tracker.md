@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-04T07:08:58Z
+**Last Updated:** 2025-12-04T07:25:00Z
 
 ## Comprehensive Project Status Report
 
@@ -22,6 +22,7 @@
 - Open issues: 1 (Issue #56 - Content Pipeline CI, already completed but issue remains open)
 - Recent commits: 30+ commits in past month, steady delivery cadence
 - Repository hygiene: Excellent - clean issue backlog, well-documented
+- **NEW:** Phase 11 (Automated Balance Workflow) - 6 tasks planned for advanced balance automation and strategy tuning
 
 ## Status Summary
 
@@ -226,7 +227,8 @@ The project has closely followed the implementation plan with excellent tracking
 | 8 | Deployment (Docker/K8s) | 6 | 6 | ✅ 100% |
 | 9 | AI Testing & Validation | 4 | 4 | ✅ 100% |
 | 10 | Test Coverage Improvements | 8 | 8 | ✅ 100% |
-| **TOTAL** | **All Phases** | **51** | **51** | **✅ 100%** |
+| 11 | Automated Balance Workflow | 6 | 0 | ⚙️ 0% |
+| **TOTAL** | **All Phases** | **57** | **51** | **⚙️ 89%** |
 
 **Optional Polish Tasks** (not included in phase counts):
 
@@ -309,6 +311,21 @@ The project has closely followed the implementation plan with excellent tracking
 - **Outstanding:**
   - 10.2.1: Difficulty sweep hardening (LOW priority, 2-3 day effort)
   - 10.2.2: AI player LLM robustness (LOW priority, future enhancement)
+
+### Phase 11: Automated Balance Workflow ⚙️ IN PLANNING (0%)
+
+- **Status:** Phase defined, tasks planned but not yet started
+- **Progress:** 0/6 tasks complete
+- **Objective:** Build advanced automation for data-driven balance iteration and strategy tuning
+- **Milestones:**
+  - ⬜ 11.1.1: Batch simulation sweep infrastructure
+  - ⬜ 11.2.1: Result aggregation and storage
+  - ⬜ 11.3.1: Analysis and balance reporting
+  - ⬜ 11.4.1: Strategy parameter optimization
+  - ⬜ 11.5.1: CI integration for continuous validation
+  - ⬜ 11.6.1: Designer feedback loop and tooling
+- **Dependencies:** Phase 9 (AI tournaments and balance tooling already exists)
+- **Outstanding:** All 6 tasks not yet started
 
 ## Outstanding Work Analysis
 
@@ -431,6 +448,12 @@ The project has closely followed the implementation plan with excellent tracking
 | 10.1.6 | Cross-system integration scenario tests | completed | Medium | Test Agent | 2025-12-03 |
 | 10.1.7 | Performance and tick-limit regression tests | completed | Low | Test Agent | 2025-12-03 |
 | 10.1.8 | AI/LLM mocking and coverage for gateways | completed | Medium | Test Agent | 2025-12-03 |
+| 11.1.1 | Batch simulation sweep infrastructure (M11.1) | not-started | Medium | gamedev-agent | 2025-12-04 |
+| 11.2.1 | Result aggregation and storage (M11.2) | not-started | Medium | gamedev-agent | 2025-12-04 |
+| 11.3.1 | Analysis and balance reporting (M11.3) | not-started | High | gamedev-agent | 2025-12-04 |
+| 11.4.1 | Strategy parameter optimization (M11.4) | not-started | Low | gamedev-agent | 2025-12-04 |
+| 11.5.1 | CI integration for continuous validation (M11.5) | not-started | Medium | gamedev-agent | 2025-12-04 |
+| 11.6.1 | Designer feedback loop and tooling (M11.6) | not-started | Low | gamedev-agent | 2025-12-04 |
 | 10.2.1 | Harden difficulty sweep runtime & monitoring | not-started | Low | Gamedev Agent | 2025-12-02 |
 | 10.2.2 | AI player LLM robustness & failure telemetry | not-started | Low | Gamedev Agent | 2025-12-02 |
 
@@ -1268,3 +1291,147 @@ The project has closely followed the implementation plan with excellent tracking
   2. Expand tests in `tests/echoes/test_llm_*` and gateway tests.
   3. Ensure CI configuration does not require real API keys.
 - **Last Updated:** 2025-12-02
+
+## Phase 11: Automated Balance Workflow
+
+### 11.1.1 — Batch Simulation Sweep Infrastructure (M11.1)
+
+- **GitHub Issue:** [#58](https://github.com/TheWizardsCode/GEngine/issues/58)
+- **Description:** Build infrastructure to run large batches of simulation sweeps with configurable parameter ranges (difficulty presets, strategy mixes, world variations, random seeds) and parallel execution. This extends existing tournament and difficulty sweep tooling to support broader parameter space exploration for balance analysis.
+- **Acceptance Criteria:**
+  - Script `scripts/run_batch_sweeps.py` supports multi-dimensional parameter grids (strategies, difficulties, seeds, worlds, tick budgets).
+  - Parallel execution using Python multiprocessing or similar to maximize throughput on multi-core hardware.
+  - JSON output per sweep run includes game results, telemetry, and parameter metadata.
+  - Configuration file (e.g., `content/config/batch_sweeps.yml`) defines sweep parameter ranges and defaults.
+  - Documentation describes sweep configuration format and execution workflow.
+  - At least 10 tests covering parameter grid generation, parallel execution, and output validation.
+- **Priority:** Medium
+- **Responsible:** gamedev-agent
+- **Dependencies:** 9.4.1 (AI tournaments), 7.3.1 (difficulty sweeps), core simulation stability.
+- **Risks & Mitigations:**
+  - Risk: Large parameter grids generate excessive data. Mitigation: Support sampling modes and configurable grid density.
+  - Risk: Parallel execution causes resource contention. Mitigation: Add worker pool size configuration and resource limits.
+- **Next Steps:**
+  1. Design parameter grid configuration schema.
+  2. Implement batch sweep runner with parallel execution.
+  3. Add output format and metadata tracking.
+  4. Create test suite covering edge cases (empty grids, single parameter, error handling).
+- **Last Updated:** 2025-12-04
+
+### 11.2.1 — Result Aggregation and Storage (M11.2)
+
+- **Description:** Implement result aggregation and storage layer that collects sweep outputs into a queryable database or structured file format. Support historical tracking of sweep runs to enable trend analysis and regression detection across balance iterations.
+- **Acceptance Criteria:**
+  - Script `scripts/aggregate_sweep_results.py` ingests batch sweep JSON outputs and produces aggregated summary data.
+  - Storage format (SQLite database or structured JSON/Parquet files) supports querying by parameter combinations, timestamp, and result metrics.
+  - Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges) for reproducibility.
+  - Aggregation computes key statistics: win rates by strategy, average stability/unrest/pollution, story seed activation rates, action usage frequencies.
+  - Query interface or helper functions support common lookups (e.g., "show all sweeps for difficulty=hard from last 30 days").
+  - At least 8 tests covering aggregation logic, storage/retrieval, and historical queries.
+- **Priority:** Medium
+- **Responsible:** gamedev-agent
+- **Dependencies:** 11.1.1 (batch sweep infrastructure).
+- **Risks & Mitigations:**
+  - Risk: Storage grows unbounded with sweep history. Mitigation: Implement retention policies and data archival.
+  - Risk: Schema changes break historical data. Mitigation: Use versioned schema with migration support.
+- **Next Steps:**
+  1. Choose storage format (recommend SQLite for queryability or Parquet for analytics).
+  2. Design aggregation schema and statistics computed.
+  3. Implement aggregation script with historical tracking.
+  4. Add test coverage for data integrity and query patterns.
+- **Last Updated:** 2025-12-04
+
+### 11.3.1 — Analysis and Balance Reporting (M11.3)
+
+- **Description:** Build analysis tooling that consumes aggregated sweep data and generates actionable balance reports identifying overpowered/underpowered mechanics, dominant strategies, unused content, and parameter sensitivity. Extend existing `analyze_ai_games.py` functionality with statistical rigor and trend detection.
+- **Acceptance Criteria:**
+  - Script `scripts/analyze_balance.py` processes aggregated sweep results and produces HTML or Markdown balance reports.
+  - Reports include sections for: dominant strategies (win rate deltas >10%), underperforming mechanics (actions/policies rarely chosen), unused story seeds, parameter sensitivity analysis (impact of difficulty/config changes).
+  - Statistical analysis includes confidence intervals, significance testing (e.g., t-tests for win rate differences), and trend detection across historical runs.
+  - Visual outputs (charts/graphs) showing win rate distributions, metric trends over time, and parameter correlations.
+  - Report highlights regressions (new sweeps showing significant deviations from baseline).
+  - At least 12 tests covering report generation, statistical calculations, and edge cases (empty data, single run).
+- **Priority:** High
+- **Responsible:** gamedev-agent
+- **Dependencies:** 11.2.1 (result aggregation and storage), 9.4.1 (analysis script foundation).
+- **Risks & Mitigations:**
+  - Risk: Statistical tests produce false positives. Mitigation: Use appropriate significance thresholds and multiple comparison corrections.
+  - Risk: Reports become too verbose. Mitigation: Summary-first design with detailed breakdowns in appendices.
+- **Next Steps:**
+  1. Define report structure and key metrics to surface.
+  2. Implement statistical analysis functions (win rate deltas, significance tests, trend detection).
+  3. Add visualization generation (matplotlib/plotly for charts).
+  4. Create test suite with synthetic sweep data.
+- **Last Updated:** 2025-12-04
+
+### 11.4.1 — Strategy Parameter Optimization (M11.4)
+
+- **Description:** Implement automated strategy parameter tuning using optimization algorithms (grid search, random search, or Bayesian optimization) to find well-balanced strategy configurations. Goal is to reduce dominant strategy win rate deltas and improve strategic diversity.
+- **Acceptance Criteria:**
+  - Script `scripts/optimize_strategies.py` accepts strategy parameter ranges and optimization targets (e.g., minimize max win rate delta, maximize strategic diversity).
+  - Supports multiple optimization algorithms: grid search (exhaustive), random search (sampling), and optionally Bayesian optimization (e.g., using `scikit-optimize`).
+  - Optimization runs batches of sweep simulations with candidate parameter sets and evaluates fitness against targets.
+  - Output includes Pareto frontier of optimal configurations (trade-offs between competing objectives like balance vs. difficulty).
+  - Integration with result storage (11.2.1) to track optimization runs and outcomes.
+  - Documentation describes optimization workflow, tuning targets, and how to interpret results.
+  - At least 10 tests covering optimization algorithms, fitness evaluation, and parameter validation.
+- **Priority:** Low
+- **Responsible:** gamedev-agent
+- **Dependencies:** 11.1.1 (batch sweeps), 11.2.1 (result storage), stable strategy parameter schema.
+- **Risks & Mitigations:**
+  - Risk: Optimization converges to local optima or overfits to specific scenarios. Mitigation: Use multiple random seeds and validation sets.
+  - Risk: Computationally expensive for large parameter spaces. Mitigation: Start with coarse grid search, then refine with targeted searches.
+- **Next Steps:**
+  1. Define strategy parameter schema and tuning ranges.
+  2. Implement fitness functions for balance objectives.
+  3. Add optimization algorithms (start with grid/random search).
+  4. Create test suite with small synthetic parameter spaces.
+- **Last Updated:** 2025-12-04
+
+### 11.5.1 — CI Integration for Continuous Validation (M11.5)
+
+- **Description:** Integrate balance sweep and analysis tooling into CI workflows to detect balance regressions automatically on every commit or nightly schedule. Failed balance checks should produce actionable reports and optionally block merges if regressions exceed thresholds.
+- **Acceptance Criteria:**
+  - GitHub Actions workflow `.github/workflows/balance-validation.yml` runs on schedule (nightly) and optionally on relevant file changes (strategy configs, game rules).
+  - Workflow executes a representative subset of balance sweeps (smaller parameter grid than full exploratory sweeps for speed).
+  - Analysis step compares current sweep results against baseline (stored historical data from main branch).
+  - Regression detection identifies significant deviations (e.g., strategy win rate delta increased by >5%, unused content increased, metric variance spiked).
+  - Workflow produces artifacts: balance report, comparison charts, regression summary.
+  - Configurable thresholds control whether regressions are warnings vs. failures (blocking).
+  - Documentation describes CI workflow configuration, baseline management, and interpreting regression reports.
+  - At least 6 tests for workflow components (subset sweep execution, baseline comparison, threshold enforcement).
+- **Priority:** Medium
+- **Responsible:** gamedev-agent
+- **Dependencies:** 11.1.1 (batch sweeps), 11.3.1 (analysis/reporting), CI infrastructure.
+- **Risks & Mitigations:**
+  - Risk: CI sweeps too slow and delay feedback. Mitigation: Use reduced parameter grid for CI, full sweeps run on-demand or nightly.
+  - Risk: Baseline drift makes regressions noisy. Mitigation: Refresh baseline periodically (e.g., after intentional balance changes merged).
+- **Next Steps:**
+  1. Design CI sweep subset (e.g., 3 difficulty presets, 3 strategies, 5 seeds, 100 ticks).
+  2. Implement baseline storage and comparison logic.
+  3. Create workflow YAML with scheduled and manual triggers.
+  4. Add regression threshold configuration and reporting.
+- **Last Updated:** 2025-12-04
+
+### 11.6.1 — Designer Feedback Loop and Tooling (M11.6)
+
+- **Description:** Build designer-facing tools and workflows that make balance iteration accessible to non-engineers. Provide intuitive interfaces for running sweeps, viewing reports, and experimenting with tuning changes without requiring code changes.
+- **Acceptance Criteria:**
+  - Command-line tool `echoes-balance-studio` (or similar) provides guided workflows for designers: "Run exploratory sweep", "Compare two configs", "Test tuning change", "View historical reports".
+  - Configuration changes can be tested via YAML overlays (similar to difficulty presets) without modifying base config files.
+  - Interactive report viewer (HTML dashboard or Jupyter notebook) allows filtering, sorting, and drilling into sweep results.
+  - Documentation includes designer-focused guides: "How to diagnose dominant strategies", "Iterating on action costs", "Testing narrative pacing changes".
+  - Example workflows demonstrated with case studies (e.g., "Balancing the Industrial Tier faction").
+  - At least 8 tests covering CLI commands, config overlay loading, and report generation.
+- **Priority:** Low
+- **Responsible:** gamedev-agent (with designer/PM feedback loop)
+- **Dependencies:** 11.1.1 (batch sweeps), 11.3.1 (analysis/reporting), stable config system.
+- **Risks & Mitigations:**
+  - Risk: Tools too complex for non-technical users. Mitigation: Focus on simple, opinionated workflows with sensible defaults.
+  - Risk: Designer changes break game systems. Mitigation: Include validation and safety checks in config overlays.
+- **Next Steps:**
+  1. Gather designer persona requirements and common use cases.
+  2. Design CLI command structure and interactive workflows.
+  3. Implement config overlay system for safe experimentation.
+  4. Create designer documentation and tutorial walkthroughs.
+- **Last Updated:** 2025-12-04
