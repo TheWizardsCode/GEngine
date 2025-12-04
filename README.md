@@ -1,10 +1,9 @@
 # GEngine: Echoes of Emergence
 
-A staged simulation project that prototypes the "Echoes of Emergence" CLI + LLM
-experience. The long-term goal is a service-first architecture (simulation
-service, CLI gateway, LLM intent service) designed for Kubernetes. This README
-summarizes the current state of development and the immediate workflows you can
-run locally.
+
+A staged simulation project that prototypes the "Echoes of Emergence" CLI + LLM experience. The long-term goal is a service-first architecture (simulation service, CLI gateway, LLM intent service) designed for Kubernetes. This README summarizes the current state of development and the immediate workflows you can run locally.
+
+**For AI tournament and balance analysis tooling, see [Section 13: AI Tournament & Balance Analysis](docs/gengine/ai_tournament_and_balance_analysis.md).**
 
 ## Current Status (Phases 1–4)
 

@@ -1,9 +1,9 @@
 # How to Play Echoes of Emergence
 
-This guide explains how to run the current Echoes of Emergence prototype,
-interpret its outputs, and iterate on the simulation while new systems are
-under construction. It assumes you have cloned the repository and installed all
-runtime/dev dependencies via `uv sync --group dev`.
+
+This guide explains how to run the current Echoes of Emergence prototype, interpret its outputs, and iterate on the simulation while new systems are under construction. It assumes you have cloned the repository and installed all runtime/dev dependencies via `uv sync --group dev`.
+
+**New!** For large-scale AI playtesting and balance iteration, see [Section 13: AI Tournament & Balance Analysis](./ai_tournament_and_balance_analysis.md).
 
 ## 1. Launching the Shell
 
