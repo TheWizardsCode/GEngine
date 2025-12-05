@@ -91,8 +91,12 @@ def generate_strategy_chart(stats: dict[str, Any]) -> str | None:
     strategies = list(stats.keys())
     avg_stabilities = [stats[s].get("avg_stability", 0) for s in strategies]
 
+    # Generate colors dynamically based on number of strategies
+    base_colors = ["#3498db", "#e74c3c", "#2ecc71", "#9b59b6", "#f39c12", "#1abc9c"]
+    colors = [base_colors[i % len(base_colors)] for i in range(len(strategies))]
+
     fig, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.bar(strategies, avg_stabilities, color=["#3498db", "#e74c3c", "#2ecc71"])
+    bars = ax.bar(strategies, avg_stabilities, color=colors)
 
     ax.set_xlabel("Strategy")
     ax.set_ylabel("Average Stability")

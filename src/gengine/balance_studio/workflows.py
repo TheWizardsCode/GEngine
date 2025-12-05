@@ -146,8 +146,6 @@ def run_exploratory_sweep(
 
     if verbose:
         cmd.append("--verbose")
-
-    if verbose:
         sys.stderr.write(f"Running sweep: {' '.join(cmd)}\n")
 
     # Set config root if using overlay
