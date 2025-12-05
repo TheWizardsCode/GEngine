@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 import sys
 from importlib import util
 from pathlib import Path
@@ -121,8 +123,6 @@ class TestMainFunction:
         assert export_path.exists()
 
         # Verify the snapshot contains valid JSON
-        import json
-
         data = json.loads(export_path.read_text())
         assert "city" in data or "game_state" in data or len(data) > 0
 
@@ -200,8 +200,6 @@ class TestArgumentParsing:
 
     def test_default_world_value(self) -> None:
         """Test that default world is 'default' when not specified."""
-        import argparse
-
         # Create a new parser like the script does
         parser = argparse.ArgumentParser()
         parser.add_argument("--world", "-w", default="default")
@@ -231,8 +229,6 @@ class TestRealWorldIntegration:
 
     def test_export_creates_valid_json(self, tmp_path: Path) -> None:
         """Test that exported snapshot is valid JSON with expected structure."""
-        import json
-
         export_path = tmp_path / "valid.json"
 
         with patch("sys.argv", ["eoe_dump_state", "-e", str(export_path)]):
