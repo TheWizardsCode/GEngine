@@ -11,7 +11,6 @@ tools:
   - testFailure
   - fetch
   - todos
-
 ---
    - Before running or modifying code or tests, set up the environment as described in the README (e.g., `uv pip install -e .[dev]`).
 
