@@ -1,4 +1,6 @@
 # Echoes of Emergence – Game UI Design
+#
+**Last Updated:** 2025-12-05
 
 ## 1. Introduction
 
@@ -165,41 +167,19 @@ The spatial hub for mid-term management.
 ```
 
 **Features:**
-- Districts displayed as connected nodes (honoring adjacency graph)
-- Focus ring clearly highlighted (filled vs. outline nodes)
-- Selectable heat overlays: unrest, pollution, prosperity, security
-- District badges show trending direction (↑↓→)
-- Click district to select and populate Context Panel
-- Double-click to enter District Detail view
 
-**Heat Overlay Legend:**
+
+
 - Green: Healthy (0.0–0.3)
-- Yellow: Caution (0.3–0.6)
-- Red: Critical (0.6–1.0)
 
-### 4.3 Event Feed
+
 
 The narrative heartbeat. Shows what's happening in the city.
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│ EVENT FEED                                            [Filter ▼]  │
-├────────────────────────────────────────────────────────────────────┤
-│ 🔴 T247 Industrial Tier: Energy shortage persists (3 ticks)       │
-│ 🟡 T246 Aria Volt negotiates with Union of Flux in Civic Core     │
-│ 🟢 T245 Cartel of Mist invests in Commons District                │
-│ 📖 T244 Story Seed "Power Struggle" activated in Civic Core       │
-│ ⚡ T243 Market: energy price spiked to 1.35                        │
-├────────────────────────────────────────────────────────────────────┤
-│ [Show More] [Clear Read]                    Suppressed: 12 events │
-└────────────────────────────────────────────────────────────────────┘
-```
 
-**Features:**
-- Color-coded severity (🔴 critical, 🟡 warning, 🟢 info, 📖 story, ⚡ economy)
-- Timestamp prefix for temporal context
-- Click event to expand details and causal chain
-- Filter dropdown: All / Focus Ring Only / Critical Only / Story Seeds
+
+└────────────────────────────────────────────────────────────────────┘
+
 - Suppressed count links to full archive for deep analysis
 - Events within focus ring receive visual emphasis (bold or highlight)
 
