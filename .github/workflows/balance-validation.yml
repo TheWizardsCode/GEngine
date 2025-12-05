@@ -250,7 +250,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Download sweep results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.8
         with:
           name: balance-validation-${{ github.run_id }}
           path: build
