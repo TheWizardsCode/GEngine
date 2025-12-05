@@ -228,6 +228,146 @@ uv run python scripts/analyze_balance.py report build/batch_sweep_summary.json -
 
 See the sections below for details on statistical analysis, regression detection, and report formats.
 
+## Strategy Parameter Optimization
+
+The `optimize_strategies.py` script (Phase 11, M11.4) provides automated strategy parameter tuning using optimization algorithms to find well-balanced strategy configurations. It helps reduce dominant strategy win rate deltas and improve strategic diversity.
+
+### Optimization Algorithms
+
+Three optimization algorithms are supported:
+
+1. **Grid Search** (`--algorithm grid`): Exhaustive search over all parameter combinations. Best for small parameter spaces or when you need guaranteed coverage.
+
+2. **Random Search** (`--algorithm random`): Randomly samples parameter configurations. Efficient for large parameter spaces where exhaustive search is impractical.
+
+3. **Bayesian Optimization** (`--algorithm bayesian`): Uses Gaussian processes to intelligently explore the parameter space. Requires `scikit-optimize` package (`pip install scikit-optimize`).
+
+### Configuration
+
+Optimization can be configured via `content/config/optimization.yml` or CLI flags:
+
+```yaml
+parameters:
+  stability_low:
+    min: 0.5
+    max: 0.8
+    step: 0.1  # For grid search
+  stability_critical:
+    min: 0.3
+    max: 0.5
+  faction_low_legitimacy:
+    min: 0.3
+    max: 0.6
+
+targets:
+  - name: win_rate_delta
+    weight: 1.0
+    direction: minimize
+  - name: diversity
+    weight: 0.5
+    direction: maximize
+
+settings:
+  algorithm: random
+  n_samples: 50
+  tick_budget: 100
+  seeds: [42, 123, 456]
+  strategies: [balanced, aggressive, diplomatic]
+```
+
+### Running Optimization
+
+**Basic optimization with grid search:**
+```bash
+uv run python scripts/optimize_strategies.py optimize --algorithm grid
+```
+
+**Random search with more samples:**
+```bash
+uv run python scripts/optimize_strategies.py optimize --algorithm random --samples 100
+```
+
+**Bayesian optimization (requires scikit-optimize):**
+```bash
+uv run python scripts/optimize_strategies.py optimize --algorithm bayesian --samples 50
+```
+
+### Optimization Targets
+
+The optimizer supports multiple optimization targets:
+
+- **win_rate_delta**: Minimize the maximum win rate difference between strategies. Lower values indicate better balance.
+- **diversity**: Maximize strategic diversity (different strategies succeed in different scenarios). Uses entropy-based scoring.
+- **stability**: Target average stability across simulations.
+
+Multi-objective optimization produces a Pareto frontier showing trade-offs between competing objectives.
+
+### Pareto Frontier
+
+The Pareto frontier represents configurations that are optimal in some dimension—no other configuration is better in all objectives simultaneously. View the frontier with:
+
+```bash
+uv run python scripts/optimize_strategies.py pareto --database build/sweep_results.db
+```
+
+This helps identify trade-offs such as:
+- Balance vs. difficulty (easier games may be more balanced)
+- Diversity vs. stability (more diverse outcomes may have wider stability ranges)
+
+### Output Files
+
+After optimization, results are saved to the output directory (default: `build/optimization/`):
+
+- `optimization_result.json`: Full optimization data including all evaluated configurations
+- `optimization_report.md`: Human-readable Markdown report with best parameters and Pareto frontier
+
+### Integration with Result Storage
+
+Optimization results are automatically stored in the sweep results database (`build/sweep_results.db`) for historical tracking. Query past optimization runs:
+
+```bash
+uv run python scripts/optimize_strategies.py pareto --limit 10
+```
+
+### CLI Options
+
+| Flag | Description |
+|------|-------------|
+| `--algorithm, -a` | Optimization algorithm (grid, random, bayesian) |
+| `--config, -c` | Path to YAML configuration file |
+| `--samples, -n` | Number of samples for random/bayesian search |
+| `--ticks, -t` | Tick budget per sweep simulation |
+| `--seed` | Random seed for reproducibility |
+| `--output-dir, -o` | Output directory for results |
+| `--database, -d` | Path to sweep results database |
+| `--json` | Output as JSON instead of files |
+| `--verbose, -v` | Print progress information |
+| `--no-store` | Skip storing result in database |
+
+### Example Workflow
+
+1. **Run initial optimization:**
+   ```bash
+   uv run python scripts/optimize_strategies.py optimize --algorithm random --samples 50 --verbose
+   ```
+
+2. **Review results:**
+   ```bash
+   cat build/optimization/optimization_report.md
+   ```
+
+3. **Apply best parameters:** Update `src/gengine/ai_player/strategies.py` with the discovered optimal values for `StrategyConfig`.
+
+4. **Validate with batch sweeps:**
+   ```bash
+   uv run python scripts/run_batch_sweeps.py --output-dir build/validation
+   ```
+
+5. **Generate balance report:**
+   ```bash
+   uv run python scripts/analyze_balance.py report --database build/sweep_results.db
+   ```
+
 ## Balance Iteration Workflow
 
 ### Recommended Workflow
@@ -235,8 +375,9 @@ See the sections below for details on statistical analysis, regression detection
 1. **Initial Exploration:** Run batch sweeps with diverse parameter combinations to establish baseline metrics.
 2. **Tournament Validation:** Run focused tournaments on specific strategy combinations.
 3. **Analysis:** Use the analysis script to identify dominant strategies, underpowered/overpowered actions, and unused content.
-4. **Adjustment:** Modify simulation parameters or authored content based on findings.
-5. **Regression Testing:** Re-run batch sweeps to validate improvements and ensure no regressions.
+4. **Parameter Optimization:** Use `optimize_strategies.py` to find balanced parameter configurations automatically.
+5. **Adjustment:** Apply optimized parameters or modify authored content based on findings.
+6. **Regression Testing:** Re-run batch sweeps to validate improvements and ensure no regressions.
 
 ## CI Integration
 
