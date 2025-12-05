@@ -251,9 +251,32 @@ A nightly CI workflow automatically runs tournaments and batch sweeps, archiving
 - Use `--verbose` during development to monitor sweep progress.
 - Use reproducible seeds for regression testing.
 
+## Designer Feedback Loop and Tooling
+
+For designer-friendly workflows that make balance iteration accessible without deep engineering knowledge, see the [Designer Balance Guide](./designer_balance_guide.md). This guide covers:
+
+- Running exploratory parameter sweeps with `echoes-balance-studio`
+- Creating and testing config overlays
+- Diagnosing dominant strategies
+- Iterating on action costs and narrative pacing
+- Example workflows with case studies
+
+Quick start:
+```bash
+# Run the balance studio
+uv run echoes-balance-studio sweep --strategies balanced aggressive --ticks 50
+
+# Test a tuning change
+uv run echoes-balance-studio test-tuning --overlay content/config/overlays/example_tuning.yml
+
+# View historical reports
+uv run echoes-balance-studio history --days 30
+```
+
 ## See Also
+- [Designer Balance Guide](./designer_balance_guide.md) - Designer-focused balance workflows
 - [How to Play Echoes](./how_to_play_echoes.md)
 - [Implementation Plan](../simul/emergent_story_game_implementation_plan.md)
 - [README](../../README.md)
- - [Testing Guide](./testing_guide.md)
- - [Content Designer Workflow](./content_designer_workflow.md)
+- [Testing Guide](./testing_guide.md)
+- [Content Designer Workflow](./content_designer_workflow.md)

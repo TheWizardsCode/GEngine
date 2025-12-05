@@ -41,6 +41,7 @@ echoes-shell = "gengine.echoes.cli.shell:main"
 echoes-gateway-service = "gengine.echoes.gateway.main:main"
 echoes-gateway-shell = "gengine.echoes.gateway.client:main"
 echoes-llm-service = "gengine.echoes.llm.main:main"
+echoes-balance-studio = "scripts.echoes_balance_studio:main"
 
 [build-system]
 requires = ["setuptools>=68.0.0"]

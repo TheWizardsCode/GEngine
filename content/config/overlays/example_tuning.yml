@@ -1,0 +1,46 @@
+# Example Tuning Overlay for Echoes of Emergence
+# ================================================
+#
+# This file demonstrates how to create configuration overlays for balance testing.
+# Overlays merge with the base simulation.yml, allowing you to test parameter
+# changes without modifying the base configuration.
+#
+# Usage:
+#   echoes-balance-studio test-tuning --overlay content/config/overlays/example_tuning.yml
+#
+# Structure:
+#   Only include the settings you want to change. Missing settings will use
+#   base configuration values. Nested sections are deep-merged.
+
+# Metadata (optional) - helps document what this overlay is testing
+_meta:
+  name: "Example Tuning Overlay"
+  description: "Demonstrates adjusting economy and environment parameters"
+  author: "Balance Team"
+  created: "2025-12-05"
+  hypothesis: "Increasing regen_scale should improve stability without making the game too easy"
+
+# Economy adjustments
+# Hypothesis: Slightly faster resource regeneration helps new players
+# without trivializing resource management
+economy:
+  # Increase base regeneration by 25% (0.8 -> 1.0)
+  regen_scale: 1.0
+  # Slightly reduce the threshold for shortages to trigger earlier warnings
+  shortage_threshold: 0.25
+  # Allow prices to fluctuate more for interesting market dynamics
+  price_max_boost: 0.6
+
+# Environment adjustments
+# Hypothesis: Softer scarcity pressure gives players more recovery time
+environment:
+  # Reduce how much scarcity affects unrest
+  scarcity_unrest_weight: 0.00003
+  # Allow biodiversity to recover faster
+  biodiversity_recovery_rate: 0.05
+
+# Director adjustments (optional)
+# Hypothesis: Longer quiet periods between story seeds reduces overwhelm
+# director:
+#   global_quiet_ticks: 6
+#   seed_quiet_ticks: 8
