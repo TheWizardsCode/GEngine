@@ -3,7 +3,14 @@ name: test_agent
 description: Writes and runs tests for this repo without ever deleting failing tests.
 model: Gemini 3 Pro (Preview) (copilot)
 tools:
-  ['edit', 'search', 'runCommands', 'Azure MCP/search', 'changes', 'testFailure', 'fetch', 'todos']
+  - edit
+  - search
+  - runCommands
+  - Azure MCP/search
+  - changes
+  - testFailure
+  - fetch
+  - todos
 
 ---
    - Before running or modifying code or tests, set up the environment as described in the README (e.g., `uv pip install -e .[dev]`).
