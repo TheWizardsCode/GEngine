@@ -1,56 +1,61 @@
-# GameDev Agent Thoughts - Issue #58: Batch Simulation Sweep Infrastructure (M11.1)
+# GameDev Agent Thoughts - Issue #61: Result Aggregation and Storage (M11.2)
 
-## Task Analysis - Complete
+## Task Analysis
 
-Implemented batch simulation sweep infrastructure for Phase 11, M11.1 task.
+Working on Issue #61 - Phase 11, Milestone 11.2, Task 11.2.1.
+
+### Requirements
+
+1. Script `scripts/aggregate_sweep_results.py` ingests batch sweep JSON outputs and produces aggregated summary data
+2. Storage format (SQLite database) supports querying by parameter combinations, timestamp, and result metrics
+3. Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges) for reproducibility
+4. Aggregation computes key statistics: win rates by strategy, average stability/unrest/pollution, story seed activation rates, action usage frequencies
+5. Query interface or helper functions support common lookups
+6. At least 8 tests covering aggregation logic, storage/retrieval, and historical queries
 
 ## Implementation Summary
 
-### Files Created/Modified
+### Files Created
 
-1. **content/config/batch_sweeps.yml** - Configuration file defining:
-   - Parameter grid (strategies, difficulties, seeds, worlds, tick_budgets)
-   - Parallel execution settings (max_workers, timeout_per_sweep)
-   - Output configuration
-   - Sampling options for large parameter spaces
-   - Metadata settings
+1. **scripts/aggregate_sweep_results.py** - Main aggregation script with:
+   - Dataclasses: `SweepRecord`, `SweepRunMetadata`, `AggregatedStats`
+   - SQLite database setup with versioned schema and indexes
+   - `init_database()` - Creates tables and indexes
+   - `ingest_sweep_summary()` - Ingests a single batch sweep summary
+   - `ingest_sweep_directory()` - Ingests all summaries from a directory
+   - `query_sweep_results()` - Query with filters (strategy, difficulty, world, run_id, days, git_commit, limit)
+   - `query_sweep_runs()` - Query run metadata
+   - `compute_aggregated_stats()` - Computes win rates, averages, action frequencies
+   - `compute_stats_by_strategy()` / `compute_stats_by_difficulty()` - Convenience functions
+   - CLI with subcommands: `ingest`, `query`, `stats`, `runs`
 
-2. **scripts/run_batch_sweeps.py** - Main batch sweep runner:
-   - Generates Cartesian product of parameter combinations
-   - Uses ProcessPoolExecutor for parallel execution
-   - Produces JSON output per sweep with parameters, results, telemetry, metadata
-   - Supports CLI overrides for quick testing
-   - Progress reporting to stderr
+2. **tests/scripts/test_aggregate_sweep_results.py** - 26 tests in 8 test classes:
+   - `TestDatabaseSchema` (3 tests): schema creation, indexes, idempotency
+   - `TestIngestion` (3 tests): ingest summary, prevent duplicates, ingest directory
+   - `TestQuerying` (6 tests): by strategy, difficulty, run_id, limit, days, git commit
+   - `TestAggregation` (4 tests): by strategy, with errors, action frequencies, empty records
+   - `TestDataclasses` (3 tests): SweepRecord, SweepRunMetadata, AggregatedStats serialization
+   - `TestCLI` (4 tests): ingest, stats JSON, query with filters, runs command
+   - `TestHistoricalTracking` (2 tests): multiple runs, date range filtering
 
-3. **tests/scripts/test_batch_sweeps.py** - 29 tests covering:
-   - SweepParameters creation and serialization
-   - SweepResult creation and serialization with errors
-   - BatchSweepConfig defaults and YAML loading
-   - Parameter grid generation (single, Cartesian product, large, sampling, empty)
-   - Single sweep execution (multiple strategies, invalid world, telemetry)
-   - Batch sweep execution (small, multiple strategies, stats, metadata)
-   - BatchSweepReport serialization
-   - CLI tests (basic run, JSON output, config file, overrides)
-   - Determinism tests (same seed produces same result)
+## Acceptance Criteria Verification
 
-4. **docs/gengine/ai_tournament_and_balance_analysis.md** - Updated documentation:
-   - Added batch sweep section with configuration format
-   - CLI options reference table
-   - Output format description
-   - Updated balance iteration workflow
+1. ✅ Script ingests batch sweep JSON outputs and produces aggregated summary data
+2. ✅ SQLite storage supports querying by parameter combinations, timestamp, and result metrics
+3. ✅ Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges)
+4. ✅ Aggregation computes: win rates, avg stability, story seed activation rates, action frequencies
+5. ✅ Query interface supports common lookups (by strategy, difficulty, date range, git commit)
+6. ✅ 26 tests covering aggregation logic, storage/retrieval, and historical queries (requirement was 8+)
 
 ## Verification
 
-- All 29 batch sweep tests pass
-- All 113 scripts tests pass
-- Smoke test confirms end-to-end functionality
-- Output format matches acceptance criteria
+- All 26 tests pass
+- Ruff linting passes with no errors
+- CLI works correctly via subprocess testing
 
-## Acceptance Criteria Status
+## Progress
 
-- [x] Script `scripts/run_batch_sweeps.py` supports multi-dimensional parameter grids
-- [x] Parallel execution using ProcessPoolExecutor
-- [x] JSON output per sweep includes game results, telemetry, and parameter metadata
-- [x] Configuration file `content/config/batch_sweeps.yml` defines sweep parameter ranges
-- [x] Documentation describes sweep configuration format and execution workflow
-- [x] At least 10 tests covering parameter grid generation, parallel execution, and output validation (29 tests implemented)
+- [x] Create scripts/aggregate_sweep_results.py
+- [x] Create tests/scripts/test_aggregate_sweep_results.py
+- [x] Run linting - PASSED
+- [x] Run tests - 26 PASSED
