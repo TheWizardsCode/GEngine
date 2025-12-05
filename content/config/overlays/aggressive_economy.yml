@@ -1,0 +1,33 @@
+# Example Overlay: Aggressive Economy
+# Demonstrates how to use YAML overlays to test balance changes.
+#
+# This overlay increases resource regeneration and reduces scarcity pressure
+# to test how the game behaves with a more forgiving economy.
+#
+# Usage:
+#   echoes-balance-studio sweep --overlay content/config/overlays/aggressive_economy.yml
+#
+# Or use test-tuning for quick experiments:
+#   echoes-balance-studio test-tuning --name aggressive_econ \
+#       --change economy.regen_scale=1.2 \
+#       --change environment.scarcity_pressure_cap=4000
+
+name: aggressive_economy
+description: |
+  Test higher resource regeneration and reduced scarcity.
+  Use this overlay to see how the game behaves when resources
+  are more abundant and scarcity pressure is lower.
+
+overrides:
+  economy:
+    regen_scale: 1.2
+    demand_population_scale: 80000
+  environment:
+    scarcity_pressure_cap: 4000
+    scarcity_unrest_weight: 0.00003
+    scarcity_pollution_weight: 0.00002
+
+metadata:
+  author: balance_team
+  purpose: testing
+  related_issue: example
