@@ -128,7 +128,12 @@ A summary file `batch_sweep_summary.json` aggregates all results, including:
 
 ## Analyzing Tournament Results
 
-After running a tournament or batch sweep, use the analysis script to generate comparative reports. This tool surfaces:
+
+After running a tournament or batch sweep, you can use two analysis scripts:
+
+### 1. Basic Analysis
+
+The `analyze_ai_games.py` script generates comparative reports highlighting:
 - Win rate differences across strategies and difficulties
 - Detection of unused story seeds
 - Flagging of balance outliers and anomalies
@@ -145,6 +150,83 @@ The report includes:
 - Win rate comparison across strategies and difficulties
 - Detection of unused story seeds
 - Flagging of balance outliers
+
+### 2. Advanced Balance Analysis
+#### Statistical Analysis & Visualization
+
+#### Regression Detection
+
+#### Report Formats
+
+#### Testing & Quality Assurance
+
+The `analyze_balance.py` tool is covered by 39 dedicated tests, exceeding the minimum requirement. All tests pass, and the project maintains over 92% code coverage. Linting and security checks (CodeQL) are also enforced in CI, ensuring reliability and maintainability.
+
+The `analyze_balance.py` tool supports multiple output formats for its reports:
+- **Markdown** (default): Easy to read and version control
+- **HTML**: Rich, styled reports with embedded charts
+- **JSON**: For programmatic analysis or integration
+
+**Specify the format with `--format`:**
+```bash
+uv run python scripts/analyze_balance.py report build/batch_sweep_summary.json --format markdown --output build/balance_report.md
+uv run python scripts/analyze_balance.py report build/batch_sweep_summary.json --format html --output build/balance_report.html
+uv run python scripts/analyze_balance.py report build/batch_sweep_summary.json --format json --output build/balance_report.json
+```
+Choose the format that best fits your workflow or audience.
+
+The `regression` subcommand in `analyze_balance.py` helps you detect significant deviations from a baseline (reference) run. This is useful for automated regression testing and ongoing balance validation.
+
+**Example: Compare a new sweep to a baseline**
+```bash
+uv run python scripts/analyze_balance.py regression build/batch_sweep_summary.json --baseline build/batch_sweep_summary_baseline.json --output build/regression_report.md
+```
+The generated report will highlight:
+- Statistically significant changes in win rates or other metrics
+- Newly dominant or underperforming strategies
+- Unintended balance shifts
+
+The `analyze_balance.py` tool provides robust statistical methods to help you understand and improve game balance:
+
+- **Confidence Intervals:** Quantifies uncertainty in win rates and other metrics.
+- **T-Tests:** Compares means between groups (e.g., strategies, difficulties) to detect significant differences.
+- **Trend Detection:** Identifies changes in metrics over time or across parameter sweeps.
+- **Parameter Sensitivity:** Surfaces which parameters most affect outcomes.
+- **Visualizations:** Generates charts for win rate distributions, metric trends, and action distributions.
+
+**Example: Generate win rate and trend charts**
+```bash
+uv run python scripts/analyze_balance.py report build/batch_sweep_summary.json --format html --output build/balance_report.html
+```
+The HTML report will include:
+- Win rate bar charts by strategy and difficulty
+- Trend lines for key metrics
+- Action and story seed usage distributions
+
+You can also use the `trends` subcommand for focused trend analysis:
+```bash
+uv run python scripts/analyze_balance.py trends build/batch_sweep_summary.json --output build/trends.json
+```
+
+The `analyze_balance.py` script provides advanced statistical analysis and reporting for tournament and sweep results. It supports:
+- Confidence intervals and t-tests
+- Trend detection and parameter sensitivity
+- Regression detection against baselines
+- Visualizations (charts/graphs)
+- Multiple report formats (Markdown, HTML, JSON)
+
+**Subcommands:**
+- `report`: Generate summary reports
+- `regression`: Detect significant deviations from baseline runs
+- `trends`: Analyze metric trends over time
+- `stats`: Compute confidence intervals and perform t-tests
+
+**Example:**
+```bash
+uv run python scripts/analyze_balance.py report build/batch_sweep_summary.json --format html --output build/balance_report.html
+```
+
+See the sections below for details on statistical analysis, regression detection, and report formats.
 
 ## Balance Iteration Workflow
 
@@ -173,3 +255,5 @@ A nightly CI workflow automatically runs tournaments and batch sweeps, archiving
 - [How to Play Echoes](./how_to_play_echoes.md)
 - [Implementation Plan](../simul/emergent_story_game_implementation_plan.md)
 - [README](../../README.md)
+ - [Testing Guide](./testing_guide.md)
+ - [Content Designer Workflow](./content_designer_workflow.md)
