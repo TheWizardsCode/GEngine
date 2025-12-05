@@ -418,7 +418,9 @@ class TestThresholdConfiguration:
             baseline_stats, current_stats, strict_config
         )
         # Could have multiple alerts (stability + win_rate)
-        stability_alerts = [a for a in strict_alerts if a.metric_name == "avg_stability"]
+        stability_alerts = [
+            a for a in strict_alerts if a.metric_name == "avg_stability"
+        ]
         assert len(stability_alerts) == 1
 
         # With relaxed 10% warning threshold - should pass
@@ -568,7 +570,7 @@ class TestWorkflowComponentIntegration:
         sweep_path.write_text(json.dumps(sample_sweep_summary))
         output_path = tmp_path / "result.json"
 
-        exit_code = main([
+        main([
             "compare",
             "--current", str(sweep_path),
             "--baseline", str(baseline_path),
@@ -661,9 +663,9 @@ class TestWorkflowComponentIntegration:
         baseline_path = tmp_path / "baseline.json"
         baseline_path.write_text(json.dumps(sample_baseline))
 
-        # Create sweep with significant regression
+        # Create sweep with significant regression (50% drop from 0.7)
         current_sweep = sample_sweep_summary.copy()
-        current_sweep["strategy_stats"]["balanced"]["avg_stability"] = 0.35  # 50% drop from 0.7
+        current_sweep["strategy_stats"]["balanced"]["avg_stability"] = 0.35
         sweep_path = tmp_path / "sweep_summary.json"
         sweep_path.write_text(json.dumps(current_sweep))
 
@@ -681,9 +683,10 @@ class TestWorkflowComponentIntegration:
 
         # Create sweep with improvement (current > baseline) - should pass
         improved_sweep = sample_sweep_summary.copy()
-        improved_sweep["strategy_stats"]["balanced"]["avg_stability"] = 0.8  # Better than 0.7 baseline
-        improved_sweep["strategy_stats"]["aggressive"]["avg_stability"] = 0.6  # Better than 0.5 baseline
-        improved_sweep["strategy_stats"]["diplomatic"]["avg_stability"] = 0.75  # Better than 0.65 baseline
+        # Better than baseline: 0.7 -> 0.8, 0.5 -> 0.6, 0.65 -> 0.75
+        improved_sweep["strategy_stats"]["balanced"]["avg_stability"] = 0.8
+        improved_sweep["strategy_stats"]["aggressive"]["avg_stability"] = 0.6
+        improved_sweep["strategy_stats"]["diplomatic"]["avg_stability"] = 0.75
         improved_sweep_path = tmp_path / "improved_sweep.json"
         improved_sweep_path.write_text(json.dumps(improved_sweep))
 

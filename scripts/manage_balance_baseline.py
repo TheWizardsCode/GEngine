@@ -612,7 +612,7 @@ def generate_comparison_chart(
     # Delta chart
     deltas = [
         ((c - b) / b * 100) if b > 0 else 0
-        for b, c in zip(baseline_stability, current_stability)
+        for b, c in zip(baseline_stability, current_stability, strict=True)
     ]
     colors = ["green" if d >= 0 else "red" for d in deltas]
 
