@@ -1,0 +1,64 @@
+# CI Balance Sweeps Configuration
+# Reduced parameter grid for fast CI validation of balance changes.
+# This configuration is optimized for speed while still providing meaningful coverage.
+
+# Parameter Grid - reduced from full sweeps for CI speed
+parameters:
+  # Three representative strategies covering the spectrum
+  strategies:
+    - balanced
+    - aggressive
+    - diplomatic
+
+  # Three difficulty presets to validate scaling
+  difficulties:
+    - easy
+    - normal
+    - hard
+
+  # Five deterministic seeds for reproducibility with statistical significance
+  seeds:
+    - 42
+    - 123
+    - 456
+    - 789
+    - 1000
+
+  # Default world only for CI (additional worlds tested in nightly full sweeps)
+  worlds:
+    - default
+
+  # Reduced tick budget for faster execution (100 ticks captures most dynamics)
+  tick_budgets:
+    - 100
+
+# Parallel execution settings optimized for CI runners
+parallel:
+  # Use 2 workers to balance speed and resource usage on CI
+  max_workers: 2
+
+  # Shorter timeout for CI
+  timeout_per_sweep: 120
+
+# Output configuration
+output:
+  # Standard CI output directory
+  dir: build/ci_sweeps
+
+  # Include telemetry for debugging but keep it minimal
+  include_telemetry: true
+
+  # Include summary for report generation
+  include_summary: true
+
+# Sampling - use full grid since CI grid is already small (3*3*5*1*1 = 45 combinations)
+sampling:
+  mode: full
+  sample_count: 45
+  sample_seed: 42
+
+# Metadata for traceability
+metadata:
+  include_git_commit: true
+  include_timestamp: true
+  include_runtime_info: true
