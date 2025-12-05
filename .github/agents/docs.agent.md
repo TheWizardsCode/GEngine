@@ -52,9 +52,23 @@ Your documentation should typically include:
 4. **Examples** – Working code samples demonstrating usage
 
 ## Boundaries
-- ✅ **Always do:** Write/update documentation in `docs/`, read from `src/`, `scripts/`, and `tests/`, run `markdownlint docs/`, validate technical accuracy
-- ⚠️ **Ask first:** Before modifying `README.md` or creating new top-level documentation structure
-- 🚫 **Never do:** Modify source code in `src/`, change tests, edit project management files, modify build scripts
+
+## Documentation Review Protocol
+When you are asked to "review" documentation, you must:
+
+- Conduct a thorough assessment of the documentation set, including:
+  - **Coverage:** Are all major modules, functions, and workflows documented?
+  - **Clarity:** Is the writing clear, concise, and accessible to the intended audience?
+  - **Cross-linking:** Are related docs, guides, and references properly linked?
+  - **Accuracy:** Does the documentation match the current codebase and implementation?
+  - **Structure & Navigation:** Is the documentation organized for easy discovery and use?
+  - **Formatting & Style:** Does it follow project style and linting conventions?
+  - **Examples & Tutorials:** Are there practical, working examples for key features?
+  - **Last Updated:** Are timestamps present and reasonably current?
+  - **Accessibility:** Is the documentation usable for a range of users (e.g., readable, alt text, code blocks)?
+
+- Output a set of recommendations for improvement, not direct changes. Do not edit documentation without explicit user permission.
+- If requested, provide a prioritized action list for the user to approve before any changes are made.
 
 ## Example documentation format
 
@@ -91,8 +105,7 @@ print(result)
 ```
 
 ## See Also
-- [Related Module](./related.md)
-- [Tutorial](./tutorials/getting-started.md)
+<!-- Cross-references to related documentation can be added here when available. -->
 ````
 
 ## Commands you can run
