@@ -1,0 +1,285 @@
+name: Balance Validation
+
+on:
+  schedule:
+    # Run nightly at 3:00 AM UTC (offset from ai-tournament at 2:00 AM)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      compare_baseline:
+        description: 'Compare against baseline (true/false)'
+        required: false
+        default: 'true'
+      fail_on_regression:
+        description: 'Fail workflow on regression detection (true/false)'
+        required: false
+        default: 'true'
+      stability_threshold:
+        description: 'Win rate delta threshold for regression (percentage)'
+        required: false
+        default: '5'
+  push:
+    branches:
+      - main
+    paths:
+      # Trigger on changes to simulation code, content, or AI systems
+      - 'src/gengine/echoes/sim/**'
+      - 'src/gengine/echoes/core/**'
+      - 'src/gengine/ai_player/**'
+      - 'content/worlds/**'
+      - 'content/config/**'
+      - 'scripts/run_batch_sweeps.py'
+      - 'scripts/analyze_balance.py'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/gengine/echoes/sim/**'
+      - 'src/gengine/echoes/core/**'
+      - 'src/gengine/ai_player/**'
+      - 'content/worlds/**'
+      - 'content/config/**'
+      - 'scripts/run_batch_sweeps.py'
+      - 'scripts/analyze_balance.py'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  balance-validation:
+    runs-on: ubuntu-latest
+    outputs:
+      regression_detected: ${{ steps.compare.outputs.regression_detected }}
+      regression_summary: ${{ steps.compare.outputs.regression_summary }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Run CI balance sweeps
+        id: sweep
+        run: |
+          echo "Running reduced parameter grid balance sweeps..."
+          python scripts/run_batch_sweeps.py \
+            --config content/config/ci_balance_sweeps.yml \
+            --output-dir build/ci_sweeps \
+            --verbose
+          
+          echo "sweep_completed=true" >> $GITHUB_OUTPUT
+
+      - name: Aggregate sweep results
+        run: |
+          python scripts/aggregate_sweep_results.py ingest build/ci_sweeps \
+            --database build/ci_sweep_results.db \
+            --verbose
+
+      - name: Generate balance report
+        run: |
+          python scripts/analyze_balance.py report \
+            --database build/ci_sweep_results.db \
+            --format html \
+            --output build/balance_report.html
+          
+          python scripts/analyze_balance.py report \
+            --database build/ci_sweep_results.db \
+            --format json \
+            --output build/balance_report.json
+
+      - name: Compare against baseline
+        id: compare
+        env:
+          COMPARE_BASELINE: ${{ github.event.inputs.compare_baseline || 'true' }}
+          STABILITY_THRESHOLD: ${{ github.event.inputs.stability_threshold || '5' }}
+        run: |
+          if [[ "$COMPARE_BASELINE" != "true" ]]; then
+            echo "Baseline comparison skipped by user input"
+            echo "regression_detected=false" >> $GITHUB_OUTPUT
+            echo "regression_summary=Baseline comparison skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          python scripts/manage_balance_baseline.py compare \
+            --current build/ci_sweeps/batch_sweep_summary.json \
+            --baseline content/baselines/balance_baseline.json \
+            --output build/regression_summary.json \
+            --stability-threshold "$STABILITY_THRESHOLD"
+          
+          # Check if regressions were detected
+          if [[ -f build/regression_summary.json ]]; then
+            REGRESSION_COUNT=$(python -c "import json; d=json.load(open('build/regression_summary.json')); print(len(d.get('regressions', [])))")
+            if [[ "$REGRESSION_COUNT" -gt 0 ]]; then
+              echo "regression_detected=true" >> $GITHUB_OUTPUT
+              SUMMARY=$(python -c "import json; d=json.load(open('build/regression_summary.json')); print(d.get('summary', 'Regressions detected'))")
+              echo "regression_summary=$SUMMARY" >> $GITHUB_OUTPUT
+            else
+              echo "regression_detected=false" >> $GITHUB_OUTPUT
+              echo "regression_summary=No regressions detected" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "regression_detected=false" >> $GITHUB_OUTPUT
+            echo "regression_summary=No baseline comparison performed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate comparison charts
+        if: always()
+        run: |
+          python scripts/manage_balance_baseline.py chart \
+            --current build/ci_sweeps/batch_sweep_summary.json \
+            --baseline content/baselines/balance_baseline.json \
+            --output build/comparison_charts.png || echo "Chart generation skipped (missing baseline or data)"
+
+      - name: Archive balance validation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-validation-${{ github.run_id }}
+          path: |
+            build/ci_sweeps/batch_sweep_summary.json
+            build/ci_sweep_results.db
+            build/balance_report.html
+            build/balance_report.json
+            build/regression_summary.json
+            build/comparison_charts.png
+          retention-days: 30
+
+      - name: Comment on PR with balance summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let report = {};
+            try {
+              report = JSON.parse(fs.readFileSync('build/balance_report.json', 'utf8'));
+            } catch (e) {
+              console.log('Could not read balance report');
+              return;
+            }
+            
+            let regressionSummary = {};
+            try {
+              regressionSummary = JSON.parse(fs.readFileSync('build/regression_summary.json', 'utf8'));
+            } catch (e) {
+              regressionSummary = { regressions: [], summary: 'No baseline comparison' };
+            }
+            
+            const regressions = regressionSummary.regressions || [];
+            const hasRegressions = regressions.length > 0;
+            
+            let body = `## 📊 Balance Validation Results\n\n`;
+            
+            if (hasRegressions) {
+              body += `### ⚠️ Regressions Detected\n\n`;
+              for (const reg of regressions) {
+                const icon = reg.severity === 'high' ? '❌' : '⚠️';
+                body += `- ${icon} **${reg.metric_name}**: ${reg.description}\n`;
+              }
+              body += `\n`;
+            } else {
+              body += `### ✅ No Regressions Detected\n\n`;
+            }
+            
+            // Strategy stats
+            if (regressionSummary.current_stats && regressionSummary.current_stats.strategy_stats) {
+              body += `### Strategy Win Rates\n\n`;
+              body += `| Strategy | Avg Stability | Win Rate |\n`;
+              body += `|----------|---------------|----------|\n`;
+              for (const [strategy, stats] of Object.entries(regressionSummary.current_stats.strategy_stats)) {
+                const avgStab = stats.avg_stability?.toFixed(3) || 'N/A';
+                const winRate = ((stats.avg_stability || 0) >= 0.5 ? '✅' : '⚠️');
+                body += `| ${strategy} | ${avgStab} | ${winRate} |\n`;
+              }
+              body += `\n`;
+            }
+            
+            body += `\n📁 [Download full report](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})\n`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Fail on regression (if configured)
+        if: steps.compare.outputs.regression_detected == 'true'
+        env:
+          FAIL_ON_REGRESSION: ${{ github.event.inputs.fail_on_regression || 'true' }}
+        run: |
+          echo "::error::Balance regression detected: ${{ steps.compare.outputs.regression_summary }}"
+          if [[ "$FAIL_ON_REGRESSION" == "true" ]]; then
+            echo "Failing workflow due to regression detection"
+            exit 1
+          else
+            echo "::warning::Regression detected but workflow configured to continue"
+          fi
+
+  update-baseline:
+    needs: balance-validation
+    runs-on: ubuntu-latest
+    # Only update baseline on successful main branch runs (scheduled or push)
+    if: |
+      github.ref == 'refs/heads/main' && 
+      (github.event_name == 'schedule' || github.event_name == 'push') &&
+      needs.balance-validation.outputs.regression_detected != 'true'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Download sweep results
+        uses: actions/download-artifact@v4
+        with:
+          name: balance-validation-${{ github.run_id }}
+          path: build
+
+      - name: Update baseline
+        run: |
+          python scripts/manage_balance_baseline.py update \
+            --source build/ci_sweeps/batch_sweep_summary.json \
+            --output content/baselines/balance_baseline.json
+
+      - name: Create baseline update PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update balance validation baseline"
+          branch: automated/update-balance-baseline
+          delete-branch: true
+          title: "[Automated] Update Balance Validation Baseline"
+          body: |
+            This PR updates the balance validation baseline from the latest successful CI run.
+            
+            **Run ID:** ${{ github.run_id }}
+            **Commit:** ${{ github.sha }}
+            
+            The baseline is updated automatically when:
+            - The balance validation workflow passes on main branch
+            - No regressions are detected against the previous baseline
+            
+            Please review the changes before merging.
+          labels: |
+            automated
+            balance
