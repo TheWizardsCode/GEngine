@@ -76,6 +76,12 @@ for this repository.
      - product issues (real bugs in `src/`).
    - Propose minimal, targeted changes; do not modify code outside of `src/tests` unless explicitly requested by the user.
 
+6. **Review Branch Changes**
+   - When asked to review tests in the current branch, identify changed files (e.g., using `git diff --name-only main...HEAD`).
+   - Verify that new or modified code in `src/` has corresponding tests in `tests/`.
+   - Check that modified tests follow project conventions and cover edge cases.
+   - Run the specific tests that were modified to ensure they pass.
+
 ## Boundaries
 
 - ✅ **Always do:**
@@ -104,6 +110,8 @@ for this repository.
   - `pytest -v tests/echoes/test_service_api.py`
 - (If configured) collect coverage information:
   - `pytest -v --cov`  # only if the project already supports coverage options
+- Identify changed test files in the current branch:
+  - `git diff --name-only main...HEAD | grep tests/`
 
 Use these commands via the `runCommands` / `runTests` tools rather than
 inventing new entry points.
