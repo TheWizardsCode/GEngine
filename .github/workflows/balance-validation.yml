@@ -15,7 +15,7 @@ on:
         required: false
         default: 'true'
       stability_threshold:
-        description: 'Win rate delta threshold for regression (percentage)'
+        description: 'Stability delta threshold for regression (percentage)'
         required: false
         default: '5'
   push:
@@ -184,7 +184,7 @@ jobs:
             if (hasRegressions) {
               body += `### ⚠️ Regressions Detected\n\n`;
               for (const reg of regressions) {
-                const icon = reg.severity === 'high' ? '❌' : '⚠️';
+                const icon = reg.severity === 'failure' ? '❌' : '⚠️';
                 body += `- ${icon} **${reg.metric_name}**: ${reg.description}\n`;
               }
               body += `\n`;

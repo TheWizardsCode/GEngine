@@ -296,9 +296,15 @@ def compare_strategy_stats(
                     )
                 )
 
-        # Compare win rates
-        baseline_wr = baseline.get("win_rate", compute_win_rate(baseline))
-        current_wr = current.get("win_rate", compute_win_rate(current))
+        # Compare win rates - prefer explicit win_rate if available
+        baseline_wr = baseline.get("win_rate")
+        current_wr = current.get("win_rate")
+
+        # Only compute from stability if not explicitly provided
+        if baseline_wr is None:
+            baseline_wr = compute_win_rate(baseline)
+        if current_wr is None:
+            current_wr = compute_win_rate(current)
 
         if baseline_wr > 0:
             wr_delta_percent = ((current_wr - baseline_wr) / baseline_wr) * 100
