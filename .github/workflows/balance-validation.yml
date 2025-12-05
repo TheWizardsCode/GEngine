@@ -89,15 +89,9 @@ jobs:
 
       - name: Generate balance report
         run: |
-          python scripts/analyze_balance.py report \
+          python scripts/analyze_balance.py \
             --database build/ci_sweep_results.db \
-            --format html \
-            --output build/balance_report.html
-          
-          python scripts/analyze_balance.py report \
-            --database build/ci_sweep_results.db \
-            --format json \
-            --output build/balance_report.json
+            report
 
       - name: Compare against baseline
         id: compare
