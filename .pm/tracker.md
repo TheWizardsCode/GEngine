@@ -18,8 +18,8 @@
 
 **Next Recommended Tasks:**
 
-1. **11.4.1** - Strategy Parameter Optimization (optional - low priority, future work)
-2. **11.6.1** - Designer Feedback Loop and Tooling (optional - low priority, UX enhancement)
+1. **11.4.1** - Strategy Parameter Optimization (Issue #71 - optional, low priority, future work)
+2. **11.6.1** - Designer Feedback Loop and Tooling (Issue #70 - optional, low priority, UX enhancement)
 3. **Phase 12** - Terminal UI Implementation (new phase, requires prioritization decision)
 
 
@@ -42,7 +42,7 @@
 
 - Total tests: 1,042 (up from 849; +193 new tests)
 - Coverage: 91.37% overall (up from 90.95%), critical modules at 94-98%, scripts at 88.6%
-- Open issues: 0 (all issues closed)
+- Open issues: 2 (Issue #70 - Designer Tooling, Issue #71 - Parameter Optimization; both low priority)
 - Recent commits: 20+ commits in past 24 hours, excellent delivery pace
 - Repository hygiene: Excellent - clean issue backlog, well-documented
 - **Phase 11 Progress:** 4 of 6 milestones complete (11.1 Batch Sweeps, 11.2 Result Aggregation, 11.3 Analysis & Reporting, 11.5 CI Integration)
@@ -359,8 +359,8 @@ The project has closely followed the implementation plan with excellent tracking
 
 **In-Progress Tasks:**
 
-- **11.4.1** - Strategy parameter optimization (optional, not started, low priority)
-- **11.6.1** - Designer feedback tooling (optional, not started, low priority)
+- **11.4.1** - Strategy parameter optimization (Issue #71, optional, not started, low priority)
+- **11.6.1** - Designer feedback tooling (Issue #70, optional, not started, low priority)
 
 **Optional Polish Tasks** (not included in phase counts):
 
@@ -1521,6 +1521,8 @@ The project has closely followed the implementation plan with excellent tracking
 
 ### 11.4.1 — Strategy Parameter Optimization (M11.4)
 
+- **GitHub Issue:** [#71](https://github.com/TheWizardsCode/GEngine/issues/71)
+- **Status:** not-started (optional enhancement)
 - **Description:** Implement automated strategy parameter tuning using optimization algorithms (grid search, random search, or Bayesian optimization) to find well-balanced strategy configurations. Goal is to reduce dominant strategy win rate deltas and improve strategic diversity. Note: Implementation plan Section 10 describes future work to expose internal strategy parameters (aggression thresholds, risk tolerance, resource prioritization) for deeper tuning—this task focuses on optimizing existing high-level strategy behavior first.
 - **Acceptance Criteria:**
   - Script `scripts/optimize_strategies.py` accepts strategy parameter ranges and optimization targets (e.g., minimize max win rate delta, maximize strategic diversity).
@@ -1568,10 +1570,12 @@ The project has closely followed the implementation plan with excellent tracking
   - Workflow includes both scheduled (nightly) and manual triggers
   - Regression detection uses statistical thresholds for win rates, stability metrics, and content usage
   - Reports published as workflow artifacts with actionable summaries
-- **Last Updated:** 2025-12-05T10:15:00Z
+- **Last Updated:** 2025-12-05T10:20:00Z
 
 ### 11.6.1 — Designer Feedback Loop and Tooling (M11.6)
 
+- **GitHub Issue:** [#70](https://github.com/TheWizardsCode/GEngine/issues/70)
+- **Status:** not-started (optional enhancement)
 - **Description:** Build designer-facing tools and workflows that make balance iteration accessible to non-engineers. Provide intuitive interfaces for running sweeps, viewing reports, and experimenting with tuning changes without requiring code changes.
 - **Acceptance Criteria:**
   - Command-line tool `echoes-balance-studio` (or similar) provides guided workflows for designers: "Run exploratory sweep", "Compare two configs", "Test tuning change", "View historical reports".
@@ -1591,7 +1595,7 @@ The project has closely followed the implementation plan with excellent tracking
   2. Design CLI command structure and interactive workflows.
   3. Implement config overlay system for safe experimentation.
   4. Create designer documentation and tutorial walkthroughs.
-- **Last Updated:** 2025-12-04
+- **Last Updated:** 2025-12-05T10:20:00Z
 
 ---
 
