@@ -82,8 +82,9 @@ jobs:
 
       - name: Aggregate sweep results
         run: |
-          python scripts/aggregate_sweep_results.py ingest build/ci_sweeps \
+          python scripts/aggregate_sweep_results.py \
             --database build/ci_sweep_results.db \
+            ingest build/ci_sweeps \
             --verbose
 
       - name: Generate balance report
