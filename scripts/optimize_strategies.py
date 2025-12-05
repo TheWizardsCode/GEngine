@@ -52,6 +52,12 @@ os.environ.setdefault("ECHOES_CONFIG_ROOT", "content/config")
 DEFAULT_CONFIG_PATH = Path("content/config/optimization.yml")
 DEFAULT_DB_PATH = Path("build/sweep_results.db")
 
+# Constants for numerical comparisons and calculations
+FLOAT_EPSILON = 1e-9  # Small epsilon for floating point comparisons
+DEFAULT_STABILITY_THRESHOLD = 0.5  # Default threshold for win determination
+OPTIMAL_STABILITY_LOW = 0.65  # Target stability_low for best balance
+STABILITY_BALANCE_MULTIPLIER = 2  # Multiplier for balance factor calculation
+
 # Try to import optional Bayesian optimization
 try:
     from skopt import gp_minimize
@@ -117,7 +123,7 @@ class ParameterRange:
 
         values: list[float] = []
         current = self.min_value
-        while current <= self.max_value + 1e-9:  # Small epsilon for float comparison
+        while current <= self.max_value + FLOAT_EPSILON:  # Small epsilon for float comparison
             if self.param_type == "int":
                 values.append(int(round(current)))
             else:
@@ -581,7 +587,7 @@ def compute_fitness(
     strategy_wins: dict[str, int] = {s: 0 for s in strategies}
     strategy_counts: dict[str, int] = {s: 0 for s in strategies}
     total_stability = 0.0
-    stability_threshold = 0.5
+    stability_threshold = DEFAULT_STABILITY_THRESHOLD
 
     for result in sweep_results:
         strategy = result.get("strategy", "unknown")
@@ -992,7 +998,7 @@ def evaluate_configuration_mock(
     # Apply some parameter influence
     stability_low = parameters.get("stability_low", 0.6)
     # Lower thresholds tend to produce more balanced results
-    balance_factor = 1.0 - abs(stability_low - 0.65) * 2
+    balance_factor = 1.0 - abs(stability_low - OPTIMAL_STABILITY_LOW) * STABILITY_BALANCE_MULTIPLIER
 
     for s in win_rates:
         win_rates[s] *= (0.8 + balance_factor * 0.2)
