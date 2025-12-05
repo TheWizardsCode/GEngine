@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-04T09:56:00Z
+**Last Updated:** 2025-12-05T03:24:00Z
 
 ## Comprehensive Project Status Report
 
@@ -17,17 +17,25 @@
 
 **Current State:**
 
-- Total tests: 849 (up from 683, +166 new tests)
+- Total tests: 875 (up from 849, +26 new tests from M11.2)
 - Coverage: 90.95% overall, critical modules at 94-98%
-- Open issues: 1 (Issue #56 - Content Pipeline CI, already completed but issue remains open)
-- Recent commits: 30+ commits in past month, steady delivery cadence
+- Open issues: 0 (Issue #61 completed and merged)
+- Recent commits: 30+ commits in past week, steady delivery cadence
 - Repository hygiene: Excellent - clean issue backlog, well-documented
-- **NEW:** Phase 11 (Automated Balance Workflow) - 6 tasks planned for advanced balance automation and strategy tuning
+- **Phase 11 Progress:** 2 of 6 milestones complete (11.1 Batch Sweeps, 11.2 Result Aggregation)
 
 ## Status Summary
 
 **Recent Progress (since last update):**
 
+- 🎉 **Task 11.2.1 (Result Aggregation and Storage) COMPLETED** - GitHub Issue [#61](https://github.com/TheWizardsCode/GEngine/issues/61)
+  - Script `scripts/aggregate_sweep_results.py` with SQLite database storage
+  - Versioned schema with indexes for efficient querying
+  - Ingest, query, stats, and runs subcommands via CLI
+  - Historical tracking with git commit hash and timestamp metadata
+  - Aggregation computes win rates, stability metrics, seed activation rates, action frequencies
+  - 26 comprehensive tests covering schema, ingestion, queries, aggregation, CLI
+  - Exceeded acceptance criteria: 26 tests delivered (requirement was 8+)
 - 📋 **Implementation Plan Updated (2025-12-04)** - Section 10 added
   - New section "Strategy Parameter Tuning (Future)" describes long-term vision for AI behavior refinement
   - Extends task 11.4.1 scope with future work: internal parameter exposure (aggression thresholds, risk tolerance, resource prioritization)
@@ -187,9 +195,9 @@
 3. ✅ **Phase 9 AI Testing Core** - COMPLETE! All 4 tasks delivered (observer, action layer, LLM-enhanced, tournaments)
 4. 🚧 **Phase 11 Balance Tooling** - IN PROGRESS (Milestone 11.1 complete, moving to 11.2)
 
-**Project Status: 📊 Phase 11 Balance Tooling in Progress**
+**Project Status: 📊 Phase 11 Balance Tooling in Progress (2/6 milestones complete)**
 
-Phases 1-10 complete. Phase 11 (Balance Tooling Enhancements) underway with first milestone delivered. Implementation plan updated with Section 10 (Strategy Parameter Tuning - Future) describing long-term vision for internal strategy parameter exposure and optimization.
+Phases 1-10 complete. Phase 11 (Balance Tooling Enhancements) underway with milestones 11.1 and 11.2 delivered. Implementation plan updated with Section 10 (Strategy Parameter Tuning - Future) describing long-term vision for internal strategy parameter exposure and optimization.
 
 ## Discrepancies Between Plan and Actual State
 
@@ -469,7 +477,7 @@ The project has closely followed the implementation plan with excellent tracking
 | 10.1.7 | Performance and tick-limit regression tests | completed | Low | Test Agent | 2025-12-03 |
 | 10.1.8 | AI/LLM mocking and coverage for gateways | completed | Medium | Test Agent | 2025-12-03 |
 | 11.1.1 | Batch simulation sweep infrastructure (M11.1) | ✅ completed | Medium | gamedev-agent | 2025-12-04 |
-| 11.2.1 | Result aggregation and storage (M11.2) | not-started | Medium | gamedev-agent | 2025-12-04 |
+| 11.2.1 | Result aggregation and storage (M11.2) | ✅ completed | Medium | gamedev-agent | 2025-12-05 |
 | 11.3.1 | Analysis and balance reporting (M11.3) | not-started | High | gamedev-agent | 2025-12-04 |
 | 11.4.1 | Strategy parameter optimization (M11.4) | not-started | Low | gamedev-agent | 2025-12-04 |
 | 11.5.1 | CI integration for continuous validation (M11.5) | not-started | Medium | gamedev-agent | 2025-12-04 |
@@ -1338,27 +1346,25 @@ The project has closely followed the implementation plan with excellent tracking
 
 ### 11.2.1 — Result Aggregation and Storage (M11.2)
 
-- **GitHub Issue:** [#61](https://github.com/TheWizardsCode/GEngine/issues/61)
+- **GitHub Issue:** [#61](https://github.com/TheWizardsCode/GEngine/issues/61) ✅ **COMPLETED**
 - **Description:** Implement result aggregation and storage layer that collects sweep outputs into a queryable database or structured file format. Support historical tracking of sweep runs to enable trend analysis and regression detection across balance iterations.
-- **Acceptance Criteria:**
-  - Script `scripts/aggregate_sweep_results.py` ingests batch sweep JSON outputs and produces aggregated summary data.
-  - Storage format (SQLite database or structured JSON/Parquet files) supports querying by parameter combinations, timestamp, and result metrics.
-  - Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges) for reproducibility.
-  - Aggregation computes key statistics: win rates by strategy, average stability/unrest/pollution, story seed activation rates, action usage frequencies.
-  - Query interface or helper functions support common lookups (e.g., "show all sweeps for difficulty=hard from last 30 days").
-  - At least 8 tests covering aggregation logic, storage/retrieval, and historical queries.
+- **Acceptance Criteria:** ✅ All met and exceeded
+  - ✅ Script `scripts/aggregate_sweep_results.py` ingests batch sweep JSON outputs and produces aggregated summary data.
+  - ✅ SQLite database storage with versioned schema (SCHEMA_VERSION=1) supports querying by parameter combinations, timestamp, and result metrics.
+  - ✅ Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges) for reproducibility.
+  - ✅ Aggregation computes key statistics: win rates by strategy, average stability/unrest/pollution, story seed activation rates, action usage frequencies.
+  - ✅ Query interface supports common lookups (strategy, difficulty, run_id, days, git commit) via CLI subcommands.
+  - ✅ 26 comprehensive tests covering all requirements (exceeded 8+ requirement by 3.2x).
 - **Priority:** Medium
 - **Responsible:** gamedev-agent
 - **Dependencies:** 11.1.1 (batch sweep infrastructure).
-- **Risks & Mitigations:**
-  - Risk: Storage grows unbounded with sweep history. Mitigation: Implement retention policies and data archival.
-  - Risk: Schema changes break historical data. Mitigation: Use versioned schema with migration support.
-- **Next Steps:**
-  1. Choose storage format (recommend SQLite for queryability or Parquet for analytics).
-  2. Design aggregation schema and statistics computed.
-  3. Implement aggregation script with historical tracking.
-  4. Add test coverage for data integrity and query patterns.
-- **Last Updated:** 2025-12-04
+- **Completion Notes:**
+  - **Database:** SQLite with `sweep_runs` (metadata) and `sweep_records` (individual games) tables
+  - **CLI Subcommands:** `ingest`, `query`, `stats`, `runs` for full workflow coverage
+  - **Indexes:** Optimized queries with indexes on strategy, difficulty, run_id, timestamp
+  - **Tests:** 26 tests covering schema creation, ingestion, deduplication, querying, aggregation, CLI integration
+  - **Output:** JSON format for aggregated statistics enabling downstream analysis
+- **Last Updated:** 2025-12-05
 
 ### 11.3.1 — Analysis and Balance Reporting (M11.3)
 
