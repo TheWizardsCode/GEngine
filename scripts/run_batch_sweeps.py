@@ -602,7 +602,10 @@ Examples:
   uv run python scripts/run_batch_sweeps.py
 
   # Run with specific strategies and seeds
-  uv run python scripts/run_batch_sweeps.py --strategies balanced aggressive --seeds 42 123
+    # Run with specific strategies and seeds
+    uv run python scripts/run_batch_sweeps.py \
+        --strategies balanced aggressive \
+        --seeds 42 123
 
   # Use custom configuration file
   uv run python scripts/run_batch_sweeps.py --config content/config/batch_sweeps.yml

@@ -493,7 +493,7 @@ class AggressiveStrategy(BaseStrategy):
         # Critical stability - triple down
         if stability < self._config.stability_critical:
             districts = self._get_multiple_districts(state, 3)
-            for i, district in enumerate(districts):
+            for _i, district in enumerate(districts):
                 intent = self._create_intent(
                     IntentType.DEPLOY_RESOURCE,
                     resource_type="materials",
@@ -686,7 +686,10 @@ class DiplomaticStrategy(BaseStrategy):
                 StrategyDecision(
                     intent=intent,
                     priority=0.6,
-                    rationale=f"Last resort support deployment at stability {stability:.2f}",
+                    rationale=(
+                        f"Last resort support deployment at stability "
+                        f"{stability:.2f}"
+                    ),
                     strategy_type=self.strategy_type,
                     tick=tick,
                     state_snapshot=state_metrics,

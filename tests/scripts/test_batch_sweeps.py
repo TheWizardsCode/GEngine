@@ -493,7 +493,10 @@ class TestInternalHelpers:
             error="failed",
         )
 
-        stats = _calculate_stats([success1, success2, failure], lambda r: r.parameters.strategy)
+        stats = _calculate_stats(
+            [success1, success2, failure],
+            lambda r: r.parameters.strategy
+        )
 
         assert "balanced" in stats
         s = stats["balanced"]
@@ -506,7 +509,9 @@ class TestInternalHelpers:
         assert pytest.approx(s["avg_actions"]) == 10.0
         assert s["total_actions"] == 20
 
-    def test_build_metadata_includes_git_and_runtime(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_build_metadata_includes_git_and_runtime(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_build_metadata includes git commit hash and runtime details."""
 
         class DummyCompletedProcess:

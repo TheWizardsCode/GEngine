@@ -164,7 +164,7 @@ pull requests and issues instead of manually constructing URLs:
    - Optionally delete the remote and local feature branches once fully
      merged and no longer needed.
 
-   - When merging, ensure that any issues referenced by the PR are closed by including `FIXES: <issue-number>` (or `Fixes #<issue-number>`) in the merge commit message. If multiple issues are referenced, include each one. Example: `git merge --no-ff feature/<short-descriptor> -m "Merge branch 'feature/<short-descriptor>' FIXES: 123"`.
+   - When merging, ensure that any issues referenced by the PR are closed by including `FIXES #<issue-number>` (in the merge commit message. If multiple issues are referenced, include each one. Example: `git merge --no-ff feature/<short-descriptor> -m "Merge branch 'feature/<short-descriptor>' FIXES #123"`.
 
 5. **Communicate status**
    - Summarize what was merged, from which branch, and any conflicts resolved.
@@ -174,7 +174,7 @@ pull requests and issues instead of manually constructing URLs:
 6. **Cleanup and verification (gated by user approval)**
    - After user confirmation, delete the local and remote feature branches.
    - Verify that the PR is marked as merged on GitHub.
-  - Mark associated issues as complete, referencing the PR. Ensure the merge commit message includes `FIXES: <issue-number>` for each related issue so that they are automatically closed when the PR is merged.
+  - Mark associated issues as complete, referencing the PR. Ensure the merge commit message includes `FIXES #<issue-number>` for each related issue so that they are automatically closed when the PR is merged.
 
 ## Pull Request Handling
 
@@ -211,7 +211,7 @@ When given a pull request URL (for example,
      - Push `main` to the remote.
    - If the merge is performed locally:
      - Ensure `main` is up to date.
-     - Merge the PR's source branch into `main` using the project's preferred strategy (e.g. `git merge --no-ff` for explicit merge commits). When merging, add `FIXES: <issue-number>` (or `Fixes #<issue-number>`) to the commit message for each related issue to ensure they are closed automatically.
+     - Merge the PR's source branch into `main` using the project's preferred strategy (e.g. `git merge --no-ff` for explicit merge commits). When merging, add `FIXES #<issue-number>` to the commit message for each related issue to ensure they are closed automatically.
      - Push `main` to the remote.
    - If the merge is performed via the Git hosting UI/API:
      - Recommend the appropriate merge strategy (merge commit, squash,
@@ -226,7 +226,7 @@ When given a pull request URL (for example,
 6. **Cleanup and verification (gated by user approval)**
    - After user confirmation, delete the local and remote feature branches.
    - Verify that the PR is marked as merged on GitHub.
-  - Mark associated issues as complete, referencing the PR. Ensure the merge commit message includes `FIXES: <issue-number>` for each related issue so that they are automatically closed when the PR is merged.
+  - Mark associated issues as complete, referencing the PR. Ensure the merge commit message includes `FIXES #<issue-number>` for each related issue so that they are automatically closed when the PR is merged.
 
 ## Pull Request Review Responsibilities
 
