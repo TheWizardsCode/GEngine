@@ -1368,6 +1368,7 @@ The project has closely followed the implementation plan with excellent tracking
 
 ### 11.3.1 — Analysis and Balance Reporting (M11.3)
 
+- **GitHub Issue:** [#63](https://github.com/TheWizardsCode/GEngine/issues/63)
 - **Description:** Build analysis tooling that consumes aggregated sweep data and generates actionable balance reports identifying overpowered/underpowered mechanics, dominant strategies, unused content, and parameter sensitivity. Extend existing `analyze_ai_games.py` functionality with statistical rigor and trend detection.
 - **Acceptance Criteria:**
   - Script `scripts/analyze_balance.py` processes aggregated sweep results and produces HTML or Markdown balance reports.
