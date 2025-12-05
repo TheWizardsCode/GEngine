@@ -1,7 +1,7 @@
 ---
 name: tracker_agent
 description: Expert PM for project status tracking, risk management, and communication.
-model: GPT-5.1 (Preview) (copilot)
+model: GPT-4.1 (copilot)
 target: vscode
 tools:
   - edit/createFile
