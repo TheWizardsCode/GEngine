@@ -133,21 +133,23 @@ pull requests and issues instead of manually constructing URLs:
     structure, and Git workflow expectations before modifying branches
     or history.
 1. **Set up the environment**
-  - Before running or modifying code or tests, set up the environment as described in the README (e.g., `uv pip install -e .[dev]`).
+   - Before running or modifying code or tests, set up the
+     environment as described in the README (for example,
+     `uv pip install -e .[dev]`).
 
-1. **Assess state**
+2. **Assess state**
    - Use `git status`, `git branch`, and `git log --oneline --graph --decorate
      --all` to understand the current branch layout.
    - Confirm whether there are uncommitted changes and whether the user wants
      them stashed, committed, or discarded.
 
-2. **Create or update feature branch**
+3. **Create or update feature branch**
    - If starting new work, create `feature/<short-descriptor>` from updated
      `main`.
    - If continuing work, ensure the feature branch is up to date with `main`
      using `merge` or `rebase` according to project policy.
 
-3. **Prepare for merge**
+4. **Prepare for merge**
    - Ensure all relevant work is committed on the feature branch with clear
      messages.
    - Run fast local checks (linting, a smoke subset of tests) to catch
@@ -158,23 +160,29 @@ pull requests and issues instead of manually constructing URLs:
      complete test run has passed or any known, explicitly accepted
      failures are documented.
 
-4. **Merge and push**
-     prefers explicit merge commits) or fast-forward as per convention.
+5. **Merge and push**
+   - Merge the feature branch into `main` using the project's preferred
+     strategy (for example, `git merge --no-ff` if the project prefers
+     explicit merge commits) or fast-forward as per convention.
+   - When merging, ensure that any issues referenced by the PR are closed by
+     including `FIXES #<issue-number>` in the merge commit message. If
+     multiple issues are referenced, include each one. Example:
+     `git merge --no-ff feature/<short-descriptor> -m "Merge branch 'feature/<short-descriptor>' FIXES #123"`.
    - Push `main` to the remote.
    - Optionally delete the remote and local feature branches once fully
      merged and no longer needed.
 
-   - When merging, ensure that any issues referenced by the PR are closed by including `FIXES #<issue-number>` (in the merge commit message. If multiple issues are referenced, include each one. Example: `git merge --no-ff feature/<short-descriptor> -m "Merge branch 'feature/<short-descriptor>' FIXES #123"`.
+6. **Communicate status**
+  - Summarize what was merged, from which branch, and any conflicts resolved.
+  - Suggest follow-up actions (e.g., tagging a release, notifying reviewers,
+    or triggering CI).
 
-5. **Communicate status**
-   - Summarize what was merged, from which branch, and any conflicts resolved.
-   - Suggest follow-up actions (e.g., tagging a release, notifying reviewers,
-     or triggering CI).
-
-6. **Cleanup and verification (gated by user approval)**
-   - After user confirmation, delete the local and remote feature branches.
-   - Verify that the PR is marked as merged on GitHub.
-  - Mark associated issues as complete, referencing the PR. Ensure the merge commit message includes `FIXES #<issue-number>` for each related issue so that they are automatically closed when the PR is merged.
+7. **Cleanup and verification (gated by user approval)**
+  - After user confirmation, delete the local and remote feature branches.
+  - Verify that the PR is marked as merged on GitHub.
+  - Mark associated issues as complete, referencing the PR. Ensure the merge
+    commit message includes `FIXES #<issue-number>` for each related issue so
+    that they are automatically closed when the PR is merged.
 
 ## Pull Request Handling
 
@@ -283,6 +291,21 @@ and implementation plan:
     without explicit user approval.
   - Discard local changes without clear confirmation from the user.
   - Bypass tests or CI checks when the project requires them for merges.
+
+
+## Logging and Reflection
+
+- At the end of each workflow, append a new entry to `gamedev-agent-thoughts.txt` in the project root.
+- Each entry must include:
+  - The agent name
+  - A timestamp (YYYY-MM-DD HH:MM)
+  - A summary of actions, decisions, or insights
+- Never overwrite previous entries; always append.
+- Example entry format:
+  ```
+  ## [AGENT_NAME] — 2025-12-06 14:23
+  - Summarized actions, decisions, or insights here.
+  ```
 
 ## Coordination With Other Agents
 
