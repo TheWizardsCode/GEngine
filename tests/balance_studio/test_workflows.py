@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-import yaml
 
 from gengine.balance_studio.workflows import (
     CompareConfigsConfig,
@@ -114,7 +113,6 @@ def test_run_config_comparison_success(mock_subprocess_run, mock_datetime, tmp_p
     mock_subprocess_run.return_value.returncode = 0
 
     # Create dummy summary files for both sweeps
-    timestamp = "20230101_120000"
     
     def side_effect(*args, **kwargs):
         # Determine if this is sweep A or B based on args
@@ -165,12 +163,17 @@ def test_run_tuning_test(mock_subprocess_run, mock_datetime, tmp_path):
     )
 
     # Mock yaml loading/dumping
-    with patch("yaml.safe_load") as mock_safe_load,          patch("yaml.safe_dump") as mock_safe_dump:
+    with (
+        patch("yaml.safe_load") as mock_safe_load,
+        patch("yaml.safe_dump"),
+    ):
         
         mock_safe_load.return_value = {"simulation": {"tick_limit": 100}}
         
         # Mock run_config_comparison to avoid complex subprocess mocking again
-        with patch("gengine.balance_studio.workflows.run_config_comparison") as mock_compare:
+        with patch(
+            "gengine.balance_studio.workflows.run_config_comparison"
+        ) as mock_compare:
             mock_compare.return_value = WorkflowResult(
                 workflow_name="compare_configs",
                 success=True,
@@ -180,7 +183,7 @@ def test_run_tuning_test(mock_subprocess_run, mock_datetime, tmp_path):
             )
             
             # We also need to mock file operations for base config
-            with patch("builtins.open", create=True) as mock_open:
+            with patch("builtins.open", create=True):
                 # Setup mock for file existence check
                 with patch("pathlib.Path.exists") as mock_exists:
                     mock_exists.return_value = True
@@ -244,7 +247,8 @@ def test_list_historical_reports(tmp_path):
     reports = list_historical_reports(reports_dir=reports_dir)
     
     assert len(reports) == 2
-    # Should be sorted reverse by path (which usually correlates with time if named correctly)
+    # Should be sorted reverse by path
+    # (which usually correlates with time if named correctly)
     # But glob order depends on OS.
     # Let's just check content.
     timestamps = [r["timestamp"] for r in reports]
@@ -266,7 +270,9 @@ def test_get_workflow_menu():
     assert "view_reports" in ids
 
 
-def test_run_exploratory_sweep_with_overlay(mock_subprocess_run, mock_datetime, tmp_path):
+def test_run_exploratory_sweep_with_overlay(
+    mock_subprocess_run, mock_datetime, tmp_path
+):
     """Test exploratory sweep with overlay."""
     from gengine.balance_studio.overlays import ConfigOverlay
     

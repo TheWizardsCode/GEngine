@@ -1137,47 +1137,47 @@ RECOMMENDATIONS
 
 When tuning game balance, follow this workflow:
 
-1. **Run baseline tournament**: Capture initial metrics with `--seed 42` for
-   reproducibility.
+**Run baseline tournament**: Capture initial metrics with `--seed 42` for
+reproducibility.
 
-   ```bash
-   uv run python scripts/run_ai_tournament.py \
-       --games 100 --output build/baseline.json
-   ```
+```bash
+uv run python scripts/run_ai_tournament.py \
+    --games 100 --output build/baseline.json
+```
 
-2. **Analyze baseline**: Review strategy balance, action distribution, and seed
-   coverage.
+**Analyze baseline**: Review strategy balance, action distribution, and seed
+coverage.
 
-   ```bash
-   uv run python scripts/analyze_ai_games.py \
-       --input build/baseline.json --world default
-   ```
+```bash
+uv run python scripts/analyze_ai_games.py \
+    --input build/baseline.json --world default
+```
 
-3. **Adjust parameters**: Based on analysis findings, modify config values in
-   `content/config/simulation.yml`:
+**Adjust parameters**: Based on analysis findings, modify config values in
+`content/config/simulation.yml`:
 
-   - Strategy thresholds affect AI decision-making
-   - Economy settings influence resource pressure
-   - Director pacing controls narrative density
+- Strategy thresholds affect AI decision-making
+- Economy settings influence resource pressure
+- Director pacing controls narrative density
 
-4. **Run comparison tournament**: Use the same seed for deterministic comparison.
+**Run comparison tournament**: Use the same seed for deterministic comparison.
 
-   ```bash
-   uv run python scripts/run_ai_tournament.py \
-       --games 100 --output build/tuned.json --seed 42
-   ```
+```bash
+uv run python scripts/run_ai_tournament.py \
+    --games 100 --output build/tuned.json --seed 42
+```
 
-5. **Compare results**: Diff the analysis reports to validate improvements.
+**Compare results**: Diff the analysis reports to validate improvements.
 
-   ```bash
-   # Compare win rates between runs
-   python scripts/analyze_ai_games.py --input build/baseline.json --json > /tmp/a.json
-   python scripts/analyze_ai_games.py --input build/tuned.json --json > /tmp/b.json
-   diff /tmp/a.json /tmp/b.json
-   ```
+```bash
+# Compare win rates between runs
+python scripts/analyze_ai_games.py --input build/baseline.json --json > /tmp/a.json
+python scripts/analyze_ai_games.py --input build/tuned.json --json > /tmp/b.json
+diff /tmp/a.json /tmp/b.json
+```
 
-6. **Iterate**: Repeat steps 3-5 until balance metrics fall within acceptable
-   ranges.
+**Iterate**: Repeat steps 3-5 until balance metrics fall within acceptable
+  ranges.
 
 ### CI Integration
 

@@ -496,14 +496,20 @@ def mock_cli_workflows():
          patch(f"{module_name}.write_html_report") as mock_write:
         
         # Setup default success returns
-        mock_sweep.return_value = MagicMock(success=True, message="Success", output_path="out", errors=[])
+        mock_sweep.return_value = MagicMock(
+            success=True, message="Success", output_path="out", errors=[]
+        )
         
         # Fix for JSON serialization: to_dict should return a real dict
-        compare_result = MagicMock(success=True, message="Success", output_path="out", data={}, errors=[])
+        compare_result = MagicMock(
+            success=True, message="Success", output_path="out", data={}, errors=[]
+        )
         compare_result.to_dict.return_value = {"success": True, "message": "Success"}
         mock_compare.return_value = compare_result
         
-        mock_tuning.return_value = MagicMock(success=True, message="Success", output_path="out", data={}, errors=[])
+        mock_tuning.return_value = MagicMock(
+            success=True, message="Success", output_path="out", data={}, errors=[]
+        )
         mock_list.return_value = []
         mock_view.return_value = MagicMock(success=True, message="Success", data={})
         
@@ -532,7 +538,8 @@ class TestInteractiveMode:
 
     def test_interactive_mode_sweep(self, mock_cli_workflows):
         """Test selecting sweep workflow."""
-        with patch("builtins.input", side_effect=["1", "", "", "", ""]): # Select 1, then defaults for sweep
+        # Select 1, then defaults for sweep
+        with patch("builtins.input", side_effect=["1", "", "", "", ""]):
             assert _cli.interactive_mode() == 0
             mock_cli_workflows["sweep"].assert_called_once()
 
@@ -548,7 +555,9 @@ class TestInteractiveMode:
 
     def test_interactive_sweep_custom(self, mock_cli_workflows):
         """Test interactive sweep with custom inputs."""
-        with patch("builtins.input", side_effect=["strat1, strat2", "hard", "1, 2", "50"]):
+        with patch(
+            "builtins.input", side_effect=["strat1, strat2", "hard", "1, 2", "50"]
+        ):
             assert _cli.interactive_sweep() == 0
             args = mock_cli_workflows["sweep"].call_args[0][0]
             assert args.strategies == ["strat1", "strat2"]
@@ -558,7 +567,9 @@ class TestInteractiveMode:
 
     def test_interactive_compare_success(self, mock_cli_workflows):
         """Test interactive compare workflow."""
-        with patch("builtins.input", side_effect=["path/a", "Name A", "path/b", "Name B"]):
+        with patch(
+            "builtins.input", side_effect=["path/a", "Name A", "path/b", "Name B"]
+        ):
             assert _cli.interactive_compare() == 0
             args = mock_cli_workflows["compare"].call_args[0][0]
             assert str(args.config_a_path) == "path/a"
@@ -573,7 +584,10 @@ class TestInteractiveMode:
 
     def test_interactive_tuning_success(self, mock_cli_workflows):
         """Test interactive tuning workflow."""
-        with patch("builtins.input", side_effect=["test_exp", "economy.regen=1.5", "invalid", "flag=true", ""]):
+        with patch(
+            "builtins.input",
+            side_effect=["test_exp", "economy.regen=1.5", "invalid", "flag=true", ""],
+        ):
             assert _cli.interactive_tuning() == 0
             args = mock_cli_workflows["tuning"].call_args[0][0]
             assert args.name == "test_exp"
@@ -592,9 +606,17 @@ class TestInteractiveMode:
     def test_interactive_view_reports_select(self, mock_cli_workflows):
         """Test selecting a report to view."""
         mock_cli_workflows["list"].return_value = [
-            {"timestamp": "2023", "completed_sweeps": 1, "total_sweeps": 1, "strategies": ["s"], "path": "p"}
+            {
+                "timestamp": "2023",
+                "completed_sweeps": 1,
+                "total_sweeps": 1,
+                "strategies": ["s"],
+                "path": "p",
+            }
         ]
-        mock_cli_workflows["view"].return_value.data = {"strategy_stats": {"s": {"avg_stability": 0.5}}}
+        mock_cli_workflows["view"].return_value.data = {
+            "strategy_stats": {"s": {"avg_stability": 0.5}}
+        }
         
         with patch("builtins.input", side_effect=["1"]):
             assert _cli.interactive_view_reports() == 0
@@ -602,7 +624,14 @@ class TestInteractiveMode:
 
     def test_interactive_view_reports_quit(self, mock_cli_workflows):
         """Test quitting report viewer."""
-        mock_cli_workflows["list"].return_value = [{"timestamp": "2023", "completed_sweeps": 1, "total_sweeps": 1, "strategies": ["s"]}]
+        mock_cli_workflows["list"].return_value = [
+            {
+                "timestamp": "2023",
+                "completed_sweeps": 1,
+                "total_sweeps": 1,
+                "strategies": ["s"],
+            }
+        ]
         with patch("builtins.input", side_effect=["q"]):
             assert _cli.interactive_view_reports() == 0
 
@@ -666,7 +695,15 @@ class TestCommandHandlers:
         args.limit = 5
         args.json = False
         
-        mock_cli_workflows["list"].return_value = [{"timestamp": "t", "completed_sweeps": 1, "total_sweeps": 1, "strategies": ["s"], "path": "p"}]
+        mock_cli_workflows["list"].return_value = [
+            {
+                "timestamp": "t",
+                "completed_sweeps": 1,
+                "total_sweeps": 1,
+                "strategies": ["s"],
+                "path": "p",
+            }
+        ]
         
         assert _cli.cmd_view_reports(args) == 0
         mock_cli_workflows["list"].assert_called_once()
