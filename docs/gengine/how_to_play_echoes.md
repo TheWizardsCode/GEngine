@@ -3,7 +3,7 @@
 
 This guide explains how to run the current Echoes of Emergence prototype, interpret its outputs, and iterate on the simulation.
 
-## 1. Launching the Shell
+## Launching the Shell
 
 The CLI shell is the primary way to interact with the simulation. To launch the shell, use:
 
@@ -29,52 +29,25 @@ The CLI shell is the primary way to interact with the simulation. To launch the 
 
 On startup the shell prints a world summary and shows the prompt `(echoes)`. Type commands listed in the next section to explore the world, advance time, and persist state.
 
-### Remote Sessions via the Gateway Service
+## [DEV] Launching the Terminal UI (Dashboard)
 
+DEV CODE - This code is in development and may not work as expected.
 
-It is also possible to play the game remotely via a WebSocket gateway so remote testers can drive the CLI without SSH access. To launch the gateway and connect, use:
+Echoes of Emergence also includes a rich Terminal UI dashboard for visual simulation interaction. This UI provides a status bar, city map, event feed, context panel, and command bar, all rendered in the terminal.
 
-```bash
-./start.sh --gateway --script "summary;run 3;exit"
-```
-
-This uses the startup script to connect to the gateway service, ensuring environment setup and consistent invocation. For advanced options, pass additional arguments to `start.sh` as needed.
-
-Each connection provisions a dedicated `EchoesShell`, proxies commands to the
-simulation service configured via `ECHOES_GATEWAY_SERVICE_URL`, and logs
-focus/digest/history snapshots via the `gengine.echoes.gateway` logger whenever
-`summary`, `focus`, `history`, or `director` runs. The client prints the same
-ASCII output as the local shell and honors `--script` for CI-friendly runs.
-
-
-## 1a. Launching the Terminal UI (Dashboard)
-
-Echoes of Emergence now includes a rich Terminal UI dashboard for visual simulation interaction. This UI provides a status bar, city map, event feed, context panel, and command bar, all rendered in the terminal using the Rich library.
-
-
-### Environment Setup
-
-
-Before running the UI or any scripts, ensure your environment is set up. The `start.sh` script will handle environment setup and dependency installation automatically. Manual setup is only needed if you want to customize the environment or install additional packages.
-
----
-
-
-To launch the demo Terminal UI:
+To launch the Terminal UI:
 
 ```bash
 ./start.sh --ui
 ```
 
-This will open a dashboard-style interface with real-time simulation data. The script uses sample data, but you can adapt it for live simulation integration.
-
-For full details on the UI components, customization, and data formats, see the [Terminal UI README](../../src/gengine/echoes/cli/README.md).
-
-> **Tip:** The classic CLI shell (`echoes-shell`) remains available for command-driven play and scripting. The Terminal UI is ideal for visual monitoring and interactive play.
+> **Tip:** The classic CLI shell (`echoes-shell`) is ideal for command-driven play and scripting. The Terminal UI is ideal for visual monitoring and interactive play.
 
 ---
 
-## 2. Shell Commands
+## Shell Commands
+
+The `start.sh` script will accept a number of command line flags and arguments, as detailed below.
 
 | Command                       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -102,21 +75,28 @@ For full details on the UI components, customization, and data formats, see the 
 Command arguments are whitespace-separated; wrap file paths containing spaces in
 quotes. The shell ignores blank lines and repeats the prompt after each command.
 
-## 3. Simulation Concepts
+### [ALPHA] Remote Sessions via the Gateway Service
 
-The CLI now routes every command through the shared `SimEngine` abstraction or,
-when `--service-url` is provided, through the FastAPI simulation service using
-`SimServiceClient`. Either way the outputs you see are consistent with what
-remote clients receive.
+ALPHA CODE - This code is implemented and working, but has not been fully playtested
 
-Run `uv run python -m gengine.echoes.service.main` to host the service locally
-and call `/tick`, `/state`, and `/metrics` with `SimServiceClient` or
-`curl`. Phase 6's `echoes-gateway-service` sits on top of the same API,
-forwarding every WebSocket command through `SimServiceClient`. Use
-`GET /state?detail=post-mortem` (or the CLI `postmortem` command) whenever you
-need the deterministic recap JSON that also appears in headless telemetry.
+It is also possible to play the game remotely via a WebSocket gateway so remote testers can drive the CLI without SSH access. To launch the gateway and connect, use:
 
-### Safeguards and Level of Detail
+TODO: '--gateway` does not exist
+```bash
+./start.sh --gateway --script "summary;run 3;exit"
+```
+
+This uses the startup script to connect to the gateway service, ensuring environment setup and consistent invocation. For advanced options, pass additional arguments to `start.sh` as needed.
+
+Each connection provisions a dedicated `EchoesShell`, proxies commands to the
+simulation service configured via `ECHOES_GATEWAY_SERVICE_URL`, and logs
+focus/digest/history snapshots via the `gengine.echoes.gateway` logger whenever
+`summary`, `focus`, `history`, or `director` runs. The client prints the same
+ASCII output as the local shell and honors `--script` for CI-friendly runs.
+
+## Simulation Concepts
+
+### Safeguards
 
 - The CLI clamps `run` commands to the value configured in
   `limits.cli_run_cap` (default 50). If you request more ticks you will see a
@@ -129,16 +109,30 @@ need the deterministic recap JSON that also appears in headless telemetry.
   and responds with HTTP 400 if a client exceeds it.
 - All limits live in `content/config/simulation.yml`. Override the config path
   with `ECHOES_CONFIG_ROOT` to inject environment-specific guardrails.
-- Level-of-Detail settings (`lod` block) adjust how aggressively the tick loop
-  drifts resources/modifiers. `balanced` dampens volatility compared to
-  `detailed`, while `coarse` applies heavy smoothing and caps the number of
-  per-tick events so long burns stay legible.
 - When `profiling.log_ticks` is enabled, `SimEngine` emits log entries such as
   `ticks=5 duration_ms=4.1 lod=balanced` via the `gengine.echoes.sim` logger so
   you can measure performance of scripted runs or headless drivers. The same
   profiling settings now populate a shared metadata block (tick ms p50/p95/max
   plus the last subsystem timings) that appears in the CLI summary, FastAPI
   `/metrics`, and headless telemetry JSON.
+
+### Level of Detail
+
+The Level-of-Detail (LOD) setting in Echoes of Emergence controls how aggressively the simulation's tick loop updates resources and modifiers, affecting the game's volatility and the clarity of event reporting.
+
+LOD determines the simulation's "smoothness" and the number of events processed per tick. It helps balance between detailed, volatile simulation (more granular, more events) and a smoother, more legible experience (fewer, aggregated events).
+
+Level-of-Detail is set using the `lod` block in the startup script.
+
+- `lod=detailed`: More volatile, less smoothing—useful for deep debugging or when you want to see every small change. Used for fine-tuning, debugging, or when you need to observe every system interaction.
+- `lod=balanced` (default): Dampens volatility, providing a middle ground. This is the default setting and is recommended for most play and analysis. Used for standard play, testing, and most analysis.
+- lod=`coarse`: Heavy smoothing, caps per-tick events—best for long runs or when you want to focus on big-picture trends without being overwhelmed by detail. Used for long-term simulations, regression testing, or when you want to reduce noise and focus on major trends.
+
+
+*Summary*
+
+LOD is a tuning knob for simulation granularity. The default is balanced, which offers a good mix of detail and stability for most use cases. Adjust it based on your need for detail versus clarity.
+
 
 ### Ticks and Reports
 
@@ -149,7 +143,6 @@ need the deterministic recap JSON that also appears in headless telemetry.
 - The tick report shows the tick number, global metrics, and notable events
   (e.g., "Industrial Tier pollution spike detected").
 - `summary` mirrors those metrics without advancing time and now includes both
-
   the `environment_impact` block (scarcity pressure, faction pollution deltas,
   diffusion state, average pollution, the latest extreme districts, the
   biodiversity snapshot with scarcity/recovery deltas, and the top diffusion
@@ -166,20 +159,20 @@ need the deterministic recap JSON that also appears in headless telemetry.
   A paired `director events` block highlights the seeds that actually fired
   (with stakes plus the first matching agent/faction) so you know who is on
   stage without replaying the tick log.
-- Agent AI (Phase 4, M4.1) now contributes narrative lines such as "Aria Volt
+- Agent AI contributes narrative lines such as "Aria Volt
   inspects Industrial Tier" or "Cassian Mire negotiates with Cartel of Mist";
   use these to understand how background characters are reacting to system
   pressures. The system ensures each tick includes at least one inspect or
   negotiate beat so the feed always surfaces a strategic highlight.
-- Faction AI (Phase 4, M4.2) injects slower, strategic beats—"Union of Flux
-  invests in Industrial Tier" or "Cartel of Mist undermines Union of Flux"—and
+- Faction AI injects slower, strategic beats—"Union of Flux
+  invests in Industrial Tier" or "Cartel of Mist undermines Union of Flux", and
   directly tweaks legitimacy, resources, and district modifiers so the macro
   picture evolves even without player input.
 - When legitimacy shifts are meaningful the shell prints a short "faction
   legitimacy" block showing the three largest deltas (signed) so you can track
   winners/losers at a glance. A `market -> energy:1.05, food:0.97, ...` line
   follows whenever the economy subsystem has published prices for the tick.
-- Focus-aware narration: the tick log now prints a "focus budget" line that
+- Focus-aware narration: the tick log prints a "focus budget" line that
   reports how many curated events went to the focus ring versus the global pool
   and how many additional beats were archived. The `focus` command exposes the
   current ring (center + neighbors) so you can retarget the curator before
@@ -237,7 +230,7 @@ need the deterministic recap JSON that also appears in headless telemetry.
 
 ### Environment Coupling
 
-- Scarcity signals now feed into the environment loop via `EnvironmentSystem`.
+- Scarcity signals feed into the environment loop via `EnvironmentSystem`.
   When the economy subsystem reports sustained shortages, the system applies a
   configurable pressure value that drifts district unrest/pollution and, by
   extension, global stability while also draining biodiversity if the pressure
@@ -374,7 +367,7 @@ need the deterministic recap JSON that also appears in headless telemetry.
   `primed`. `lifecycle_history_limit` controls how much history stays in CLI and
   telemetry outputs for after-action reviews.
 
-## 4. World and District Parameters
+## World and District Parameters
 
 The world YAML defines both global city metadata and per-district stats. The
 shell surfaces the same data so you can reason about how each parameter affects
@@ -429,7 +422,7 @@ Keeping these parameters consistent between YAML content and the shell output
 helps you detect data-entry mistakes quickly (e.g., mismatched IDs or runaway
 modifier values).
 
-## 5. Game Parameters
+## Game Parameters
 
 Each tracked parameter plays a specific role inside the tick loop. Use this
 section to understand what the number represents in gameplay terms and what can
@@ -528,7 +521,7 @@ move it during a tick.
 - **Tick influences:** Not yet used during ticks, but populating it in YAML
   keeps the data model ready for advanced rules.
 
-## 6. Saving, Loading, and Hot-Swapping Worlds
+## Saving, Loading, and Hot-Swapping Worlds
 
 - Use `save build/state.json` to capture the entire state at any tick.
 - Reload later with `load snapshot build/state.json`.
@@ -539,7 +532,7 @@ move it during a tick.
 Snapshots are plain JSON; you can inspect or version them to track different
 simulation branches.
 
-## 7. Tips for Playtesting
+## Tips for Playtesting
 
 1. Run short bursts (`run 5`) to monitor how modifiers drift, then longer runs
    (`run 50`) to see macro trends.
@@ -549,7 +542,7 @@ simulation branches.
 4. Keep an eye on the tick event logs—early warnings like "Civic tension is
    rising" indicate metrics approaching thresholds.
 
-## 8. Headless Regression Runs
+## Headless Regression Runs
 
 For longer burns or CI sweeps, use `scripts/run_headless_sim.py`:
 
@@ -575,19 +568,7 @@ uv run python scripts/run_headless_sim.py --world default --ticks 400 --lod coar
   CI-specific configuration folder (high-pressure, cushioned, and profiling-
   history presets now live under `content/config/sweeps/`).
 
-For reviewer sign-off on Phase 5 M5.4, rerun the canonical balanced capture
-after each regression sweep:
-
-```bash
-uv run python scripts/run_headless_sim.py --world default --ticks 200 --lod balanced --seed 42 --output build/feature-m5-4-post-mortem.json
-```
-
-Check the resulting `post_mortem` block with `jq '.post_mortem'
-build/feature-m5-4-post-mortem.json` (or diff two captures by piping both
-through `jq`) to confirm environment deltas, faction swings, director events,
-and story-seed recaps stayed deterministic without replaying ticks.
-
-## 9. Difficulty Presets and Tuning
+## Difficulty Presets and Tuning
 
 The simulation includes five difficulty presets that adjust resource regeneration,
 demand pressure, scarcity effects, and narrative pacing to create measurably
@@ -670,30 +651,122 @@ Each difficulty config adjusts several key parameters:
 
 ### Recommended Playtesting Workflow
 
-1. Run the tutorial preset to verify systems work as expected
-2. Progress through easy → normal to confirm intended challenge curve
-3. Run hard/brutal to stress-test failure cascades
-4. Use the analysis script to identify gaps in difficulty progression
-5. Adjust config values and re-run sweeps to validate changes
+#### Tutorial Validation
 
-## 10. What Comes Next
+Run the tutorial preset to verify systems work as expected.
+From the project root, run a short, forgiving sweep:
 
-The local shell now has three front-ends—direct in-process state, HTTP service
-mode, and the Phase 6 WebSocket gateway. Upcoming phases will:
+```bash
+  uv run python scripts/run_difficulty_sweeps.py \
+  --ticks 200 \
+  --seed 42 \
+  --preset tutorial \
+  --output-dir build
+```
 
-- Extend the gateway/UI layer with richer ASCII overlays (shared `summary`
-  tables, enhanced `map`/`director` panels) so remote sessions match the local
-  CLI presentation exactly.
-- Introduce deeper agent/faction/economy subsystems feeding the tick loop.
-- Layer an LLM intent service on top of the gateway so free-form text can be
-  parsed into structured actions before the simulation executes them.
+Inspect the resulting telemetry (for example `build/difficulty-tutorial-sweep.json`) with `jq` or your JSON viewer of choice to confirm:
+  - Stability remains high and does not crash toward 0.0
+  - Unrest/pollution stay low or quickly recover after spikes
+  - Anomalies count is 0 or very low.
 
-As those milestones land, this guide will expand with new sections covering
-service endpoints, intent schemas, and multi-service orchestration.
+#### Validate Normal Play Challenge Curves
 
-## 11. Player Progression System
+Progress through easy → normal to confirm intended challenge curve
+Run the sweep across multiple presets in one pass:
 
-The progression system (Phase 7, M7.1) tracks player growth across five skill
+```bash
+uv run python scripts/run_difficulty_sweeps.py \
+  --ticks 200 \
+  --seed 42 \
+  --preset tutorial --preset easy --preset normal \
+  --output-dir build
+```
+
+ Use the difficulty analysis helper to compare profiles:
+
+  ```bash
+  uv run python scripts/analyze_difficulty_profiles.py \
+    --telemetry-dir build
+  ```
+
+Verify that, moving from Tutorial → Easy → Normal:
+  - Average stability trends gently downward
+  - Unrest/pollution peaks grow slightly
+  - Anomalies (if any) appear later or remain rare.
+
+#### Validae Faiure Cascades
+
+Run hard/brutal to stress-test failure cascades
+Capture higher-pressure presets in the same way:
+
+```bash
+uv run python scripts/run_difficulty_sweeps.py \
+  --ticks 200 \
+  --seed 42 \
+  --preset hard --preset brutal \
+  --output-dir build
+```
+
+Re-run the analysis to compare all presets side by side:
+
+  ```bash
+  uv run python scripts/analyze_difficulty_profiles.py \
+    --telemetry-dir build
+  ```
+
+Confirm that Hard/Brutal:
+  - Show steeper stability declines and more frequent unrest/pollution spikes
+  - Still avoid instant collapse (e.g., stability usually stays above ~0.1–0.2)
+  - Produce readable, non-grindy timelines (events continue to evolve).
+
+#### Look for Gaps in Difficulty Progression
+Use the analysis script to identify gaps in difficulty progression
+  - Focus on where adjacent presets look too similar or jump too far apart.
+  - Re-run the difficulty analysis and filter for specific presets if needed:
+
+```bash
+uv run python scripts/analyze_difficulty_profiles.py \
+  --telemetry-dir build \
+  --preset tutorial --preset easy --preset normal \
+  --preset hard --preset brutal
+```
+
+Look for signals such as:
+  - Nearly identical stability/unrest curves between two presets (not differentiated enough)
+  - Brutal stabilizing too cleanly (not punishing enough)
+  - Tutorial showing frequent scarcity or legitimacy crashes (too harsh for onboarding).
+
+#### Make Adjustments and Re-Run
+
+Adjust config values and re-run sweeps to validate changes
+
+Edit the per-preset configs under `content/config/sweeps/difficulty-{preset}/simulation.yml`, focusing on:
+  - `economy.regen_scale`, `economy.demand_*_weight`, and `economy.shortage_threshold`
+  - `environment.scarcity_*_weight`, `environment.biodiversity_recovery_rate`
+  - `director.max_active_seeds`, `director.global_quiet_ticks`, and `director.seed_*_ticks`.
+
+After making changes, re-run the sweeps for only the affected presets:
+
+```bash
+uv run python scripts/run_difficulty_sweeps.py \
+  --ticks 200 \
+  --seed 42 \
+  --preset normal --preset hard --preset brutal \
+  --output-dir build
+```
+
+Re-run the difficulty profile analysis and compare the new curves against previous runs (using git diffs on JSON files or by storing timestamped outputs in `build/`):
+
+  ```bash
+  uv run python scripts/analyze_difficulty_profiles.py \
+    --telemetry-dir build
+  ```
+
+Iterate until the difficulty ladder shows a smooth but noticeable increase in pressure from Tutorial → Easy → Normal → Hard → Brutal.
+
+## Player Progression System
+
+The progression system tracks player growth across five skill
 domains, manages access tier unlocks, and monitors reputation with each faction.
 These metrics influence action success rates and unlock new gameplay options.
 
@@ -787,7 +860,7 @@ progression:
 Increase experience rates to speed up progression for tutorials or decrease them
 for more challenging campaigns.
 
-### Per-Agent Progression (M7.1.2)
+### Per-Agent Progression
 
 Beyond global player progression, each field agent can develop individual
 expertise, reliability, and stress levels. This adds a tactical layer where
@@ -873,7 +946,7 @@ Scenario testing across all difficulty presets confirmed that the ±10% bonus/
 penalty envelope does not destabilize game balance. Disable the flag if you want
 to remove the tactical layer around agent selection.
 
-## 12. Campaign Management
+## Campaign Management
 
 The CLI supports persistent campaigns with autosave functionality. Instead of
 manually saving/loading snapshots, you can create named campaigns that track
@@ -890,7 +963,7 @@ uv run echoes-shell --world default
 Or resume an existing campaign directly:
 
 ```bash
-uv run echoes-shell --campaign abc123
+.start.sh --campaign abc123
 ```
 
 ### Campaign Commands
@@ -967,7 +1040,7 @@ Post-mortem summary:
 The post-mortem is saved alongside the campaign data for later review. Ended
 campaigns can still be resumed if you want to continue playing.
 
-## 13. AI Tournaments & Balance Tooling
+## AI Tournaments & Balance Tooling
 
 The repository includes AI tournament infrastructure for automated balance
 testing and validation. Tournaments run multiple AI players with different
@@ -1064,47 +1137,47 @@ RECOMMENDATIONS
 
 When tuning game balance, follow this workflow:
 
-1. **Run baseline tournament**: Capture initial metrics with `--seed 42` for
-   reproducibility.
+**Run baseline tournament**: Capture initial metrics with `--seed 42` for
+reproducibility.
 
-   ```bash
-   uv run python scripts/run_ai_tournament.py \
-       --games 100 --output build/baseline.json
-   ```
+```bash
+uv run python scripts/run_ai_tournament.py \
+    --games 100 --output build/baseline.json
+```
 
-2. **Analyze baseline**: Review strategy balance, action distribution, and seed
-   coverage.
+**Analyze baseline**: Review strategy balance, action distribution, and seed
+coverage.
 
-   ```bash
-   uv run python scripts/analyze_ai_games.py \
-       --input build/baseline.json --world default
-   ```
+```bash
+uv run python scripts/analyze_ai_games.py \
+    --input build/baseline.json --world default
+```
 
-3. **Adjust parameters**: Based on analysis findings, modify config values in
-   `content/config/simulation.yml`:
+**Adjust parameters**: Based on analysis findings, modify config values in
+`content/config/simulation.yml`:
 
-   - Strategy thresholds affect AI decision-making
-   - Economy settings influence resource pressure
-   - Director pacing controls narrative density
+- Strategy thresholds affect AI decision-making
+- Economy settings influence resource pressure
+- Director pacing controls narrative density
 
-4. **Run comparison tournament**: Use the same seed for deterministic comparison.
+**Run comparison tournament**: Use the same seed for deterministic comparison.
 
-   ```bash
-   uv run python scripts/run_ai_tournament.py \
-       --games 100 --output build/tuned.json --seed 42
-   ```
+```bash
+uv run python scripts/run_ai_tournament.py \
+    --games 100 --output build/tuned.json --seed 42
+```
 
-5. **Compare results**: Diff the analysis reports to validate improvements.
+**Compare results**: Diff the analysis reports to validate improvements.
 
-   ```bash
-   # Compare win rates between runs
-   python scripts/analyze_ai_games.py --input build/baseline.json --json > /tmp/a.json
-   python scripts/analyze_ai_games.py --input build/tuned.json --json > /tmp/b.json
-   diff /tmp/a.json /tmp/b.json
-   ```
+```bash
+# Compare win rates between runs
+python scripts/analyze_ai_games.py --input build/baseline.json --json > /tmp/a.json
+python scripts/analyze_ai_games.py --input build/tuned.json --json > /tmp/b.json
+diff /tmp/a.json /tmp/b.json
+```
 
-6. **Iterate**: Repeat steps 3-5 until balance metrics fall within acceptable
-   ranges.
+**Iterate**: Repeat steps 3-5 until balance metrics fall within acceptable
+  ranges.
 
 ### CI Integration
 
