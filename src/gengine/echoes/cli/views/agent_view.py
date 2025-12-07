@@ -10,17 +10,29 @@ from rich.text import Text
 
 
 def _calculate_stress_level(agent_data: dict[str, Any]) -> tuple[str, str]:
-    """Calculate stress level and style from agent traits.
+    """Calculate stress level and style from agent progression or traits.
     
     Args:
-        agent_data: Agent data dictionary with traits
+        agent_data: Agent data dictionary with progression and/or traits
         
     Returns:
         Tuple of (stress_label, style)
     """
+    # First check if we have progression data with stress
+    progression = agent_data.get("progression")
+    if progression and "stress" in progression:
+        stress = progression["stress"]
+        if stress <= 0.2:
+            return "Calm", "green"
+        elif stress <= 0.5:
+            return "Focused", "yellow"
+        elif stress <= 0.75:
+            return "Strained", "orange"
+        else:
+            return "Burned Out", "red"
+    
+    # Fallback to calculating from traits (resolve)
     traits = agent_data.get("traits", {})
-    # Calculate stress from traits (empathy/cunning/resolve)
-    # Lower resolve = higher stress
     resolve = traits.get("resolve", 0.5)
     
     if resolve >= 0.7:
@@ -33,16 +45,21 @@ def _calculate_stress_level(agent_data: dict[str, Any]) -> tuple[str, str]:
         return "Stressed", "red"
 
 
-def _format_expertise_pips(expertise_value: float) -> Text:
+def _format_expertise_pips(expertise_value: float | int) -> Text:
     """Format expertise as filled/unfilled pips (●○).
     
     Args:
-        expertise_value: Expertise value (0.0-1.0)
+        expertise_value: Expertise value (0.0-1.0 float or 0-5 int)
         
     Returns:
         Rich Text with colored pips
     """
-    filled = int(expertise_value * 5)
+    # Handle both float (0.0-1.0) and int (0-5) values
+    if isinstance(expertise_value, float):
+        filled = int(expertise_value * 5)
+    else:
+        filled = min(5, max(0, int(expertise_value)))
+    
     pips = "●" * filled + "○" * (5 - filled)
     
     if filled >= 4:
@@ -94,7 +111,9 @@ def _get_agent_status(agent_data: dict[str, Any], tick: int) -> tuple[str, str]:
     return "Available", "green"
 
 
-def render_agent_roster(agents_data: list[dict[str, Any]], tick: int = 0) -> Panel:
+def render_agent_roster(
+    agents_data: list[dict[str, Any]], tick: int = 0, selected_index: int | None = None
+) -> Panel:
     """Render the agent roster view.
     
     Args:
@@ -105,7 +124,9 @@ def render_agent_roster(agents_data: list[dict[str, Any]], tick: int = 0) -> Pan
             - traits: Dict of trait values
             - faction_id: Optional faction affiliation
             - notes: Optional notes
+            - progression: Optional AgentProgressionState data
         tick: Current simulation tick
+        selected_index: Index of currently selected agent (for keyboard navigation)
         
     Returns:
         Rich Panel with agent roster table
@@ -118,36 +139,68 @@ def render_agent_roster(agents_data: list[dict[str, Any]], tick: int = 0) -> Pan
         )
     
     table = Table(show_header=True, header_style="bold cyan", expand=True)
-    table.add_column("Agent", width=18)
-    table.add_column("Role", width=14)
+    table.add_column("Agent", width=20)
+    table.add_column("Role", width=16)
     table.add_column("Expertise", justify="center", width=10)
-    table.add_column("Stress", width=10)
-    table.add_column("Status", width=12)
+    table.add_column("Reliability", justify="center", width=10)
+    table.add_column("Stress", width=12)
+    table.add_column("Missions", justify="right", width=10)
     
-    for agent in agents_data:
+    for idx, agent in enumerate(agents_data):
         name = agent.get("name", "Unknown")
-        role = agent.get("role", "Operative")
         
-        # Calculate expertise from highest trait
-        traits = agent.get("traits", {})
-        expertise = max(traits.values()) if traits else 0.5
+        # Get progression data if available
+        progression = agent.get("progression", {})
+        role = progression.get("role", agent.get("role", "Operative"))
+        
+        # Calculate expertise from progression or highest trait
+        if progression and "expertise" in progression:
+            # Get highest expertise from progression
+            expertise_dict = progression.get("expertise", {})
+            if expertise_dict:
+                expertise = max(expertise_dict.values())
+            else:
+                expertise = 0
+        else:
+            # Fallback to calculating from traits
+            traits = agent.get("traits", {})
+            expertise = int(max(traits.values()) * 5) if traits else 0
         expertise_pips = _format_expertise_pips(expertise)
         
-        # Get stress and status
+        # Get reliability from progression or calculate from traits
+        if progression and "reliability" in progression:
+            reliability = progression["reliability"]
+        else:
+            # Default to 0.5 if no progression data
+            reliability = 0.5
+        reliability_text = Text(f"{reliability:.1%}", style="dim")
+        
+        # Get stress and mission count
         stress_label, stress_style = _calculate_stress_level(agent)
+        missions = progression.get("missions_completed", 0)
+        missions_text = Text(str(missions), style="cyan" if missions > 0 else "dim")
+        
+        # Get status
         status_label, status_style = _get_agent_status(agent, tick)
         
+        # Apply selection highlight
+        name_style = "bold reverse" if idx == selected_index else "bold"
+        
         table.add_row(
-            Text(name, style="bold"),
+            Text(name, style=name_style),
             Text(role, style="dim"),
             expertise_pips,
+            reliability_text,
             Text(stress_label, style=stress_style),
-            Text(status_label, style=status_style),
+            missions_text,
         )
+    
+    # Add keyboard hints to title
+    nav_hint = " [dim](↑↓ to navigate, Enter to select)[/dim]" if agents_data else ""
     
     return Panel(
         table,
-        title=f"[bold]Agent Roster[/bold] ({len(agents_data)} agents)",
+        title=f"[bold]Agent Roster[/bold] ({len(agents_data)} agents){nav_hint}",
         border_style="cyan",
     )
 
@@ -156,14 +209,15 @@ def render_agent_detail(agent_data: dict[str, Any], tick: int = 0) -> Panel:
     """Render detailed view of a selected agent.
     
     Args:
-        agent_data: Agent data dictionary
+        agent_data: Agent data dictionary with progression info
         tick: Current simulation tick
         
     Returns:
         Rich Panel with agent details
     """
     name = agent_data.get("name", "Unknown")
-    role = agent_data.get("role", "Operative")
+    progression = agent_data.get("progression", {})
+    role = progression.get("role", agent_data.get("role", "Operative"))
     traits = agent_data.get("traits", {})
     faction_id = agent_data.get("faction_id")
     home_district = agent_data.get("home_district")
@@ -182,15 +236,41 @@ def render_agent_detail(agent_data: dict[str, Any], tick: int = 0) -> Panel:
     table.add_row("Status:", Text(status_label, style=status_style))
     table.add_row("Stress:", Text(stress_label, style=stress_style))
     
+    # Add progression metrics if available
+    if progression:
+        if "reliability" in progression:
+            reliability = progression["reliability"]
+            table.add_row("Reliability:", Text(f"{reliability:.1%}", style="cyan"))
+        
+        if "missions_completed" in progression:
+            completed = progression.get("missions_completed", 0)
+            failed = progression.get("missions_failed", 0)
+            total = completed + failed
+            success_rate = (completed / total * 100) if total > 0 else 0
+            missions_text = (
+                f"{completed} completed, {failed} failed "
+                f"({success_rate:.0f}% success)"
+            )
+            table.add_row("Missions:", Text(missions_text, style="cyan"))
+    
     if faction_id:
         table.add_row("Faction:", Text(faction_id, style="cyan"))
     
     if home_district:
         table.add_row("Home:", Text(home_district, style="yellow"))
     
-    # Traits section
-    if traits:
-        table.add_row("", "")
+    # Traits/Expertise section
+    table.add_row("", "")
+    if progression and "expertise" in progression:
+        # Show expertise from progression
+        expertise_dict = progression.get("expertise", {})
+        if expertise_dict:
+            table.add_row("[bold]Expertise:[/bold]", "")
+            for domain, pips in sorted(expertise_dict.items()):
+                pips_display = _format_expertise_pips(pips)
+                table.add_row(f"  {domain.capitalize()}:", pips_display)
+    elif traits:
+        # Fallback to showing traits
         table.add_row("[bold]Traits:[/bold]", "")
         for trait_name, trait_value in sorted(traits.items()):
             pips = _format_expertise_pips(trait_value)
@@ -216,13 +296,18 @@ def prepare_agent_roster_data(game_state: dict[str, Any]) -> list[dict[str, Any]
         game_state: Full game state dictionary
         
     Returns:
-        List of agent data dictionaries
+        List of agent data dictionaries with progression info
     """
     agents = game_state.get("agents", {})
+    agent_progression = game_state.get("agent_progression", {})
     
     # Convert agents dict to list and sort by name
     agent_list = []
     for agent_id, agent in agents.items():
+        # Get progression data if available
+        prog = agent_progression.get(agent_id)
+        prog_data = prog.summary() if hasattr(prog, "summary") else prog if prog else {}
+        
         agent_data = {
             "id": agent_id,
             "name": agent.get("name", agent_id),
@@ -231,6 +316,7 @@ def prepare_agent_roster_data(game_state: dict[str, Any]) -> list[dict[str, Any]
             "faction_id": agent.get("faction_id"),
             "home_district": agent.get("home_district"),
             "notes": agent.get("notes"),
+            "progression": prog_data,
         }
         agent_list.append(agent_data)
     

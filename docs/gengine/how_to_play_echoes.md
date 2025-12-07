@@ -43,6 +43,18 @@ To launch the Terminal UI:
 
 > **Tip:** The classic CLI shell (`echoes-shell`) is ideal for command-driven play and scripting. The Terminal UI is ideal for visual monitoring and interactive play.
 
+### Agent Roster Panel
+
+The Terminal UI now includes an **Agent Roster Panel** for interactive agent management:
+
+- **Live agent roster:** View all agents and their current stats in real time
+- **Keyboard navigation:** Use `↑`/`↓` to select agents, `Enter` for detail view, and `Escape` to close
+- **Detail view:** See missions, reliability, expertise, and stress levels for each agent
+- **Selection highlighting:** Easily track which agent is selected
+- **Automatic updates:** Panel refreshes as simulation state changes
+
+See [Agent Roster Panel & Management UI](agent_roster_panel.md) for full details and usage examples.
+
 ---
 
 ## Shell Commands
