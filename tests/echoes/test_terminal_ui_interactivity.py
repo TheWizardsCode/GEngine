@@ -256,7 +256,7 @@ class TestUIEngineIntegration:
             # Set focus via backend (simulating UI action)
             real_backend.set_focus(district_id)
 
-            # Verify focus is in metadata - need to check focus_state not focus
+            # Verify focus is stored in metadata under 'focus_state' key
             focus_data = state.metadata.get("focus_state", {})
             assert focus_data.get("district_id") == district_id
 

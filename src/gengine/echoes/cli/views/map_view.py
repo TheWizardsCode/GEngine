@@ -40,6 +40,7 @@ def prepare_map_view_data(
                 "pollution": district.modifiers.pollution,
                 "prosperity": district.modifiers.prosperity,
                 "security": district.modifiers.security,
+                # Delta attributes are computed/temporary, not in District model
                 "unrest_delta": getattr(district, "unrest_delta", 0.0),
                 "pollution_delta": getattr(district, "pollution_delta", 0.0),
             },
