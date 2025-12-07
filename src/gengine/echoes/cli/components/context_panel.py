@@ -8,6 +8,9 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+# Constants
+SHORTAGE_THRESHOLD = 0.5
+
 
 def _render_modifier_bar(name: str, value: float, delta: float = 0.0) -> Text:
     """Render a modifier with a progress bar and trend indicator.
@@ -24,13 +27,28 @@ def _render_modifier_bar(name: str, value: float, delta: float = 0.0) -> Text:
     filled = int(value * 8)
     bar = "█" * filled + "░" * (8 - filled)
 
-    # Determine color
-    if value >= 0.6:
-        color = "red"
-    elif value >= 0.3:
-        color = "yellow"
+    # Determine color based on modifier type
+    # Positive modifiers (prosperity, security): high = good (green)
+    # Negative modifiers (unrest, pollution): high = bad (red)
+    positive_modifiers = {'prosperity', 'security', 'growth', 'stability'}
+    is_positive = any(pos in name.lower() for pos in positive_modifiers)
+    
+    if is_positive:
+        # Inverted colors for positive modifiers
+        if value >= 0.6:
+            color = "green"
+        elif value >= 0.3:
+            color = "yellow"
+        else:
+            color = "red"
     else:
-        color = "green"
+        # Standard colors for negative modifiers
+        if value >= 0.6:
+            color = "red"
+        elif value >= 0.3:
+            color = "yellow"
+        else:
+            color = "green"
 
     # Determine trend
     if delta > 0.01:
@@ -118,7 +136,7 @@ def _render_district_context(district: dict[str, Any]) -> Panel:
         for resource, data in resources.items():
             current = data.get("current", 0)
             capacity = data.get("capacity", 0)
-            if current < capacity * 0.5:
+            if current < capacity * SHORTAGE_THRESHOLD:
                 style = "red"
                 suffix = " (shortage!)"
             else:

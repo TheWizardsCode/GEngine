@@ -48,18 +48,17 @@ def _classify_event_severity(event: dict[str, Any]) -> str:
     if "story" in event_type or "seed" in description:
         return "story"
 
-    # Economy events
-    if "price" in description or "market" in description or "shortage" in description:
-        return "economy"
-
-    # Critical events
+    # Critical events (check first, before economy)
     if (
         "crisis" in description
         or "critical" in description
-        or "shortage" in description
-        and "3" in description
+        or ("shortage" in description and "3" in description)
     ):
         return "critical"
+
+    # Economy events (after critical to avoid shortage overlap)
+    if "price" in description or "market" in description or "shortage" in description:
+        return "economy"
 
     # Warning events
     if (
