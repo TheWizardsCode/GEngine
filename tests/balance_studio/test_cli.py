@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -39,10 +37,16 @@ def test_main_success(mock_script_path):
             # specifically when resolving the script path
             with patch("gengine.balance_studio.cli.Path") as mock_path_cls:
                 # Configure the mock path to point to our temp script
-                # The logic in cli.py is: Path(__file__).resolve().parents[3] / "scripts"
+                # The logic in cli.py is:
+                # Path(__file__).resolve().parents[3] / "scripts"
                 # We'll just mock the final result of that chain
                 mock_resolved_path = MagicMock()
-                mock_resolved_path.parents = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
+                mock_resolved_path.parents = [
+                    MagicMock(),
+                    MagicMock(),
+                    MagicMock(),
+                    MagicMock(),
+                ]
                 # The 4th parent (index 3) is the root
                 mock_root = mock_resolved_path.parents[3]
                 mock_root.__truediv__.return_value = mock_script_path.parent
@@ -72,4 +76,7 @@ def test_main_script_not_found():
 
             assert result == 1
             mock_stderr.write.assert_called_once()
-            assert "Failed to load Balance Studio script" in mock_stderr.write.call_args[0][0]
+            assert (
+                "Failed to load Balance Studio script"
+                in mock_stderr.write.call_args[0][0]
+            )

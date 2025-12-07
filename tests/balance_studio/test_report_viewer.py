@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -40,15 +38,23 @@ def sample_data():
         "sweeps": [
             {
                 "sweep_id": "1",
-                "parameters": {"strategy": "balanced", "difficulty": "normal", "seed": 42},
+                "parameters": {
+                    "strategy": "balanced",
+                    "difficulty": "normal",
+                    "seed": 42,
+                },
                 "results": {"final_stability": 0.8, "actions_taken": 10},
             },
             {
                 "sweep_id": "2",
-                "parameters": {"strategy": "aggressive", "difficulty": "hard", "seed": 123},
+                "parameters": {
+                    "strategy": "aggressive",
+                    "difficulty": "hard",
+                    "seed": 123,
+                },
                 "results": {"final_stability": 0.2, "actions_taken": 20},
-                "error": "Some error"
-            }
+                "error": "Some error",
+            },
         ]
     }
 
