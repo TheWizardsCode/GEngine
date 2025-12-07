@@ -720,3 +720,6 @@ Created 1 new component and enhanced 1 existing view module:
 - Add visual indicators for agent availability/assignment status
 - Document new UI commands in how_to_play_echoes.md
 
+## [tracker_agent] — 2025-12-07 23:00
+- Updated .pm/tracker.md: Marked Agent Roster Panel (12.2.2) as complete, summarized merge, and logged branch cleanup. All management UI features and docs are now in main.
+
