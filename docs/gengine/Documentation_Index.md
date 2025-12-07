@@ -1,6 +1,6 @@
 # Documentation Index
 
-**Last Updated:** 2025-12-04
+**Last Updated:** 2025-12-07
 
 This index provides an overview of all major documentation files in the `docs/gengine/` directory. Each entry includes the purpose and coverage of the document, with direct links for easy navigation.
 
@@ -37,6 +37,18 @@ Guide for authoring, validating, and deploying content for Echoes of Emergence.
 - Directory structure and content types
 - World definitions and story seeds
 - YAML configuration examples
+
+---
+
+## [Agent Roster Panel & Management UI](./gengine/agent_roster_panel.md)
+**Purpose:**
+Documentation for the interactive Agent Roster Panel in the Terminal UI, including keyboard navigation, real-time updates, and agent detail view.
+**Coverage:**
+- Accessing the panel
+- Keyboard shortcuts
+- Agent stats and detail view
+- Example usage
+- Test coverage
 
 ---
 

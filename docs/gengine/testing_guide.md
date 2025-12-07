@@ -133,6 +133,7 @@ Indicative files:
   - `test_display.py`
   - `test_explanations.py`
   - `test_post_mortem.py`
+  - `test_management_ui.py` (Agent Roster Panel, keyboard navigation, real-time updates, rendering, boundary conditions, detail view)
 
 Use fixtures from `tests/echoes/conftest.py` to:
 
