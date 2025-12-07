@@ -651,7 +651,6 @@ def test_agent_roster_panel_keyboard_selection():
     """Test agent roster panel keyboard navigation and selection."""
     from gengine.echoes.cli.components.agent_roster_panel import (
         AgentRosterPanel,
-        AgentRosterState,
     )
     
     # Create panel with sample agents
@@ -818,8 +817,9 @@ def test_agent_roster_state_boundary_conditions():
 
 def test_agent_roster_panel_detail_view():
     """Test agent roster panel shows detail view when toggled."""
-    from gengine.echoes.cli.components.agent_roster_panel import AgentRosterPanel
     from rich.layout import Layout
+
+    from gengine.echoes.cli.components.agent_roster_panel import AgentRosterPanel
     
     game_state = {
         "agents": {
