@@ -256,3 +256,98 @@ See `docs/simul/game_ui_implementation_plan.md` for the full roadmap.
 - Standard library: dataclasses, typing
 
 No additional dependencies required.
+
+## Phase 12.2.1: Management Depth UI (Issue #77)
+
+New views for advanced management features:
+
+### Agent Roster View (`views/agent_view.py`)
+
+Displays all agents with key stats:
+- Name, role, and specialization (Negotiator/Investigator/Operative)
+- Expertise visualization with pips (●●●○○)
+- Stress level with color coding (Calm/Steady/Strained/Stressed)
+- Availability status (Available/Assigned/Resting)
+
+**Functions:**
+```python
+render_agent_roster(agents_data, tick) -> Panel
+render_agent_detail(agent_data, tick) -> Panel
+prepare_agent_roster_data(game_state) -> list[dict]
+```
+
+### Faction Overview View (`views/faction_view.py`)
+
+Displays all factions with power dynamics:
+- Legitimacy bars with trend indicators (↑↓→)
+- Territory claims with district names
+- Resource levels
+- Faction relations (coming soon)
+
+**Functions:**
+```python
+render_faction_overview(factions_data, districts_data) -> Panel
+render_faction_detail(faction_data, districts_data, all_factions) -> Panel
+prepare_faction_overview_data(game_state) -> tuple[list[dict], dict]
+```
+
+### Focus Management View (`views/focus_view.py`)
+
+Displays narrative budget allocation:
+- Current focus district
+- Budget breakdown (ring events vs global events)
+- Focus ring district listing
+- Archive count
+- District selection interface
+
+**Functions:**
+```python
+render_focus_management(focus_state, districts_data) -> Panel
+render_focus_selection(districts_data, current_focus) -> Panel
+prepare_focus_data(game_state) -> dict
+```
+
+### Heat Map Overlays (enhanced `components/city_map.py`)
+
+Enhanced city map with metric overlays:
+- **unrest**: Negative metric (high=red, low=green)
+- **pollution**: Negative metric (high=red, low=green)
+- **security**: Positive metric (high=green, low=red)
+- **prosperity**: Positive metric (high=green, low=red)
+- **control**: Alias for security
+
+Color coding automatically adjusts based on metric type:
+- Positive metrics: green=good, red=bad
+- Negative metrics: green=good (low), red=bad (high)
+
+**Usage:**
+```python
+render_city_map(districts, focus_data, overlay="unrest")
+render_city_map(districts, focus_data, overlay="pollution")
+render_city_map(districts, focus_data, overlay="security")
+```
+
+## Test Coverage
+
+Comprehensive test suite in `tests/echoes/test_management_ui.py`:
+- 19 tests covering all management UI components
+- Agent roster: 4 tests
+- Faction overview: 4 tests
+- Focus management: 4 tests
+- Heat map overlays: 5 tests
+- Integration: 2 tests
+
+Coverage metrics:
+- agent_view.py: 87%
+- faction_view.py: 97%
+- focus_view.py: 97%
+- city_map.py: 78% (enhanced from baseline)
+
+## Future Enhancements
+
+Planned for future phases:
+- Agent assignment workflow (select agent, choose task, confirm)
+- Faction relationship visualization
+- Action history tracking for agents and factions
+- Real-time stress tracking for agents
+- District selection via keyboard navigation

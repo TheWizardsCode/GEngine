@@ -31,6 +31,40 @@ def _get_focus_indicator(district_id: str, focus_data: dict[str, Any]) -> str:
         return "○"
 
 
+def _get_overlay_color(overlay: str | None, value: float) -> str:
+    """Get color for overlay value based on overlay type.
+    
+    Args:
+        overlay: Overlay type ("unrest", "pollution", "security",
+            "prosperity", "control")
+        value: Metric value (0.0-1.0)
+        
+    Returns:
+        Color name for styling
+    """
+    # For positive metrics (security, prosperity), high is good (green)
+    # For negative metrics (unrest, pollution), high is bad (red)
+    positive_overlays = {"security", "prosperity", "control"}
+    is_positive = overlay in positive_overlays if overlay else False
+    
+    if is_positive:
+        # Inverted colors for positive metrics
+        if value >= 0.6:
+            return "green"
+        elif value >= 0.3:
+            return "yellow"
+        else:
+            return "red"
+    else:
+        # Standard colors for negative metrics
+        if value >= 0.6:
+            return "red"
+        elif value >= 0.3:
+            return "yellow"
+        else:
+            return "green"
+
+
 def _format_district_node(
     district: dict[str, Any],
     focus_data: dict[str, Any],
@@ -43,7 +77,8 @@ def _format_district_node(
         district: District data dictionary
         focus_data: Focus state data
         selected_id: Currently selected district ID
-        overlay: Overlay mode ("unrest", "pollution", "prosperity", or None)
+        overlay: Overlay mode ("unrest", "pollution", "security",
+            "prosperity", "control", or None)
 
     Returns:
         Rich Text object with formatted district node
@@ -55,25 +90,21 @@ def _format_district_node(
     focus_marker = _get_focus_indicator(district_id, focus_data)
 
     # Determine overlay value and color
-    if overlay and overlay in district.get("modifiers", {}):
-        value = district["modifiers"][overlay]
-        if value >= 0.6:
-            color = "red"
-        elif value >= 0.3:
-            color = "yellow"
-        else:
-            color = "green"
-        overlay_str = f" {value:.2f}"
+    modifiers = district.get("modifiers", {})
+    
+    # Map "control" overlay to "security" modifier
+    if overlay == "control":
+        value = modifiers.get("security", 0.5)
+    elif overlay and overlay in modifiers:
+        value = modifiers[overlay]
     else:
-        # Default to stability
+        # Default to aggregated stability score
         stability = district.get("stability", 0.5)
-        if stability >= 0.7:
-            color = "green"
-        elif stability >= 0.4:
-            color = "yellow"
-        else:
-            color = "red"
-        overlay_str = f" {stability:.2f}"
+        value = stability
+        overlay = None  # Use default coloring
+    
+    color = _get_overlay_color(overlay, value)
+    overlay_str = f" {value:.2f}"
 
     # Build node text
     node_text = Text()
@@ -110,7 +141,8 @@ def render_city_map(
         districts: List of district dictionaries
         focus_data: Focus state data
         selected_id: Currently selected district ID
-        overlay: Overlay mode ("unrest", "pollution", "prosperity", or None)
+        overlay: Overlay mode ("unrest", "pollution", "security",
+            "prosperity", "control", or None)
 
     Returns:
         Rich Panel with city map content
@@ -153,16 +185,34 @@ def render_city_map(
         Text("○ Other", style="dim"),
     )
 
+    # Add overlay legend with color scale
+    if overlay:
+        overlay_legend = Table.grid(padding=(0, 1))
+        overlay_legend.add_column(justify="left")
+        overlay_legend.add_row(
+            Text(f"Overlay: {overlay.capitalize()}", style="bold"),
+            Text("  Low ", style="green"),
+            Text("→", style="dim"),
+            Text(" Med ", style="yellow"),
+            Text("→", style="dim"),
+            Text(" High", style="red"),
+        )
+        
+        content = Table.grid()
+        content.add_row(table)
+        content.add_row("")  # Spacer
+        content.add_row(legend)
+        content.add_row(overlay_legend)
+    else:
+        content = Table.grid()
+        content.add_row(table)
+        content.add_row("")  # Spacer
+        content.add_row(legend)
+
     # Add overlay indicator if active
     overlay_text = ""
     if overlay:
         overlay_text = f" [{overlay.capitalize()}]"
-
-    # Combine map and legend
-    content = Table.grid()
-    content.add_row(table)
-    content.add_row("")  # Spacer
-    content.add_row(legend)
 
     return Panel(
         Align.center(content),
