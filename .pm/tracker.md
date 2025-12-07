@@ -531,10 +531,10 @@ The project has closely followed the implementation plan with excellent tracking
 **Key Risks:**
 
 - ✅ **Phase 8 deployment COMPLETE** - All 6 tasks done: containerization (8.1.1), K8s manifests (8.2.1), observability (8.3.1), K8s validation CI (8.3.2), resource sizing (8.3.3), metrics (8.3.4), content pipeline (8.4.1)
-- ✅ **Phase 9 core AI COMPLETE** - All 4 tasks shipped: observer (9.1.1), actor (9.2.1), LLM-enhanced (9.3.1), tournaments (9.4.1)
+- ✅ **Phase 9 core AI COMPLETE** - All 4 tasks delivered: observer (9.1.1), actor (9.2.1), LLM-enhanced (9.3.1), tournaments (9.4.1)
 - ✅ **Phase 10 test coverage COMPLETE** - Epic 10.1.1 and all 7 child tasks (10.1.2–10.1.8) completed; 849 tests at 90.95% coverage
 - ✅ **Phase 7 delivery risk eliminated** - All core player features complete and tested, per-agent modifiers enabled by default
-- ✅ **Repository hygiene excellent** - Clean issue backlog (only Issue #56 open, which is actually completed work)
+- ✅ **Repository hygiene excellent** - Clean issue backlog (only Issue #56 open, which is actually completed)
 - 🟢 **No major blockers** - All planned work complete; only optional polish tasks remain (3-4 days total effort)
 - 🟢 **Project delivery SUCCESS** - All phases 1-10 functionally complete with comprehensive test coverage
 
@@ -709,7 +709,7 @@ The project has closely followed the implementation plan with excellent tracking
 
 ### 4.7.1 — Tune Spatial Adjacency & Seed Thresholds (M4.7)
 
-- **Description:** Tune the spatial adjacency graph and narrative seed thresholds using new spatial weights and director feeds; expand authored seeds and wire resolution/cooldown UX across all surfaces.
+- **Description:** Tune the spatial adjacency graph and narrative seed thresholds using new spatial weights and director feeds; extend profiling hooks to share a common performance block across CLI/service/headless.
 - **Acceptance Criteria:** Seed triggers and adjacency weights produce stable, interesting hotspot mobility; additional seeds authored and visible in telemetry; CLI/service/headless surfaces show clear resolution/cooldown states.
 - **Priority:** Medium
 - **Responsible:** TBD (ask Ross)
@@ -845,7 +845,7 @@ The project has closely followed the implementation plan with excellent tracking
 - **GitHub Issue:** [#25](https://github.com/TheWizardsCode/GEngine/issues/25)
 - **Description:** Enable per-agent progression modifiers by default in `content/config/simulation.yml` after validating balance through scenario testing.
 - **Acceptance Criteria:**
-  - ✅ Run scenario tests with `enable_per_agent_modifiers: true` across all difficulty presets
+  - ✅ Run scenario tests with `enable_per_agent_modifiers: true` across all 5 presets
   - ✅ Validate that per-agent bonuses/penalties don't destabilize difficulty balance
   - ✅ Update `content/config/simulation.yml` to set `enable_per_agent_modifiers: true`
   - ✅ Document any observed balance impacts in gameplay guide
@@ -922,7 +922,7 @@ The project has closely followed the implementation plan with excellent tracking
     - Campaign model serialization tests
     - CampaignManager lifecycle tests
     - Integration tests with LocalBackend
-  - **Documentation:** Updated gameplay guide, README, GDD, implementation plan
+  - **Documentation**: Updated gameplay guide, README, GDD, implementation plan
 - **Dependencies:** Snapshot persistence (✅ complete), post-mortem generator (✅ complete), CLI/gateway surfaces (✅ complete).
 
 ### 8.1.1 — Containerization (Docker + Compose) (M8.1)
@@ -1312,7 +1312,7 @@ The project has closely followed the implementation plan with excellent tracking
 - **Responsible:** Test Agent
 - **Dependencies:** 4.1.1 (Agent AI subsystem) – already completed.
 - **Risks & Mitigations:**
-  - Risk: Tests rely on fragile internal details. Mitigation: Prefer public behavior and scoring contracts over internal data structures.
+  - Risk: Tests rely on fragile internal details. Mitigation: Prefer public behavior and contracts over internal data structures.
 - **Next Steps:**
   1. Introduce a small fake RNG helper or refactor to accept a sampling strategy.
   2. Add targeted tests for trait and environment influences.
@@ -1538,6 +1538,7 @@ The project has closely followed the implementation plan with excellent tracking
   - At least 10 tests covering optimization algorithms, fitness evaluation, and parameter validation.
 - **Priority:** Low
 - **Responsible:** gamedev-agent
+- **Status:** complete (optional enhancement, delivered 2025-12-07)
 - **Dependencies:** 11.1.1 (batch sweeps), 11.2.1 (result storage), stable strategy parameter schema.
 - **Risks & Mitigations:**
   - Risk: Optimization converges to local optima or overfits to specific scenarios. Mitigation: Use multiple random seeds and validation sets.
@@ -1629,18 +1630,6 @@ The project has closely followed the implementation plan with excellent tracking
   3. Implement config overlay system for safe experimentation.
   4. Create designer documentation and tutorial walkthroughs.
 - **Last Updated:** 2025-12-05T10:20:00Z
-
----
-
-## Phase 12: UI Implementation (Terminal Interface)
-
-**Status:** 🆕 **PLANNED** - New phase based on `docs/simul/game_ui_design.md`
-
-This phase implements the terminal-based UI described in the Game UI Design document, moving from the current CLI-only interface to a rich, visual terminal experience with real-time updates, maps, and progressive disclosure.
-
-**Reference Documents:**
-- `docs/simul/game_ui_design.md` - Complete UI design specification
-- `docs/simul/emergent_story_game_implementation_plan.md` - Section 6 (CLI Gateway)
 
 ### 12.1.1 — Terminal UI Core Implementation (M12.1)
 
@@ -1812,4 +1801,20 @@ This phase implements the terminal-based UI described in the Game UI Design docu
   7. Update documentation with UI usage guides.
 - **Last Updated:** 2025-12-05
 
----
+### 12.6.1 — Offer Campaign Creation if --campaign <name> Does Not Exist
+
+- **Description:** When using the `--campaign <name>` parameter, the CLI should offer to create a new campaign if the specified campaign does not yet exist, improving user experience and reducing friction for new campaign setup.
+- **Acceptance Criteria:**
+  - If the user provides `--campaign <name>` and the campaign is not found, prompt to create a new campaign with that name.
+  - Campaign is initialized and ready for use if the user accepts.
+  - No disruption to existing campaign resume workflow.
+- **Priority:** Low
+- **Responsible:** Dev Team
+- **Dependencies:** None
+- **Risks & Mitigations:**
+  - Risk: Unintended campaign creation due to typos. Mitigation: Require explicit confirmation before creating a new campaign.
+- **Next Steps:**
+  1. Update CLI argument handling to check for campaign existence.
+  2. Implement prompt/confirmation logic for campaign creation.
+  3. Test new workflow for both creation and resume scenarios.
+- **Last Updated:** 2025-12-07
