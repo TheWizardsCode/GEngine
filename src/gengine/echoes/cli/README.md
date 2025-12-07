@@ -153,7 +153,7 @@ layout.render()
 Run the demo to see the Terminal UI in action:
 
 ```bash
-python3 scripts/demo_terminal_ui.py
+python scripts/demo_terminal_ui.py
 ```
 
 ## Data Formats

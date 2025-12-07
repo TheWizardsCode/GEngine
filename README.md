@@ -364,16 +364,19 @@ snapshot for downstream tools.
 
 ## Running the CLI Shell
 
-Interactive mode:
+
+To launch the Echoes of Emergence Terminal UI demo, use the provided startup script:
 
 ```bash
-uv run echoes-shell --world default
+./start.sh
 ```
+
+This script sets up the environment and launches the Terminal UI with recommended settings. For advanced options, you can pass arguments to the script (e.g., `./start.sh --rich` for enhanced ASCII views).
 
 **Enhanced ASCII Views** (tables, colors, panels):
 
 ```bash
-uv run echoes-shell --world default --rich
+./start.sh --rich
 ```
 
 The `--rich` flag enables enhanced formatting using the Rich library, providing:
