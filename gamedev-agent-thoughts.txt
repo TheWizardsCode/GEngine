@@ -119,5 +119,186 @@ Working on Issue #70 - Phase 11, Milestone 11.6, Task 11.6.1.
 - [x] Add tests (30 tests - exceeds minimum of 8)
 - [x] Create designer documentation
 - [x] Register CLI in pyproject.toml
+[x] Run linting - PASSED
+[x] Run tests - 39 PASSED
+[x] Task completed
+---
+
+# Previous Task Notes - Issue #61: Result Aggregation and Storage (M11.2)
+
+## Task Analysis
+
+Working on Issue #61 - Phase 11, Milestone 11.2, Task 11.2.1.
+
+### Requirements
+
+1. Script `scripts/aggregate_sweep_results.py` ingests batch sweep JSON outputs and produces aggregated summary data
+2. Storage format (SQLite database) supports querying by parameter combinations, timestamp, and result metrics
+3. Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges) for reproducibility
+4. Aggregation computes key statistics: win rates by strategy, average stability/unrest/pollution, story seed activation rates, action usage frequencies
+5. Query interface or helper functions support common lookups
+6. At least 8 tests covering aggregation logic, storage/retrieval, and historical queries
+
+## Implementation Summary
+
+### Files Created
+
+1. **scripts/aggregate_sweep_results.py** - Main aggregation script with:
+   - Dataclasses: `SweepRecord`, `SweepRunMetadata`, `AggregatedStats`
+   - SQLite database setup with versioned schema and indexes
+   - `init_database()` - Creates tables and indexes
+   - `ingest_sweep_summary()` - Ingests a single batch sweep summary
+   - `ingest_sweep_directory()` - Ingests all summaries from a directory
+   - `query_sweep_results()` - Query with filters (strategy, difficulty, world, run_id, days, git_commit, limit)
+   - `query_sweep_runs()` - Query run metadata
+   - `compute_aggregated_stats()` - Computes win rates, averages, action frequencies
+   - `compute_stats_by_strategy()` / `compute_stats_by_difficulty()` - Convenience functions
+   - CLI with subcommands: `ingest`, `query`, `stats`, `runs`
+
+2. **tests/scripts/test_aggregate_sweep_results.py** - 26 tests in 8 test classes:
+   - `TestDatabaseSchema` (3 tests): schema creation, indexes, idempotency
+   - `TestIngestion` (3 tests): ingest summary, prevent duplicates, ingest directory
+   - `TestQuerying` (6 tests): by strategy, difficulty, run_id, limit, days, git commit
+   - `TestAggregation` (4 tests): by strategy, with errors, action frequencies, empty records
+   - `TestDataclasses` (3 tests): SweepRecord, SweepRunMetadata, AggregatedStats serialization
+   - `TestCLI` (4 tests): ingest, stats JSON, query with filters, runs command
+   - `TestHistoricalTracking` (2 tests): multiple runs, date range filtering
+
+## Acceptance Criteria Verification
+
+1. ✅ Script ingests batch sweep JSON outputs and produces aggregated summary data
+2. ✅ SQLite storage supports querying by parameter combinations, timestamp, and result metrics
+3. ✅ Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges)
+4. ✅ Aggregation computes: win rates, avg stability, story seed activation rates, action frequencies
+5. ✅ Query interface supports common lookups (by strategy, difficulty, date range, git commit)
+6. ✅ 26 tests covering aggregation logic, storage/retrieval, and historical queries (requirement was 8+)
+
+## Verification
+
+- All 26 tests pass
+- Ruff linting passes with no errors
+- CLI works correctly via subprocess testing
+
+## Progress
+
+- [x] Create scripts/aggregate_sweep_results.py
+- [x] Create tests/scripts/test_aggregate_sweep_results.py
 - [x] Run linting - PASSED
-- [x] Run tests - 30 PASSED
+- [x] Run tests - 26 PASSED
+
+---
+
+# Issue #71: Strategy Parameter Optimization (M11.4.1)
+
+## Task Analysis (4a219f5)
+
+Working on Issue #71 - Phase 11, Milestone 11.4, Task 11.4.1.
+
+### Previous Completions
+- Task 11.1.1 (Batch Simulation Sweep Infrastructure) - COMPLETED
+- Task 11.2.1 (Result Aggregation and Storage) - COMPLETED
+- Task 11.3.1 (Analysis and Balance Reporting) - COMPLETED
+
+### Requirements for Task 11.4.1
+
+1. Script `scripts/optimize_strategies.py` accepts strategy parameter ranges and optimization targets
+2. Supports multiple optimization algorithms: grid search, random search, and optionally Bayesian optimization
+3. Optimization runs batches of sweep simulations and evaluates fitness against targets
+4. Output includes Pareto frontier of optimal configurations (trade-offs between balance vs. difficulty)
+5. Integration with result storage (11.2.1) to track optimization runs and outcomes
+6. Documentation describes optimization workflow, tuning targets, and result interpretation
+7. At least 10 tests covering optimization algorithms, fitness evaluation, and parameter validation
+
+## Implementation Plan
+
+### Files to Create
+
+1. **scripts/optimize_strategies.py** - Main optimization script with:
+   - Dataclasses: `ParameterRange`, `OptimizationTarget`, `OptimizationConfig`, `OptimizationResult`, `ParetoPoint`
+   - Grid search algorithm: exhaustive parameter combinations
+   - Random search algorithm: sampling from parameter ranges
+   - Optional Bayesian optimization (using scikit-optimize if available)
+   - Fitness function computing win rate delta minimization and diversity maximization
+   - Pareto frontier computation for multi-objective optimization
+   - Integration with batch sweep infrastructure (run_batch_sweeps.py)
+   - Integration with result storage (aggregate_sweep_results.py)
+   - CLI with subcommands: `optimize`, `pareto`, `report`
+
+2. **tests/scripts/test_optimize_strategies.py** - At least 10 tests:
+   - Parameter range generation
+   - Grid search algorithm
+   - Random search algorithm
+   - Fitness function calculations
+   - Pareto frontier computation
+   - Parameter validation
+   - CLI argument parsing
+   - Integration with batch sweeps (mocked)
+   - Edge cases
+
+3. **Update docs/gengine/ai_tournament_and_balance_analysis.md** - Add optimization section
+
+## Progress
+
+- [ ] Create scripts/optimize_strategies.py
+- [ ] Create tests/scripts/test_optimize_strategies.py
+- [ ] Update documentation
+- [ ] Run linting
+- [ ] Run tests
+- [ ] Task completion
+
+
+## Implementation Complete
+
+### Files Created/Modified
+
+1. **scripts/optimize_strategies.py** - Main optimization script (4a219f5)
+   - Dataclasses: `ParameterRange`, `OptimizationTarget`, `OptimizationConfig`, 
+     `FitnessResult`, `ParetoPoint`, `OptimizationResult`
+   - Grid search algorithm: exhaustive parameter combinations
+   - Random search algorithm: sampling from parameter ranges
+   - Optional Bayesian optimization (using scikit-optimize if available)
+   - Fitness functions computing win rate delta minimization and diversity
+   - Pareto frontier computation for multi-objective optimization
+   - Integration with result storage (aggregate_sweep_results.py)
+   - CLI with subcommands: `optimize`, `pareto`, `report`
+
+2. **tests/scripts/test_optimize_strategies.py** - 43 tests in 12 test classes:
+   - `TestParameterRange` (7 tests): creation, validation, grid values, random sampling
+   - `TestOptimizationTarget` (3 tests): creation, validation, serialization
+   - `TestOptimizationConfig` (4 tests): default, YAML loading, serialization
+   - `TestParameterGeneration` (5 tests): grid, random, Latin hypercube configurations
+   - `TestFitnessFunctions` (5 tests): win rate delta, diversity, fitness computation
+   - `TestParetoFrontier` (3 tests): computation, dominance, serialization
+   - `TestOptimizationAlgorithms` (4 tests): grid, random, algorithm selection
+   - `TestResultStorage` (2 tests): store and query optimization results
+   - `TestReportGeneration` (1 test): Markdown report generation
+   - `TestCLI` (4 tests): pareto, report commands
+   - `TestEdgeCases` (5 tests): empty params, single target, identical results
+
+3. **docs/gengine/ai_tournament_and_balance_analysis.md** - Updated with optimization section
+
+### Acceptance Criteria Verification
+
+1. ✅ Script `scripts/optimize_strategies.py` accepts strategy parameter ranges and optimization targets
+2. ✅ Supports multiple optimization algorithms: grid search, random search, and Bayesian optimization
+3. ✅ Optimization runs batches of sweep simulations and evaluates fitness against targets
+4. ✅ Output includes Pareto frontier of optimal configurations
+5. ✅ Integration with result storage (SQLite database) to track optimization runs
+6. ✅ Documentation describes optimization workflow, tuning targets, and result interpretation
+7. ✅ 43 tests covering optimization algorithms, fitness evaluation, and parameter validation (requirement was 10+)
+
+### Verification
+
+- All 43 tests pass
+- Ruff linting passes with no errors
+
+## Progress
+
+- [x] Create scripts/optimize_strategies.py
+- [x] Create tests/scripts/test_optimize_strategies.py
+- [x] Update documentation
+- [x] Run linting - PASSED
+- [x] Run tests - 43 PASSED
+- [x] Task completed
+
+>>>>>>> copilot/optimize-strategy-parameters

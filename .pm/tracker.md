@@ -360,6 +360,7 @@ The project has closely followed the implementation plan with excellent tracking
 **In-Progress Tasks:**
 
 - **11.4.1** - Strategy parameter optimization (Issue #71, optional, not started, low priority)
+- **11.4.2** - Optimization engine robustness & UX polish (see task details)
 - **11.6.1** - Designer feedback tooling (Issue #70, optional, not started, low priority)
 
 **Optional Polish Tasks** (not included in phase counts):
@@ -454,6 +455,7 @@ The project has closely followed the implementation plan with excellent tracking
   - ✅ 11.2.1: Result aggregation and storage - **COMPLETED** (2025-12-04)
   - ✅ 11.3.1: Analysis and balance reporting - **COMPLETED** (2025-12-04)
   - ⬜ 11.4.1: Strategy parameter optimization - **OPTIONAL** (low priority, future work)
+  - ⬜ 11.4.2: Optimization engine robustness & UX polish - **OPTIONAL** (medium priority, future work)
   - ✅ 11.5.1: CI integration for continuous validation - **COMPLETED** (2025-12-05)
   - ⬜ 11.6.1: Designer feedback loop and tooling - **OPTIONAL** (low priority, UX enhancement)
 - **Dependencies:** Phase 9 (AI tournaments) ✅ COMPLETE
@@ -584,6 +586,7 @@ The project has closely followed the implementation plan with excellent tracking
 | 11.2.1 | Result aggregation and storage (M11.2) | ✅ completed | Medium | gamedev-agent | 2025-12-05 |
 | 11.3.1 | Analysis and balance reporting (M11.3) | ✅ completed | High | gamedev-agent | 2025-12-05 |
 | 11.4.1 | Strategy parameter optimization (M11.4) | not-started | Low | gamedev-agent | 2025-12-05 |
+| 11.4.2 | Optimization engine robustness & UX polish | not-started | Medium | gamedev-agent | 2025-12-06 |
 | 11.5.1 | CI integration for continuous validation (M11.5) | ✅ completed | Medium | gamedev-agent | 2025-12-05 |
 | 11.6.1 | Designer feedback loop and tooling (M11.6) | not-started | Low | gamedev-agent | 2025-12-05 |
 | 10.2.1 | Harden difficulty sweep runtime & monitoring | not-started | Low | Gamedev Agent | 2025-12-02 |
@@ -1545,6 +1548,35 @@ The project has closely followed the implementation plan with excellent tracking
   4. Create test suite with small synthetic parameter spaces.
   5. (Future) Consider exposing internal strategy parameters per implementation plan Section 10.
 - **Last Updated:** 2025-12-04
+
+### 11.4.2 — Optimization Engine Robustness & UX Polish
+
+- **Status:** not-started (optional enhancement)
+- **Description:** Iterate on `scripts/optimize_strategies.py` to improve robustness, extensibility, and user experience after the initial implementation (PR #72). Focus areas include stronger validation, clearer feedback for long-running jobs, more flexible parameter handling, consistent logging, and forward-compatible result storage.
+- **Acceptance Criteria:**
+  - CLI validates YAML and CLI overrides with clear, actionable error messages for invalid ranges, missing/unknown fields, and conflicting options.
+  - Optional parallel evaluation mode (config flag and/or CLI flag) for grid/random search that preserves deterministic behavior when seeds are fixed.
+  - Result storage schema includes a simple version field and continues to read older rows safely (defensive parsing for missing/extra columns).
+  - Logging uses the standard `logging` module with at least `--verbose` and `--quiet` behaviors, replacing ad-hoc `stderr` writes.
+  - Categorical (non-numeric) parameter support is either minimally implemented for a representative case or explicitly documented as a future design (with clear limitations).
+  - All tests pass; coverage for `scripts/optimize_strategies.py` is maintained at or above the current baseline.
+- **Priority:** Medium
+- **Responsible:** gamedev-agent
+- **Dependencies:** 11.1.1 (batch sweeps), 11.2.1 (result aggregation), 11.3.1 (analysis & reporting), 11.4.1 (initial optimizer shipped)
+- **Risks & Mitigations:**
+  - Risk: Parallelization introduces non-determinism or intermittent failures.
+    - Mitigation: Make parallel mode opt-in, centralize RNG seeding, and add tests that assert stable results with fixed seeds.
+  - Risk: SQLite schema changes break existing data.
+    - Mitigation: Introduce a schema version column, keep queries backward compatible, and add a small migration/upgrade note in docs.
+  - Risk: Over-extending categorical parameter support.
+    - Mitigation: Limit scope to a single clear pattern or document it as future work instead of refactoring the core engine.
+- **Next Steps:**
+  1. Design validation rules and logging behavior for `optimize_strategies.py` CLI usage.
+  2. Prototype optional parallel evaluation for random/grid search and measure performance and determinism.
+  3. Extend SQLite schema and query helpers with a version field while keeping existing rows readable.
+  4. Update `docs/gengine/ai_tournament_and_balance_analysis.md` with an "Advanced Optimization" section describing new behaviors and trade-offs.
+  5. Coordinate with `test_agent` to ensure edge cases and failure paths are well covered.
+- **Last Updated:** 2025-12-06
 
 ### 11.5.1 — CI Integration for Continuous Validation (M11.5)
 
