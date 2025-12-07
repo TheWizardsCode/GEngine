@@ -32,7 +32,7 @@ On startup the shell prints a world summary and shows the prompt `(echoes)`. Typ
 ### Remote Sessions via the Gateway Service
 
 
-Phase 6 introduces a WebSocket gateway so remote testers can drive the CLI without SSH access. To launch the gateway and connect, use:
+It is also possible to play the game remotely via a WebSocket gateway so remote testers can drive the CLI without SSH access. To launch the gateway and connect, use:
 
 ```bash
 ./start.sh --gateway --script "summary;run 3;exit"

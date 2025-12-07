@@ -9,7 +9,7 @@
 | **1-10** | ✅ Complete | 51/51 | 0 | - | Maintenance only |
 | **11** | 🚧 In Progress | 5/6 | 1 | Medium | Complete 11.6.1 or begin Phase 12 |
 | **12** | 🚧 In Progress | 1/5 | 4 | Medium | Begin 12.1.1 Terminal UI Core Implementation |
-| 12.1.1 | Terminal UI Core Implementation | not-started | High | None | UI Team | 2025-12-07 |
+| 12.1.1 | Terminal UI Core Implementation | complete | High | None | UI Team | 2025-12-07 |
 
 
 **Active Tasks:**
@@ -80,8 +80,8 @@
   - All 1,042 tests pass with 91.37% overall coverage (up from 90.95%)
 - 🆕 **Phase 12 (UI Implementation) PLANNED** - NEW PHASE (2025-12-05)
   - 5 new milestones added based on UI design document (`docs/simul/game_ui_design.md`)
-  - M12.1: Core Playability UI (status bar, city map, event feed, context panel, command bar)
-  - M12.2: Management Depth UI (agent roster, faction overview, focus management, heat maps)
+  - M12.1: Core Playability UI (status bar, city map, event feed, context panel, command bar) — ✅ Complete (2025-12-07)
+  - M12.2: Management Depth UI (agent roster, faction overview, focus management, heat maps) — ⏳ Next Up (High Priority)
   - M12.3: Understanding & Reflection UI (explanations, timeline view, campaign hub, post-mortem)
   - M12.4: Polish & Accessibility (animations, keyboard navigation, accessibility audit, help system)
   - M12.5: UI Testing & Validation (success metrics tracking, automated tests, user testing)
@@ -1644,6 +1644,10 @@ This phase implements the terminal-based UI described in the Game UI Design docu
 
 ### 12.1.1 — Terminal UI Core Implementation (M12.1)
 
+- **Status:** Complete
+- **Last Updated:** 2025-12-07
+
+
 - **Description:** Build the foundational terminal UI, including global status bar, ASCII city map, event feed, and context panel. This enables real-time visualization and interaction for simulation monitoring and management.
 - **Acceptance Criteria:**
   - Status bar displays global metrics (stability, pollution, unrest, faction control) with color coding.
@@ -1697,25 +1701,30 @@ This phase implements the terminal-based UI described in the Game UI Design docu
 
 ### 12.2.1 — Management Depth UI (M12.2)
 
-- **Description:** Add UI panels for deeper strategic management: agent roster with assignment flow, faction overview, focus management, heat map overlays, and batch run summary panel. This enables players to make informed tactical decisions.
+- **Description:** Implements advanced management features in the terminal UI: agent roster, faction overview, focus management, and heat maps for simulation metrics.
 - **Acceptance Criteria:**
-  - Agent roster view lists all agents with key stats (name, specialization, expertise, stress level, current assignment).
-  - Agent assignment flow: select agent → view available districts → assign with visual confirmation.
-  - Faction overview panel shows all factions with influence levels, relationships, and recent actions.
-  - Focus management UI allows setting focused district with visual indication on map and in panels.
-  - Heat map overlays toggle on city map showing pollution, unrest, or stability with color gradients.
-  - Batch run summary panel displays results after "Run N" commands: ticks executed, key events, metric changes, crisis alerts.
+  - Agent roster panel displays all agents with key stats and allows selection.
+  - Faction overview summarizes all factions, their influence, and relationships.
+  - Focus management UI enables assigning/adjusting focus areas for agents/districts.
+  - Heat map overlays visualize unrest, control, and pollution across the city.
+  - Keyboard navigation and real-time updates integrated with simulation state.
   - At least 12 tests covering agent interactions, faction displays, focus setting, and heat map rendering.
-- **Priority:** Medium
-- **Responsible:** Development Team
+- **Priority:** High
+- **Responsible:** UI Team
 - **Dependencies:** 12.1.1 (core UI), existing agent/faction systems, focus manager (M4.6).
 - **Risks & Mitigations:**
+  - Risk: Feature creep in management UI. Mitigation: Lock scope to agent/faction/heatmap MVP, defer extras.
+  - Risk: Integration complexity with simulation state. Mitigation: Early technical review and incremental integration.
   - Risk: Information overload from too many panels. Mitigation: Use tabbed views or toggleable panels.
   - Risk: Heat maps difficult to read in ASCII. Mitigation: Use clear color gradients and include legend.
 - **Next Steps:**
-  1. Design agent roster table layout with sort/filter options.
-  2. Implement faction overview panel with relationship visualization.
-  3. Add focus management UI controls (dropdown or map-based selection).
+  1. Review technical design for management UI components.
+  2. Implement agent roster and faction overview panels.
+  3. Integrate focus management and heat map overlays.
+  4. Conduct internal review and feedback.
+- **GitHub Issue:** [#77](https://github.com/TheWizardsCode/GEngine/issues/77)
+- **Last Updated:** 2025-12-07
+
   4. Create heat map overlay system with multiple metric options.
   5. Build batch run summary panel with metric delta highlighting.
   6. Test all management interactions and data flows.
