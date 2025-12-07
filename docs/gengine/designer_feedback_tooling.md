@@ -1,5 +1,27 @@
 # Designer Feedback Loop and Tooling
 
+**Last Updated:** 2025-12-06
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Quick Start](#quick-start)
+3. [Workflows](#workflows)
+    - [Run Exploratory Sweep](#1-run-exploratory-sweep)
+    - [Compare Two Configs](#2-compare-two-configs)
+    - [Test Tuning Change](#3-test-tuning-change)
+    - [View Historical Reports](#4-view-historical-reports)
+4. [YAML Overlay System](#yaml-overlay-system)
+5. [Interactive HTML Reports](#interactive-html-reports)
+6. [Diagnose Dominant Strategies](#how-to-diagnose-dominant-strategies)
+7. [Iterating on Action Costs](#iterating-on-action-costs)
+8. [Testing Narrative Pacing Changes](#testing-narrative-pacing-changes)
+9. [Case Study: Balancing the Industrial Tier Faction](#case-study-balancing-the-industrial-tier-faction)
+10. [Tips and Best Practices](#tips-and-best-practices)
+11. [Command Reference](#command-reference)
+12. [See Also](#see-also)
+# Designer Feedback Loop and Tooling
+
 This guide explains how to use the Balance Studio tools for iterating on game
 balance without requiring code changes. These tools are designed for designers
 who want to experiment with tuning, diagnose balance issues, and validate
