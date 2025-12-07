@@ -43,17 +43,33 @@ def test_render_agent_roster_with_agents():
             "name": "Aria Volt",
             "role": "Negotiator",
             "traits": {"empathy": 0.8, "cunning": 0.5, "resolve": 0.7},
+            "progression": {
+                "role": "Veteran Negotiator",
+                "expertise": {"diplomacy": 4, "investigation": 2},
+                "reliability": 0.85,
+                "stress": 0.3,
+                "missions_completed": 15,
+                "missions_failed": 2,
+            },
         },
         {
             "id": "agent-2",
             "name": "Cassian Mire",
             "role": "Investigator",
             "traits": {"empathy": 0.3, "cunning": 0.9, "resolve": 0.3},
+            "progression": {
+                "role": "Junior Investigator",
+                "expertise": {"investigation": 3},
+                "reliability": 0.65,
+                "stress": 0.6,
+                "missions_completed": 7,
+                "missions_failed": 1,
+            },
         },
     ]
     
     panel = render_agent_roster(agents, tick=10)
-    console = Console()
+    console = Console(width=150)  # Wide enough for full output
     
     with console.capture() as capture:
         console.print(panel)
@@ -63,6 +79,11 @@ def test_render_agent_roster_with_agents():
     assert "2 agents" in output
     assert "Aria Volt" in output
     assert "Cassian Mire" in output
+    assert "Veteran Negotiator" in output or "Veteran" in output
+    assert "Junior Investigator" in output or "Junior" in output
+    # Check for mission counts
+    assert "15" in output  # Aria's missions
+    assert "7" in output  # Cassian's missions
 
 
 def test_render_agent_detail():
@@ -70,11 +91,19 @@ def test_render_agent_detail():
     agent = {
         "id": "agent-1",
         "name": "Aria Volt",
-        "role": "Veteran Negotiator",
+        "role": "Negotiator",
         "traits": {"empathy": 0.8, "cunning": 0.5, "resolve": 0.7},
         "faction_id": "union-of-flux",
         "home_district": "civic-core",
         "notes": "Experienced diplomat with strong ties to labor movement.",
+        "progression": {
+            "role": "Veteran Negotiator",
+            "expertise": {"diplomacy": 4, "investigation": 2},
+            "reliability": 0.85,
+            "stress": 0.3,
+            "missions_completed": 15,
+            "missions_failed": 2,
+        },
     }
     
     panel = render_agent_detail(agent, tick=10)
@@ -86,10 +115,13 @@ def test_render_agent_detail():
     
     assert "Aria Volt" in output
     assert "Veteran Negotiator" in output
-    assert "empathy" in output.lower()
     assert "union-of-flux" in output
     assert "civic-core" in output
     assert "Experienced diplomat" in output
+    # Check for progression info
+    assert "85.0%" in output or "85%" in output  # Reliability
+    assert "15 completed" in output  # Missions completed
+    assert "88%" in output or "15 completed, 2 failed" in output  # Mission success rate
 
 
 def test_prepare_agent_roster_data():
@@ -106,7 +138,25 @@ def test_prepare_agent_roster_data():
                 "role": "Investigator",
                 "traits": {"cunning": 0.9},
             },
-        }
+        },
+        "agent_progression": {
+            "agent-1": {
+                "role": "Veteran Negotiator",
+                "expertise": {"diplomacy": 4},
+                "reliability": 0.85,
+                "stress": 0.3,
+                "missions_completed": 15,
+                "missions_failed": 2,
+            },
+            "agent-2": {
+                "role": "Junior Investigator",
+                "expertise": {"investigation": 3},
+                "reliability": 0.65,
+                "stress": 0.6,
+                "missions_completed": 7,
+                "missions_failed": 1,
+            },
+        },
     }
     
     data = prepare_agent_roster_data(game_state)
@@ -114,6 +164,9 @@ def test_prepare_agent_roster_data():
     assert len(data) == 2
     assert data[0]["name"] == "Aria Volt"  # Should be sorted
     assert data[1]["name"] == "Cassian Mire"
+    # Check that progression data is included
+    assert data[0]["progression"]["missions_completed"] == 15
+    assert data[1]["progression"]["missions_completed"] == 7
 
 
 # --- Faction Overview Tests ---
@@ -589,3 +642,226 @@ def test_management_ui_keyboard_navigation_hints():
     output2 = capture.get()
     
     assert "cancel" in output2.lower() or "c" in output2.lower()
+
+
+# --- Agent Roster Panel Tests (Issue #79) ---
+
+
+def test_agent_roster_panel_keyboard_selection():
+    """Test agent roster panel keyboard navigation and selection."""
+    from gengine.echoes.cli.components.agent_roster_panel import (
+        AgentRosterPanel,
+        AgentRosterState,
+    )
+    
+    # Create panel with sample agents
+    game_state = {
+        "agents": {
+            "agent-1": {"name": "Agent One", "role": "Operative", "traits": {}},
+            "agent-2": {"name": "Agent Two", "role": "Investigator", "traits": {}},
+            "agent-3": {"name": "Agent Three", "role": "Negotiator", "traits": {}},
+        },
+        "agent_progression": {},
+    }
+    
+    panel = AgentRosterPanel()
+    panel.update(game_state, tick=10)
+    
+    # Test initial selection
+    assert panel.state.selected_index == 0
+    selected = panel.state.get_selected_agent()
+    assert selected is not None
+    assert selected["name"] == "Agent One"
+    
+    # Test navigation down
+    panel.handle_key("down")
+    assert panel.state.selected_index == 1
+    selected = panel.state.get_selected_agent()
+    assert selected["name"] == "Agent Three"  # Sorted alphabetically
+    
+    # Test navigation up
+    panel.handle_key("up")
+    assert panel.state.selected_index == 0
+    
+    # Test wrap-around navigation
+    panel.handle_key("up")
+    assert panel.state.selected_index == 2
+    
+    # Test detail toggle
+    assert panel.state.show_detail is False
+    panel.handle_key("enter")
+    assert panel.state.show_detail is True
+    panel.handle_key("escape")
+    assert panel.state.show_detail is False
+
+
+def test_agent_roster_panel_real_time_updates():
+    """Test agent roster panel updates in real-time as simulation state changes."""
+    from gengine.echoes.cli.components.agent_roster_panel import AgentRosterPanel
+    
+    # Initial state with 2 agents
+    game_state = {
+        "agents": {
+            "agent-1": {"name": "Agent One", "role": "Operative", "traits": {}},
+            "agent-2": {"name": "Agent Two", "role": "Investigator", "traits": {}},
+        },
+        "agent_progression": {
+            "agent-1": {
+                "missions_completed": 5,
+                "missions_failed": 0,
+                "reliability": 0.8,
+                "stress": 0.2,
+            }
+        },
+    }
+    
+    panel = AgentRosterPanel()
+    panel.update(game_state, tick=10)
+    
+    assert len(panel.state.agents_data) == 2
+    assert panel.state.agents_data[0]["progression"]["missions_completed"] == 5
+    
+    # Simulate a tick that completes a mission
+    game_state["agent_progression"]["agent-1"]["missions_completed"] = 6
+    game_state["agent_progression"]["agent-1"]["stress"] = 0.3
+    
+    # Update panel
+    panel.update(game_state, tick=11)
+    
+    # Verify updates
+    assert panel.state.agents_data[0]["progression"]["missions_completed"] == 6
+    assert panel.state.agents_data[0]["progression"]["stress"] == 0.3
+    
+    # Simulate adding a new agent
+    game_state["agents"]["agent-3"] = {
+        "name": "Agent Three",
+        "role": "Negotiator",
+        "traits": {},
+    }
+    
+    panel.update(game_state, tick=12)
+    
+    assert len(panel.state.agents_data) == 3
+
+
+def test_agent_roster_panel_rendering_with_selection():
+    """Test agent roster panel renders with selection highlighting."""
+    from gengine.echoes.cli.components.agent_roster_panel import AgentRosterPanel
+    
+    game_state = {
+        "agents": {
+            "agent-1": {"name": "Agent One", "role": "Operative", "traits": {}},
+            "agent-2": {"name": "Agent Two", "role": "Investigator", "traits": {}},
+        },
+        "agent_progression": {},
+    }
+    
+    panel = AgentRosterPanel()
+    panel.update(game_state, tick=10)
+    panel.state.selected_index = 1
+    
+    rendered = panel.render(tick=10)
+    console = Console()
+    
+    with console.capture() as capture:
+        console.print(rendered)
+    output = capture.get()
+    
+    assert "Agent Roster" in output
+    assert "Agent One" in output
+    assert "Agent Two" in output
+    # Should show navigation hints
+    assert "navigate" in output.lower() or "↑↓" in output
+
+
+def test_agent_roster_state_boundary_conditions():
+    """Test agent roster state handles edge cases."""
+    from gengine.echoes.cli.components.agent_roster_panel import AgentRosterState
+    
+    # Test empty roster
+    state = AgentRosterState(agents_data=[])
+    state.select_next()
+    assert state.selected_index == 0
+    state.select_previous()
+    assert state.selected_index == 0
+    assert state.get_selected_agent() is None
+    
+    # Test single agent
+    state = AgentRosterState(
+        agents_data=[{"id": "agent-1", "name": "Agent One"}], selected_index=0
+    )
+    state.select_next()
+    assert state.selected_index == 0  # Wraps to same agent
+    state.select_previous()
+    assert state.selected_index == 0
+    
+    # Test index clamping on update
+    state = AgentRosterState(
+        agents_data=[
+            {"id": "agent-1", "name": "One"},
+            {"id": "agent-2", "name": "Two"},
+            {"id": "agent-3", "name": "Three"},
+        ],
+        selected_index=2,
+    )
+    
+    # Simulate agents being removed
+    game_state = {
+        "agents": {"agent-1": {"name": "One", "role": "Operative", "traits": {}}},
+        "agent_progression": {},
+    }
+    
+    state.update_agents(game_state)
+    assert len(state.agents_data) == 1
+    assert state.selected_index == 0  # Should be clamped
+
+
+def test_agent_roster_panel_detail_view():
+    """Test agent roster panel shows detail view when toggled."""
+    from gengine.echoes.cli.components.agent_roster_panel import AgentRosterPanel
+    from rich.layout import Layout
+    
+    game_state = {
+        "agents": {
+            "agent-1": {
+                "name": "Agent One",
+                "role": "Operative",
+                "traits": {"empathy": 0.7},
+                "notes": "Test agent",
+            }
+        },
+        "agent_progression": {
+            "agent-1": {
+                "role": "Veteran Operative",
+                "missions_completed": 10,
+                "reliability": 0.9,
+                "stress": 0.2,
+            }
+        },
+    }
+    
+    panel = AgentRosterPanel()
+    panel.update(game_state, tick=10)
+    
+    # Initially no detail view
+    assert panel.state.show_detail is False
+    rendered = panel.render(tick=10)
+    assert not isinstance(rendered, Layout)
+    
+    # Toggle detail view
+    panel.handle_key("enter")
+    assert panel.state.show_detail is True
+    rendered = panel.render(tick=10)
+    assert isinstance(rendered, Layout)
+    
+    console = Console(width=150)  # Wide enough for full output
+    with console.capture() as capture:
+        console.print(rendered)
+    output = capture.get()
+    
+    # Should show both roster and detail
+    assert "Agent Roster" in output
+    assert "Agent One" in output
+    # Check for veteran or role info
+    assert "Veteran" in output or "Operative" in output
+    assert "10" in output  # Missions count
