@@ -1,3 +1,8 @@
+## [git_agent] — 2025-12-07 03:01
+- Restored --ui flag handling in start.sh to match documentation and user expectations. Committed and pushed to main.
+## [git_agent] — 2025-12-07 02:56
+- Merged branch 'copilot/metropolitan-flamingo' into 'main' with updated how_to_play_echoes.md and related CLI/UI/test improvements.
+- Pushed main to remote. All documentation and code changes are now live on main.
 
 ## agent_author_agent — 2025-12-06 14:45
 - Refined execdocs-agent, agent_author_agent, and git_agent definitions for
@@ -565,4 +570,20 @@ Created 4 new view modules and enhanced 1 component:
 - Verified all 1251 tests pass.
 - Verified code style is clean with `ruff check`.
 - Ready for PR review and merge.
+
+
+## [tracker_agent] — 2025-12-07 21:43
+- Created GitHub issue #79 for tracker task 12.2.2 as requested. See .pm/tracker.md for details.
+
+
+## [tracker_agent] — 2025-12-07 21:45
+- Added summary table entry for 12.2.2 (Agent Roster Panel) and confirmed full tracker detail for issue #79.
+
+
+## [tracker_agent] — 2025-12-07 21:47
+- Updated GitHub issue #79 with full tracker detail for 12.2.2 to enable delegation.
+
+
+## [tracker_agent] — 2025-12-07 21:49
+- Added new task 12.2.3 (Player Interactivity & UI Wiring) to .pm/tracker.md after 12.2.2. Updated summary table and detailed section.
 

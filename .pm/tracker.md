@@ -10,6 +10,9 @@
 | **11** | 🚧 In Progress | 5/6 | 1 | Medium | Complete 11.6.1 or begin Phase 12 |
 | **12** | 🚧 In Progress | 1/5 | 4 | Medium | Begin 12.1.1 Terminal UI Core Implementation |
 | 12.1.1 | Terminal UI Core Implementation | complete | High | None | UI Team | 2025-12-07 |
+| 12.2.1 | Management Depth UI | complete | High | 12.1.1 | UI Team | 2025-12-07 |
+| 12.2.2 | Agent Roster Panel | planning | High | 12.2.1 | UI Team | 2025-12-07 |
+| 12.2.3 | Player Interactivity & UI Wiring | not-started | High | 12.2.2 | UI Team | 2025-12-07 |
 
 
 **Active Tasks:**
@@ -81,7 +84,49 @@
 - 🆕 **Phase 12 (UI Implementation) PLANNED** - NEW PHASE (2025-12-05)
   - 5 new milestones added based on UI design document (`docs/simul/game_ui_design.md`)
   - M12.1: Core Playability UI (status bar, city map, event feed, context panel, command bar) — ✅ Complete (2025-12-07)
-  - M12.2: Management Depth UI (agent roster, faction overview, focus management, heat maps) — ⏳ Next Up (High Priority)
+  - M12.2: Management Depth UI (agent roster, faction overview, focus management, heat maps) — ✅ Complete (2025-12-07)
+  ### 12.2.2 — Implement Agent Roster Panel
+
+  - **Description:** Build the agent roster panel for the management UI. Display all agents with key stats, enable selection, and integrate with simulation state for real-time updates.
+  - **Acceptance Criteria:**
+    - Agent roster panel displays all agents with stats (name, role, expertise, reliability, stress, missions).
+    - Supports keyboard navigation and selection.
+    - Updates in real time as simulation state changes.
+    - At least 3 tests covering agent display, selection, and update.
+  - **Priority:** High
+  - **Responsible:** UI Team
+  - **Dependencies:** 12.2.1 (Management Depth UI)
+  - **Risks & Mitigations:**
+    - Risk: Data model mismatch. Mitigation: Early integration with simulation state and test with sample data.
+    - Risk: Usability issues. Mitigation: Solicit feedback from playtesters after initial implementation.
+  - **Next Steps:**
+    1. Design agent roster UI layout and data flow.
+
+### 12.2.3 — Player Interactivity & UI Wiring
+
+  - **Description:** Enable player interactivity by wiring up the UI panels (agent roster, map, event feed, context panel, command bar) to the game engine. Ensure all interactive elements respond to player input and update in real time, supporting core gameplay actions.
+  - **Acceptance Criteria:**
+    - All UI panels are interactive and respond to player input (keyboard/mouse as applicable).
+    - Actions taken in the UI (e.g., selecting agents, issuing commands) are reflected in the game engine state.
+    - Real-time updates between UI and simulation state are robust and performant.
+    - At least 5 tests covering UI-to-engine integration and player interaction flows.
+  - **Priority:** High
+  - **Responsible:** UI Team
+  - **Dependencies:** 12.2.2 (Agent Roster Panel)
+  - **Risks & Mitigations:**
+    - Risk: UI/engine integration complexity. Mitigation: Incremental integration and early technical review.
+    - Risk: Incomplete input handling. Mitigation: Comprehensive test cases and user feedback.
+  - **Next Steps:**
+    1. Implement event handlers and data bindings for all interactive UI elements.
+    2. Integrate player actions with game engine logic.
+    3. Test end-to-end player interaction flows.
+    4. Gather feedback from playtesters and iterate.
+  - **Last Updated:** 2025-12-07
+
+    2. Implement panel and connect to simulation state.
+    3. Add keyboard navigation and selection logic.
+    4. Write tests for agent display and selection.
+  - **Last Updated:** 2025-12-07
   - M12.3: Understanding & Reflection UI (explanations, timeline view, campaign hub, post-mortem)
   - M12.4: Polish & Accessibility (animations, keyboard navigation, accessibility audit, help system)
   - M12.5: UI Testing & Validation (success metrics tracking, automated tests, user testing)
