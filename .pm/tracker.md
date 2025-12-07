@@ -7,8 +7,9 @@
 | Phase | Status | Complete | Remaining | Priority | Next Action |
 |-------|--------|----------|-----------|----------|-------------|
 | **1-10** | ✅ Complete | 51/51 | 0 | - | Maintenance only |
-| **11** | 🚧 In Progress | 4/6 | 2 | Medium | Continue with 11.4.1 or 11.6.1 |
-| **12** | 📋 Planned | 0/5 | 5 | Medium | Await prioritization decision |
+| **11** | 🚧 In Progress | 5/6 | 1 | Medium | Complete 11.6.1 or begin Phase 12 |
+| **12** | 🚧 In Progress | 1/5 | 4 | Medium | Begin 12.1.1 Terminal UI Core Implementation |
+| 12.1.1 | Terminal UI Core Implementation | not-started | High | None | UI Team | 2025-12-07 |
 
 
 **Active Tasks:**
@@ -459,7 +460,7 @@ The project has closely followed the implementation plan with excellent tracking
   - ✅ 11.5.1: CI integration for continuous validation - **COMPLETED** (2025-12-05)
   - ⬜ 11.6.1: Designer feedback loop and tooling - **OPTIONAL** (low priority, UX enhancement)
 - **Dependencies:** Phase 9 (AI tournaments) ✅ COMPLETE
-- **Outstanding:** 2 optional tasks (11.4.1, 11.6.1) - not required for core balance workflow
+- **Outstanding:** 1 optional task (11.6.1) - not required for core balance workflow
 
 ## Outstanding Work Analysis
 
@@ -585,7 +586,7 @@ The project has closely followed the implementation plan with excellent tracking
 | 11.1.1 | Batch simulation sweep infrastructure (M11.1) | ✅ completed | Medium | gamedev-agent | 2025-12-05 |
 | 11.2.1 | Result aggregation and storage (M11.2) | ✅ completed | Medium | gamedev-agent | 2025-12-05 |
 | 11.3.1 | Analysis and balance reporting (M11.3) | ✅ completed | High | gamedev-agent | 2025-12-05 |
-| 11.4.1 | Strategy parameter optimization (M11.4) | not-started | Low | gamedev-agent | 2025-12-05 |
+| 11.4.1 | Strategy parameter optimization (M11.4) | complete | Low | gamedev-agent | 2025-12-07 |
 | 11.4.2 | Optimization engine robustness & UX polish | not-started | Medium | gamedev-agent | 2025-12-06 |
 | 11.5.1 | CI integration for continuous validation (M11.5) | ✅ completed | Medium | gamedev-agent | 2025-12-05 |
 | 11.6.1 | Designer feedback loop and tooling (M11.6) | not-started | Low | gamedev-agent | 2025-12-05 |
@@ -1525,8 +1526,8 @@ The project has closely followed the implementation plan with excellent tracking
 ### 11.4.1 — Strategy Parameter Optimization (M11.4)
 
 - **GitHub Issue:** [#71](https://github.com/TheWizardsCode/GEngine/issues/71)
-- **Status:** not-started (optional enhancement)
-- **Description:** Implement automated strategy parameter tuning using optimization algorithms (grid search, random search, or Bayesian optimization) to find well-balanced strategy configurations. Goal is to reduce dominant strategy win rate deltas and improve strategic diversity. Note: Implementation plan Section 10 describes future work to expose internal strategy parameters (aggression thresholds, risk tolerance, resource prioritization) for deeper tuning—this task focuses on optimizing existing high-level strategy behavior first.
+- **Status:** complete (optional enhancement, delivered 2025-12-07)
+- **Description:** Automated strategy parameter tuning implemented using grid search and random search algorithms. Optimization runs batch sweeps, outputs Pareto frontier, and integrates with result storage. Documentation and 10+ tests delivered. Future work for deeper parameter exposure is referenced in 11.4.2.
 - **Acceptance Criteria:**
   - Script `scripts/optimize_strategies.py` accepts strategy parameter ranges and optimization targets (e.g., minimize max win rate delta, maximize strategic diversity).
   - Supports multiple optimization algorithms: grid search (exhaustive), random search (sampling), and optionally Bayesian optimization (e.g., using `scikit-optimize`).
@@ -1541,8 +1542,8 @@ The project has closely followed the implementation plan with excellent tracking
 - **Risks & Mitigations:**
   - Risk: Optimization converges to local optima or overfits to specific scenarios. Mitigation: Use multiple random seeds and validation sets.
   - Risk: Computationally expensive for large parameter spaces. Mitigation: Start with coarse grid search, then refine with targeted searches.
-- **Next Steps:**
-  1. Define strategy parameter schema and tuning ranges.
+- **Status Update:** All acceptance criteria met, PR and docs merged, tests delivered. No further action required unless new feedback arises.
+- **Last Updated:** 2025-12-07
   2. Implement fitness functions for balance objectives.
   3. Add optimization algorithms (start with grid/random search).
   4. Create test suite with small synthetic parameter spaces.
@@ -1641,7 +1642,31 @@ This phase implements the terminal-based UI described in the Game UI Design docu
 - `docs/simul/game_ui_design.md` - Complete UI design specification
 - `docs/simul/emergent_story_game_implementation_plan.md` - Section 6 (CLI Gateway)
 
-### 12.1.1 — Core Playability UI (M12.1)
+### 12.1.1 — Terminal UI Core Implementation (M12.1)
+
+- **Description:** Build the foundational terminal UI, including global status bar, ASCII city map, event feed, and context panel. This enables real-time visualization and interaction for simulation monitoring and management.
+- **Acceptance Criteria:**
+  - Status bar displays global metrics (stability, pollution, unrest, faction control) with color coding.
+  - ASCII city map shows all districts, supports selection and highlights.
+  - Event feed lists recent events with severity indicators.
+  - Context panel displays selected district details.
+  - Command bar with Next/Run/Save buttons, keyboard-navigable.
+  - UI updates in real-time during batch tick execution.
+  - At least 15 tests covering UI rendering, selection, event feed, and navigation.
+- **Priority:** High
+- **Responsible:** UI Team
+- **Dependencies:** None
+- **Risks & Mitigations:**
+  - Risk: Terminal rendering performance degrades with frequent updates. Mitigation: Use efficient rendering library (Rich, Textual) and delta updates.
+  - Risk: ASCII map unreadable on small terminals. Mitigation: Implement responsive layout and minimum size checks.
+- **Next Steps:**
+  1. Evaluate terminal UI libraries and select one.
+  2. Implement status bar component.
+  3. Build ASCII city map renderer.
+  4. Create event feed and context panel components.
+  5. Wire up command bar and keyboard navigation.
+  6. Add comprehensive UI tests.
+- **Last Updated:** 2025-12-07
 
 - **GitHub Issue:** TBD
 - **Description:** Implement the fundamental UI elements needed for basic playability: global status bar, city map with district selection, event feed, context panel, and command bar. This establishes the core observe-decide-simulate loop with visual feedback.

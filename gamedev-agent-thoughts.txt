@@ -302,3 +302,9 @@ Working on Issue #71 - Phase 11, Milestone 11.4, Task 11.4.1.
 - [x] Task completed
 
 >>>>>>> copilot/optimize-strategy-parameters
+
+## [tracker_agent] — 2025-12-07 04:01
+- Reviewed recent commits and updated .pm/tracker.md: Task 11.4.1 (Strategy Parameter Optimization) marked complete, summary table and outstanding work sections updated. No blockers; only 11.6.1 remains as optional for Phase 11. Ran markdownlint; only line length warnings present.
+
+## [tracker_agent] — 2025-12-07 04:04
+- Created and documented task 12.1.1 (Terminal UI Core Implementation) in .pm/tracker.md. Updated summary table and milestone details. Lint check run; only line length warnings present.
