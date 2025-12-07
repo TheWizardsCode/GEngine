@@ -1,63 +1,78 @@
 # How to Play Echoes of Emergence
 
 
-This guide explains how to run the current Echoes of Emergence prototype, interpret its outputs, and iterate on the simulation while new systems are under construction. It assumes you have cloned the repository and installed all runtime/dev dependencies via `uv sync --group dev`.
-
-**New!** For large-scale AI playtesting and balance iteration, see [Section 13: AI Tournament & Balance Analysis](./ai_tournament_and_balance_analysis.md).
+This guide explains how to run the current Echoes of Emergence prototype, interpret its outputs, and iterate on the simulation.
 
 ## 1. Launching the Shell
 
-The CLI shell is the primary way to interact with the simulation today.
+The CLI shell is the primary way to interact with the simulation. To launch the shell, use:
 
 ```bash
-uv run echoes-shell --world default
+./start.sh
 ```
 
-- `--world` selects the authored content folder under `content/worlds/`.
+- Use `--world <name>` to select the authored content folder under `content/worlds/`.
 - Use `--snapshot path/to/save.json` to load a previously saved state.
-- Use `--service-url http://localhost:8000` to target the FastAPI simulation
-  service instead of running in-process (world/snapshot loads must then be
-  triggered server-side).
-- Use `--rich` to enable enhanced ASCII views with styled tables, color-coded
-  panels, and improved readability (requires Rich library).
+- Use `--service-url http://localhost:8000` to target the FastAPI simulation service (world/snapshot loads must then be triggered server-side).
+- Use `--rich` to enable enhanced ASCII views with styled tables, color-coded panels, and improved readability.
 - For scripted runs (handy for CI or quick experiments):
 
   ```bash
-  uv run echoes-shell --world default --script "summary;run 5;map;exit"
+  ./start.sh --script "summary;run 5;map;exit"
   ```
 
 - For enhanced visualization during playtesting:
 
   ```bash
-  uv run echoes-shell --world default --rich
+  ./start.sh --rich
   ```
 
-On startup the shell prints a world summary and shows the prompt `(echoes)`.
-Type commands listed in the next section to explore the world, advance time,
-and persist state.
+On startup the shell prints a world summary and shows the prompt `(echoes)`. Type commands listed in the next section to explore the world, advance time, and persist state.
 
 ### Remote Sessions via the Gateway Service
 
-Phase 6 introduces a WebSocket gateway so remote testers can drive the CLI
-without SSH access. Launch the gateway alongside the FastAPI simulation
-service:
+
+Phase 6 introduces a WebSocket gateway so remote testers can drive the CLI without SSH access. To launch the gateway and connect, use:
 
 ```bash
-uv run echoes-gateway-service
+./start.sh --gateway --script "summary;run 3;exit"
 ```
 
-Then connect with the bundled client (or any WebSocket tool that sends JSON
-`{"command": "..."}` frames):
-
-```bash
-uv run echoes-gateway-shell --gateway-url ws://localhost:8100/ws --script "summary;run 3;exit"
-```
+This uses the startup script to connect to the gateway service, ensuring environment setup and consistent invocation. For advanced options, pass additional arguments to `start.sh` as needed.
 
 Each connection provisions a dedicated `EchoesShell`, proxies commands to the
 simulation service configured via `ECHOES_GATEWAY_SERVICE_URL`, and logs
 focus/digest/history snapshots via the `gengine.echoes.gateway` logger whenever
 `summary`, `focus`, `history`, or `director` runs. The client prints the same
 ASCII output as the local shell and honors `--script` for CI-friendly runs.
+
+
+## 1a. Launching the Terminal UI (Dashboard)
+
+Echoes of Emergence now includes a rich Terminal UI dashboard for visual simulation interaction. This UI provides a status bar, city map, event feed, context panel, and command bar, all rendered in the terminal using the Rich library.
+
+
+### Environment Setup
+
+
+Before running the UI or any scripts, ensure your environment is set up. The `start.sh` script will handle environment setup and dependency installation automatically. Manual setup is only needed if you want to customize the environment or install additional packages.
+
+---
+
+
+To launch the demo Terminal UI:
+
+```bash
+./start.sh --ui
+```
+
+This will open a dashboard-style interface with real-time simulation data. The script uses sample data, but you can adapt it for live simulation integration.
+
+For full details on the UI components, customization, and data formats, see the [Terminal UI README](../../src/gengine/echoes/cli/README.md).
+
+> **Tip:** The classic CLI shell (`echoes-shell`) remains available for command-driven play and scripting. The Terminal UI is ideal for visual monitoring and interactive play.
+
+---
 
 ## 2. Shell Commands
 
