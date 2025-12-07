@@ -1,3 +1,4 @@
+
 ## agent_author_agent — 2025-12-06 14:45
 - Refined execdocs-agent, agent_author_agent, and git_agent definitions for
    frontmatter compliance, clearer workflows, explicit boundaries, and
@@ -5,165 +6,118 @@
 
 # GameDev Agent Thoughts - Issue #63: Analysis and Balance Reporting (M11.3)
 
+# GameDev Agent Thoughts - Issue #70: Designer Feedback Loop and Tooling (M11.6)
+
 ## Task Analysis
 
-Working on Issue #63 - Phase 11, Milestone 11.3, Task 11.3.1.
+Working on Issue #70 - Phase 11, Milestone 11.6, Task 11.6.1.
 
-### Previous Completions
-- Task 11.1.1 (Batch Simulation Sweep Infrastructure) - COMPLETED
-- Task 11.2.1 (Result Aggregation and Storage) - COMPLETED
+### Requirements from Issue
 
-### Requirements for Task 11.3.1
+1. Create CLI tool `echoes-balance-studio` with guided workflows for designers:
+   - "Run exploratory sweep"
+   - "Compare two configs" 
+   - "Test tuning change"
+   - "View historical reports"
 
-1. Create `scripts/analyze_balance.py` that processes aggregated sweep results from SQLite database
-2. Generate HTML or Markdown balance reports with sections for:
-   - Dominant strategies (win rate deltas >10%)
-   - Underperforming mechanics (actions/policies rarely chosen)
-   - Unused story seeds
-   - Parameter sensitivity analysis (impact of difficulty/config changes)
-3. Statistical analysis including:
-   - Confidence intervals
-   - Significance testing (t-tests for win rate differences)
-   - Trend detection across historical runs
-4. Visual outputs (charts/graphs) showing:
-   - Win rate distributions
-   - Metric trends over time
-   - Parameter correlations
-5. Regression detection: Highlights significant deviations from baseline
-6. At least 12 tests covering report generation, statistical calculations, and edge cases
+2. Configuration changes testable via YAML overlays without modifying base configs
+   (similar to difficulty presets)
+
+3. Interactive report viewer (HTML dashboard) allowing filtering, sorting, 
+   and drilling into results
+
+4. Designer-focused documentation:
+   - "How to diagnose dominant strategies"
+   - "Iterating on action costs"
+   - "Testing narrative pacing changes"
+
+5. Example workflows with case studies (e.g., "Balancing the Industrial Tier faction")
+
+6. At least 8 tests covering CLI commands, config overlay loading, and report generation
+
+7. Register new CLI tool in pyproject.toml
+
+### Existing Infrastructure Leveraged
+
+- scripts/run_batch_sweeps.py - Batch simulation sweep infrastructure
+- scripts/aggregate_sweep_results.py - Result aggregation with SQLite storage
+- scripts/analyze_balance.py - Analysis and balance reporting
+- content/config/batch_sweeps.yml - Sweep parameter configuration
+- Difficulty presets in content/config/sweeps/
 
 ## Implementation Summary
 
 ### Files Created
 
-1. **scripts/analyze_balance.py** - Main balance analysis script with:
-   - Dataclasses: `ConfidenceInterval`, `TTestResult`, `TrendAnalysis`, `RegressionAlert`, `BalanceReport`
-   - Database query functions for extracting sweep results
-   - Statistical analysis functions:
-     - `compute_confidence_interval()` - 95% CI using t-distribution
-     - `perform_t_test()` - Two-sample t-test for strategy comparison
-     - `detect_trend()` - Linear regression for trend detection
-     - `detect_regression()` - Compare runs for significant deviations
-   - Balance analysis functions:
-     - `analyze_dominant_strategies()` - Win rate deltas >10%
-     - `analyze_underperforming_mechanics()` - Actions with <5% usage
-     - `identify_unused_story_seeds()` - Seeds never activated
-     - `analyze_parameter_sensitivity()` - Metrics by difficulty
-   - Visualization functions (using matplotlib):
-     - `generate_win_rate_chart()` - Bar chart of win rates
-     - `generate_trend_chart()` - Line chart of metrics over time
-     - `generate_action_distribution_chart()` - Pie chart of actions
-   - Report generation:
-     - `format_report_markdown()` - Full markdown report
-     - `format_report_html()` - HTML with embedded charts
-   - CLI with subcommands: `report`, `regression`, `trends`, `stats`
+1. **src/gengine/balance_studio/__init__.py** - Package init with exports
+2. **src/gengine/balance_studio/overlays.py** - YAML overlay loading system
+   - ConfigOverlay dataclass
+   - deep_merge() for config merging
+   - load_overlay_directory() for batch loading
+   - create_tuning_overlay() helper
+   - merge_overlays() for combining overlays
+3. **src/gengine/balance_studio/workflows.py** - Workflow implementations
+   - WorkflowResult dataclass
+   - ExploratorySweepConfig, CompareConfigsConfig, TuningTestConfig
+   - run_exploratory_sweep()
+   - run_config_comparison()
+   - run_tuning_test()
+   - list_historical_reports()
+   - view_historical_report()
+   - get_workflow_menu()
+4. **src/gengine/balance_studio/report_viewer.py** - HTML report generation
+   - ReportViewerConfig, FilterState dataclasses
+   - generate_strategy_chart(), generate_difficulty_chart()
+   - generate_stability_distribution_chart()
+   - generate_interactive_html() - full HTML dashboard
+   - write_html_report()
+5. **src/gengine/balance_studio/cli.py** - Entry point for pyproject.toml
+6. **scripts/echoes_balance_studio.py** - Main CLI tool with:
+   - Interactive workflow selection
+   - sweep, compare, test-tuning, view-reports, generate-report commands
+7. **tests/scripts/test_echoes_balance_studio.py** - 30 tests covering:
+   - ConfigOverlay (5 tests)
+   - DeepMerge (3 tests)
+   - LoadOverlayDirectory (3 tests)
+   - CreateTuningOverlay (1 test)
+   - MergeOverlays (2 tests)
+   - ReportViewer (3 tests)
+   - Workflows (6 tests)
+   - CLI (5 tests)
+   - ExploratorySweepConfig (2 tests)
+8. **docs/gengine/designer_feedback_tooling.md** - Designer documentation
 
-2. **tests/scripts/test_analyze_balance.py** - 39 tests in 12 test classes:
-   - `TestConfidenceInterval` (4 tests): CI computation, edge cases, serialization
-   - `TestTTest` (4 tests): Significant/non-significant detection, insufficient data
-   - `TestTrendDetection` (4 tests): Increasing, decreasing, stable, insufficient data
-   - `TestRegressionDetection` (3 tests): Regression alerts, thresholds, serialization
-   - `TestDominantStrategies` (3 tests): Detection, balanced scenarios, single strategy
-   - `TestUnderperformingMechanics` (3 tests): Detection, all used, empty data
-   - `TestUnusedStorySeeds` (3 tests): Identification, full coverage, no reference
-   - `TestParameterSensitivity` (2 tests): Difficulty analysis, high variation
-   - `TestReportGeneration` (4 tests): Report with data, markdown, HTML, serialization
-   - `TestCLI` (6 tests): Report, JSON output, stats, trends, regression commands
-   - `TestEdgeCases` (3 tests): Empty database, single result, all failed sweeps
+### Files Modified
 
-## Acceptance Criteria Verification
-
-1. ✅ Script processes aggregated sweep results from SQLite database
-2. ✅ Generates HTML or Markdown balance reports with sections for:
-   - ✅ Dominant strategies (win rate deltas >10%)
-   - ✅ Underperforming mechanics (actions with <5% usage)
-   - ✅ Unused story seeds
-   - ✅ Parameter sensitivity analysis
-3. ✅ Statistical analysis includes:
-   - ✅ Confidence intervals (95% CI using t-distribution)
-   - ✅ Significance testing (two-sample t-tests)
-   - ✅ Trend detection (linear regression)
-4. ✅ Visual outputs (charts) showing:
-   - ✅ Win rate distributions (bar chart)
-   - ✅ Metric trends over time (line chart)
-   - ✅ Action distribution (pie chart)
-5. ✅ Regression detection highlights significant deviations from baseline
-6. ✅ 39 tests covering report generation, statistical calculations, and edge cases (requirement was 12+)
-
-## Verification
-
-- All 39 tests pass
-- Ruff linting passes with no errors
-- CLI works correctly with all subcommands
-
-## Progress
-
-- [x] Create scripts/analyze_balance.py
-- [x] Create tests/scripts/test_analyze_balance.py
-- [x] Run linting - PASSED
-- [x] Run tests - 39 PASSED
-- [x] Task completed
-
----
-
-# Previous Task Notes - Issue #61: Result Aggregation and Storage (M11.2)
-
-## Task Analysis
-
-Working on Issue #61 - Phase 11, Milestone 11.2, Task 11.2.1.
-
-### Requirements
-
-1. Script `scripts/aggregate_sweep_results.py` ingests batch sweep JSON outputs and produces aggregated summary data
-2. Storage format (SQLite database) supports querying by parameter combinations, timestamp, and result metrics
-3. Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges) for reproducibility
-4. Aggregation computes key statistics: win rates by strategy, average stability/unrest/pollution, story seed activation rates, action usage frequencies
-5. Query interface or helper functions support common lookups
-6. At least 8 tests covering aggregation logic, storage/retrieval, and historical queries
-
-## Implementation Summary
-
-### Files Created
-
-1. **scripts/aggregate_sweep_results.py** - Main aggregation script with:
-   - Dataclasses: `SweepRecord`, `SweepRunMetadata`, `AggregatedStats`
-   - SQLite database setup with versioned schema and indexes
-   - `init_database()` - Creates tables and indexes
-   - `ingest_sweep_summary()` - Ingests a single batch sweep summary
-   - `ingest_sweep_directory()` - Ingests all summaries from a directory
-   - `query_sweep_results()` - Query with filters (strategy, difficulty, world, run_id, days, git_commit, limit)
-   - `query_sweep_runs()` - Query run metadata
-   - `compute_aggregated_stats()` - Computes win rates, averages, action frequencies
-   - `compute_stats_by_strategy()` / `compute_stats_by_difficulty()` - Convenience functions
-   - CLI with subcommands: `ingest`, `query`, `stats`, `runs`
-
-2. **tests/scripts/test_aggregate_sweep_results.py** - 26 tests in 8 test classes:
-   - `TestDatabaseSchema` (3 tests): schema creation, indexes, idempotency
-   - `TestIngestion` (3 tests): ingest summary, prevent duplicates, ingest directory
-   - `TestQuerying` (6 tests): by strategy, difficulty, run_id, limit, days, git commit
-   - `TestAggregation` (4 tests): by strategy, with errors, action frequencies, empty records
-   - `TestDataclasses` (3 tests): SweepRecord, SweepRunMetadata, AggregatedStats serialization
-   - `TestCLI` (4 tests): ingest, stats JSON, query with filters, runs command
-   - `TestHistoricalTracking` (2 tests): multiple runs, date range filtering
+1. **pyproject.toml** - Added echoes-balance-studio script entry
 
 ## Acceptance Criteria Verification
 
-1. ✅ Script ingests batch sweep JSON outputs and produces aggregated summary data
-2. ✅ SQLite storage supports querying by parameter combinations, timestamp, and result metrics
-3. ✅ Historical tracking preserves sweep metadata (git commit hash, timestamp, parameter ranges)
-4. ✅ Aggregation computes: win rates, avg stability, story seed activation rates, action frequencies
-5. ✅ Query interface supports common lookups (by strategy, difficulty, date range, git commit)
-6. ✅ 26 tests covering aggregation logic, storage/retrieval, and historical queries (requirement was 8+)
+1. ✅ CLI tool `echoes-balance-studio` provides guided workflows for designers
+2. ✅ Workflows include: "Run exploratory sweep", "Compare two configs", 
+      "Test tuning change", "View historical reports"
+3. ✅ Configuration changes testable via YAML overlays
+4. ✅ Interactive report viewer (HTML dashboard) allows filtering, sorting, 
+      and drilling into results
+5. ✅ Designer-focused documentation covers:
+   - "How to diagnose dominant strategies"
+   - "Iterating on action costs"
+   - "Testing narrative pacing changes"
+6. ✅ Example workflows with case studies (Balancing Industrial Tier faction)
+7. ✅ 30 tests covering CLI commands, config overlay loading, and report generation
+      (requirement was at least 8)
+8. ✅ CLI registered in pyproject.toml under [project.scripts]
+9. ✅ All code passes ruff linting
+10. ✅ Tests pass
 
-## Verification
-
-- All 26 tests pass
-- Ruff linting passes with no errors
-- CLI works correctly via subprocess testing
-
-## Progress
-
-- [x] Create scripts/aggregate_sweep_results.py
-- [x] Create tests/scripts/test_aggregate_sweep_results.py
+## Status
+- [x] Read and understand existing infrastructure
+- [x] Create balance studio module with overlays
+- [x] Create workflows module
+- [x] Create report viewer module
+- [x] Create CLI tool (echoes_balance_studio.py)
+- [x] Add tests (30 tests - exceeds minimum of 8)
+- [x] Create designer documentation
+- [x] Register CLI in pyproject.toml
 - [x] Run linting - PASSED
-- [x] Run tests - 26 PASSED
+- [x] Run tests - 30 PASSED

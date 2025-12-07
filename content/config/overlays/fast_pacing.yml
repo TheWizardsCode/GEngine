@@ -1,0 +1,27 @@
+# Example Overlay: Fast Narrative Pacing
+# Demonstrates how to adjust narrative timing for testing.
+#
+# This overlay increases the rate of story seed activations
+# and reduces quiet periods between events.
+#
+# Usage:
+#   echoes-balance-studio sweep --overlay content/config/overlays/fast_pacing.yml
+
+name: fast_narrative_pacing
+description: |
+  Test faster narrative pacing with more frequent story events.
+  Use this to see how players handle increased drama density.
+
+overrides:
+  director:
+    max_active_seeds: 3
+    global_quiet_ticks: 2
+    seed_active_ticks: 4
+    seed_resolve_ticks: 2
+    seed_quiet_ticks: 3
+    story_seed_limit: 4
+
+metadata:
+  author: narrative_team
+  purpose: testing
+  related_issue: example
