@@ -1,5 +1,73 @@
 # Echoes of Emergence – Game Design Document
 
+## Automated Testing & Balancing Plan
+
+### Simulation Results Summary (2025-12-07)
+
+### Design Update: Disruptive Story Seeds & Resource Scarcity
+
+#### Purpose
+Introduce disruptive story seeds (e.g., city-wide crises, faction betrayals, resource shortages) and resource scarcity to increase tension, risk, and outcome diversity. These events force players to adapt tactics, manage resources, and recover from setbacks, making each playthrough more engaging and unpredictable.
+
+#### Mechanics & Tuning Knobs
+
+- New disruptive story seed added: "Supply Chain Collapse" (citywide logistics breakdown, resource shortage, faction conflict).
+- Resource scarcity increased in default world: energy and materials starting values reduced, slower regeneration.
+- Supply Chain Collapse triggers when resources fall below 20% in key districts, forcing emergency rationing and trade decisions.
+
+- Disruptive seeds trigger unpredictable events (e.g., sudden supply chain collapse, faction betrayal, environmental disaster).
+- Resource scarcity is tuned via config knobs (frequency, severity, recovery options) in `content/config/`.
+- Director pacing controls when and how often disruptions occur, ensuring tension without overwhelming the player.
+
+#### Game Loop Impact
+- Moment-to-moment: Players must react to crises, make tough choices, and prioritize limited resources.
+- Mid-term: Faction/district management becomes riskier, requiring strategic planning and mitigation.
+- Long-term: Campaign arcs feature more recovery opportunities, failure modes, and divergent outcomes.
+
+#### Balance Guidance
+- Target: Tension curves with clear risk/reward, readable feedback, and recovery options.
+- Safe envelope: Disruptions should challenge but not punish; configs should allow tuning for different skill levels.
+- Telemetry: Use batch sweeps to validate tension, outcome diversity, and avoid grind/snowball/dead-end states.
+
+#### Enjoyment Risks & Follow-ups
+- Risks: Excessive punishment, opaque outcomes, confusion.
+- Mitigation: Start with mild disruptions, increase severity gradually, and run lightweight playtests to validate fun and readability.
+
+---
+
+
+- **Proposal:** Add disruptive story seeds (e.g., city-wide crises, faction betrayals, resource shortages) and introduce resource scarcity to scenario configs.
+- **Intended impact:** Create more risk, recovery opportunities, and divergent outcomes across strategies, increasing tension and replayability.
+- **Balance guidance:** Tune disruptive events to occur unpredictably but not overwhelmingly; ensure recovery options exist so players can avoid dead-ends.
+- **Next steps:** Prototype new seeds and scarcity configs, then run fresh batch sweeps to validate increased tension and outcome diversity.
+
+
+- **Strategies tested:** balanced, aggressive, diplomatic (seed 42, normal difficulty, 100 ticks)
+- **Outcomes:** All strategies activated the 'hollow-supply-chain' story seed and reached final stability 1.0 within 100 ticks.
+- **Action profiles:**
+  - Balanced: 10 INSPECT actions
+  - Aggressive: 5 DEPLOY_RESOURCE, 5 INSPECT
+  - Diplomatic: 7 INSPECT, 3 NEGOTIATE
+- **Balance notes:** No grind, snowball, or dead-end states observed. All strategies converged to stable outcomes, suggesting current tuning is fair but may lack tension spikes or risk of failure.
+- **Next steps:** Increase scenario variety and introduce more disruptive story seeds to test edge cases and tension curves.
+
+
+1. **Automated Playtest Scenarios**
+   - Scripted agents simulate player actions across all three rings (moment-to-moment, mid-term, long-term).
+   - Batch simulations with varied configs from `content/config/` capture win/loss rates, resource curves, and narrative pacing.
+   - Key metrics (decision density, tension spikes, recovery frequency) are logged to `build/telemetry/` for analysis.
+
+2. **Balance Sweeps and Tuning**
+   - Parameter sweeps systematically vary difficulty, resource availability, and director pacing knobs.
+   - Telemetry identifies grind, snowball, and dead-end states; configs producing unfun or unreadable outcomes are flagged.
+   - Auto-generated balance reports summarize safe tuning envelopes and outlier scenarios.
+
+3. **Continuous GDD Alignment**
+   - After each test sweep, GDD statements are cross-checked against observed outcomes.
+   - Balance notes and tuning guidance are updated to reflect actual system behavior, with prototype divergences highlighted.
+
+---
+
 ## 1. High-Level Concept
 
 **Working Title:** Echoes of Emergence

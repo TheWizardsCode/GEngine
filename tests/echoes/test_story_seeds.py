@@ -30,7 +30,7 @@ def test_story_seed_schema_fields_are_loaded() -> None:
     assert seed.resolution_templates.success
     assert seed.resolution_templates.failure
     assert seed.travel_hint is not None
-    assert seed.followups == ["hollow-supply-chain"]
+    assert seed.followups == ["supply-chain-collapse"]
 
 
 def test_summary_includes_active_story_seeds() -> None:

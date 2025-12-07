@@ -325,6 +325,11 @@ def test_sabotage_reduces_rival_legitimacy() -> None:
     when only the acting faction can perform actions.
     """
     state = _multi_faction_state()
+    # Ensure only union and cartel exist to prevent interference from other factions
+    state.factions = {
+        k: v for k, v in state.factions.items() 
+        if k in ["union_of_flux", "cartel_of_mist"]
+    }
     state.environment.stability = 0.8
     
     # Set up union as the only faction that can act (will sabotage cartel)

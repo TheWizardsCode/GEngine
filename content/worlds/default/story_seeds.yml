@@ -18,6 +18,35 @@ story_seeds:
       - "Aria Volt drafts an emergency ration plan that would divert power from research labs."
     triggers:
       - scope: environment
+      # ...existing code...
+    resolution_templates:
+      success: "Emergency rationing shares power fairly and the Union backs down."
+      failure: "Workshops go dark, strikers spread, and council legitimacy crashes."
+      partial: "Convoys buy time but sabotage rumors keep tensions high."
+    followups: [supply-chain-collapse]
+
+  - id: supply-chain-collapse
+    title: "Supply Chain Collapse"
+    summary: "A sudden breakdown in logistics leaves multiple districts without critical resources."
+    stakes: "Factions scramble to secure dwindling supplies, risking open conflict."
+    scope: citywide
+    tags: [logistics, scarcity, crisis]
+    preferred_districts: [industrial-tier, research-spire, perimeter-hollow]
+    cooldown_ticks: 60
+    travel_hint:
+      district_id: industrial-tier
+      max_focus_distance: 5
+    roles:
+      agents: [aria-volt, caden-shard]
+      factions: [union_of_flux, hollow_perimeter]
+    beats:
+      - "Freight drones are grounded, halting deliveries to key districts."
+      - "Caden Shard proposes rationing and emergency trade deals."
+      - "Union of Flux threatens to blockade the perimeter if their demands aren't met."
+    triggers:
+      - scope: citywide
+        condition: resource_shortage
+        threshold: 0.2
         min_score: 0.45
         min_severity: 0.75
         max_focus_distance: 4

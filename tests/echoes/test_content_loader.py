@@ -21,9 +21,9 @@ def test_load_world_bundle_default_world() -> None:
 
     summary = state.summary()
     assert summary["city"] == "Neo Echo"
-    assert summary["districts"] == 3
-    assert summary["factions"] == 2
-    assert summary["agents"] == 3
+    assert summary["districts"] >= 3
+    assert summary["factions"] >= 3
+    assert summary["agents"] >= 4
     assert state.city.districts[0].resources
 
 
@@ -260,3 +260,72 @@ def _write_story_seeds_file(world_root: Path, seeds: list[dict]) -> None:
         yaml.safe_dump({"story_seeds": seeds}),
         encoding="utf-8",
     )
+
+def test_load_world_bundle_custom_content(tmp_path: Path) -> None:
+    """Verify loader logic with controlled content."""
+    world_dir = tmp_path / "custom_world"
+    world_dir.mkdir()
+    
+    # Create minimal world.yml
+    world_data = {
+        "city": {
+            "id": "test-city",
+            "name": "Test City",
+            "districts": [
+                {
+                    "id": "d1", 
+                    "name": "District 1", 
+                    "population": 1000,
+                    "coordinates": {"x": 0.0, "y": 0.0}
+                }
+            ]
+        },
+        "factions": [
+            {
+                "id": "f1", 
+                "name": "Faction 1", 
+                "ideology": "Test", 
+                "legitimacy": 0.5,
+                "resources": {"capital": 10},
+                "territory": ["d1"],
+                "description": "Test faction"
+            }
+        ],
+        "agents": [
+            {
+                "id": "a1", 
+                "name": "Agent 1", 
+                "role": "Tester", 
+                "home_district": "d1",
+                "traits": {"resolve": 0.5},
+                "goals": []
+            }
+        ],
+        "environment": {
+            "stability": 0.8,
+            "unrest": 0.1,
+            "pollution": 0.0,
+            "climate_risk": 0.0,
+            "security": 0.9
+        },
+        "metadata": {"seed": 999}
+    }
+    
+    with (world_dir / "world.yml").open("w") as f:
+        yaml.dump(world_data, f)
+        
+    # Create minimal story_seeds.yml (required by loader)
+    seeds_data = {"story_seeds": []}
+    with (world_dir / "story_seeds.yml").open("w") as f:
+        yaml.dump(seeds_data, f)
+
+    # Load from the temp directory
+    # Note: load_world_bundle expects content_root to contain the world folder
+    state = load_world_bundle("custom_world", content_root=tmp_path)
+
+    summary = state.summary()
+    assert summary["city"] == "Test City"
+    assert summary["districts"] == 1
+    assert summary["factions"] == 1
+    assert summary["agents"] == 1
+    assert state.seed == 999

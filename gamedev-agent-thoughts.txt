@@ -308,3 +308,48 @@ Working on Issue #71 - Phase 11, Milestone 11.4, Task 11.4.1.
 
 ## [tracker_agent] — 2025-12-07 04:04
 - Created and documented task 12.1.1 (Terminal UI Core Implementation) in .pm/tracker.md. Updated summary table and milestone details. Lint check run; only line length warnings present.
+
+## [Game Design Agent] — 2025-12-07 04:41
+- Ran batch simulations for balanced, aggressive, and diplomatic strategies. All reached stable outcomes with no grind or dead-ends. Updated GDD with results and next steps for deeper tension testing.
+
+## [Game Design Agent] — 2025-12-07 04:53
+- Recommended adding disruptive story seeds and resource scarcity to increase tension and outcome variation. Updated GDD with proposal and balance guidance. Next: prototype new events and configs, then validate via batch sweeps.
+
+## [Game Design Agent] — 2025-12-07 04:54
+- Updated GDD with detailed design for disruptive story seeds and resource scarcity. Documented mechanics, tuning knobs, game loop impact, balance guidance, and enjoyment risks. Ready for prototyping and playtest validation.
+
+## [GameDev Agent] — 2025-12-07 04:59
+- Implemented disruptive story seed (Supply Chain Collapse) and increased resource scarcity in default world config. Updated GDD and implementation plan with changes. Next: Validate impact via batch simulation sweeps and telemetry review.
+
+## [GameDev Agent] — 2025-12-07 05:02
+- Followed agent instructions and README setup. Attempted batch sweeps after dependency install; encountered 'No module named gengine' error. Next: Review runner script and PYTHONPATH, ensure src/gengine is discoverable, then rerun sweeps. Ready for test_agent handoff after successful run.
+
+## [GitHub Copilot] — 2025-12-06 14:50
+- Fixed YAML validation errors in `content/worlds/default/world.yml` (missing `goals` list for `dr-lyra-keel`).
+- Updated tests to reflect content changes:
+  - `tests/echoes/test_content_loader.py`: Updated expected counts for factions (3) and agents (4).
+  - `tests/echoes/test_story_seeds.py`: Updated expected followup seed ID.
+  - `tests/echoes/test_faction_system.py`: Isolated faction test state to prevent interference from the newly added `hollow_perimeter` faction.
+- Verified all tests pass with `uv run pytest -v`.
+- Note: Test coverage is at 87.46% (below 90% target), but all tests are passing.
+
+## [GitHub Copilot] — 2025-12-06 15:00
+- Refactored `tests/echoes/test_content_loader.py` to prevent future brittleness:
+  - Added `test_load_world_bundle_custom_content`: A new test using a temporary fixture to verify loader logic with controlled, minimal content.
+  - Updated `test_load_world_bundle_default_world`: Changed exact count assertions (==) to minimum count assertions (>=). This ensures the test verifies the default world is loaded and populated without breaking when new content is added.
+- Verified all tests pass with `uv run pytest tests/echoes/test_content_loader.py`.
+
+## [GitHub Copilot] — 2025-12-06 21:55
+- Improved test coverage for `src/gengine/balance_studio` package to >90%.
+- Created `tests/balance_studio/test_cli.py` (100% coverage).
+- Created `tests/balance_studio/test_workflows.py` (90% coverage).
+- Created `tests/balance_studio/test_overlays.py` (97% coverage).
+- Created `tests/balance_studio/test_report_viewer.py` (96% coverage).
+- Mocked external dependencies (subprocess, matplotlib, importlib) to ensure fast and reliable tests.
+
+## [GitHub Copilot] — 2025-12-06 21:57
+- Analyzed coverage report and identified `scripts/echoes_balance_studio.py` as having low coverage (26%).
+- Created new tests for interactive modes and command handlers in `tests/scripts/test_echoes_balance_studio.py`.
+- Mocked `input`, `print`, and workflow functions to test CLI logic without running simulations.
+- Verified all tests pass.
+- This should bring the overall coverage above 90%.

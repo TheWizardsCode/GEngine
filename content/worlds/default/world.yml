@@ -16,8 +16,13 @@ city:
         energy:
           type: energy
           capacity: 80
-          current: 60
-          regen: 4.5
+          current: 40  # Reduced to increase scarcity
+          regen: 2.0  # Slower recovery to heighten tension
+        materials:
+          type: materials
+          capacity: 60
+          current: 20  # Scarcity for supply chain events
+          regen: 1.0
         materials:
           type: materials
           capacity: 55
@@ -94,6 +99,16 @@ factions:
     territory:
       - perimeter-hollow
     description: Black-market syndicate controlling perimeter trade.
+  - id: hollow_perimeter
+    name: Hollow Perimeter
+    ideology: Perimeter dwellers focused on survival and adaptation.
+    legitimacy: 0.45
+    resources:
+      food: 30
+      salvage: 20
+    territory:
+      - perimeter-hollow
+    description: Community of survivors and scavengers in the outer city.
 agents:
   - id: aria-volt
     name: Aria Volt
@@ -122,7 +137,17 @@ agents:
     traits:
       analysis: 0.88
       curiosity: 0.91
+    goals: []
+  - id: caden-shard
+    name: Caden Shard
+    role: Survivalist
+    faction_id: hollow_perimeter
+    home_district: perimeter-hollow
+    traits:
+      resilience: 0.81
+      ingenuity: 0.76
     goals:
+      - Protect perimeter resources from external threats
       - Reduce pollution spillover from the Industrial Tier
 environment:
   stability: 0.56
