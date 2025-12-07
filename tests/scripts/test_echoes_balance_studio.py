@@ -6,6 +6,7 @@ import json
 import sys
 from importlib import util
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -479,3 +480,217 @@ class TestExploratorySweepConfig:
         assert config.difficulties == ["hard"]
         assert config.seeds == [1, 2, 3]
         assert config.tick_budget == 200
+
+@pytest.fixture
+def mock_cli_workflows():
+    """Mock workflow functions in the CLI module."""
+    # We need to patch the functions in the loaded module _cli
+    # The module name is 'echoes_balance_studio_cli'
+    module_name = "echoes_balance_studio_cli"
+    
+    with patch(f"{module_name}.run_exploratory_sweep") as mock_sweep, \
+         patch(f"{module_name}.run_config_comparison") as mock_compare, \
+         patch(f"{module_name}.run_tuning_test") as mock_tuning, \
+         patch(f"{module_name}.list_historical_reports") as mock_list, \
+         patch(f"{module_name}.view_historical_report") as mock_view, \
+         patch(f"{module_name}.write_html_report") as mock_write:
+        
+        # Setup default success returns
+        mock_sweep.return_value = MagicMock(success=True, message="Success", output_path="out", errors=[])
+        
+        # Fix for JSON serialization: to_dict should return a real dict
+        compare_result = MagicMock(success=True, message="Success", output_path="out", data={}, errors=[])
+        compare_result.to_dict.return_value = {"success": True, "message": "Success"}
+        mock_compare.return_value = compare_result
+        
+        mock_tuning.return_value = MagicMock(success=True, message="Success", output_path="out", data={}, errors=[])
+        mock_list.return_value = []
+        mock_view.return_value = MagicMock(success=True, message="Success", data={})
+        
+        yield {
+            "sweep": mock_sweep,
+            "compare": mock_compare,
+            "tuning": mock_tuning,
+            "list": mock_list,
+            "view": mock_view,
+            "write": mock_write
+        }
+
+class TestInteractiveMode:
+    """Tests for interactive mode workflows."""
+
+    def test_interactive_mode_quit(self, mock_cli_workflows):
+        """Test quitting interactive mode."""
+        with patch("builtins.input", side_effect=["q"]):
+            assert _cli.interactive_mode() == 0
+
+    def test_interactive_mode_invalid(self, mock_cli_workflows):
+        """Test invalid input in interactive mode."""
+        # The function returns 1 on invalid input (it does not loop)
+        with patch("builtins.input", side_effect=["invalid"]):
+            assert _cli.interactive_mode() == 1
+
+    def test_interactive_mode_sweep(self, mock_cli_workflows):
+        """Test selecting sweep workflow."""
+        with patch("builtins.input", side_effect=["1", "", "", "", ""]): # Select 1, then defaults for sweep
+            assert _cli.interactive_mode() == 0
+            mock_cli_workflows["sweep"].assert_called_once()
+
+    def test_interactive_sweep_defaults(self, mock_cli_workflows):
+        """Test interactive sweep with defaults."""
+        with patch("builtins.input", side_effect=["", "", "", ""]): # All defaults
+            assert _cli.interactive_sweep() == 0
+            args = mock_cli_workflows["sweep"].call_args[0][0]
+            assert args.strategies == ["balanced", "aggressive", "diplomatic"]
+            assert args.difficulties == ["normal"]
+            assert args.seeds == [42, 123, 456]
+            assert args.tick_budget == 100
+
+    def test_interactive_sweep_custom(self, mock_cli_workflows):
+        """Test interactive sweep with custom inputs."""
+        with patch("builtins.input", side_effect=["strat1, strat2", "hard", "1, 2", "50"]):
+            assert _cli.interactive_sweep() == 0
+            args = mock_cli_workflows["sweep"].call_args[0][0]
+            assert args.strategies == ["strat1", "strat2"]
+            assert args.difficulties == ["hard"]
+            assert args.seeds == [1, 2]
+            assert args.tick_budget == 50
+
+    def test_interactive_compare_success(self, mock_cli_workflows):
+        """Test interactive compare workflow."""
+        with patch("builtins.input", side_effect=["path/a", "Name A", "path/b", "Name B"]):
+            assert _cli.interactive_compare() == 0
+            args = mock_cli_workflows["compare"].call_args[0][0]
+            assert str(args.config_a_path) == "path/a"
+            assert args.name_a == "Name A"
+            assert str(args.config_b_path) == "path/b"
+            assert args.name_b == "Name B"
+
+    def test_interactive_compare_missing_path(self, mock_cli_workflows):
+        """Test interactive compare with missing path."""
+        with patch("builtins.input", side_effect=[""]):
+            assert _cli.interactive_compare() == 1
+
+    def test_interactive_tuning_success(self, mock_cli_workflows):
+        """Test interactive tuning workflow."""
+        with patch("builtins.input", side_effect=["test_exp", "economy.regen=1.5", "invalid", "flag=true", ""]):
+            assert _cli.interactive_tuning() == 0
+            args = mock_cli_workflows["tuning"].call_args[0][0]
+            assert args.name == "test_exp"
+            assert args.changes == {"economy": {"regen": 1.5}, "flag": True}
+
+    def test_interactive_tuning_no_changes(self, mock_cli_workflows):
+        """Test interactive tuning with no changes."""
+        with patch("builtins.input", side_effect=["test_exp", ""]):
+            assert _cli.interactive_tuning() == 1
+
+    def test_interactive_view_reports_empty(self, mock_cli_workflows):
+        """Test viewing reports when none exist."""
+        mock_cli_workflows["list"].return_value = []
+        assert _cli.interactive_view_reports() == 0
+
+    def test_interactive_view_reports_select(self, mock_cli_workflows):
+        """Test selecting a report to view."""
+        mock_cli_workflows["list"].return_value = [
+            {"timestamp": "2023", "completed_sweeps": 1, "total_sweeps": 1, "strategies": ["s"], "path": "p"}
+        ]
+        mock_cli_workflows["view"].return_value.data = {"strategy_stats": {"s": {"avg_stability": 0.5}}}
+        
+        with patch("builtins.input", side_effect=["1"]):
+            assert _cli.interactive_view_reports() == 0
+            mock_cli_workflows["view"].assert_called_once()
+
+    def test_interactive_view_reports_quit(self, mock_cli_workflows):
+        """Test quitting report viewer."""
+        mock_cli_workflows["list"].return_value = [{"timestamp": "2023", "completed_sweeps": 1, "total_sweeps": 1, "strategies": ["s"]}]
+        with patch("builtins.input", side_effect=["q"]):
+            assert _cli.interactive_view_reports() == 0
+
+class TestCommandHandlers:
+    """Tests for CLI command handlers."""
+
+    def test_cmd_sweep(self, mock_cli_workflows):
+        """Test sweep command."""
+        args = MagicMock()
+        args.strategies = ["s1"]
+        args.difficulties = ["d1"]
+        args.seeds = [1]
+        args.ticks = 10
+        args.output_dir = "out"
+        args.overlay = None
+        args.json = False
+        args.verbose = False
+        
+        assert _cli.cmd_sweep(args) == 0
+        mock_cli_workflows["sweep"].assert_called_once()
+
+    def test_cmd_compare(self, mock_cli_workflows):
+        """Test compare command."""
+        args = MagicMock()
+        args.config_a = "a"
+        args.config_b = "b"
+        args.name_a = "A"
+        args.name_b = "B"
+        args.strategies = ["s"]
+        args.seeds = [1]
+        args.ticks = 10
+        args.output_dir = "out"
+        args.json = True
+        args.verbose = True
+        
+        assert _cli.cmd_compare(args) == 0
+        mock_cli_workflows["compare"].assert_called_once()
+
+    def test_cmd_test_tuning(self, mock_cli_workflows):
+        """Test tuning command."""
+        args = MagicMock()
+        args.name = "test"
+        args.change = ["a=1", "b.c=2.5", "d=true"]
+        args.description = "desc"
+        args.baseline = None
+        args.strategies = ["s"]
+        args.seeds = [1]
+        args.ticks = 10
+        args.output_dir = "out"
+        args.json = False
+        args.verbose = False
+        
+        assert _cli.cmd_test_tuning(args) == 0
+        call_args = mock_cli_workflows["tuning"].call_args[0][0]
+        assert call_args.changes == {"a": 1, "b": {"c": 2.5}, "d": True}
+
+    def test_cmd_view_reports(self, mock_cli_workflows):
+        """Test view-reports command."""
+        args = MagicMock()
+        args.reports_dir = "dir"
+        args.limit = 5
+        args.json = False
+        
+        mock_cli_workflows["list"].return_value = [{"timestamp": "t", "completed_sweeps": 1, "total_sweeps": 1, "strategies": ["s"], "path": "p"}]
+        
+        assert _cli.cmd_view_reports(args) == 0
+        mock_cli_workflows["list"].assert_called_once()
+
+    def test_cmd_generate_report(self, mock_cli_workflows, tmp_path):
+        """Test generate-report command."""
+        input_file = tmp_path / "in.json"
+        input_file.write_text("{}")
+        output_file = tmp_path / "out.html"
+        
+        args = MagicMock()
+        args.input = str(input_file)
+        args.output = str(output_file)
+        args.title = "Title"
+        args.theme = "light"
+        args.no_charts = False
+        args.include_raw = False
+        
+        assert _cli.cmd_generate_report(args) == 0
+        mock_cli_workflows["write"].assert_called_once()
+
+    def test_cmd_generate_report_missing_input(self, mock_cli_workflows, tmp_path):
+        """Test generate-report with missing input."""
+        args = MagicMock()
+        args.input = str(tmp_path / "missing.json")
+        
+        assert _cli.cmd_generate_report(args) == 1
