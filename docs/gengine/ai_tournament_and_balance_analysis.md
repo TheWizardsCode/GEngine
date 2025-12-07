@@ -314,6 +314,30 @@ This helps identify trade-offs such as:
 - Balance vs. difficulty (easier games may be more balanced)
 - Diversity vs. stability (more diverse outcomes may have wider stability ranges)
 
+#### Interpreting the Pareto Frontier
+
+The Pareto frontier is a set of parameter configurations where no single configuration is strictly better than another across all objectives. Each point on the frontier represents a trade-off:
+
+- **If you want the most balanced game:** Look for points with the lowest `win_rate_delta`.
+- **If you want the most diverse strategies:** Look for points with the highest `diversity` score.
+- **If you want a compromise:** Choose a point that balances both objectives, or use the weights in your optimization config to bias toward your design goals.
+
+**Visualizing the Pareto Frontier:**
+You can plot the Pareto points (e.g., `win_rate_delta` vs. `diversity`) using your favorite plotting tool or spreadsheet. This helps you see the shape of the trade-off curve and pick a configuration that fits your needs.
+
+**Example:**
+If the Pareto frontier includes:
+
+| win_rate_delta | diversity | stability |
+|----------------|-----------|-----------|
+| 0.10           | 0.95      | 0.70      |
+| 0.12           | 0.98      | 0.68      |
+| 0.08           | 0.90      | 0.72      |
+
+You might choose the first row for best balance, the second for best diversity, or the third for a compromise.
+
+**Tip:** No point on the Pareto frontier is strictly "best"—the right choice depends on your design priorities.
+
 ### Output Files
 
 After optimization, results are saved to the output directory (default: `build/optimization/`):
@@ -345,6 +369,18 @@ uv run python scripts/optimize_strategies.py pareto --limit 10
 | `--no-store` | Skip storing result in database |
 
 ### Example Workflow
+
+### Troubleshooting & FAQ
+
+- **Q: My optimization run is very slow or seems stuck.**
+  - Try reducing the number of samples or using random search instead of grid search for large parameter spaces.
+  - Use the `--verbose` flag to monitor progress.
+- **Q: I get an error about missing or invalid parameters.**
+  - Check your YAML config and CLI flags for typos or out-of-range values. All parameter names must match those in your strategy config.
+- **Q: The Pareto frontier is empty or has only one point.**
+  - This can happen if all configurations are dominated or if your parameter ranges are too narrow. Try expanding the search space or adjusting your targets.
+- **Q: How do I add a new optimization target?**
+  - Edit your config to add a new target (e.g., `stability`) and re-run the optimizer. See the config example above.
 
 1. **Run initial optimization:**
    ```bash
@@ -384,6 +420,14 @@ uv run python scripts/optimize_strategies.py pareto --limit 10
 A nightly CI workflow automatically runs tournaments and batch sweeps, archiving results for ongoing balance review. See `.github/workflows/ai-tournament.yml` for details.
 
 ## Usage Tips
+
+## Best Practices & Advanced Tips
+
+- Start with a broad parameter sweep to understand the landscape, then narrow in on promising regions.
+- Use multiple random seeds to avoid overfitting to a single scenario.
+- Regularly review the Markdown and JSON reports to track progress and spot regressions.
+- Archive your optimization results and reports for future reference and reproducibility.
+- For advanced analysis, export Pareto points and plot them to visualize trade-offs.
 
 - Use different world configs and seeds to stress-test balance across scenarios.
 - For large parameter spaces, start with `sampling.mode: random` and a reduced `sample_count`.

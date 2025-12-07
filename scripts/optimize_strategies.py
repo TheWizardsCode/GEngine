@@ -123,7 +123,8 @@ class ParameterRange:
 
         values: list[float] = []
         current = self.min_value
-        while current <= self.max_value + FLOAT_EPSILON:  # Small epsilon for float comparison
+        # Small epsilon for float comparison
+        while current <= self.max_value + FLOAT_EPSILON:
             if self.param_type == "int":
                 values.append(int(round(current)))
             else:
@@ -681,7 +682,7 @@ def generate_grid_configurations(
 
     configurations: list[dict[str, float]] = []
     for values in itertools.product(*value_lists):
-        config = dict(zip(keys, values))
+        config = dict(zip(keys, values, strict=True))
         configurations.append(config)
 
     return configurations
@@ -998,7 +999,9 @@ def evaluate_configuration_mock(
     # Apply some parameter influence
     stability_low = parameters.get("stability_low", 0.6)
     # Lower thresholds tend to produce more balanced results
-    balance_factor = 1.0 - abs(stability_low - OPTIMAL_STABILITY_LOW) * STABILITY_BALANCE_MULTIPLIER
+    balance_factor = 1.0 - abs(
+        stability_low - OPTIMAL_STABILITY_LOW
+    ) * STABILITY_BALANCE_MULTIPLIER
 
     for s in win_rates:
         win_rates[s] *= (0.8 + balance_factor * 0.2)
@@ -1256,7 +1259,7 @@ def run_bayesian_optimization(
     all_results: list[FitnessResult] = []
 
     def objective(x: list[float]) -> float:
-        params = dict(zip(param_names, x))
+        params = dict(zip(param_names, x, strict=True))
         result = evaluate_fn(params, config)
         all_results.append(result)
 
@@ -1285,7 +1288,7 @@ def run_bayesian_optimization(
     )
 
     # Extract best result
-    best_params = dict(zip(param_names, opt_result.x))
+    best_params = dict(zip(param_names, opt_result.x, strict=True))
     best_fitness = opt_result.fun
 
     # Compute Pareto frontier
