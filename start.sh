@@ -11,7 +11,21 @@ else
     source .venv/bin/activate
 fi
 
-# Run the Terminal UI demo
-echo "Starting Echoes of Emergence Terminal UI..."
-# python scripts/demo_terminal_ui.py "$@"
-uv run echoes-shell "$@"
+# Parse for --ui flag
+run_ui_demo=false
+args=()
+for arg in "$@"; do
+    if [[ "$arg" == "--ui" ]]; then
+        run_ui_demo=true
+    else
+        args+=("$arg")
+    fi
+done
+
+if [ "$run_ui_demo" = true ]; then
+    echo "Starting Echoes of Emergence Terminal UI..."
+    uv run python scripts/demo_terminal_ui.py "${args[@]}"
+else
+    echo "Starting Echoes of Emergence CLI shell..."
+    uv run echoes-shell "${args[@]}"
+fi
