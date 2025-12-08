@@ -48,6 +48,7 @@ class TerminalUIController:
     """
 
     REFRESH_RATE = 0.1  # 10 FPS refresh rate
+    RUN_TICK_BATCH = 5  # Number of ticks to advance when hitting "run"
 
     def __init__(
         self,
@@ -93,8 +94,30 @@ class TerminalUIController:
         # Use the event buffer from UI state
         return self.ui_state.event_buffer[-10:]  # Show last 10 events
 
+    def _record_tick_events(self, reports) -> None:
+        """Append tick report events to the UI buffer."""
+        if not reports:
+            return
+
+        for report in reports:
+            tick = getattr(report, "tick", 0)
+            for event in getattr(report, "events", []) or []:
+                if isinstance(event, dict):
+                    event_entry = {"tick": tick, **event}
+                    event_entry.setdefault("tick", tick)
+                else:
+                    event_entry = {
+                        "tick": tick,
+                        "description": str(event),
+                        "severity": "info",
+                    }
+                self.ui_state.event_buffer.append(event_entry)
+
     def _update_components(self) -> None:
         """Update all UI components with latest game state."""
+        # Keep the layout anchored to the terminal size before refreshing regions.
+        self.layout.sync_dimensions()
+
         # Update status bar
         status_data = self._prepare_status_data()
         self.layout.update_region("header", render_status_bar(status_data))
@@ -152,8 +175,8 @@ class TerminalUIController:
     def _update_factions_view(self) -> None:
         """Update the factions view components."""
         state = self._get_game_state()
-        faction_data = prepare_faction_overview_data(state)
-        faction_panel = render_faction_overview(faction_data)
+        faction_list, districts = prepare_faction_overview_data(state)
+        faction_panel = render_faction_overview(faction_list, districts)
         self.layout.update_region("main", faction_panel)
 
         # Show faction detail in context if one is selected
@@ -232,16 +255,11 @@ class TerminalUIController:
         # Simulation commands
         elif action == InputAction.TICK_NEXT:
             reports = self.backend.advance_ticks(1)
-            # Add events from report to event buffer
-            if reports:
-                for event in reports[0].events:
-                    self.ui_state.event_buffer.append(
-                        {
-                            "tick": reports[0].tick,
-                            "description": event,
-                            "severity": "info",
-                        }
-                    )
+            self._record_tick_events(reports)
+
+        elif action == InputAction.TICK_RUN:
+            reports = self.backend.advance_ticks(self.RUN_TICK_BATCH)
+            self._record_tick_events(reports)
 
         elif action == InputAction.FOCUS_CLEAR:
             self.backend.set_focus(None)
@@ -281,6 +299,10 @@ class TerminalUIController:
             return
 
         self.running = True
+        self.layout.lock_dimensions(
+            width=self.console.width,
+            height=self.console.height,
+        )
 
         old_settings = termios.tcgetattr(sys.stdin)
         try:

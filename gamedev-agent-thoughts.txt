@@ -38,6 +38,12 @@ Working on Issue #70 - Phase 11, Milestone 11.6, Task 11.6.1.
 
 5. Example workflows with case studies (e.g., "Balancing the Industrial Tier faction")
 
+## [gamedev_agent] — 2025-12-07 22:28
+- eaca843: Investigated terminal UI flicker, added layout dimension syncing plus controller refresh call, and reran the full pytest suite to confirm stable rendering.
+
+## [gamedev_agent] — 2025-12-07 22:35
+- eaca843: Locked the screen layout to the detected terminal dimensions before entering Live mode, refreshed targeted UI tests, and revalidated the full pytest suite for coverage.
+
 6. At least 8 tests covering CLI commands, config overlay loading, and report generation
 
 7. Register new CLI tool in pyproject.toml
@@ -905,3 +911,5 @@ Created 2 new modules and enhanced 2 existing files:
 - Add visual feedback for actions (status messages, animations)
 - Integrate with campaign system for auto-save
 - Document UI controls in how_to_play_echoes.md
+## [gamedev_agent] — 2025-12-07 23:04
+- eaca843: Re-ran the full pytest suite post-faction-view fix to restore coverage to 90.11% with all 1,278 tests passing.

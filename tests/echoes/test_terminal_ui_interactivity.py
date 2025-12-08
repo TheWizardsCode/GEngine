@@ -164,6 +164,30 @@ class TestTerminalUIController:
         assert len(controller.ui_state.event_buffer) == 2
         assert controller.ui_state.event_buffer[0]["description"] == "Event 1"
 
+    def test_handle_tick_run_advances_batch(self, mock_backend, mock_console):
+        """Test run command advances multiple ticks and records events."""
+        report_one = Mock()
+        report_one.tick = 44
+        report_one.events = ["Event A"]
+
+        report_two = Mock()
+        report_two.tick = 45
+        report_two.events = [
+            {"description": "Event B", "severity": "warning"},
+        ]
+
+        mock_backend.advance_ticks.return_value = [report_one, report_two]
+
+        controller = TerminalUIController(mock_backend, mock_console)
+        event = InputEvent(action=InputAction.TICK_RUN)
+        controller._handle_input_event(event)
+
+        mock_backend.advance_ticks.assert_called_once_with(
+            controller.RUN_TICK_BATCH
+        )
+        descriptions = [e["description"] for e in controller.ui_state.event_buffer]
+        assert descriptions == ["Event A", "Event B"]
+
     def test_handle_focus_clear(self, mock_backend, mock_console):
         """Test clearing focus updates backend and UI state."""
         controller = TerminalUIController(mock_backend, mock_console)

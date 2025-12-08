@@ -26,6 +26,23 @@
 2. **11.6.1** - Designer Feedback Loop and Tooling (Issue #70 - optional, low priority, UX enhancement)
 3. **Phase 12** - Terminal UI Implementation (new phase, requires prioritization decision)
 
+4. **12.3.1** - Replace Rich with Windows-aware Renderer (Issue #82)
+   - **Description:** Replace the Rich library for terminal UI rendering with a renderer that is fully compatible with Windows Terminal, eliminating border flicker and Unicode line height issues. Must support all current UI features (panels, overlays, event feed, command bar) and maintain cross-platform compatibility.
+   - **Acceptance Criteria:** No flicker or border artifacts in Windows Terminal; all UI features work identically on Windows, Linux, and VS Code terminals; passes full test suite.
+   - **Priority:** High
+   - **Responsible:** UI Team
+   - **Dependencies:** 12.2.3 (Player Interactivity & UI Wiring)
+   - **Risks & Mitigations:**
+     - Risk: Feature regression during renderer migration. Mitigation: Maintain parallel implementation and run full regression tests before switching default.
+     - Risk: Loss of advanced styling. Mitigation: Select renderer with comparable feature set and test on all platforms.
+   - **Next Steps:**
+     1. Evaluate candidate renderers (e.g., Textual, urwid, blessed, custom curses).
+     2. Prototype core layout and panel rendering.
+     3. Migrate event feed, overlays, and command bar.
+     4. Run cross-platform manual and automated tests.
+     5. Submit for code review and merge.
+   - **Last Updated:** 2025-12-07
+
 
 ## Comprehensive Project Status Report
 

@@ -43,6 +43,7 @@ class ScreenLayout:
     def __init__(self, console: Console):
         self.console = console
         self.layout = Layout()
+        self._locked_size: tuple[int, int] | None = None
         self._configure_regions()
 
     def _configure_regions(self) -> None:
@@ -79,6 +80,27 @@ class ScreenLayout:
             return False, msg
 
         return True, ""
+
+    def lock_dimensions(self, width: int, height: int) -> None:
+        """Lock the layout to a fixed terminal size.
+
+        Args:
+            width: Terminal width in characters
+            height: Terminal height in rows
+        """
+
+        self._locked_size = (height, width)
+        self.layout.size = (height, width)
+
+    def sync_dimensions(self) -> None:
+        """Ensure the layout matches the locked or current console size."""
+        if self._locked_size is not None:
+            height, width = self._locked_size
+        else:
+            height = self.console.height
+            width = self.console.width
+
+        self.layout.size = (height, width)
 
     def update_region(self, region_name: str, content: object) -> None:
         """Update a specific layout region with new content.
