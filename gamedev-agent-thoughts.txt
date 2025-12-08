@@ -913,3 +913,9 @@ Created 2 new modules and enhanced 2 existing files:
 - Document UI controls in how_to_play_echoes.md
 ## [gamedev_agent] — 2025-12-07 23:04
 - eaca843: Re-ran the full pytest suite post-faction-view fix to restore coverage to 90.11% with all 1,278 tests passing.
+## [tracker_agent] — 2025-12-08 07:42
+- Updated .pm/tracker.md: marked 12.2.3 Player Interactivity & UI Wiring as in-progress, refreshed summary table and next steps. Reviewed recent commits and tracker status. Ready for next stakeholder review.
+
+## [tracker_agent] — 2025-12-08 07:44
+- Marked 12.2.3 Player Interactivity & UI Wiring as complete in .pm/tracker.md after confirming PR #82 merged and issue #83 exists. No duplicate issue needed.
+

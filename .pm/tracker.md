@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-07T23:00:00Z
+**Last Updated:** 2025-12-08T07:42:16Z
 
 ## Quick Status Dashboard
 
@@ -8,11 +8,11 @@
 |-------|--------|----------|-----------|----------|-------------|
 | **1-10** | ✅ Complete | 51/51 | 0 | - | Maintenance only |
 | **11** | 🚧 In Progress | 5/6 | 1 | Medium | Complete 11.6.1 or begin Phase 12 |
-| **12** | 🚧 In Progress | 1/5 | 4 | Medium | Begin 12.1.1 Terminal UI Core Implementation |
-| 12.1.1 | Terminal UI Core Implementation | complete | High | None | UI Team | 2025-12-07 |
+| **12** | 🚧 In Progress | 2/5 | 3 | Medium | Next: 12.2.3 Player Interactivity & UI Wiring |
+| 12.1.1 | Terminal UI Core Implementation | ✅ complete | High | None | UI Team | 2025-12-07 |
 | 12.2.1 | Management Depth UI | complete | High | 12.1.1 | UI Team | 2025-12-07 |
 | 12.2.2 | Agent Roster Panel | complete | High | 12.2.1 | UI Team | 2025-12-07 |
-| 12.2.3 | Player Interactivity & UI Wiring | not-started | High | 12.2.2 | UI Team | 2025-12-07 |
+| 12.2.3 | Player Interactivity & UI Wiring | ✅ complete | High | 12.2.2 | UI Team | 2025-12-08 |
 
 
 **Active Tasks:**
@@ -72,7 +72,14 @@
 ## Status Summary
 
 
+
 **Recent Progress (since last update):**
+
+- 🎉 **Task 12.1.1 (Terminal UI Core Implementation) COMPLETED** - Merged to main 2025-12-07
+  - Documented all Terminal UI views and keyboard controls in `docs/gengine/how_to_play_echoes.md`
+  - Updated agent and faction view logic for GameState compatibility
+  - All tests and linting passed; coverage at 91.37%
+  - Feature branch cleaned up post-merge
 
 - 🎉 **Task 12.2.2 (Agent Roster Panel) COMPLETED** - Merged to main 2025-12-07
   - PR #80 delivered interactive agent roster panel, keyboard navigation, real-time updates, and expanded management UI tests
