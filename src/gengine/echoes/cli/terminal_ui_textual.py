@@ -248,23 +248,15 @@ class EchoesTerminalApp(App):
 
     def action_tick_next(self) -> None:  # pragma: no cover - Textual action
         """Advance one tick."""
-        if hasattr(self.backend, "state"):
-            # Execute next tick
-            from ..sim import advance_ticks
-            reports = advance_ticks(self.backend.state, 1)
-            self.backend.state.tick += 1
-            self._record_tick_events(reports)
-            self.refresh_ui()
+        reports = self.backend.advance_ticks(1)
+        self._record_tick_events(reports)
+        self.refresh_ui()
 
     def action_tick_run(self) -> None:  # pragma: no cover - Textual action
         """Run multiple ticks."""
-        if hasattr(self.backend, "state"):
-            # Execute 5 ticks
-            from ..sim import advance_ticks
-            reports = advance_ticks(self.backend.state, 5)
-            self.backend.state.tick += 5
-            self._record_tick_events(reports)
-            self.refresh_ui()
+        reports = self.backend.advance_ticks(5)
+        self._record_tick_events(reports)
+        self.refresh_ui()
 
     def action_save_game(self) -> None:  # pragma: no cover - Textual action
         """Save game state."""
