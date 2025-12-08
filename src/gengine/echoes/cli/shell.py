@@ -1761,9 +1761,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         # Interactive Terminal UI mode
         if args.ui:
-            from .terminal_ui import run_terminal_ui
+            # Use Textual-based UI for better Windows Terminal compatibility
+            from .terminal_ui_textual import TextualTerminalUIController
 
-            run_terminal_ui(backend)
+            controller = TextualTerminalUIController(backend)
+            controller.run()
             return 0
 
         if args.script:
