@@ -364,14 +364,44 @@ snapshot for downstream tools.
 
 ## Running the CLI Shell
 
+### Interactive Terminal UI Mode
 
-To launch the Echoes of Emergence Terminal UI demo, use the provided startup script:
+To launch the interactive Echoes of Emergence Terminal UI, use the provided startup script with the `--ui` flag:
+
+```bash
+./start.sh --ui
+```
+
+The Terminal UI uses the Textual framework for cross-platform compatibility, providing:
+
+- **Windows Terminal Support**: No border flicker or Unicode line height issues
+- **Cross-platform**: Works identically on Windows, Linux, macOS, and VS Code terminals
+- **Responsive Layout**: Status bar, main view, context panel, event feed, and command hints
+- **Keyboard Navigation**: Full keyboard control with intuitive shortcuts
+- **Real-time Updates**: Live simulation state rendering
+
+**Keyboard Commands:**
+- `m` - Map view
+- `a` - Agents view
+- `f` - Factions view
+- `o` - Focus management
+- `n` - Next tick
+- `r` - Run 5 ticks
+- `s` - Save game
+- `q` - Quit
+- `?` - Help
+
+The Terminal UI is built with Textual instead of Rich to ensure consistent rendering across all platforms, particularly addressing Windows Terminal compatibility issues.
+
+### Text Mode (Non-Interactive)
+
+To launch the Echoes of Emergence CLI in text mode, use the provided startup script:
 
 ```bash
 ./start.sh
 ```
 
-This script sets up the environment and launches the Terminal UI with recommended settings. For advanced options, you can pass arguments to the script (e.g., `./start.sh --rich` for enhanced ASCII views).
+This script sets up the environment and launches the CLI shell with recommended settings. For advanced options, you can pass arguments to the script (e.g., `./start.sh --rich` for enhanced ASCII views).
 
 **Enhanced ASCII Views** (tables, colors, panels):
 
@@ -379,7 +409,7 @@ This script sets up the environment and launches the Terminal UI with recommende
 ./start.sh --rich
 ```
 
-The `--rich` flag enables enhanced formatting using the Rich library, providing:
+The `--rich` flag enables enhanced formatting for non-interactive mode, providing:
 
 - Styled tables for world status and performance metrics
 - Color-coded panels for environment impact and focus state
