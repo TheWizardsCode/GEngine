@@ -116,23 +116,6 @@ class EventFeedWidget(Static):
         return "\n".join(lines)
 
 
-class CommandBarWidget(Static):
-    """Widget displaying available commands and keyboard hints."""
-
-    def render(self) -> str:
-        """Render command bar content."""
-        commands = [
-            "[bold cyan]m[/]ap",
-            "[bold cyan]a[/]gents",
-            "[bold cyan]f[/]actions",
-            "[bold cyan]o[/] f[bold cyan]o[/]cus",
-            "[bold cyan]n[/]ext",
-            "[bold cyan]r[/]un",
-            "[bold cyan]s[/]ave",
-            "[bold cyan]q[/]uit",
-        ]
-        return " | ".join(commands)
-
 
 class MainViewWidget(Static):
     """Widget displaying the main content area (map, agents, etc.)."""
@@ -206,11 +189,7 @@ class EchoesTerminalApp(App):
         padding: 1;
     }
     
-    #commands {
-        height: 3;
-        border: solid magenta;
-        padding: 0 1;
-    }
+
     """
 
     BINDINGS = [
@@ -239,7 +218,6 @@ class EchoesTerminalApp(App):
             yield ContextPanelWidget(id="context")
         
         yield EventFeedWidget(id="events")
-        yield CommandBarWidget(id="commands")
         yield Footer()
 
     def on_mount(self) -> None:  # pragma: no cover - Textual lifecycle hook

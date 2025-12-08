@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from gengine.echoes.cli.terminal_ui_textual import (
-    CommandBarWidget,
     ContextPanelWidget,
     EchoesTerminalApp,
     EventFeedWidget,
@@ -101,24 +100,6 @@ class TestEventFeedWidget:
         assert isinstance(result, str)
         assert "Test event" in result
 
-
-class TestCommandBarWidget:
-    """Tests for CommandBarWidget."""
-
-    def test_initialization(self):
-        """Test widget can be created."""
-        widget = CommandBarWidget()
-        assert widget is not None
-
-    def test_render_returns_string(self):
-        """Test render produces a string with commands."""
-        widget = CommandBarWidget()
-        result = widget.render()
-        assert isinstance(result, str)
-        # Check for command text (accounting for Rich markup)
-        assert "ap" in result  # "m[/]ap"
-        assert "gents" in result.lower()
-        assert "uit" in result.lower()  # "q[/]uit"
 
 
 class TestMainViewWidget:
