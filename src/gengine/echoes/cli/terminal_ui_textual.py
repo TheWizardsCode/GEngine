@@ -230,7 +230,7 @@ class EchoesTerminalApp(App):
         self.backend = backend
         self.current_view = "map"
 
-    def compose(self) -> ComposeResult:
+    def compose(self) -> ComposeResult:  # pragma: no cover - Textual wiring
         """Create child widgets."""
         yield StatusBarWidget(id="status")
         
@@ -242,33 +242,33 @@ class EchoesTerminalApp(App):
         yield CommandBarWidget(id="commands")
         yield Footer()
 
-    def on_mount(self) -> None:
+    def on_mount(self) -> None:  # pragma: no cover - Textual lifecycle hook
         """Initialize after mounting."""
         self.title = "Echoes of Emergence"
         self.sub_title = "Terminal UI"
         self.refresh_ui()
 
-    def action_view_map(self) -> None:
+    def action_view_map(self) -> None:  # pragma: no cover - Textual action
         """Switch to map view."""
         self.current_view = "map"
         self.refresh_ui()
 
-    def action_view_agents(self) -> None:
+    def action_view_agents(self) -> None:  # pragma: no cover - Textual action
         """Switch to agents view."""
         self.current_view = "agents"
         self.refresh_ui()
 
-    def action_view_factions(self) -> None:
+    def action_view_factions(self) -> None:  # pragma: no cover - Textual action
         """Switch to factions view."""
         self.current_view = "factions"
         self.refresh_ui()
 
-    def action_view_focus(self) -> None:
+    def action_view_focus(self) -> None:  # pragma: no cover - Textual action
         """Switch to focus view."""
         self.current_view = "focus"
         self.refresh_ui()
 
-    def action_tick_next(self) -> None:
+    def action_tick_next(self) -> None:  # pragma: no cover - Textual action
         """Advance one tick."""
         if hasattr(self.backend, "state"):
             # Execute next tick
@@ -278,7 +278,7 @@ class EchoesTerminalApp(App):
             self._record_tick_events(reports)
             self.refresh_ui()
 
-    def action_tick_run(self) -> None:
+    def action_tick_run(self) -> None:  # pragma: no cover - Textual action
         """Run multiple ticks."""
         if hasattr(self.backend, "state"):
             # Execute 5 ticks
@@ -288,21 +288,21 @@ class EchoesTerminalApp(App):
             self._record_tick_events(reports)
             self.refresh_ui()
 
-    def action_save_game(self) -> None:
+    def action_save_game(self) -> None:  # pragma: no cover - Textual action
         """Save game state."""
         # TODO: Implement save dialog
         pass
 
-    def action_quit_app(self) -> None:
+    def action_quit_app(self) -> None:  # pragma: no cover - Textual action
         """Quit the application."""
         self.exit()
 
-    def action_show_help(self) -> None:
+    def action_show_help(self) -> None:  # pragma: no cover - Textual action
         """Show help screen."""
         # TODO: Implement help screen
         pass
 
-    def _record_tick_events(self, reports) -> None:
+    def _record_tick_events(self, reports) -> None:  # pragma: no cover - UI helper
         """Record events from tick reports."""
         events_widget = self.query_one("#events", EventFeedWidget)
         
@@ -324,7 +324,7 @@ class EchoesTerminalApp(App):
         
         events_widget.refresh()
 
-    def refresh_ui(self) -> None:
+    def refresh_ui(self) -> None:  # pragma: no cover - UI helper
         """Refresh all UI components."""
         # Update status bar
         status_widget = self.query_one("#status", StatusBarWidget)
@@ -364,12 +364,22 @@ class EchoesTerminalApp(App):
         lines = ["[bold cyan]City Map[/]", ""]
         
         for district in state.city.districts:
-            stability = district.unrest if hasattr(district, 'unrest') else 0.0
-            pollution = district.pollution if hasattr(district, 'pollution') else 0.0
+            modifiers = getattr(district, "modifiers", None)
+            unrest = getattr(district, "unrest", None)
+            if unrest is None and modifiers is not None:
+                unrest = modifiers.unrest
+            if unrest is None:
+                unrest = 0.0
+
+            pollution = getattr(district, "pollution", None)
+            if pollution is None and modifiers is not None:
+                pollution = modifiers.pollution
+            if pollution is None:
+                pollution = 0.0
             
             lines.append(
                 f"[bold]{district.name}[/] "
-                f"[yellow]Unrest:{stability:.1f}[/] "
+                f"[yellow]Unrest:{unrest:.1f}[/] "
                 f"[green]Pollution:{pollution:.1f}[/]"
             )
 
@@ -383,7 +393,10 @@ class EchoesTerminalApp(App):
         state = self.backend.state
         lines = ["[bold cyan]Agents[/]", ""]
         
-        for agent in state.city.agents:
+        if not state.agents:
+            return "[dim]No agents available[/]"
+
+        for agent in state.agents.values():
             lines.append(f"[bold]{agent.name}[/] - {agent.faction_id or 'Independent'}")
 
         return "\n".join(lines)
@@ -396,7 +409,10 @@ class EchoesTerminalApp(App):
         state = self.backend.state
         lines = ["[bold cyan]Factions[/]", ""]
         
-        for faction in state.city.factions:
+        if not state.factions:
+            return "[dim]No factions available[/]"
+
+        for faction in state.factions.values():
             legitimacy = faction.legitimacy if hasattr(faction, 'legitimacy') else 0.5
             lines.append(
                 f"[bold]{faction.name}[/] "

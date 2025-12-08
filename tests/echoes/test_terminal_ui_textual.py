@@ -192,6 +192,61 @@ class TestEchoesTerminalApp:
         assert "f" in binding_keys  # Factions
         assert "q" in binding_keys  # Quit
 
+    def test_render_agents_view_uses_state_agents(self):
+        """Agents view renders agent list without attribute errors."""
+        backend = MockBackend()
+        app = EchoesTerminalApp(backend=backend)
+
+        content = app._render_agents_view()
+
+        assert "Agents" in content
+        first_agent = next(iter(backend.state.agents.values()))
+        assert first_agent.name in content
+
+    def test_render_agents_view_handles_empty_state(self):
+        """Agents view falls back gracefully when no agents exist."""
+        backend = MockBackend()
+        backend.state.agents = {}
+        app = EchoesTerminalApp(backend=backend)
+
+        content = app._render_agents_view()
+
+        assert "No agents" in content
+
+    def test_render_map_view_tracks_district_modifiers(self):
+        """Map view reflects modifier-driven unrest and pollution values."""
+        backend = MockBackend()
+        district = backend.state.city.districts[0]
+        district.modifiers.unrest = 0.9
+        district.modifiers.pollution = 0.2
+        app = EchoesTerminalApp(backend=backend)
+
+        content = app._render_map_view()
+
+        assert "0.9" in content
+        assert "0.2" in content
+
+    def test_render_factions_view_uses_state_factions(self):
+        """Factions view renders faction list without attribute errors."""
+        backend = MockBackend()
+        app = EchoesTerminalApp(backend=backend)
+
+        content = app._render_factions_view()
+
+        assert "Factions" in content
+        first_faction = next(iter(backend.state.factions.values()))
+        assert first_faction.name in content
+
+    def test_render_factions_view_handles_empty_state(self):
+        """Factions view falls back gracefully when no factions exist."""
+        backend = MockBackend()
+        backend.state.factions = {}
+        app = EchoesTerminalApp(backend=backend)
+
+        content = app._render_factions_view()
+
+        assert "No factions" in content
+
 
 class TestTextualTerminalUIController:
     """Tests for TextualTerminalUIController."""

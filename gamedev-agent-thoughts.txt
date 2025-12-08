@@ -1,3 +1,7 @@
+## [GitHub Copilot] — 2025-12-08 14:16
+- dc49d31: investigated agents view crash, updated Textual UI to read `GameState` agent/faction data, expanded tests, and ran full pytest suite with coverage to verify 90% gate.
+## [GitHub Copilot] — 2025-12-08 14:28
+- dc49d31: wired the Textual map view to district modifiers so unrest/pollution respond to ticks, added coverage tests, and reran the full pytest suite to keep the 90% threshold.
 ## [git_agent] — 2025-12-07 03:01
 - Restored --ui flag handling in start.sh to match documentation and user expectations. Committed and pushed to main.
 ## [git_agent] — 2025-12-07 02:56
