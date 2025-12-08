@@ -57,6 +57,66 @@ See [Agent Roster Panel & Management UI](agent_roster_panel.md) for full details
 
 ---
 
+## Terminal UI Views & Keyboard Controls
+
+The Echoes Terminal UI provides a dashboard experience with multiple views and full keyboard navigation. Use the following keys to interact with the UI:
+
+### Main Views
+
+| Key         | View/Action                |
+|-------------|----------------------------|
+| `m`         | Map view                   |
+| `a`         | Agent roster panel         |
+| `f`         | Faction overview           |
+| `o`         | Focus view                 |
+
+### Navigation & Selection
+
+| Key(s)      | Action                     |
+|-------------|----------------------------|
+| `↑`/`k`     | Move up                    |
+| `↓`/`j`     | Move down                  |
+| `←`/`h`     | Move left                  |
+| `→`/`l`     | Move right                 |
+| `Enter`     | Select / open detail       |
+| `Escape`    | Deselect / close detail    |
+
+### Overlays
+
+| Key         | Overlay                    |
+|-------------|----------------------------|
+| `1`         | Unrest overlay             |
+| `2`         | Pollution overlay          |
+| `3`         | Security overlay           |
+| `4`         | Prosperity overlay         |
+| `0`         | Turn overlays off          |
+
+### Simulation & UI Actions
+
+| Key         | Action                     |
+|-------------|----------------------------|
+| `n`         | Next tick                  |
+| `r`         | Run batch                  |
+| `c`         | Clear focus                |
+| `s`         | Save snapshot              |
+| `?`         | Show help                  |
+| `q`         | Quit UI                    |
+
+#### Quick Reference (Command Bar)
+
+The command bar at the bottom of the UI displays the most important actions and their shortcuts:
+
+- ▶ Next (`n`)
+- ▶▶ Run (`r`)
+- 🎯 Focus (`f`)
+- 💾 Save (`s`)
+- ❓ Why (`?`)
+- ☰ Menu (`m`)
+
+All actions are reachable via keyboard. For more details on agent management, see the [Agent Roster Panel & Management UI](agent_roster_panel.md).
+
+---
+
 ## Shell Commands
 
 The `start.sh` script will accept a number of command line flags and arguments, as detailed below.

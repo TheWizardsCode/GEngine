@@ -205,8 +205,16 @@ def render_faction_detail(
     )
 
 
+def _get_field(source: Any, field: str, default: Any = None) -> Any:
+    """Fetch ``field`` regardless of dict or object source."""
+
+    if isinstance(source, dict):
+        return source.get(field, default)
+    return getattr(source, field, default)
+
+
 def prepare_faction_overview_data(
-    game_state: dict[str, Any],
+    game_state: Any,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Prepare faction overview data from game state.
     
@@ -216,24 +224,56 @@ def prepare_faction_overview_data(
     Returns:
         Tuple of (faction_list, districts_dict)
     """
-    factions = game_state.get("factions", {})
-    
+    if isinstance(game_state, dict):
+        factions_source = game_state.get("factions", {}) or {}
+        city = game_state.get("city")
+    else:
+        factions_source = getattr(game_state, "factions", {}) or {}
+        city = getattr(game_state, "city", None)
+
     # Get districts for territory lookup
-    city = game_state.get("city", {})
-    districts_list = city.get("districts", [])
-    districts_dict = {d.get("id"): d for d in districts_list}
-    
-    # Convert factions dict to list and sort by legitimacy (descending)
-    faction_list = []
-    for faction_id, faction in factions.items():
+    if not city:
+        city_districts = {}
+    elif isinstance(city, dict):
+        city_districts = city.get("districts", {})
+    else:
+        city_districts = getattr(city, "districts", {})
+    if hasattr(city_districts, "items"):
+        district_iterable = city_districts.items()
+    else:
+        district_iterable = (
+            (_get_field(district, "id"), district) for district in city_districts
+        )
+
+    districts_dict: dict[str, dict[str, Any]] = {}
+    for district_id, district in district_iterable:
+        if district_id is None:
+            continue
+        districts_dict[district_id] = {
+            "id": district_id,
+            "name": _get_field(district, "name", district_id),
+        }
+
+    # Convert factions mapping to list and sort by legitimacy (descending)
+    if hasattr(factions_source, "items"):
+        faction_iterable = factions_source.items()
+    else:
+        faction_iterable = (
+            (_get_field(faction, "id"), faction) for faction in factions_source
+        )
+
+    faction_list: list[dict[str, Any]] = []
+    for faction_id, faction in faction_iterable:
+        # Fallback to generated id if one isn't provided
+        safe_id = faction_id or _get_field(faction, "name", "faction")
         faction_data = {
-            "id": faction_id,
-            "name": faction.get("name", faction_id),
-            "ideology": faction.get("ideology"),
-            "description": faction.get("description"),
-            "legitimacy": faction.get("legitimacy", 0.5),
-            "resources": faction.get("resources", {}),
-            "territory": faction.get("territory", []),
+            "id": safe_id,
+            "name": _get_field(faction, "name", safe_id),
+            "ideology": _get_field(faction, "ideology"),
+            "description": _get_field(faction, "description"),
+            "legitimacy": float(_get_field(faction, "legitimacy", 0.5)),
+            "resources": _get_field(faction, "resources", {}),
+            "territory": list(_get_field(faction, "territory", []) or []),
             "legitimacy_delta": 0.0,  # Would need history tracking
         }
         faction_list.append(faction_data)

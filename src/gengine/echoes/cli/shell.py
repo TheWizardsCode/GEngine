@@ -1716,6 +1716,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Resume a specific campaign by ID",
     )
+    parser.add_argument(
+        "--ui",
+        action="store_true",
+        help="Launch interactive terminal UI mode (experimental)",
+    )
     args = parser.parse_args(argv)
     config = load_simulation_config()
 
@@ -1754,6 +1759,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     shell = EchoesShell(backend, limits=config.limits, enable_rich=args.rich)
 
     try:
+        # Interactive Terminal UI mode
+        if args.ui:
+            from .terminal_ui import run_terminal_ui
+
+            run_terminal_ui(backend)
+            return 0
+
         if args.script:
             commands = [cmd.strip() for cmd in args.script.split(";") if cmd.strip()]
             for result in run_commands(commands, backend=backend, config=config):

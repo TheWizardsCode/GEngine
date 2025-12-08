@@ -9,6 +9,14 @@ from rich.table import Table
 from rich.text import Text
 
 
+def _get_field(source: Any, field: str, default: Any = None) -> Any:
+    """Fetch ``field`` regardless of dict or object source."""
+
+    if isinstance(source, dict):
+        return source.get(field, default)
+    return getattr(source, field, default)
+
+
 def _calculate_stress_level(agent_data: dict[str, Any]) -> tuple[str, str]:
     """Calculate stress level and style from agent progression or traits.
     
@@ -289,33 +297,33 @@ def render_agent_detail(agent_data: dict[str, Any], tick: int = 0) -> Panel:
     )
 
 
-def prepare_agent_roster_data(game_state: dict[str, Any]) -> list[dict[str, Any]]:
+def prepare_agent_roster_data(game_state: Any) -> list[dict[str, Any]]:
     """Prepare agent roster data from game state.
     
     Args:
-        game_state: Full game state dictionary
+        game_state: Full game state dictionary or object
         
     Returns:
         List of agent data dictionaries with progression info
     """
-    agents = game_state.get("agents", {})
-    agent_progression = game_state.get("agent_progression", {})
+    agents = _get_field(game_state, "agents", {})
+    agent_progression = _get_field(game_state, "agent_progression", {})
     
     # Convert agents dict to list and sort by name
     agent_list = []
     for agent_id, agent in agents.items():
         # Get progression data if available
-        prog = agent_progression.get(agent_id)
+        prog = _get_field(agent_progression, agent_id)
         prog_data = prog.summary() if hasattr(prog, "summary") else prog if prog else {}
         
         agent_data = {
             "id": agent_id,
-            "name": agent.get("name", agent_id),
-            "role": agent.get("role", "Operative"),
-            "traits": agent.get("traits", {}),
-            "faction_id": agent.get("faction_id"),
-            "home_district": agent.get("home_district"),
-            "notes": agent.get("notes"),
+            "name": _get_field(agent, "name", agent_id),
+            "role": _get_field(agent, "role", "Operative"),
+            "traits": _get_field(agent, "traits", {}),
+            "faction_id": _get_field(agent, "faction_id"),
+            "home_district": _get_field(agent, "home_district"),
+            "notes": _get_field(agent, "notes"),
             "progression": prog_data,
         }
         agent_list.append(agent_data)

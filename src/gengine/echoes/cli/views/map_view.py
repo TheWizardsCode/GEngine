@@ -20,19 +20,27 @@ def prepare_map_view_data(
     Returns:
         Dictionary containing prepared view data
     """
-    # Extract districts
+    # Extract districts - handle both list and dict
     districts = []
-    for district in state.city.districts.values():
+    city_districts = state.city.districts
+    district_list = (
+        city_districts.values()
+        if hasattr(city_districts, "values")
+        else city_districts
+    )
+
+    for district in district_list:
         district_data = {
             "id": district.id,
             "name": district.name,
             "population": district.population,
             "stability": getattr(district, "stability", 0.5),
             "modifiers": {
-                "unrest": district.unrest,
-                "pollution": district.pollution,
-                "prosperity": district.prosperity,
-                "security": getattr(district, "security", 0.5),
+                "unrest": district.modifiers.unrest,
+                "pollution": district.modifiers.pollution,
+                "prosperity": district.modifiers.prosperity,
+                "security": district.modifiers.security,
+                # Delta attributes are computed/temporary, not in District model
                 "unrest_delta": getattr(district, "unrest_delta", 0.0),
                 "pollution_delta": getattr(district, "pollution_delta", 0.0),
             },

@@ -24,7 +24,7 @@ done
 
 if [ "$run_ui_demo" = true ]; then
     echo "Starting Echoes of Emergence Terminal UI..."
-    uv run python scripts/demo_terminal_ui.py "${args[@]}"
+    uv run echoes-shell --ui "${args[@]}"
 else
     echo "Starting Echoes of Emergence CLI shell..."
     uv run echoes-shell "${args[@]}"
