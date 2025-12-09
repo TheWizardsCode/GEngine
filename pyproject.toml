@@ -18,7 +18,10 @@ dependencies = [
     "websockets>=12.0,<13.0",
     "openai>=1.0.0,<2.0.0",
     "anthropic>=0.39.0,<1.0.0",
-    "prometheus_client>=0.20.0,<1.0.0"
+    "prometheus_client>=0.20.0,<1.0.0",
+    "onnxruntime>=1.16.0,<2.0.0",
+    "numpy>=1.24.0,<2.0.0",
+    "tokenizers>=0.15.0,<1.0.0"
 ]
 
 [project.optional-dependencies]
@@ -43,6 +46,7 @@ echoes-gateway-service = "gengine.echoes.gateway.main:main"
 echoes-gateway-shell = "gengine.echoes.gateway.client:main"
 echoes-llm-service = "gengine.echoes.llm.main:main"
 echoes-balance-studio = "gengine.balance_studio.cli:main"
+echoes-tinyllama-chat = "gengine.echoes.llm.tinyllama_chat:main"
 
 [build-system]
 requires = ["setuptools>=68.0.0"]

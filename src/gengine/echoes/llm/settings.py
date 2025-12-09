@@ -74,16 +74,16 @@ class LLMSettings:
 
     def validate(self) -> None:
         """Validate settings and raise ValueError if invalid."""
-        if self.provider not in ("stub", "openai", "anthropic"):
+        if self.provider not in ("stub", "openai", "anthropic", "tinyllama"):
             raise ValueError(
                 f"Invalid provider '{self.provider}'. "
-                "Must be 'stub', 'openai', or 'anthropic'."
+                "Must be 'stub', 'openai', 'anthropic', or 'tinyllama'."
             )
 
-        if self.provider != "stub" and not self.api_key:
+        if self.provider not in ("stub", "tinyllama") and not self.api_key:
             raise ValueError(f"API key required for provider '{self.provider}'")
 
-        if self.provider != "stub" and not self.model:
+        if self.provider not in ("stub", "tinyllama") and not self.model:
             raise ValueError(
                 f"Model identifier required for provider '{self.provider}'"
             )

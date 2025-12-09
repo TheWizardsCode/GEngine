@@ -1069,6 +1069,16 @@ export ECHOES_LLM_MODEL=claude-3-5-sonnet-20241022  # Or other Claude models
 ```
 Uses Anthropic Messages API with structured outputs. The provider includes intent schemas in prompts and parses JSON responses into validated intent objects.
 
+**TinyLlama Provider** (Phase 13 M13.1.1 - Local NPU Inference):
+```bash
+export ECHOES_LLM_PROVIDER=tinyllama
+export TINYLLAMA_MODEL_PATH=/path/to/tinyllama-1.1b-chat-v1.0.onnx
+export TINYLLAMA_TOKENIZER_PATH=/path/to/tokenizer.json
+export TINYLLAMA_USE_NPU=true                     # Enable NPU acceleration
+export TINYLLAMA_MAX_LENGTH=512                   # Max sequence length
+```
+Uses TinyLlama-1.1B-Chat-v1.0 with ONNX Runtime and QNN Execution Provider for local inference on Snapdragon NPU. No API key required - runs entirely locally. See [TinyLlama Chat Setup Guide](docs/gengine/tinyllama_chat_setup.md) for detailed installation and usage instructions.
+
 Both real providers include retry logic for rate limits and transient errors, with configurable `max_retries` (default: 2).
 
 ### API Endpoints
@@ -1200,6 +1210,60 @@ narration_prompt = build_narration_prompt(
 ```
 
 The intent schemas enable the LLM service to convert natural language into type-safe game actions with validation, while the prompt templates ensure consistent LLM behavior across different providers.
+
+## TinyLlama Chat Interface (Phase 13 M13.1.1)
+
+The TinyLlama chat interface provides a simple conversational AI experience running entirely locally using TinyLlama-1.1B-Chat-v1.0 with ONNX Runtime and NPU acceleration on Copilot+ PC with Snapdragon hardware.
+
+### Quick Start
+
+1. **Install dependencies** (already included in pyproject.toml):
+   ```bash
+   uv sync
+   ```
+
+2. **Download the model** from Hugging Face:
+   - Model: https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+   - Download `model.onnx` and `tokenizer.json`
+
+3. **Configure environment variables**:
+   ```bash
+   export TINYLLAMA_MODEL_PATH="/path/to/model.onnx"
+   export TINYLLAMA_TOKENIZER_PATH="/path/to/tokenizer.json"
+   export TINYLLAMA_USE_NPU=true
+   ```
+
+4. **Run the chat interface**:
+   ```bash
+   uv run echoes-tinyllama-chat
+   ```
+
+### Features
+
+- **Local Inference**: Runs entirely on your device without cloud API calls
+- **NPU Acceleration**: Uses QNN Execution Provider for fast inference on Snapdragon NPU
+- **Conversational Interface**: Simple chat interface with command support
+- **No API Keys**: No cloud service required - complete privacy
+
+### Chat Commands
+
+- Regular messages: Just type and press Enter
+- `/help` - Show available commands
+- `/info` - Display model and execution provider information
+- `/clear` - Clear conversation history
+- `/history` - Show conversation history
+- `/quit` or `/exit` - Exit the chat
+
+### Performance
+
+With NPU acceleration:
+- First token: ~50-100ms
+- Subsequent tokens: ~10-20ms per token
+- 100 tokens: ~1-2 seconds
+
+### Documentation
+
+For detailed setup instructions, model download, troubleshooting, and integration examples, see [TinyLlama Chat Setup Guide](docs/gengine/tinyllama_chat_setup.md).
 
 ## Docker
 

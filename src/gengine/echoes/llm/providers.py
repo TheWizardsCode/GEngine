@@ -211,5 +211,9 @@ def create_provider(settings: LLMSettings) -> LLMProvider:
         from .anthropic_provider import AnthropicProvider
 
         return AnthropicProvider(settings)
+    elif settings.provider == "tinyllama":
+        from .tinyllama_provider import TinyLlamaONNXProvider
+
+        return TinyLlamaONNXProvider(settings)
     else:
         raise ValueError(f"Unsupported provider: {settings.provider}")
