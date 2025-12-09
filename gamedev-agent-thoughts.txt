@@ -6,38 +6,11 @@
 - beac36a: removed the redundant command bar so only the Textual footer remains and verified with the full pytest+coverage run.
 ## [GitHub Copilot] — 2025-12-08 14:43
 - 54389f6: routed Textual UI tick actions through `ShellBackend.advance_ticks` so events use the full SimEngine pipeline, then reran the full pytest suite to retain the 90% coverage gate.
-## [git_agent] — 2025-12-07 03:01
-- Restored --ui flag handling in start.sh to match documentation and user expectations. Committed and pushed to main.
-## [git_agent] — 2025-12-07 02:56
-- Merged branch 'copilot/metropolitan-flamingo' into 'main' with updated how_to_play_echoes.md and related CLI/UI/test improvements.
-- Pushed main to remote. All documentation and code changes are now live on main.
-
-## agent_author_agent — 2025-12-06 14:45
-- Refined execdocs-agent, agent_author_agent, and git_agent definitions for
-   frontmatter compliance, clearer workflows, explicit boundaries, and
-   consistent logging/reflection instructions.
-
-# GameDev Agent Thoughts - Issue #63: Analysis and Balance Reporting (M11.3)
-
-# GameDev Agent Thoughts - Issue #70: Designer Feedback Loop and Tooling (M11.6)
-
-## Task Analysis
-
-Working on Issue #70 - Phase 11, Milestone 11.6, Task 11.6.1.
-
-### Requirements from Issue
-
-1. Create CLI tool `echoes-balance-studio` with guided workflows for designers:
-   - "Run exploratory sweep"
-   - "Compare two configs" 
-   - "Test tuning change"
-   - "View historical reports"
-
-2. Configuration changes testable via YAML overlays without modifying base configs
-   (similar to difficulty presets)
-
-3. Interactive report viewer (HTML dashboard) allowing filtering, sorting, 
-   and drilling into results
+## agent_author_agent — 2025-12-08 15:10
+- Updated `tracker_agent` guidance so that any GitHub issue created from a tracker task must include a complete task description and an explicit reference back to `.pm/tracker.md`.
+## [tracker_agent] — 2025-12-08 15:02
+- Marked Issue #84 (Player Interactivity & UI Wiring) as complete in tracker.md.
+- Added Phase 13 for LLM integration, with new task 13.1.1 to build a TinyLlama ONNX chat interface for Copilot+ PC Snapdragon NPU.
 
 4. Designer-focused documentation:
    - "How to diagnose dominant strategies"
