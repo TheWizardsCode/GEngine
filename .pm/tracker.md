@@ -8,17 +8,19 @@
 |-------|--------|----------|-----------|----------|-------------|
 | **1-10** | ✅ Complete | 51/51 | 0 | - | Maintenance only |
 | **11** | 🚧 In Progress | 5/6 | 1 | Medium | Complete 11.6.1 or begin Phase 12 |
-| **12** | 🚧 In Progress | 2/5 | 3 | Medium | Next: 12.2.3 Player Interactivity & UI Wiring |
+| **12** | 🚧 In Progress | 3/5 | 2 | Medium | Next: 12.3.1 Replace Rich with Windows-aware Renderer |
 | 12.1.1 | Terminal UI Core Implementation | ✅ complete | High | None | UI Team | 2025-12-07 |
 | 12.2.1 | Management Depth UI | complete | High | 12.1.1 | UI Team | 2025-12-07 |
 | 12.2.2 | Agent Roster Panel | complete | High | 12.2.1 | UI Team | 2025-12-07 |
 | 12.2.3 | Player Interactivity & UI Wiring | ✅ complete | High | 12.2.2 | UI Team | 2025-12-08 |
 
 
+
 **Active Tasks:**
 
 - ✅ **11.5.1** - CI Integration for Balance Validation - **COMPLETED** (merged 2025-12-05)
 - ✅ **10.1.9** - Comprehensive Scripts Test Coverage - **COMPLETED** (merged 2025-12-05)
+- ✅ **12.2.3** - Player Interactivity & UI Wiring (Issue #84) - **COMPLETED** (merged 2025-12-08)
 
 **Next Recommended Tasks:**
 
@@ -434,49 +436,54 @@ The project has closely followed the implementation plan with excellent tracking
 | 12 | UI Implementation | 5 | 0 | 📋 Planned |
 | **TOTAL** | **All Phases** | **63** | **54** | **⚙️ 86%** |
 
-**In-Progress Tasks:**
 
-- **11.4.1** - Strategy parameter optimization (Issue #71, optional, not started, low priority)
-- **11.4.2** - Optimization engine robustness & UX polish (see task details)
-- **11.6.1** - Designer feedback tooling (Issue #70, optional, not started, low priority)
+**Next Recommended Tasks:**
 
-**Optional Polish Tasks** (not included in phase counts):
+1. **11.4.1** - Strategy Parameter Optimization (Issue #71 - optional, low priority, future work)
+2. **11.6.1** - Designer Feedback Loop and Tooling (Issue #70 - optional, low priority, UX enhancement)
+3. **Phase 12** - Terminal UI Implementation (new phase, requires prioritization decision)
+4. **12.3.1** - Replace Rich with Windows-aware Renderer (Issue #82)
+   - **Description:** Replace the Rich library for terminal UI rendering with a renderer that is fully compatible with Windows Terminal, eliminating border flicker and Unicode line height issues. Must support all current UI features (panels, overlays, event feed, command bar) and maintain cross-platform compatibility.
+   - **Acceptance Criteria:** No flicker or border artifacts in Windows Terminal; all UI features work identically on Windows, Linux, and VS Code terminals; passes full test suite.
+   - **Priority:** High
+   - **Responsible:** UI Team
+   - **Dependencies:** 12.2.3 (Player Interactivity & UI Wiring)
+   - **Risks & Mitigations:**
+     - Risk: Feature regression during renderer migration. Mitigation: Maintain parallel implementation and run full regression tests before switching default.
+     - Risk: Loss of advanced styling. Mitigation: Select renderer with comparable feature set and test on all platforms.
+   - **Next Steps:**
+     1. Evaluate candidate renderers (e.g., Textual, urwid, blessed, custom curses).
+     2. Prototype core layout and panel rendering.
+     3. Migrate event feed, overlays, and command bar.
+     4. Run cross-platform manual and automated tests.
+     5. Submit for code review and merge.
+   - **Last Updated:** 2025-12-07
 
-- 8.3.5: K8s smoke test CI integration
-- 10.2.1: Difficulty sweep hardening  
-- 10.2.2: AI player LLM robustness
+---
 
-## Detailed Phase Analysis
+## Phase 13: LLM Integration & Conversational SLM
 
-### Phase 1-6: Foundation & Core Systems ✅ COMPLETE
+|    ID    | Task                                  | Status      | Priority | Dependencies | Responsible      | Updated    |
+| -------: | ------------------------------------- | ----------- | -------- | ------------ | ---------------- | ---------- |
+| 13.1.1   | Build Test Chat Interface (TinyLlama)  | in-progress | High     | None         | LLM Team         | 2025-12-09 |
 
-- **Status:** All milestones delivered and tested
-- **Key Achievements:**
-  - Data models, content loading, snapshot persistence
-  - CLI shell with 12+ commands (summary, run, map, focus, campaign, explain, timeline, etc.)
-  - Simulation service (FastAPI) + gateway service (WebSocket) + LLM service
-  - Agent AI (utility-based decision logic), Faction AI (strategic actions)
-  - Economy subsystem (supply/demand, markets, shortages)
+### 13.1.1 — Build Test Chat Interface (TinyLlama)
+
+- **Description:** Implement a simple Python chat interface using TinyLlama-1.1B-Chat-v1.0-ONNX running on a Copilot+ PC with Snapdragon NPU. Use ONNX Runtime with QNNExecutionProvider for hardware acceleration. The interface should support conversational input/output and run locally.
   - Environment subsystem (pollution, diffusion, biodiversity, stability)
   - Narrative director with story seeds, pacing, lifecycle management
   - LLM integration (OpenAI, Anthropic providers) with intent parsing
 
 ### Phase 7: Player Experience ✅ COMPLETE (100%)
 
-- **Status:** All 4 milestones shipped
-- **Progress:** 4/4 tasks complete
-- **Milestones:**
-  - ✅ M7.1: Progression systems (skills, access tiers, reputation)
   - ✅ M7.1.2: Per-agent progression (specialization, expertise, reliability, stress)
   - ✅ M7.1.3: Per-agent modifiers enabled by default
   - ✅ M7.2: Explanations & causal queries (timeline, explain, why commands)
-  - ✅ M7.3: Tuning & replayability (5 difficulty presets, sweep tooling)
   - ✅ M7.4: Campaign UX (create, resume, autosave, end-of-campaign post-mortems)
 - **Outstanding:** None
 
 ### Phase 8: Deployment ✅ COMPLETE (100%)
 
-- **Status:** All containerization and K8s work delivered
 - **Progress:** 6/6 tasks complete
 - **Milestones:**
   - ✅ M8.1: Containerization (Docker + docker-compose for all 3 services)
