@@ -160,6 +160,8 @@ experimental AI governance
 
 drive tension.
 
+For an extended narrative introduction to the world of Neo Echo (geography, climate, factions, and social texture), see the lore document: [Neo Echo World Overview](../../docs/narrative/Neo_Echo.md).
+
 **District Types:**
 
 - **Civic Core:** Government, council chambers, AI governance centers.
