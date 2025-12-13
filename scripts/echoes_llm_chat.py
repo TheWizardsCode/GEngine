@@ -44,7 +44,8 @@ def detect_service_url() -> str | None:
     if os.path.exists("/proc/version"):
         try:
             with open("/proc/version", "r") as f:
-                if "microsoft" in f.read().lower() or "wsl" in f.read().lower():
+                version_content = f.read().lower()
+                if "microsoft" in version_content or "wsl" in version_content:
                     # Running in WSL, try to get Windows host IP
                     try:
                         result = subprocess.run(

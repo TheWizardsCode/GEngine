@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 import pytest
@@ -187,9 +187,6 @@ class TestAutoDetection:
 
     def test_detect_service_url_success(self) -> None:
         """Test successful service detection."""
-        import httpx
-        from unittest.mock import patch
-        
         chat_module = _import_chat_script()
         detect_service_url = chat_module.detect_service_url
         
@@ -202,9 +199,6 @@ class TestAutoDetection:
 
     def test_detect_service_url_failure(self) -> None:
         """Test when no service is found."""
-        import httpx
-        from unittest.mock import patch
-        
         chat_module = _import_chat_script()
         detect_service_url = chat_module.detect_service_url
         
