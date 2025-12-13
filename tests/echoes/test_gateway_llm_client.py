@@ -13,8 +13,8 @@ class TestLLMClient:
 
     def test_initialization(self):
         """Test client initialization."""
-        client = LLMClient("http://localhost:8001", timeout=10.0, max_retries=3)
-        assert client.base_url == "http://localhost:8001"
+        client = LLMClient("http://127.0.0.1:8001", timeout=10.0, max_retries=3)
+        assert client.base_url == "http://127.0.0.1:8001"
         assert client.timeout == 10.0
         assert client.max_retries == 3
         client.close()
@@ -22,8 +22,8 @@ class TestLLMClient:
     @patch("httpx.Client")
     def test_context_manager(self, mock_client):
         """Test client works as context manager."""
-        with LLMClient("http://localhost:8001") as client:
-            assert client.base_url == "http://localhost:8001"
+        with LLMClient("http://127.0.0.1:8001") as client:
+            assert client.base_url == "http://127.0.0.1:8001"
 
     @patch("httpx.Client.post")
     def test_parse_intent_success(self, mock_post):
