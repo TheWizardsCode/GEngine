@@ -703,6 +703,207 @@ The gateway:
 
 The integration uses HTTP retry logic (2 retries by default) and handles LLM service health checks on session creation. This enables conversational gameplay where players use natural language instead of memorizing CLI commands.
 
+## LLM Chat Harness
+
+The LLM chat harness (`scripts/echoes_llm_chat.py`) provides an interactive REPL for testing the LLM service endpoints (`/parse_intent` and `/narrate`) with multi-turn history support. This tool is useful for:
+
+- Testing prompt changes and observing model responses
+- Debugging latency and token usage
+- Running scripted demos against remote environments
+- Validating provider configurations (stub, OpenAI, Anthropic, Foundry)
+
+### Prerequisites
+
+1. **LLM Service Running**: Start the service locally or point to a remote instance:
+   ```bash
+   # Start local service with stub provider (default)
+   uv run echoes-llm-service
+   
+   # Or with OpenAI provider
+   export ECHOES_LLM_PROVIDER=openai
+   export ECHOES_LLM_API_KEY=your-api-key
+   export ECHOES_LLM_MODEL=gpt-4
+   uv run echoes-llm-service
+   ```
+
+2. **Python Environment**: The chat client requires `httpx` (already in project dependencies).
+
+### Basic Usage
+
+**Parse Mode** (default) - Convert natural language to intents:
+```bash
+uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001
+
+# Example session:
+You: inspect the industrial district
+📋 Intents:
+[
+  {
+    "type": "inspect",
+    "target": "district"
+  }
+]
+⏱  Latency: 45ms
+🎯 Confidence: 0.95
+```
+
+**Narrate Mode** - Generate narrative from game events:
+```bash
+uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001 --mode narrate
+
+# Example session:
+Events (JSON or text): [{"type": "pollution_increase", "district": "industrial", "amount": 5}]
+📖 Narrative:
+The industrial district's pollution levels rose sharply as factory output increased...
+⏱  Latency: 120ms
+📊 Tokens: 45 in / 32 out
+```
+
+### Command-Line Options
+
+- `--service-url URL`: Base URL of the LLM service (default: `http://localhost:8001`)
+- `--mode MODE`: Chat mode - `parse` (intent JSON) or `narrate` (story text) (default: `parse`)
+- `--context-file FILE`: Load initial context from JSON file
+- `--history-limit N`: Maximum conversation history entries to keep (default: `10`)
+- `--export FILE`: (deprecated) Export transcript on exit; use `/save` command instead
+
+### Slash Commands
+
+- `/clear` - Clear conversation history
+- `/save <path>` - Save transcript to JSON file
+- `/quit` - Exit the chat interface
+
+### Multi-Turn History
+
+The client automatically maintains conversation history and sends it with each request in the `context.history` field:
+
+```json
+{
+  "user_input": "what happened next?",
+  "context": {
+    "history": [
+      {"role": "user", "content": "inspect district"},
+      {"role": "assistant", "content": "[{\"type\": \"inspect\", \"target\": \"district\"}]"}
+    ]
+  }
+}
+```
+
+History is limited by `--history-limit` (default 10 exchanges) to prevent unbounded token growth.
+
+### Context Files
+
+Use `--context-file` to provide initial game state context:
+
+```bash
+# Create context.json
+cat > context.json << EOF
+{
+  "tick": 42,
+  "district": "industrial-tier",
+  "recent_events": ["pollution_spike", "faction_meeting"]
+}
+EOF
+
+uv run python scripts/echoes_llm_chat.py --context-file context.json
+```
+
+The context merges with conversation history in subsequent requests.
+
+### Transcript Export
+
+Save conversation logs for analysis or sharing:
+
+```bash
+# During session
+You: inspect district
+/save my_session.json
+✓ Transcript saved to my_session.json
+```
+
+Transcript format:
+```json
+{
+  "mode": "parse",
+  "service_url": "http://localhost:8001",
+  "history": [
+    {"role": "user", "content": "inspect district"},
+    {"role": "assistant", "content": "[{\"type\": \"inspect\"}]"}
+  ],
+  "context": {"tick": 42}
+}
+```
+
+**Note**: API keys are NOT included in exported transcripts for security.
+
+### Remote Endpoints
+
+Point the client at any running LLM service:
+
+```bash
+# Staging environment
+uv run python scripts/echoes_llm_chat.py --service-url https://echoes-llm-staging.example.com
+
+# Docker Compose stack
+uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001
+
+# Kubernetes port-forward
+kubectl port-forward svc/echoes-llm-service 8001:8001
+uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001
+```
+
+### Troubleshooting
+
+**Connection Refused / Timeout:**
+- Verify service is running: `curl http://localhost:8001/healthz`
+- Check Docker: `docker ps | grep llm`
+- Check Kubernetes: `kubectl get pods -l app=echoes-llm-service`
+
+**HTTP 500 / Provider Errors:**
+- Check service logs for authentication failures (OpenAI/Anthropic API keys)
+- Verify provider configuration: `curl http://localhost:8001/healthz` (shows provider + model)
+- Test with stub provider first (no API keys required)
+
+**TLS Certificate Errors (remote endpoints):**
+- Use `http://` for local/dev environments
+- Verify certificate chain for production endpoints
+- Check firewall rules and ingress configuration
+
+**Empty Responses:**
+- Stub provider returns deterministic responses for testing
+- Real providers may fail if quota exceeded or model unavailable
+- Check token limits and rate limiting in service logs
+
+### Provider Configuration
+
+The chat client connects to the service; provider configuration happens server-side via environment variables:
+
+```bash
+# Stub provider (default, no API key needed)
+export ECHOES_LLM_PROVIDER=stub
+uv run echoes-llm-service
+
+# OpenAI
+export ECHOES_LLM_PROVIDER=openai
+export ECHOES_LLM_API_KEY=sk-...
+export ECHOES_LLM_MODEL=gpt-4
+uv run echoes-llm-service
+
+# Anthropic
+export ECHOES_LLM_PROVIDER=anthropic
+export ECHOES_LLM_API_KEY=sk-ant-...
+export ECHOES_LLM_MODEL=claude-3-sonnet-20240229
+uv run echoes-llm-service
+
+# Foundry Local (self-hosted)
+export ECHOES_LLM_PROVIDER=foundry_local
+export ECHOES_LLM_BASE_URL=http://foundry:8000
+export ECHOES_LLM_MODEL=your-model-name
+uv run echoes-llm-service
+```
+
+See `src/gengine/echoes/llm/settings.py` for all available configuration options.
+
 ## Headless Regression Driver
 
 `scripts/run_headless_sim.py` advances long simulations without interactive
