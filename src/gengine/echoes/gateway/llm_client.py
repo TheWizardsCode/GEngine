@@ -46,6 +46,7 @@ class LLMClient:
                     if line.startswith("default"):
                         win_host_ip = line.split()[2]
                         base_url = f"http://{win_host_ip}:8001"
+                        print(f"Auto-discovered Windows host: {base_url}")
                         break
             except Exception:
                 pass
