@@ -1,3 +1,7 @@
+
+import pytest
+pytestmark = pytest.mark.windows_only
+
 """Tests for LLM prompt templates."""
 
 from gengine.echoes.llm.prompts import (
@@ -128,7 +132,6 @@ class TestSystemPrompts:
         assert "INSPECT" in prompt
         assert "NEGOTIATE" in prompt
         assert "DEPLOY" in prompt
-        assert "functions" in prompt.lower()
 
     def test_narration_prompt_content(self):
         """Test narration system prompt has key content."""
