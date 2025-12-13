@@ -235,7 +235,6 @@ INTENT_PARSING_SYSTEM_PROMPT = (
     "- Execute COVERT actions for hidden operations\n"
     "- INVOKE specific agents to take actions\n"
     "- REQUEST reports about simulation state\n\n"
-    "Always use the provided functions to structure your responses. "
     "Extract key details from player text:\n"
     "- Target entities (districts, agents, factions)\n"
     "- Resource types and amounts\n"

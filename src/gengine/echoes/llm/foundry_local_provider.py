@@ -41,21 +41,33 @@ class FoundryLocalProvider(LLMProvider):
         context: dict[str, Any],
     ) -> IntentParseResult:
         """Parse user input into structured intents via Foundry Local."""
+        prompt = build_intent_parsing_prompt(user_input, context=context)
         payload = {
             "model": self.model,
             "messages": [
-                {"role": "system", "content": INTENT_PARSING_SYSTEM_PROMPT},
+                {
+                    "role": "system", 
+                    "content": INTENT_PARSING_SYSTEM_PROMPT
+                },
                 {
                     "role": "user",
-                    "content": build_intent_parsing_prompt(user_input, context=context),
+                    "content": prompt,
                 },
             ],
             "temperature": 0.3,
             "functions": OPENAI_INTENT_FUNCTIONS,
             "function_call": "auto",
         }
+        LOGGER.info("FoundryLocalProvider.parse_intent prompt: %s", prompt)
+        LOGGER.info("FoundryLocalProvider.parse_intent payload: %s", json.dumps(payload, indent=2))
         try:
             data, raw_text = await self._chat_completion(payload)
+            try:
+                import json as _json
+                pretty = _json.dumps(data, indent=2, ensure_ascii=False)
+                LOGGER.info("FoundryLocalProvider.parse_intent response (pretty):\n%s", pretty)
+            except Exception:
+                LOGGER.info("FoundryLocalProvider.parse_intent response (raw): %s", raw_text)
             intents = []
             choices = data.get("choices") or []
             if choices:
@@ -74,6 +86,36 @@ class FoundryLocalProvider(LLMProvider):
                     )
                     if intent_dict:
                         intents.append(intent_dict)
+                else:
+                    # Fallback: try to extract intent from message content (code block or plain text)
+                    content = message.get("content", "")
+                    # Try to extract code block
+                    import re
+                    code_block = None
+                    code_block_match = re.search(r"```(?:json)?\n(.*?)```", content, re.DOTALL)
+                    if code_block_match:
+                        code_block = code_block_match.group(1).strip()
+                    if code_block:
+                        try:
+                            intent_dict = json.loads(code_block)
+                            if isinstance(intent_dict, dict):
+                                intents.append(intent_dict)
+                        except Exception as exc:
+                            LOGGER.info("Failed to parse code block as JSON: %s", exc)
+                    else:
+                        # Try to parse intent from plain text (very basic fallback)
+                        # Example: look for lines like 'Action: INSPECT', 'Target: districts', etc.
+                        lines = content.splitlines()
+                        intent_dict = {}
+                        for line in lines:
+                            if ':' in line:
+                                key, value = line.split(':', 1)
+                                key = key.strip().lower()
+                                value = value.strip()
+                                if key and value:
+                                    intent_dict[key] = value
+                        if intent_dict:
+                            intents.append(intent_dict)
 
             confidence = 0.9 if intents else 0.3
             LOGGER.info(
