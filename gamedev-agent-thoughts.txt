@@ -971,3 +971,9 @@ Created 2 new modules and enhanced 2 existing files:
 
 ## [Game Design Agent] — 2025-12-11 12:00
 - Authored a rich narrative introduction to the world of Neo Echo, focusing on geography, climate, politics, and social texture to support future in-game lore, tooltips, and campaign framing.
+
+## [GitHub Copilot] — 2025-12-12 11:22
+- (n/a): Implemented the Foundry Local LLM provider (settings, factory wiring, provider implementation, and tests) and documented the work required in preparation for wiring the LLM service to Foundry Local.
+
+## [GitHub Copilot] — 2025-12-12 10:05
+- (n/a): Reviewed the README, Azure Foundry Local REST reference, and LLM service modules to outline the work required for wiring the LLM service to the Foundry Local API.

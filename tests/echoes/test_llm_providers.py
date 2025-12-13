@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import json
+
+import httpx
 import pytest
 
+from gengine.echoes.llm.foundry_local_provider import FoundryLocalProvider
 from gengine.echoes.llm.providers import (
     IntentParseResult,
     NarrateResult,
@@ -144,6 +148,17 @@ class TestCreateProvider:
         assert provider.settings.api_key == "test-key"
         assert provider.settings.model == "claude-3-sonnet-20240229"
 
+    def test_create_foundry_provider(self) -> None:
+        settings = LLMSettings(
+            provider="foundry_local",
+            model="phi-local",
+            base_url="http://localhost:5272",
+        )
+
+        provider = create_provider(settings)
+        assert isinstance(provider, FoundryLocalProvider)
+        assert provider.settings.provider == "foundry_local"
+
     def test_create_invalid_provider(self) -> None:
         settings = LLMSettings(provider="invalid")
 
@@ -158,3 +173,79 @@ class TestCreateProvider:
 
         with pytest.raises(ValueError, match="API key required"):
             create_provider(settings)
+
+
+class TestFoundryLocalProvider:
+    """Tests for Foundry Local provider behavior."""
+
+    pytestmark = pytest.mark.windows_only
+
+    @pytest.fixture(name="foundry_settings")
+    def _foundry_settings(self) -> LLMSettings:
+        return LLMSettings(
+            provider="foundry_local",
+            model="phi-4-mini",
+            base_url="http://localhost:5272",
+        )
+
+    async def test_parse_intent_success(self, foundry_settings: LLMSettings) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            body = {
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": None,
+                            "function_call": {
+                                "name": "inspect_target",
+                                "arguments": json.dumps(
+                                    {
+                                        "target_type": "district",
+                                        "target_id": "industrial",
+                                    }
+                                ),
+                            },
+                        },
+                    }
+                ],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+            }
+            return httpx.Response(200, json=body)
+
+        transport = httpx.MockTransport(handler)
+        provider = FoundryLocalProvider(foundry_settings, transport=transport)
+
+        result = await provider.parse_intent("Inspect the industrial tier", {"session_id": "abc"})
+
+        assert result.intents
+        assert result.intents[0]["intent"] == "INSPECT"
+        assert result.intents[0]["target_id"] == "industrial"
+        assert result.confidence == 0.9
+
+    async def test_narrate_success(self, foundry_settings: LLMSettings) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            body = {
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "Narration output",
+                        },
+                    }
+                ],
+                "usage": {"prompt_tokens": 8, "completion_tokens": 12},
+            }
+            return httpx.Response(200, json=body)
+
+        transport = httpx.MockTransport(handler)
+        provider = FoundryLocalProvider(foundry_settings, transport=transport)
+
+        result = await provider.narrate([
+            {"description": "Agent recruited"},
+        ], {})
+
+        assert result.narrative == "Narration output"
+        assert result.metadata is not None
+        assert result.metadata["prompt_tokens"] == 8

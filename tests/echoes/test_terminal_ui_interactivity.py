@@ -1,6 +1,10 @@
-"""Tests for Terminal UI interactivity and UI-to-engine integration."""
 
 from __future__ import annotations
+import sys
+import pytest
+if sys.platform == "win32":
+    pytest.skip("POSIX-only test file", allow_module_level=True)
+"""Tests for Terminal UI interactivity and UI-to-engine integration."""
 
 from unittest.mock import Mock, patch
 

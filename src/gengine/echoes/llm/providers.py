@@ -211,5 +211,9 @@ def create_provider(settings: LLMSettings) -> LLMProvider:
         from .anthropic_provider import AnthropicProvider
 
         return AnthropicProvider(settings)
+    elif settings.provider == "foundry_local":
+        from .foundry_local_provider import FoundryLocalProvider
+
+        return FoundryLocalProvider(settings)
     else:
         raise ValueError(f"Unsupported provider: {settings.provider}")

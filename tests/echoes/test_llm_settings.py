@@ -45,6 +45,7 @@ class TestLLMSettings:
             "ECHOES_LLM_TEMPERATURE": os.environ.get("ECHOES_LLM_TEMPERATURE"),
             "ECHOES_LLM_MAX_TOKENS": os.environ.get("ECHOES_LLM_MAX_TOKENS"),
             "ECHOES_LLM_TIMEOUT": os.environ.get("ECHOES_LLM_TIMEOUT"),
+            "ECHOES_LLM_BASE_URL": os.environ.get("ECHOES_LLM_BASE_URL"),
         }
         try:
             for key in old_env:
@@ -69,6 +70,7 @@ class TestLLMSettings:
             "ECHOES_LLM_TEMPERATURE": os.environ.get("ECHOES_LLM_TEMPERATURE"),
             "ECHOES_LLM_MAX_TOKENS": os.environ.get("ECHOES_LLM_MAX_TOKENS"),
             "ECHOES_LLM_TIMEOUT": os.environ.get("ECHOES_LLM_TIMEOUT"),
+            "ECHOES_LLM_BASE_URL": os.environ.get("ECHOES_LLM_BASE_URL"),
         }
         try:
             os.environ["ECHOES_LLM_PROVIDER"] = "anthropic"
@@ -77,6 +79,7 @@ class TestLLMSettings:
             os.environ["ECHOES_LLM_TEMPERATURE"] = "0.3"
             os.environ["ECHOES_LLM_MAX_TOKENS"] = "2000"
             os.environ["ECHOES_LLM_TIMEOUT"] = "45"
+            os.environ["ECHOES_LLM_BASE_URL"] = "http://custom-base"
 
             settings = LLMSettings.from_env()
             assert settings.provider == "anthropic"
@@ -85,6 +88,7 @@ class TestLLMSettings:
             assert settings.temperature == 0.3
             assert settings.max_tokens == 2000
             assert settings.timeout_seconds == 45
+            assert settings.base_url == "http://custom-base"
         finally:
             for key, value in old_env.items():
                 if value is not None:
@@ -129,3 +133,27 @@ class TestLLMSettings:
         settings = LLMSettings(timeout_seconds=0)
         with pytest.raises(ValueError, match="timeout_seconds must be at least 1"):
             settings.validate()
+
+    def test_validate_foundry_provider_missing_base_url(self) -> None:
+        settings = LLMSettings(
+            provider="foundry_local",
+            model="phi-local",
+        )
+        with pytest.raises(ValueError, match="Base URL required"):
+            settings.validate()
+
+    def test_validate_foundry_provider_missing_model(self) -> None:
+        settings = LLMSettings(
+            provider="foundry_local",
+            base_url="http://localhost:5272",
+        )
+        with pytest.raises(ValueError, match="Model identifier required"):
+            settings.validate()
+
+    def test_validate_foundry_provider_success(self) -> None:
+        settings = LLMSettings(
+            provider="foundry_local",
+            model="phi-4",
+            base_url="http://localhost:5272",
+        )
+        settings.validate()
