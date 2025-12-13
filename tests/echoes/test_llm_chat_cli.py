@@ -182,6 +182,39 @@ class TestLLMChatClient:
             assert result["status"] == "ok"
 
 
+class TestAutoDetection:
+    """Tests for service URL auto-detection."""
+
+    def test_detect_service_url_success(self) -> None:
+        """Test successful service detection."""
+        import httpx
+        from unittest.mock import patch
+        
+        chat_module = _import_chat_script()
+        detect_service_url = chat_module.detect_service_url
+        
+        # Mock httpx.get to simulate successful connection
+        with patch("httpx.get") as mock_get:
+            mock_get.return_value.status_code = 200
+            result = detect_service_url()
+            assert result is not None
+            assert "8001" in result
+
+    def test_detect_service_url_failure(self) -> None:
+        """Test when no service is found."""
+        import httpx
+        from unittest.mock import patch
+        
+        chat_module = _import_chat_script()
+        detect_service_url = chat_module.detect_service_url
+        
+        # Mock httpx.get to simulate connection failure
+        with patch("httpx.get") as mock_get:
+            mock_get.side_effect = httpx.ConnectError("Connection refused")
+            result = detect_service_url()
+            assert result is None
+
+
 class TestChatSession:
     """Tests for ChatSession (imported from scripts)."""
 

@@ -730,6 +730,16 @@ The LLM chat harness (`scripts/echoes_llm_chat.py`) provides an interactive REPL
 
 ### Basic Usage
 
+**Auto-detect Service** (no arguments needed):
+```bash
+# Auto-detects service URL (tries Windows host if in WSL, then localhost)
+uv run python scripts/echoes_llm_chat.py
+
+# Output:
+Auto-detecting LLM service...
+✓ Detected service at http://localhost:8001
+```
+
 **Parse Mode** (default) - Convert natural language to intents:
 ```bash
 uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001
@@ -761,7 +771,7 @@ The industrial district's pollution levels rose sharply as factory output increa
 
 ### Command-Line Options
 
-- `--service-url URL`: Base URL of the LLM service (default: `http://localhost:8001`)
+- `--service-url URL`: Base URL of the LLM service (default: auto-detect)
 - `--mode MODE`: Chat mode - `parse` (intent JSON) or `narrate` (story text) (default: `parse`)
 - `--context-file FILE`: Load initial context from JSON file
 - `--history-limit N`: Maximum conversation history entries to keep (default: `10`)
@@ -771,7 +781,7 @@ The industrial district's pollution levels rose sharply as factory output increa
 
 - `/clear` - Clear conversation history
 - `/save <path>` - Save transcript to JSON file
-- `/quit` - Exit the chat interface
+- `/quit` or `/exit` - Exit the chat interface
 
 ### Multi-Turn History
 
@@ -854,10 +864,18 @@ uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001
 
 ### Troubleshooting
 
+**Auto-detection Fails:**
+- The client tries to detect the service on:
+  1. Windows host IP (when running in WSL) - reads from `/etc/resolv.conf`
+  2. `http://localhost:8001`
+- If both fail, manually specify with `--service-url`
+- Check if service is running: `curl http://localhost:8001/healthz`
+
 **Connection Refused / Timeout:**
 - Verify service is running: `curl http://localhost:8001/healthz`
 - Check Docker: `docker ps | grep llm`
 - Check Kubernetes: `kubectl get pods -l app=echoes-llm-service`
+- If in WSL and accessing Windows host, ensure Windows Firewall allows port 8001
 
 **HTTP 500 / Provider Errors:**
 - Check service logs for authentication failures (OpenAI/Anthropic API keys)

@@ -10,6 +10,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
+import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -21,6 +24,61 @@ import httpx
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from gengine.echoes.llm.chat_client import LLMChatClient
+
+
+def detect_service_url() -> str | None:
+    """Auto-detect the LLM service URL.
+    
+    Tries the following in order:
+    1. Windows host IP (when running in WSL)
+    2. localhost
+    
+    Returns
+    -------
+    str | None
+        The detected service URL, or None if not found
+    """
+    urls_to_try = []
+    
+    # Check if running in WSL and try Windows host IP
+    if os.path.exists("/proc/version"):
+        try:
+            with open("/proc/version", "r") as f:
+                if "microsoft" in f.read().lower() or "wsl" in f.read().lower():
+                    # Running in WSL, try to get Windows host IP
+                    try:
+                        result = subprocess.run(
+                            ["cat", "/etc/resolv.conf"],
+                            capture_output=True,
+                            text=True,
+                            timeout=2,
+                        )
+                        # Look for nameserver line which points to Windows host
+                        for line in result.stdout.split("\n"):
+                            if line.strip().startswith("nameserver"):
+                                match = re.search(r"nameserver\s+(\S+)", line)
+                                if match:
+                                    host_ip = match.group(1)
+                                    urls_to_try.append(f"http://{host_ip}:8001")
+                                    break
+                    except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError):
+                        pass
+        except (FileNotFoundError, PermissionError):
+            pass
+    
+    # Always try localhost as fallback
+    urls_to_try.append("http://localhost:8001")
+    
+    # Try each URL with a quick health check
+    for url in urls_to_try:
+        try:
+            response = httpx.get(f"{url}/healthz", timeout=2.0)
+            if response.status_code == 200:
+                return url
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPError):
+            continue
+    
+    return None
 
 
 class ChatSession:
@@ -179,7 +237,7 @@ class ChatSession:
         print(f"Service: {self.service_url}")
         print(f"Mode: {self.mode}")
         print(f"History limit: {self.history_limit}")
-        print(f"\nCommands: /clear, /save <path>, /quit")
+        print(f"\nCommands: /clear, /save <path>, /quit, /exit")
         print(f"{'=' * 60}\n")
         
         async with LLMChatClient(self.service_url) as client:
@@ -209,7 +267,7 @@ class ChatSession:
                     
                     # Handle slash commands
                     if user_input.startswith("/"):
-                        if user_input == "/quit":
+                        if user_input in ("/quit", "/exit"):
                             print("Goodbye!")
                             break
                         elif user_input == "/clear":
@@ -244,6 +302,9 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Auto-detect service (tries WSL Windows host, then localhost)
+  python scripts/echoes_llm_chat.py
+  
   # Connect to local service in parse mode
   python scripts/echoes_llm_chat.py --service-url http://localhost:8001
   
@@ -262,8 +323,8 @@ Environment variables:
     
     parser.add_argument(
         "--service-url",
-        default="http://localhost:8001",
-        help="Base URL of the LLM service (default: http://localhost:8001)",
+        default=None,
+        help="Base URL of the LLM service (default: auto-detect)",
     )
     parser.add_argument(
         "--mode",
@@ -288,9 +349,23 @@ Environment variables:
     
     args = parser.parse_args()
     
+    # Auto-detect service URL if not provided
+    service_url = args.service_url
+    if service_url is None:
+        print("Auto-detecting LLM service...")
+        service_url = detect_service_url()
+        if service_url is None:
+            print("\n✗ Error: Could not detect LLM service.", file=sys.stderr)
+            print("  Tried:", file=sys.stderr)
+            print("    - Windows host (if running in WSL)", file=sys.stderr)
+            print("    - http://localhost:8001", file=sys.stderr)
+            print("\n  Please ensure the service is running or specify --service-url", file=sys.stderr)
+            return 1
+        print(f"✓ Detected service at {service_url}\n")
+    
     # Create and run session
     session = ChatSession(
-        service_url=args.service_url,
+        service_url=service_url,
         mode=args.mode,
         history_limit=args.history_limit,
         context_file=args.context_file,
