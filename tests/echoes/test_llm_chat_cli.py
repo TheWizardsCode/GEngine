@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 import httpx
@@ -12,6 +14,17 @@ from gengine.echoes.llm.chat_client import LLMChatClient
 
 
 pytestmark = pytest.mark.anyio
+
+
+def _import_chat_script():
+    """Import the echoes_llm_chat script module."""
+    script_path = Path(__file__).parent.parent.parent / "scripts" / "echoes_llm_chat.py"
+    spec = importlib.util.spec_from_file_location("echoes_llm_chat", script_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load script from {script_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class TestLLMChatClient:
@@ -174,12 +187,8 @@ class TestChatSession:
 
     def test_history_management(self) -> None:
         """Test history add and clear operations."""
-        # Import here to avoid issues with script path manipulation
-        import sys
-        from pathlib import Path
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-        
-        from echoes_llm_chat import ChatSession
+        chat_module = _import_chat_script()
+        ChatSession = chat_module.ChatSession
         
         session = ChatSession("http://localhost:8001", history_limit=2)
         
@@ -204,11 +213,8 @@ class TestChatSession:
 
     def test_context_building(self) -> None:
         """Test context building with history."""
-        import sys
-        from pathlib import Path
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-        
-        from echoes_llm_chat import ChatSession
+        chat_module = _import_chat_script()
+        ChatSession = chat_module.ChatSession
         
         session = ChatSession("http://localhost:8001")
         session.additional_context = {"tick": 10}
@@ -222,11 +228,8 @@ class TestChatSession:
 
     def test_save_transcript(self, tmp_path) -> None:
         """Test saving transcript to file."""
-        import sys
-        from pathlib import Path
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-        
-        from echoes_llm_chat import ChatSession
+        chat_module = _import_chat_script()
+        ChatSession = chat_module.ChatSession
         
         session = ChatSession("http://localhost:8001", mode="parse")
         session.add_to_history("user", "test")
@@ -246,11 +249,8 @@ class TestChatSession:
 
     def test_context_file_loading(self, tmp_path) -> None:
         """Test loading initial context from file."""
-        import sys
-        from pathlib import Path
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-        
-        from echoes_llm_chat import ChatSession
+        chat_module = _import_chat_script()
+        ChatSession = chat_module.ChatSession
         
         # Create a context file
         context_file = tmp_path / "context.json"
