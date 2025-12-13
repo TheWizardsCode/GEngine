@@ -240,7 +240,7 @@ class ChatSession:
         print(f"Service: {self.service_url}")
         print(f"Mode: {self.mode}")
         print(f"History limit: {self.history_limit}")
-    print("\nCommands: /clear, /save <path>, /quit, /exit")
+        print("\nCommands: /clear, /save <path>, /quit, /exit")
         print(f"{'=' * 60}\n")
         
         async with LLMChatClient(self.service_url) as client:
