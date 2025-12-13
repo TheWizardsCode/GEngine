@@ -154,7 +154,7 @@ class ChatSession:
             latency_ms = (time.perf_counter() - start_time) * 1000
             
             # Display narrative
-            print(f"\n📖 Narrative:")
+            print("\n📖 Narrative:")
             print(response.get("narrative", ""))
             
             # Display metadata
@@ -162,7 +162,9 @@ class ChatSession:
             if "metadata" in response and response["metadata"]:
                 metadata = response["metadata"]
                 if "input_tokens" in metadata:
-                    print(f"📊 Tokens: {metadata.get('input_tokens', 0)} in / {metadata.get('output_tokens', 0)} out")
+                    in_tokens = metadata.get('input_tokens', 0)
+                    out_tokens = metadata.get('output_tokens', 0)
+                    print(f"📊 Tokens: {in_tokens} in / {out_tokens} out")
             
             # Add to history
             self.add_to_history("user", json.dumps(events))
@@ -175,11 +177,11 @@ class ChatSession:
 
     async def run(self) -> None:
         """Run the interactive chat session."""
-        print(f"Echoes LLM Chat Interface")
+        print("Echoes LLM Chat Interface")
         print(f"Service: {self.service_url}")
         print(f"Mode: {self.mode}")
         print(f"History limit: {self.history_limit}")
-        print(f"\nCommands: /clear, /save <path>, /quit")
+        print("\nCommands: /clear, /save <path>, /quit")
         print(f"{'=' * 60}\n")
         
         async with LLMChatClient(self.service_url) as client:

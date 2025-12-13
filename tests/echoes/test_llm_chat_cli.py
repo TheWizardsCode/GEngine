@@ -5,13 +5,11 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
 
 from gengine.echoes.llm.chat_client import LLMChatClient
-
 
 pytestmark = pytest.mark.anyio
 
@@ -35,7 +33,8 @@ class TestLLMChatClient:
         async with LLMChatClient("http://localhost:8001") as client:
             assert client._client is not None
         # Client should be closed after exiting context
-        # (no direct way to check httpx.AsyncClient.is_closed, but we can verify it doesn't raise)
+        # (no direct way to check httpx.AsyncClient.is_closed,
+        # but we can verify it doesn't raise)
 
     async def test_parse_intent_request_format(self) -> None:
         """Test that parse_intent formats requests correctly."""
@@ -43,7 +42,9 @@ class TestLLMChatClient:
             assert request.url.path == "/parse_intent"
             payload = json.loads(request.content)
             assert payload["user_input"] == "test input"
-            assert payload["context"] == {"history": [{"role": "user", "content": "hi"}]}
+            assert payload["context"] == {
+                "history": [{"role": "user", "content": "hi"}]
+            }
             
             return httpx.Response(
                 200,
