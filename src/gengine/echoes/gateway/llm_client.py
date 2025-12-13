@@ -12,6 +12,9 @@ from ..llm import GameIntent, parse_intent
 LOGGER = logging.getLogger("gengine.echoes.gateway.llm")
 
 
+import os
+import subprocess
+
 class LLMClient:
     """HTTP client for the LLM service.
 
@@ -20,7 +23,7 @@ class LLMClient:
 
     def __init__(
         self,
-        base_url: str,
+        base_url: str | None = None,
         *,
         timeout: float = 30.0,
         max_retries: int = 2,
@@ -32,6 +35,22 @@ class LLMClient:
             timeout: Request timeout in seconds
             max_retries: Number of retry attempts for failed requests
         """
+        if not base_url or base_url in ("http://windows-host:8001", "http://localhost:8001"):
+            # Try environment variable first
+            base_url = os.environ.get("LLM_SERVICE_URL")
+        if not base_url or base_url in ("http://windows-host:8001", "http://localhost:8001"):
+            # Auto-discover Windows host IP from WSL
+            try:
+                result = subprocess.run(["ip", "route"], capture_output=True, text=True)
+                for line in result.stdout.splitlines():
+                    if line.startswith("default"):
+                        win_host_ip = line.split()[2]
+                        base_url = f"http://{win_host_ip}:8001"
+                        break
+            except Exception:
+                pass
+        if not base_url:
+            raise RuntimeError("Could not determine LLM service URL. Set LLM_SERVICE_URL or provide base_url.")
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.max_retries = max_retries
