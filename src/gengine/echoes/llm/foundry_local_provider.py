@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import socket
 from typing import Any
 
 import httpx
@@ -19,6 +20,28 @@ from .providers import IntentParseResult, LLMProvider, NarrateResult
 from .settings import LLMSettings
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _format_foundry_error(exc: httpx.HTTPError, base_url: str) -> str:
+    """Convert HTTP errors into actionable troubleshooting hints."""
+    if isinstance(exc, httpx.ConnectError):
+        cause = exc.__cause__
+        if isinstance(cause, socket.gaierror):
+            return (
+                f"Failed to resolve Foundry Local host in '{base_url}'. "
+                "Ensure the service is running on Windows and that "
+                "ECHOES_LLM_BASE_URL points to a reachable host/port."
+            )
+        return (
+            f"Could not connect to Foundry Local at '{base_url}': {exc}. "
+            "Verify the service is running and the port is open."
+        )
+    if isinstance(exc, httpx.HTTPStatusError):
+        body = exc.response.text[:200] if exc.response else ""
+        return (
+            f"Foundry Local responded with HTTP {exc.response.status_code}: {body}"
+        )
+    return str(exc)
 
 
 class FoundryLocalProvider(LLMProvider):
@@ -129,8 +152,9 @@ class FoundryLocalProvider(LLMProvider):
                 confidence=confidence,
             )
         except httpx.HTTPError as exc:
-            LOGGER.error("Foundry Local intent parsing failed: %s", exc)
-            return IntentParseResult(intents=[], raw_response=str(exc), confidence=0.0)
+            message = _format_foundry_error(exc, self.base_url)
+            LOGGER.error("Foundry Local intent parsing failed: %s", message)
+            return IntentParseResult(intents=[], raw_response=message, confidence=0.0)
 
     async def narrate(
         self,
@@ -170,11 +194,12 @@ class FoundryLocalProvider(LLMProvider):
                 metadata=metadata,
             )
         except httpx.HTTPError as exc:
-            LOGGER.error("Foundry Local narration failed: %s", exc)
+            message = _format_foundry_error(exc, self.base_url)
+            LOGGER.error("Foundry Local narration failed: %s", message)
             return NarrateResult(
                 narrative="",
-                raw_response=str(exc),
-                metadata={"error": str(exc)},
+                raw_response=message,
+                metadata={"error": message},
             )
 
     async def _chat_completion(

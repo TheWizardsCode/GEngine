@@ -977,3 +977,15 @@ Created 2 new modules and enhanced 2 existing files:
 
 ## [GitHub Copilot] — 2025-12-12 10:05
 - (n/a): Reviewed the README, Azure Foundry Local REST reference, and LLM service modules to outline the work required for wiring the LLM service to the Foundry Local API.
+
+## [GitHub Copilot] — 2025-12-13 16:45
+- d4ac3ee: logged sanitized LLM configuration at echoes-llm-service startup by adding a loggable_dict helper and emitting the structured settings payload during boot.
+
+## [GitHub Copilot] — 2025-12-13 16:50
+- d4ac3ee: ensured the echoes-llm-service configuration log prints when launched via uv by initializing logging if the process lacks handlers.
+
+## [GitHub Copilot] — 2025-12-13 17:05
+- d4ac3ee: switched the LLM configuration log to pretty-printed JSON for easier inspection during Foundry troubleshooting.
+
+## [GitHub Copilot] — 2025-12-13 17:12
+- d4ac3ee: upgraded Foundry Local provider error handling to explain hostname/connection issues and echo actionable troubleshooting hints to callers.

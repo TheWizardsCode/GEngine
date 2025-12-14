@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from typing import Any
 
 
 @dataclass
@@ -36,6 +37,13 @@ class LLMSettings:
     max_tokens: int = 1000
     timeout_seconds: int = 30
     max_retries: int = 2
+
+    def loggable_dict(self) -> dict[str, Any]:
+        """Return a sanitized dict for logging without exposing secrets."""
+        data = asdict(self)
+        if data.get("api_key"):
+            data["api_key"] = "***redacted***"
+        return data
 
     @classmethod
     def from_env(cls) -> LLMSettings:
