@@ -47,7 +47,9 @@ class DocumentChunker:
         self.chunk_size = chunk_size
         self.overlap = overlap
 
-    def chunk_text(self, text: str, metadata: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    def chunk_text(
+        self, text: str, metadata: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Split text into overlapping chunks.
 
         Parameters
@@ -152,12 +154,17 @@ class VectorStore:
             Document embedding vectors
         """
         if not (len(contents) == len(metadatas) == len(embeddings)):
-            raise ValueError("Contents, metadatas, and embeddings must have same length")
+            raise ValueError(
+                "Contents, metadatas, and embeddings must have same length"
+            )
 
         with sqlite3.connect(self.db_path) as conn:
-            for content, metadata, embedding in zip(contents, metadatas, embeddings):
+            for content, metadata, embedding in zip(
+                contents, metadatas, embeddings, strict=False
+            ):
                 conn.execute(
-                    "INSERT INTO documents (content, metadata, embedding) VALUES (?, ?, ?)",
+                    "INSERT INTO documents (content, metadata, embedding) "
+                    "VALUES (?, ?, ?)",
                     (content, json.dumps(metadata), json.dumps(embedding)),
                 )
 
@@ -226,7 +233,7 @@ class VectorStore:
         if len(a) != len(b):
             return 0.0
 
-        dot_product = sum(x * y for x, y in zip(a, b))
+        dot_product = sum(x * y for x, y in zip(a, b, strict=False))
         magnitude_a = sum(x * x for x in a) ** 0.5
         magnitude_b = sum(x * x for x in b) ** 0.5
 

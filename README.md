@@ -1260,6 +1260,12 @@ export ECHOES_LLM_TEMPERATURE=0.7        # Sampling temperature (0.0-1.0)
 export ECHOES_LLM_MAX_TOKENS=500         # Max tokens in response
 export ECHOES_LLM_TIMEOUT=30             # Request timeout in seconds
 export ECHOES_LLM_MAX_RETRIES=2          # Number of retries on API errors
+
+# RAG (Retrieval-Augmented Generation) configuration
+export ECHOES_LLM_ENABLE_RAG=true        # Enable RAG context retrieval
+export ECHOES_LLM_RAG_DB_PATH=build/knowledge_base/index.db  # Knowledge base path
+export ECHOES_LLM_RAG_TOP_K=3            # Number of context snippets to retrieve
+export ECHOES_LLM_RAG_MIN_SCORE=0.5      # Minimum relevance score threshold
 ```
 
 The `stub` provider is the default and requires no API key. It uses deterministic keyword matching for testing without API costs.
@@ -1290,12 +1296,63 @@ Uses Anthropic Messages API with structured outputs. The provider includes inten
 
 Both real providers include retry logic for rate limits and transient errors, with configurable `max_retries` (default: 2).
 
+### Retrieval-Augmented Generation (RAG)
+
+The LLM service supports RAG to ground responses in project documentation and lore. When enabled, it automatically retrieves relevant context from a knowledge base and injects it into prompts.
+
+#### Building the Knowledge Base
+
+Before enabling RAG, build the knowledge base from project documentation:
+
+```bash
+# Build with default settings (stub provider)
+python scripts/build_llm_knowledge_base.py
+
+# Clean and rebuild with custom settings
+python scripts/build_llm_knowledge_base.py --clean --chunk-size 300 --overlap 30
+
+# Use OpenAI embeddings (requires ECHOES_LLM_API_KEY)
+python scripts/build_llm_knowledge_base.py --provider openai --clean
+```
+
+By default, the script ingests:
+- `docs/gengine/**/*.md` - Game design and technical documentation
+- `content/worlds/**/*.yml` - World configuration and lore
+- `README.md` - Project overview
+
+The knowledge base is stored at `build/knowledge_base/index.db` and can be regenerated as documentation evolves.
+
+#### Using RAG
+
+Enable RAG by setting the environment variable:
+
+```bash
+export ECHOES_LLM_ENABLE_RAG=true
+```
+
+With RAG enabled:
+- `/parse_intent` retrieves context based on user input
+- `/narrate` retrieves context based on event types
+- Retrieved snippets are injected into prompts with citations
+- RAG metrics (hits, latency, context size) are exposed at `/metrics`
+
+If the knowledge base is missing or retrieval fails, the service continues without RAG and logs a warning.
+
+#### RAG Metrics
+
+Monitor RAG performance via Prometheus metrics at `/metrics`:
+
+- `llm_rag_hits_total` - Total number of RAG retrievals
+- `llm_rag_latency_seconds` - Retrieval latency histogram
+- `llm_rag_context_chars` - Context size histogram
+
 ### API Endpoints
 
 **GET /healthz**
 
 - Health check endpoint
-- Returns `{"status": "ok", "provider": "stub"}`
+- Returns `{"status": "ok", "provider": "stub", "rag_enabled": false}`
+- If RAG is enabled, also returns `"rag_documents": <count>`
 
 **POST /parse_intent**
 

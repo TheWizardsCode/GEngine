@@ -96,8 +96,14 @@ class LLMSettings:
         timeout_seconds = int(os.getenv("ECHOES_LLM_TIMEOUT", "30"))
         max_retries = int(os.getenv("ECHOES_LLM_MAX_RETRIES", "2"))
 
-        enable_rag = os.getenv("ECHOES_LLM_ENABLE_RAG", "false").lower() in ("true", "1", "yes")
-        rag_db_path = os.getenv("ECHOES_LLM_RAG_DB_PATH", "build/knowledge_base/index.db")
+        enable_rag = os.getenv("ECHOES_LLM_ENABLE_RAG", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+        rag_db_path = os.getenv(
+            "ECHOES_LLM_RAG_DB_PATH", "build/knowledge_base/index.db"
+        )
         rag_top_k = int(os.getenv("ECHOES_LLM_RAG_TOP_K", "3"))
         rag_min_score = float(os.getenv("ECHOES_LLM_RAG_MIN_SCORE", "0.5"))
 

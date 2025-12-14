@@ -165,7 +165,9 @@ async def build_knowledge_base(
             from gengine.echoes.llm.rag import FoundryLocalEmbeddingClient
             settings = LLMSettings.from_env()
             if not settings.base_url:
-                raise ValueError("ECHOES_LLM_BASE_URL required for Foundry Local provider")
+                raise ValueError(
+                    "ECHOES_LLM_BASE_URL required for Foundry Local provider"
+                )
             embedding_client = FoundryLocalEmbeddingClient(
                 base_url=settings.base_url,
             )
@@ -204,7 +206,9 @@ async def build_knowledge_base(
     
     for i in range(0, len(all_contents), batch_size):
         batch_contents = all_contents[i:i + batch_size]
-        logger.info(f"Generating embeddings for batch {i // batch_size + 1}/{(len(all_contents) + batch_size - 1) // batch_size}")
+        batch_num = i // batch_size + 1
+        total_batches = (len(all_contents) + batch_size - 1) // batch_size
+        logger.info(f"Generating embeddings for batch {batch_num}/{total_batches}")
         batch_embeddings = await embedding_client.embed_texts(batch_contents)
         all_embeddings.extend(batch_embeddings)
 
@@ -214,7 +218,7 @@ async def build_knowledge_base(
 
     # Summary
     total_docs = vector_store.count()
-    logger.info(f"✓ Knowledge base built successfully")
+    logger.info("✓ Knowledge base built successfully")
     logger.info(f"  Total documents in store: {total_docs}")
     logger.info(f"  Database: {output_path}")
 
@@ -233,7 +237,8 @@ Examples:
   uv run scripts/build_llm_knowledge_base.py --provider openai --clean
 
   # Custom input sources
-  uv run scripts/build_llm_knowledge_base.py --input-glob "docs/**/*.md" --input-glob "README.md"
+  uv run scripts/build_llm_knowledge_base.py --input-glob "docs/**/*.md" \\
+      --input-glob "README.md"
 
   # Adjust chunk size
   uv run scripts/build_llm_knowledge_base.py --chunk-size 300 --overlap 30

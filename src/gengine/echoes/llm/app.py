@@ -19,7 +19,12 @@ from prometheus_client import (
 from pydantic import BaseModel, Field
 
 from .providers import LLMProvider, create_provider
-from .rag import RAGRetriever, StubEmbeddingClient, VectorStore, format_retrieved_context
+from .rag import (
+    RAGRetriever,
+    StubEmbeddingClient,
+    VectorStore,
+    format_retrieved_context,
+)
 from .settings import LLMSettings
 
 logger = logging.getLogger(__name__)
@@ -283,7 +288,9 @@ def create_llm_app(
                     "Continuing without RAG."
                 )
         except Exception as e:
-            logger.error(f"Failed to initialize RAG retriever: {e}. Continuing without RAG.")
+            logger.error(
+                f"Failed to initialize RAG retriever: {e}. Continuing without RAG."
+            )
             app.state.rag_retriever = None
 
     @app.get("/healthz")
@@ -334,7 +341,9 @@ def create_llm_app(
                         f"({len(rag_context)} chars) in {rag_latency:.3f}s"
                     )
                 except Exception as e:
-                    logger.warning(f"RAG retrieval failed: {e}. Continuing without context.")
+                    logger.warning(
+                        f"RAG retrieval failed: {e}. Continuing without context."
+                    )
 
             # Augment context with RAG results
             enhanced_context = request.context.copy()
@@ -376,7 +385,9 @@ def create_llm_app(
                 rag_start = time.perf_counter()
                 try:
                     # Build query from events
-                    event_summary = " ".join(str(e.get("type", "")) for e in request.events)
+                    event_summary = " ".join(
+                        str(e.get("type", "")) for e in request.events
+                    )
                     retrieved_docs = await app.state.rag_retriever.retrieve(
                         event_summary,
                         top_k=app.state.llm_settings.rag_top_k,
@@ -390,7 +401,9 @@ def create_llm_app(
                         f"({len(rag_context)} chars) in {rag_latency:.3f}s"
                     )
                 except Exception as e:
-                    logger.warning(f"RAG retrieval failed: {e}. Continuing without context.")
+                    logger.warning(
+                        f"RAG retrieval failed: {e}. Continuing without context."
+                    )
 
             # Augment context with RAG results
             enhanced_context = request.context.copy()
