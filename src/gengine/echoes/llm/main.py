@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 
 import uvicorn
@@ -12,8 +13,17 @@ from .settings import LLMSettings
 logger = logging.getLogger(__name__)
 
 
+def _configure_logging() -> None:
+    """Initialize logging if the process has no handlers yet."""
+    root_logger = logging.getLogger()
+    if root_logger.handlers:
+        return
+    logging.basicConfig(level=logging.INFO)
+
+
 def main() -> None:
     """Run the LLM service."""
+    _configure_logging()
     settings = LLMSettings.from_env()
 
     try:
@@ -21,6 +31,9 @@ def main() -> None:
     except ValueError as e:
         logger.error(f"Invalid LLM settings: {e}")
         raise
+
+    config_snapshot = json.dumps(settings.loggable_dict(), indent=2, sort_keys=True)
+    logger.info("LLM service configuration:\n%s", config_snapshot)
 
     app = create_llm_app(settings=settings)
 
