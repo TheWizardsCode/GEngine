@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-08T07:42:16Z
+**Last Updated:** 2025-12-14T05:53:29Z
 
 ## Quick Status Dashboard
 
@@ -13,11 +13,15 @@
 | 12.2.1 | Management Depth UI | complete | High | 12.1.1 | UI Team | 2025-12-07 |
 | 12.2.2 | Agent Roster Panel | complete | High | 12.2.1 | UI Team | 2025-12-07 |
 | 12.2.3 | Player Interactivity & UI Wiring | ✅ complete | High | 12.2.2 | UI Team | 2025-12-08 |
+| 13.1.1 | Build Test Chat Interface | not-started | High | None | LLM Team | 2025-12-13 |
+| 13.1.2 | Add RAG pipeline to LLM service | not-started | High | 13.1.1 | LLM Team | 2025-12-14 |
 
 
 
 **Active Tasks:**
 
+- 🆕 **13.1.2** - Add RAG pipeline to LLM service (Issue #91) - **NOT STARTED** (created 2025-12-14)
+- 🆕 **13.1.1** - Build Test Chat Interface (Issue #89) - **NOT STARTED** (created 2025-12-13)
 - ✅ **11.5.1** - CI Integration for Balance Validation - **COMPLETED** (merged 2025-12-05)
 - ✅ **10.1.9** - Comprehensive Scripts Test Coverage - **COMPLETED** (merged 2025-12-05)
 - ✅ **12.2.3** - Player Interactivity & UI Wiring (Issue #84) - **COMPLETED** (merged 2025-12-08)
@@ -45,6 +49,8 @@
      5. Submit for code review and merge.
    - **Last Updated:** 2025-12-07
 
+5. **13.1.1** - Build Test Chat Interface (Issue #89) - Define CLI UX + httpx helper so LLM work can be validated manually.
+6. **13.1.2** - Add RAG pipeline to LLM service (Issue #91) - Ground `/parse_intent` + `/narrate` with retrieved context per Semantic Kernel playbook.
 
 ## Comprehensive Project Status Report
 
@@ -65,7 +71,7 @@
 
 - Total tests: 1,042 (up from 849; +193 new tests)
 - Coverage: 91.37% overall (up from 90.95%), critical modules at 94-98%, scripts at 88.6%
-- Open issues: 2 (Issue #70 - Designer Tooling, Issue #71 - Parameter Optimization; both low priority)
+- Open issues: 4 (Issue #70 - Designer Tooling, Issue #71 - Parameter Optimization, Issue #89 - LLM Chat Harness, Issue #91 - LLM RAG pipeline)
 - Recent commits: 20+ commits in past 24 hours, excellent delivery pace
 - Repository hygiene: Excellent - clean issue backlog, well-documented
 - **Phase 11 Progress:** 4 of 6 milestones complete (11.1 Batch Sweeps, 11.2 Result Aggregation, 11.3 Analysis & Reporting, 11.5 CI Integration)
@@ -76,6 +82,9 @@
 
 
 **Recent Progress (since last update):**
+
+- 🆕 **Task 13.1.2 (Add RAG pipeline to LLM service)** - Issue [#91](https://github.com/TheWizardsCode/GEngine/issues/91) opened 2025-12-14 outlining ingestion tooling, retrieval hooks, telemetry, and tests per Microsoft Semantic Kernel reference.
+- 🆕 **Task 13.1.1 (Build Test Chat Interface)** - Issue [#89](https://github.com/TheWizardsCode/GEngine/issues/89) opened 2025-12-13 with CLI workflow, HTTP helper, docs, and test plan for exercising the LLM service manually.
 
 - 🎉 **Task 12.1.1 (Terminal UI Core Implementation) COMPLETED** - Merged to main 2025-12-07
   - Documented all Terminal UI views and keyboard controls in `docs/gengine/how_to_play_echoes.md`
@@ -364,11 +373,13 @@ All tasks are either complete or unblocked and ready to start.
 | **Phase prioritization unclear** | Low | Resource allocation between Phase 11 completion vs. Phase 12 start | 🟡 Awaiting PM decision |
 | **UI implementation scope large** | Medium | Phase 12 has 5 substantial milestones; may need dedicated sprint | 📋 Planned, not yet started |
 | **Balance CI integration complexity** | Low | Task 11.5.1 requires careful baseline management and threshold tuning | 📋 Documented in task, ready to start |
+| **LLM service lacks manual chat harness** | Medium | Hard to validate provider regressions without developer tooling | 🛠️ Task 13.1.1 / Issue #89 planned |
+| **LLM intents lack RAG grounding** | Medium | Without retrieval context, LLM outputs may drift from canon | 🛠️ Task 13.1.2 / Issue #91 opened to implement RAG |
 
 ### 🔄 Monitoring
 
 - **Test Coverage:** Improved to 91.37% (up from 90.95%); scripts module at 88.6%
-- **Issue Backlog:** Clean (1 open issue, just created)
+- **Issue Backlog:** 4 open issues (#70, #71, #89, #91) with owners + next steps
 - **PR Queue:** Empty - excellent merge velocity
 - **Documentation Drift:** None detected - docs updated with each milestone
 
@@ -465,14 +476,61 @@ The project has closely followed the implementation plan with excellent tracking
 
 |    ID    | Task                                  | Status      | Priority | Dependencies | Responsible      | Updated    |
 | -------: | ------------------------------------- | ----------- | -------- | ------------ | ---------------- | ---------- |
-| 13.1.1   | Build Test Chat Interface (TinyLlama)  | in-progress | High     | None         | LLM Team         | 2025-12-09 |
+| 13.1.1   | Build Test Chat Interface (echoes_llm_service) | not-started | High     | None         | LLM Team         | 2025-12-13 |
+| 13.1.2   | Add RAG pipeline to LLM service                | not-started | High     | 13.1.1      | LLM Team         | 2025-12-14 |
 
-### 13.1.1 — Build Test Chat Interface (TinyLlama)
+### 13.1.1 — Build Test Chat Interface (echoes_llm_service)
 
-- **Description:** Implement a simple Python chat interface using TinyLlama-1.1B-Chat-v1.0-ONNX running on a Copilot+ PC with Snapdragon NPU. Use ONNX Runtime with QNNExecutionProvider for hardware acceleration. The interface should support conversational input/output and run locally.
-  - Environment subsystem (pollution, diffusion, biodiversity, stability)
-  - Narrative director with story seeds, pacing, lifecycle management
-  - LLM integration (OpenAI, Anthropic providers) with intent parsing
+- **Description:** Build a lightweight Python CLI chat harness that targets `echoes_llm_service` so engineers, PMs, and designers can manually exercise `/parse_intent` and `/narrate` against stub or real providers.
+- **Acceptance Criteria:**
+  - `uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001` connects to the stub provider and supports interactive multi-turn chats.
+  - CLI supports `--mode parse|narrate`, optional context injection (`--context-file`), slash commands (`/clear`, `/save <path>`, `/quit`), and `--history-limit`.
+  - Requests include prior turns when history is enabled; transcripts export to JSON; errors surface readable messages and set non-zero exit codes.
+  - README (or linked doc) describes setup, env vars (`ECHOES_LLM_*`), sample usage, and troubleshooting for local vs. remote endpoints.
+  - Automated tests cover HTTP payload formation, history management, export/reset commands, and error handling using mocked transports.
+- **Priority:** High
+- **Responsible:** LLM Team (owner TBD)
+- **Dependencies:** None
+- **Status:** not-started
+- **Linked Issue:** [#89](https://github.com/TheWizardsCode/GEngine/issues/89)
+- **Risks & Mitigations:**
+  - Risk: Provider regressions go undetected without manual harness; mitigation: deliver CLI defaults to stub provider and capture telemetry.
+  - Risk: Transcript exports could leak secrets; mitigation: redact sensitive env vars and allow configurable history trimming.
+- **Testing Owner:** `test_agent`
+- **Next Steps:**
+  1. Finalize CLI spec/flags and align with UX expectations.
+  2. Implement reusable HTTP helper (`src/gengine/echoes/llm/chat_client.py`) with telemetry extraction.
+  3. Build the interactive script with prompt loop + slash commands + transcript export.
+  4. Partner with `test_agent` to add `tests/echoes/test_llm_chat_cli.py` using mocked transports.
+  5. Document usage and troubleshooting in README LLM section.
+- **Last Updated:** 2025-12-14
+
+### 13.1.2 — Add RAG pipeline to LLM service
+
+- **Description:** Adapt the Semantic Kernel + Foundry Local RAG approach (see [Microsoft TechCommunity article](https://techcommunity.microsoft.com/blog/educatordeveloperblog/building-enterprise-grade-local-rag-applications-with-semantic-kernel-and-foundr/4433945)) into our Python-based LLM service so `/parse_intent` and `/narrate` are grounded in curated Echoes documentation.
+- **Acceptance Criteria:**
+  - `scripts/build_llm_knowledge_base.py` ingests configured corpora, chunkifies content, generates embeddings via the active provider, and writes a deterministic local index.
+  - Enabling `ECHOES_LLM_ENABLE_RAG=true` causes the LLM service to retrieve top-K snippets and append them (with citations) to provider prompts for both endpoints.
+  - Retrieval failures fall back gracefully while emitting actionable warnings/telemetry; Prometheus metrics expose `rag_hits`, `rag_latency`, and `rag_context_chars`.
+  - CLI tooling and docs explain how to rebuild the knowledge base, point at Foundry Local vs. cloud providers, and debug retrieval results.
+  - Automated tests cover chunking, embedding request formation, retrieval filtering, and endpoint wiring (owned by `test_agent`).
+- **Priority:** High
+- **Responsible:** LLM Team (owner TBD)
+- **Dependencies:** 13.1.1 (chat harness useful for validation)
+- **Status:** not-started
+- **Linked Issue:** [#91](https://github.com/TheWizardsCode/GEngine/issues/91)
+- **Risks & Mitigations:**
+  - Risk: Embedding provider differences complicate ingestion; mitigation: wrap calls via Semantic Kernel abstractions and document per-provider requirements.
+  - Risk: Index bloat/stale docs; mitigation: include hashing + `--clean` flag so rebuilds stay deterministic.
+  - Risk: Added latency; mitigation: configurable `rag_top_k`, caching, and visible metrics.
+- **Testing Owner:** `test_agent`
+- **Next Steps:**
+  1. Implement ingestion/embedding script with configurable corpora and providers.
+  2. Add retriever module + settings toggles inside LLM service, including graceful fallbacks.
+  3. Wire prompts to include retrieved snippets + citation metadata for OpenAI/Anthropic/Foundry providers.
+  4. Capture telemetry + debugging endpoints for retrieval context.
+  5. Add docs + troubleshooting plus unit/integration tests.
+- **Last Updated:** 2025-12-14
 
 ### Phase 7: Player Experience ✅ COMPLETE (100%)
 

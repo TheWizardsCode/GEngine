@@ -48,8 +48,8 @@ class LLMClient:
                         base_url = f"http://{win_host_ip}:8001"
                         print(f"Auto-discovered Windows host: {base_url}")
                         break
-            except Exception:
-                pass
+            except Exception as e:
+                LOGGER.warning(f"Failed to auto-discover Windows host IP: {e}")
         if not base_url:
             raise RuntimeError("Could not determine LLM service URL. Set LLM_SERVICE_URL or provide base_url.")
         self.base_url = base_url.rstrip("/")

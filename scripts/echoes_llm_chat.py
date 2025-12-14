@@ -48,22 +48,16 @@ def detect_service_url() -> str | None:
                 if "microsoft" in version_content or "wsl" in version_content:
                     # Running in WSL, try to get Windows host IP
                     try:
-                        result = subprocess.run(
-                            ["cat", "/etc/resolv.conf"],
-                            capture_output=True,
-                            text=True,
-                            timeout=2,
-                        )
-                        # Look for nameserver line which points to Windows host
-                        for line in result.stdout.split("\n"):
-                            if line.strip().startswith("nameserver"):
-                                match = re.search(r"nameserver\s+(\S+)", line)
-                                if match:
-                                    host_ip = match.group(1)
-                                    urls_to_try.append(f"http://{host_ip}:8001")
-                                    break
-                    except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError):
-                        pass
+                        result = subprocess.run(["ip", "route"], capture_output=True, text=True)
+                        for line in result.stdout.splitlines():
+                            if line.startswith("default"):
+                                win_host_ip = line.split()[2]
+                                base_url = f"http://{win_host_ip}:8001"
+                                print(f"Auto-discovered Windows host: {base_url}")
+                                urls_to_try.append(base_url)
+                                break
+                    except Exception as e:
+                        print(f"⚠ Failed to auto-discover Windows host IP: {e}")
         except (FileNotFoundError, PermissionError):
             pass
     
@@ -73,6 +67,7 @@ def detect_service_url() -> str | None:
     # Try each URL with a quick health check
     for url in urls_to_try:
         try:
+            print("Trying LLM service URL:", url)
             response = httpx.get(f"{url}/healthz", timeout=2.0)
             if response.status_code == 200:
                 return url
