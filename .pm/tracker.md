@@ -1,6 +1,6 @@
 # Project Task Tracker
 
-**Last Updated:** 2025-12-14T05:53:29Z
+**Last Updated:** 2025-12-15T05:55:00Z
 
 ## Quick Status Dashboard
 
@@ -13,15 +13,15 @@
 | 12.2.1 | Management Depth UI | complete | High | 12.1.1 | UI Team | 2025-12-07 |
 | 12.2.2 | Agent Roster Panel | complete | High | 12.2.1 | UI Team | 2025-12-07 |
 | 12.2.3 | Player Interactivity & UI Wiring | ✅ complete | High | 12.2.2 | UI Team | 2025-12-08 |
-| 13.1.1 | Build Test Chat Interface | not-started | High | None | LLM Team | 2025-12-13 |
-| 13.1.2 | Add RAG pipeline to LLM service | not-started | High | 13.1.1 | LLM Team | 2025-12-14 |
+| 13.1.1 | Build Test Chat Interface | ✅ complete | High | None | LLM Team | 2025-12-14 |
+| 13.1.2 | Add RAG pipeline to LLM service | ✅ complete | High | 13.1.1 | LLM Team | 2025-12-15 |
+| 13.1.3 | Enable Foundry streaming by default (Issue #93) | not-started | High | 13.1.1 | LLM Team | 2025-12-15 |
 
 
 
 **Active Tasks:**
 
-- 🆕 **13.1.2** - Add RAG pipeline to LLM service (Issue #91) - **NOT STARTED** (created 2025-12-14)
-- 🆕 **13.1.1** - Build Test Chat Interface (Issue #89) - **NOT STARTED** (created 2025-12-13)
+- 🆕 **13.1.3** - Enable default Foundry-local streaming with optional CLI opt-out — **NOT STARTED** (Issue [#93](https://github.com/TheWizardsCode/GEngine/issues/93), created 2025-12-15)
 - ✅ **11.5.1** - CI Integration for Balance Validation - **COMPLETED** (merged 2025-12-05)
 - ✅ **10.1.9** - Comprehensive Scripts Test Coverage - **COMPLETED** (merged 2025-12-05)
 - ✅ **12.2.3** - Player Interactivity & UI Wiring (Issue #84) - **COMPLETED** (merged 2025-12-08)
@@ -49,8 +49,7 @@
      5. Submit for code review and merge.
    - **Last Updated:** 2025-12-07
 
-5. **13.1.1** - Build Test Chat Interface (Issue #89) - Define CLI UX + httpx helper so LLM work can be validated manually.
-6. **13.1.2** - Add RAG pipeline to LLM service (Issue #91) - Ground `/parse_intent` + `/narrate` with retrieved context per Semantic Kernel playbook.
+5. **13.1.3** - Enable Foundry-local streaming default & CLI opt-out (Issue #93) - Streamed responses improve latency/observability while preserving `--no-stream` compatibility.
 
 ## Comprehensive Project Status Report
 
@@ -71,7 +70,7 @@
 
 - Total tests: 1,042 (up from 849; +193 new tests)
 - Coverage: 91.37% overall (up from 90.95%), critical modules at 94-98%, scripts at 88.6%
-- Open issues: 4 (Issue #70 - Designer Tooling, Issue #71 - Parameter Optimization, Issue #89 - LLM Chat Harness, Issue #91 - LLM RAG pipeline)
+- Open issues: 3 (Issue #70 - Designer Tooling, Issue #71 - Parameter Optimization, Issue #93 - Foundry streaming)
 - Recent commits: 20+ commits in past 24 hours, excellent delivery pace
 - Repository hygiene: Excellent - clean issue backlog, well-documented
 - **Phase 11 Progress:** 4 of 6 milestones complete (11.1 Batch Sweeps, 11.2 Result Aggregation, 11.3 Analysis & Reporting, 11.5 CI Integration)
@@ -83,8 +82,9 @@
 
 **Recent Progress (since last update):**
 
-- 🆕 **Task 13.1.2 (Add RAG pipeline to LLM service)** - Issue [#91](https://github.com/TheWizardsCode/GEngine/issues/91) opened 2025-12-14 outlining ingestion tooling, retrieval hooks, telemetry, and tests per Microsoft Semantic Kernel reference.
-- 🆕 **Task 13.1.1 (Build Test Chat Interface)** - Issue [#89](https://github.com/TheWizardsCode/GEngine/issues/89) opened 2025-12-13 with CLI workflow, HTTP helper, docs, and test plan for exercising the LLM service manually.
+- ✅ **Task 13.1.1 (Build Test Chat Interface)** - Issue [#89](https://github.com/TheWizardsCode/GEngine/issues/89) closed 2025-12-14 after landing the `scripts/echoes_llm_chat.py` CLI, reusable HTTP helper, tests, and docs for exercising `/parse_intent` + `/narrate` locally or remotely.
+- ✅ **Task 13.1.2 (Add RAG pipeline to LLM service)** - Issue [#91](https://github.com/TheWizardsCode/GEngine/issues/91) closed via [PR #92](https://github.com/TheWizardsCode/GEngine/pull/92) on 2025-12-15, delivering the ingestion script, vector store, FastAPI wiring, Prometheus metrics, and 49 new tests covering chunking + retrieval.
+- 🆕 **Task 13.1.3 (Enable Foundry-local streaming by default)** - Issue [#93](https://github.com/TheWizardsCode/GEngine/issues/93) opened 2025-12-15 to stream chunked responses to the CLI by default while honoring a `--no-stream` flag for compatibility testing.
 
 - 🎉 **Task 12.1.1 (Terminal UI Core Implementation) COMPLETED** - Merged to main 2025-12-07
   - Documented all Terminal UI views and keyboard controls in `docs/gengine/how_to_play_echoes.md`
@@ -373,13 +373,12 @@ All tasks are either complete or unblocked and ready to start.
 | **Phase prioritization unclear** | Low | Resource allocation between Phase 11 completion vs. Phase 12 start | 🟡 Awaiting PM decision |
 | **UI implementation scope large** | Medium | Phase 12 has 5 substantial milestones; may need dedicated sprint | 📋 Planned, not yet started |
 | **Balance CI integration complexity** | Low | Task 11.5.1 requires careful baseline management and threshold tuning | 📋 Documented in task, ready to start |
-| **LLM service lacks manual chat harness** | Medium | Hard to validate provider regressions without developer tooling | 🛠️ Task 13.1.1 / Issue #89 planned |
-| **LLM intents lack RAG grounding** | Medium | Without retrieval context, LLM outputs may drift from canon | 🛠️ Task 13.1.2 / Issue #91 opened to implement RAG |
+| **Foundry responses are buffered** | Medium | Non-streaming requests delay CLI feedback and increase timeout risk for long outputs | 🆕 Task 13.1.3 adds default streaming with an opt-out flag |
 
 ### 🔄 Monitoring
 
 - **Test Coverage:** Improved to 91.37% (up from 90.95%); scripts module at 88.6%
-- **Issue Backlog:** 4 open issues (#70, #71, #89, #91) with owners + next steps
+- **Issue Backlog:** 3 open issues (#70, #71, #91) with owners + next steps
 - **PR Queue:** Empty - excellent merge velocity
 - **Documentation Drift:** None detected - docs updated with each milestone
 
@@ -476,61 +475,67 @@ The project has closely followed the implementation plan with excellent tracking
 
 |    ID    | Task                                  | Status      | Priority | Dependencies | Responsible      | Updated    |
 | -------: | ------------------------------------- | ----------- | -------- | ------------ | ---------------- | ---------- |
-| 13.1.1   | Build Test Chat Interface (echoes_llm_service) | not-started | High     | None         | LLM Team         | 2025-12-13 |
-| 13.1.2   | Add RAG pipeline to LLM service                | not-started | High     | 13.1.1      | LLM Team         | 2025-12-14 |
+| 13.1.1   | Build Test Chat Interface (echoes_llm_service) | ✅ complete | High     | None         | LLM Team         | 2025-12-14 |
+| 13.1.2   | Add RAG pipeline to LLM service                | ✅ complete | High     | 13.1.1      | LLM Team         | 2025-12-15 |
+| 13.1.3   | Enable Foundry-local streaming default w/ opt-out (Issue #93) | not-started | High     | 13.1.1      | LLM Team         | 2025-12-15 |
 
 ### 13.1.1 — Build Test Chat Interface (echoes_llm_service)
 
-- **Description:** Build a lightweight Python CLI chat harness that targets `echoes_llm_service` so engineers, PMs, and designers can manually exercise `/parse_intent` and `/narrate` against stub or real providers.
-- **Acceptance Criteria:**
-  - `uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001` connects to the stub provider and supports interactive multi-turn chats.
-  - CLI supports `--mode parse|narrate`, optional context injection (`--context-file`), slash commands (`/clear`, `/save <path>`, `/quit`), and `--history-limit`.
-  - Requests include prior turns when history is enabled; transcripts export to JSON; errors surface readable messages and set non-zero exit codes.
-  - README (or linked doc) describes setup, env vars (`ECHOES_LLM_*`), sample usage, and troubleshooting for local vs. remote endpoints.
-  - Automated tests cover HTTP payload formation, history management, export/reset commands, and error handling using mocked transports.
-- **Priority:** High
-- **Responsible:** LLM Team (owner TBD)
-- **Dependencies:** None
-- **Status:** not-started
-- **Linked Issue:** [#89](https://github.com/TheWizardsCode/GEngine/issues/89)
-- **Risks & Mitigations:**
-  - Risk: Provider regressions go undetected without manual harness; mitigation: deliver CLI defaults to stub provider and capture telemetry.
-  - Risk: Transcript exports could leak secrets; mitigation: redact sensitive env vars and allow configurable history trimming.
-- **Testing Owner:** `test_agent`
-- **Next Steps:**
-  1. Finalize CLI spec/flags and align with UX expectations.
-  2. Implement reusable HTTP helper (`src/gengine/echoes/llm/chat_client.py`) with telemetry extraction.
-  3. Build the interactive script with prompt loop + slash commands + transcript export.
-  4. Partner with `test_agent` to add `tests/echoes/test_llm_chat_cli.py` using mocked transports.
-  5. Document usage and troubleshooting in README LLM section.
+- **Status:** ✅ Complete — Issue [#89](https://github.com/TheWizardsCode/GEngine/issues/89) closed 2025-12-14.
+- **Deliverables:**
+  - `scripts/echoes_llm_chat.py` interactive CLI with `/parse_intent` (default) and `/narrate` modes, history-aware prompts, slash commands (`/clear`, `/save`, `/quit`), transcript export, and latency/token readouts.
+  - `src/gengine/echoes/llm/chat_client.py` reusable `httpx` helper that handles headers, timeouts, telemetry capture, and provider-agnostic payloads.
+  - README LLM section expanded with setup instructions, env var table, stub vs. remote usage, and troubleshooting for TLS/auth errors.
+  - `tests/echoes/test_llm_chat_cli.py` suite (owned by `test_agent`) covering request formation, history reset, export handling, and error surfacing via mocked transports.
+- **Impact:** Gives engineers/designers a deterministic way to validate provider changes before gameplay wiring, unblocks 13.1.2 validation workflows, and reduces debugging time for latency/token issues.
+- **Follow-ups:** Share CLI usage video with design stakeholders; gather feedback to feed into future UX polish (tracked via `test_agent` + LLM team backlog).
 - **Last Updated:** 2025-12-14
 
 ### 13.1.2 — Add RAG pipeline to LLM service
 
-- **Description:** Adapt the Semantic Kernel + Foundry Local RAG approach (see [Microsoft TechCommunity article](https://techcommunity.microsoft.com/blog/educatordeveloperblog/building-enterprise-grade-local-rag-applications-with-semantic-kernel-and-foundr/4433945)) into our Python-based LLM service so `/parse_intent` and `/narrate` are grounded in curated Echoes documentation.
+- **Description:** Adapted the Semantic Kernel + Foundry Local RAG approach (see [Microsoft TechCommunity article](https://techcommunity.microsoft.com/blog/educatordeveloperblog/building-enterprise-grade-local-rag-applications-with-semantic-kernel-and-foundr/4433945)) into our Python-based LLM service so `/parse_intent` and `/narrate` are grounded in curated Echoes documentation.
+- **Deliverables (PR [#92](https://github.com/TheWizardsCode/GEngine/pull/92)):**
+  - `scripts/build_llm_knowledge_base.py` CLI to ingest docs/content/README excerpts, chunk text with overlap, embed via provider abstraction (stub/OpenAI/Foundry), and persist a SQLite vector index with `--clean` + provider flags.
+  - `src/gengine/echoes/llm/rag.py` module implementing chunker, deterministic stub embeddings, vector store, and `RAGRetriever` with top-K cosine search + graceful fallback when the KB is missing.
+  - FastAPI wiring that appends retrieved snippets (with citations) whenever `ECHOES_LLM_ENABLE_RAG=true`, plus Prometheus metrics (`llm_rag_hits_total`, `llm_rag_latency_seconds`, `llm_rag_context_chars`) and verbose logging hooks.
+  - Settings toggles (`ECHOES_LLM_ENABLE_RAG`, `ECHOES_LLM_RAG_DB_PATH`, `ECHOES_LLM_RAG_TOP_K`, `ECHOES_LLM_RAG_MIN_SCORE`) and README/docs updates covering knowledge base rebuild + troubleshooting.
+  - 49 new tests (unit + integration) owned by `test_agent`, covering chunking, embedding calls, retrieval scoring, prompt enrichment, and endpoint-level behavior.
+- **Status:** ✅ Complete (Issue [#91](https://github.com/TheWizardsCode/GEngine/issues/91) closed 2025-12-15)
+- **Priority:** High
+- **Responsible:** LLM Team
+- **Dependencies:** 13.1.1 (chat harness validation)
+- **Risks & Mitigations:**
+  - Risk: KB drift or missing corpora — mitigated via deterministic `--clean` rebuilds and logging of corpus hashes.
+  - Risk: Latency increase — mitigated with configurable `rag_top_k` + Prometheus latency tracking; fallback path bypasses retrieval when scores are below threshold.
+- **Next Steps:**
+  1. Socialize `scripts/build_llm_knowledge_base.py` workflow with designers and document rebuild cadence.
+  2. Monitor the new metrics in staging to tune `rag_top_k`/`rag_min_score` defaults.
+  3. Hand off ingestion + rebuild SOPs to release managers ahead of the next content drop.
+- **Last Updated:** 2025-12-15
+
+### 13.1.3 — Enable Foundry-local streaming by default with CLI opt-out
+
+- **Description:** Update the Foundry Local provider and chat tooling so `/parse_intent`, `/narrate`, and `scripts/echoes_llm_chat.py` stream tokens to the client by default, while allowing operators to disable streaming with a `--no-stream` (or equivalent) flag for compatibility or regression testing.
 - **Acceptance Criteria:**
-  - `scripts/build_llm_knowledge_base.py` ingests configured corpora, chunkifies content, generates embeddings via the active provider, and writes a deterministic local index.
-  - Enabling `ECHOES_LLM_ENABLE_RAG=true` causes the LLM service to retrieve top-K snippets and append them (with citations) to provider prompts for both endpoints.
-  - Retrieval failures fall back gracefully while emitting actionable warnings/telemetry; Prometheus metrics expose `rag_hits`, `rag_latency`, and `rag_context_chars`.
-  - CLI tooling and docs explain how to rebuild the knowledge base, point at Foundry Local vs. cloud providers, and debug retrieval results.
-  - Automated tests cover chunking, embedding request formation, retrieval filtering, and endpoint wiring (owned by `test_agent`).
+  - Foundry Local client/server code exposes a streaming generator that pushes incremental deltas through the CLI and HTTP response helpers without buffering entire completions.
+  - `scripts/echoes_llm_chat.py` streams output by default and documents a `--no-stream` switch (plus config/env override) that falls back to the existing non-streaming flow.
+  - Streaming is guarded by provider capability detection so OpenAI/Anthropic paths continue working even when streaming is toggled off.
+  - Telemetry captures streaming enablement, chunk counts, and end-of-stream durations; logs explain when streaming was disabled by flag or incompatibility.
+  - Tests (owned by `test_agent`) cover streaming vs. non-streaming flows and verify that payload order, transcripts, and error handling remain deterministic.
+  - README / LLM usage docs explain when to stream, how to disable it, and how to troubleshoot partial chunks.
 - **Priority:** High
 - **Responsible:** LLM Team (owner TBD)
-- **Dependencies:** 13.1.1 (chat harness useful for validation)
+- **Dependencies:** 13.1.1 (chat harness for validation)
 - **Status:** not-started
-- **Linked Issue:** [#91](https://github.com/TheWizardsCode/GEngine/issues/91)
+- **Linked Issue:** [#93](https://github.com/TheWizardsCode/GEngine/issues/93)
 - **Risks & Mitigations:**
-  - Risk: Embedding provider differences complicate ingestion; mitigation: wrap calls via Semantic Kernel abstractions and document per-provider requirements.
-  - Risk: Index bloat/stale docs; mitigation: include hashing + `--clean` flag so rebuilds stay deterministic.
-  - Risk: Added latency; mitigation: configurable `rag_top_k`, caching, and visible metrics.
-- **Testing Owner:** `test_agent`
+  - Risk: Streaming APIs may behave differently across providers; mitigation: gate by provider capability and include a fallback buffer path with clear warnings.
+  - Risk: CLI regressions when stdout consumers expect whole responses; mitigation: default transcripts to accumulate streamed chunks and keep `--no-stream` flag for scripted usage.
 - **Next Steps:**
-  1. Implement ingestion/embedding script with configurable corpora and providers.
-  2. Add retriever module + settings toggles inside LLM service, including graceful fallbacks.
-  3. Wire prompts to include retrieved snippets + citation metadata for OpenAI/Anthropic/Foundry providers.
-  4. Capture telemetry + debugging endpoints for retrieval context.
-  5. Add docs + troubleshooting plus unit/integration tests.
-- **Last Updated:** 2025-12-14
+  1. Add streaming generator + response channel to `foundry_local_provider.py` and service endpoints.
+  2. Extend `echoes_llm_chat.py` (and gateway client) to stream by default, surface chunk timers, and honor a `--no-stream` or `ECHOES_LLM_STREAM=false` override.
+  3. Update docs + telemetry + tests to cover both streaming modes and document compatibility guidance.
+- **Last Updated:** 2025-12-15
 
 ### Phase 7: Player Experience ✅ COMPLETE (100%)
 

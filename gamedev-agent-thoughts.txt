@@ -286,7 +286,6 @@ Working on Issue #71 - Phase 11, Milestone 11.4, Task 11.4.1.
 - [x] Run tests - 43 PASSED
 - [x] Task completed
 
->>>>>>> copilot/optimize-strategy-parameters
 
 ## [tracker_agent] — 2025-12-07 04:01
 - Created and documented task 12.1.1 (Terminal UI Core Implementation) in .pm/tracker.md. Updated summary table and milestone details. Lint check run; only line length warnings present.
@@ -307,7 +306,6 @@ Working on Issue #71 - Phase 11, Milestone 11.4, Task 11.4.1.
   - src/gengine/echoes/cli/components/ - Reusable UI components
   - src/gengine/echoes/cli/views/ - View mode implementations
 
-<<<<<<< HEAD
 ## [tracker_agent] — 2025-12-07 04:04
 - Created and documented task 12.1.1 (Terminal UI Core Implementation) in .pm/tracker.md. Updated summary table and milestone details. Lint check run; only line length warnings present.
 
@@ -350,7 +348,6 @@ Working on Issue #71 - Phase 11, Milestone 11.4, Task 11.4.1.
 - Mocked external dependencies (subprocess, matplotlib, importlib) to ensure fast and reliable tests.
 
 ## [GitHub Copilot] — 2025-12-06 21:57
-=======
  ✅ Created module structure:
     - src/gengine/echoes/cli/layout.py (ScreenLayout, UIState)
     - src/gengine/echoes/cli/components/ package with:
@@ -430,7 +427,6 @@ Working on Issue #71 - Phase 11, Milestone 11.4, Task 11.4.1.
 - Files created: 13 files (8 source, 1 demo, 1 doc, 1 test)
 - Files modified: 1 file (gamedev-agent-thoughts.txt)
 - Ready for: Integration with EchoesShell in Phase UI-1 M-UI-1.7
->>>>>>> copilot/frequent-moth
 ## [tracker_agent] — 2025-12-07 06:37
 - Marked 12.1.1 (Terminal UI Core Implementation) as complete in the tracker and summary table.
 - Updated Phase 12 milestone list to reflect completion and highlighted 12.2.1 (Management Depth UI) as the next high-priority task.
@@ -1003,3 +999,19 @@ Created 2 new modules and enhanced 2 existing files:
 
 ## [GitHub Copilot] — 2025-12-15 03:03
 - c23ec90: replaced the narration system prompt with the Neo Echo Storyweaver brief so every LLM-generated beat follows the updated collaboration, tone, and safety guidelines designers requested.
+## [tracker_agent] — 2025-12-14 06:41
+- Synced repo, reviewed Issue #89 closure details, and updated .pm/tracker.md header/summary tables/Phase 13 briefs to mark Task 13.1.1 complete while keeping 13.1.2 as the sole active LLM item.
+- Refreshed recent progress bullets, open-issue counts, risk table, and monitoring stats to reflect the closed chat-harness issue and highlight the remaining RAG work.
+- Logged deliverables for the chat CLI, noted follow-ups for the LLM team, and documented markdownlint results (pre-existing MD013/MD009/MD012/MD029/MD033 violations).
+## [tracker_agent] — 2025-12-15 05:30
+- Pulled latest main (after stashing), resolved gamedev-agent-thoughts.txt conflicts, and synced instructions before editing.
+- Added tracker entry 13.1.3 for Foundry-local streaming (dashboard row, active tasks, risk table, phase table, and detailed brief) covering default streaming + `--no-stream` flag and telemetry/test expectations.
+- Ran `npx markdownlint-cli .pm/tracker.md`; acknowledged existing MD013/MD009/MD012/MD029/MD033 warnings remain from historical content.
+## [tracker_agent] — 2025-12-15 05:46
+- Stashed local tracker edits, pulled latest main, then restored changes before updating records.
+- Marked Task 13.1.2 complete across the tracker (dashboard, progress log, Phase 13 table, detailed brief) with PR #92/Issue #91 context, refreshed open-issue counts, and trimmed the resolved RAG risk entry while keeping 13.1.3 as the sole active LLM task.
+- Ran `npx markdownlint-cli .pm/tracker.md`; long-standing MD013/MD009/MD012/MD029/MD033 warnings persist from legacy content.
+## [tracker_agent] — 2025-12-15 05:56
+- Created GitHub Issue #93 for Task 13.1.3 (Foundry streaming default + CLI opt-out) with full context, goals, acceptance criteria, and tracker reference.
+- Updated .pm/tracker.md (timestamp, dashboard, active-task list, next-task queue, Phase 13 table, risk/summary bullets, and detailed 13.1.3 brief) to link Issue #93 and note open-issue count.
+- Ran `npx markdownlint-cli .pm/tracker.md`; longstanding MD013/MD009/MD012/MD029/MD033 warnings persist from legacy content.
