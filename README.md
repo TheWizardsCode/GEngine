@@ -920,6 +920,38 @@ export ECHOES_LLM_MODEL=your-model-name
 uv run echoes-llm-service
 ```
 
+### Streaming Configuration
+
+The LLM service supports **streaming responses** (for Foundry Local and compatible providers) to improve real-time feedback and reduce perceived latency. Streaming is **enabled by default**.
+
+**Disable streaming** (forces buffered mode):
+```bash
+# Via CLI flag
+uv run echoes-llm-service --no-streaming
+
+# Via environment variable
+export ECHOES_LLM_NO_STREAMING=true
+uv run echoes-llm-service
+```
+
+**When streaming is enabled:**
+- Foundry Local narration responses stream token-by-token
+- Reduces end-to-end latency for long narratives
+- Metrics track chunk counts and streaming enablement
+- Logs show streaming status at service startup
+
+**When streaming is disabled:**
+- Falls back to buffered (non-streaming) mode
+- Auto-disables for providers without streaming support (e.g., stub)
+- Structured logs indicate the disable reason:
+  - `disabled_by_config`: User explicitly disabled via flag/env
+  - `provider_unsupported`: Provider doesn't support streaming
+
+**Metrics available** (at `/metrics` endpoint):
+- `llm_streaming_enabled_total`: Requests with streaming enabled
+- `llm_streaming_disabled_total{reason}`: Requests where streaming was disabled
+- `llm_streaming_chunks`: Distribution of chunk counts in streaming responses
+
 See `src/gengine/echoes/llm/settings.py` for all available configuration options.
 
 ---
