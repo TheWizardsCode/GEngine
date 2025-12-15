@@ -15,6 +15,7 @@ import re
 import subprocess
 import sys
 import time
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -86,6 +87,8 @@ class ChatSession:
         mode: str = "parse",
         history_limit: int = 10,
         context_file: str | None = None,
+        verbose: bool = False,
+        timeout: float = 60.0,
     ) -> None:
         """Initialize chat session.
         
@@ -99,12 +102,18 @@ class ChatSession:
             Maximum number of history entries to keep
         context_file
             Optional JSON file with initial context
+        verbose
+            Enable detailed error output when True
+        timeout
+            HTTP client timeout in seconds
         """
         self.service_url = service_url
         self.mode = mode
         self.history_limit = history_limit
         self.history: list[dict[str, str]] = []
         self.additional_context: dict[str, Any] = {}
+        self.verbose = verbose
+        self.timeout = timeout
         
         # Load context file if provided
         if context_file:
@@ -114,6 +123,19 @@ class ChatSession:
                 print(f"✓ Loaded context from {context_file}")
             except Exception as e:
                 print(f"⚠ Failed to load context file: {e}")
+                self._log_verbose_exception(e)
+    
+    def _log_verbose_exception(self, error: Exception) -> None:
+        """Emit traceback details when verbose logging is enabled."""
+        if self.verbose:
+            traceback.print_exc()
+    
+    def _report_timeout(self, operation: str) -> None:
+        """Display a human-friendly timeout message."""
+        print(
+            f"\n✗ Timeout: {operation} did not respond before the HTTP client timed out. "
+            "Verify the service is reachable or rerun with --verbose for details."
+        )
 
     def add_to_history(self, role: str, content: str) -> None:
         """Add an entry to the conversation history."""
@@ -141,6 +163,7 @@ class ChatSession:
             print(f"✓ Transcript saved to {path}")
         except Exception as e:
             print(f"✗ Failed to save transcript: {e}")
+            self._log_verbose_exception(e)
 
     def build_context(self) -> dict[str, Any]:
         """Build context payload including history."""
@@ -178,8 +201,13 @@ class ChatSession:
             
         except httpx.HTTPStatusError as e:
             print(f"\n✗ HTTP Error {e.response.status_code}: {e.response.text}")
+            self._log_verbose_exception(e)
+        except httpx.TimeoutException as e:
+            self._report_timeout("intent parsing")
+            self._log_verbose_exception(e)
         except Exception as e:
             print(f"\n✗ Error: {e}")
+            self._log_verbose_exception(e)
 
     async def handle_narrate_mode(
         self,
@@ -226,8 +254,13 @@ class ChatSession:
             
         except httpx.HTTPStatusError as e:
             print(f"\n✗ HTTP Error {e.response.status_code}: {e.response.text}")
+            self._log_verbose_exception(e)
+        except httpx.TimeoutException as e:
+            self._report_timeout("narration")
+            self._log_verbose_exception(e)
         except Exception as e:
             print(f"\n✗ Error: {e}")
+            self._log_verbose_exception(e)
 
     async def run(self) -> None:
         """Run the interactive chat session."""
@@ -238,7 +271,7 @@ class ChatSession:
         print("\nCommands: /clear, /save <path>, /quit, /exit")
         print(f"{'=' * 60}\n")
         
-        async with LLMChatClient(self.service_url) as client:
+        async with LLMChatClient(self.service_url, timeout=self.timeout) as client:
             # Health check
             try:
                 health = await client.health_check()
@@ -246,8 +279,12 @@ class ChatSession:
                 if health.get("model"):
                     print(f"  Model: {health['model']}")
                 print()
+            except httpx.TimeoutException as e:
+                print("⚠ Warning: Health check timed out\n")
+                self._log_verbose_exception(e)
             except Exception as e:
                 print(f"⚠ Warning: Health check failed: {e}\n")
+                self._log_verbose_exception(e)
             
             # Main REPL loop
             while True:
@@ -344,8 +381,23 @@ Environment variables:
         "--export",
         help="Export transcript to this file on exit (deprecated: use /save command)",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging (print tracebacks on errors)",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=60.0,
+        help="HTTP client timeout in seconds (default: 60)",
+    )
     
     args = parser.parse_args()
+
+    if args.timeout <= 0:
+        print("\n✗ Error: --timeout must be greater than 0 seconds.", file=sys.stderr)
+        return 1
     
     # Auto-detect service URL if not provided
     service_url = args.service_url
@@ -367,6 +419,8 @@ Environment variables:
         mode=args.mode,
         history_limit=args.history_limit,
         context_file=args.context_file,
+        verbose=args.verbose,
+        timeout=args.timeout,
     )
     
     try:
@@ -379,6 +433,8 @@ Environment variables:
         return 0
     except Exception as e:
         print(f"\n✗ Fatal error: {e}", file=sys.stderr)
+        if args.verbose:
+            traceback.print_exc()
         return 1
 
 
