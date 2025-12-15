@@ -80,6 +80,12 @@ def main() -> None:
     logger.info(f"Starting LLM service with provider '{settings.provider}'")
     if settings.model:
         logger.info(f"Using model: {settings.model}")
+    
+    # Report streaming configuration at startup
+    if settings.enable_streaming:
+        logger.info("Streaming enabled (default). Use --no-streaming or ECHOES_LLM_NO_STREAMING=true to disable.")
+    else:
+        logger.info("Streaming disabled by configuration.")
 
     uvicorn.run(app, host=host, port=port)
 

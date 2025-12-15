@@ -11,7 +11,6 @@ import argparse
 import asyncio
 import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -201,22 +200,18 @@ class ChatSession:
             
         except httpx.HTTPStatusError as e:
             print(f"\n✗ HTTP Error {e.response.status_code}: {e.response.text}")
-<<<<<<< HEAD
             self._log_verbose_exception(e)
         except httpx.TimeoutException as e:
             self._report_timeout("intent parsing")
             self._log_verbose_exception(e)
-        except Exception as e:
-            print(f"\n✗ Error: {e}")
-            self._log_verbose_exception(e)
-=======
         except httpx.RequestError as e:
             print(
                 f"\n✗ Network Error ({type(e).__name__}): {e}. URL={getattr(e.request, 'url', 'unknown')}"
             )
+            self._log_verbose_exception(e)
         except Exception as e:
             print(f"\n✗ Error ({type(e).__name__}): {e}")
->>>>>>> copilot/add-rag-pipeline-echoes-llm
+            self._log_verbose_exception(e)
 
     async def handle_narrate_mode(
         self,
@@ -266,22 +261,18 @@ class ChatSession:
             
         except httpx.HTTPStatusError as e:
             print(f"\n✗ HTTP Error {e.response.status_code}: {e.response.text}")
-<<<<<<< HEAD
             self._log_verbose_exception(e)
         except httpx.TimeoutException as e:
             self._report_timeout("narration")
             self._log_verbose_exception(e)
-        except Exception as e:
-            print(f"\n✗ Error: {e}")
-            self._log_verbose_exception(e)
-=======
         except httpx.RequestError as e:
             print(
                 f"\n✗ Network Error ({type(e).__name__}): {e}. URL={getattr(e.request, 'url', 'unknown')}"
             )
+            self._log_verbose_exception(e)
         except Exception as e:
             print(f"\n✗ Error ({type(e).__name__}): {e}")
->>>>>>> copilot/add-rag-pipeline-echoes-llm
+            self._log_verbose_exception(e)
 
     async def run(self) -> None:
         """Run the interactive chat session."""
