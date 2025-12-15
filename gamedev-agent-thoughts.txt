@@ -12,18 +12,11 @@
 - Marked Issue #84 (Player Interactivity & UI Wiring) as complete in tracker.md.
 - Added Phase 13 for LLM integration, with new task 13.1.1 to build a TinyLlama ONNX chat interface for Copilot+ PC Snapdragon NPU.
 
-4. Designer-focused documentation:
    - "How to diagnose dominant strategies"
-   - "Iterating on action costs"
    - "Testing narrative pacing changes"
-
 5. Example workflows with case studies (e.g., "Balancing the Industrial Tier faction")
-
 ## [gamedev_agent] — 2025-12-07 22:28
-- eaca843: Investigated terminal UI flicker, added layout dimension syncing plus controller refresh call, and reran the full pytest suite to confirm stable rendering.
 
-## [gamedev_agent] — 2025-12-07 22:35
-- eaca843: Locked the screen layout to the detected terminal dimensions before entering Live mode, refreshed targeted UI tests, and revalidated the full pytest suite for coverage.
 
 6. At least 8 tests covering CLI commands, config overlay loading, and report generation
 
@@ -992,3 +985,21 @@ Created 2 new modules and enhanced 2 existing files:
 - Reviewed README plus latest repo state, then refreshed .pm/tracker.md header, dashboard rows, risk table, and monitoring stats to reflect new LLM tasks and issue counts.
 - Captured detailed briefs for Tasks 13.1.1 and 13.1.2 (chat harness + RAG) with acceptance criteria, dependencies, test ownership, and next steps; added corresponding risk entries.
 - Created GitHub Issue #91 for the RAG pipeline referencing the Microsoft Semantic Kernel article and Python adaptation plan.
+
+## [GitHub Copilot] — 2025-12-14 15:30
+- (workspace) Switched `scripts/build_llm_knowledge_base.py` default embedding provider to `foundry_local` and updated the usage epilog to match the new default.
+
+## [GitHub Copilot] — 2025-12-14 16:05
+- (workspace) Added `ECHOES_LLM_VERBOSE` + `--verbose` support so the LLM service logs provider JSON requests/responses, gated verbose logging in OpenAI/Anthropic/Foundry providers, updated docs, extended LLM settings/tests, and now capture verbose RAG query/response details before handing context to the LLM.
+
+## [GitHub Copilot] — 2025-12-14 16:18
+- (workspace) Updated the narration prompt builder to append `_rag_context` so retrieved doc snippets flow into provider payloads without touching intent prompts.
+
+## [GitHub Copilot] — 2025-12-14 16:25
+- (workspace) Improved Foundry Local provider error logging so timeouts show the query, provider URL, and timeout budget for faster diagnosis.
+
+## [GitHub Copilot] — 2025-12-15 02:52
+- c23ec90: tightened the Echoes chat harness narrate/parse handlers by surfacing provider metadata errors, falling back to prompt/completion token counts, and expanding exception output (network vs. generic) so UI users see actionable details when narration fails despite LLM success.
+
+## [GitHub Copilot] — 2025-12-15 03:03
+- c23ec90: replaced the narration system prompt with the Neo Echo Storyweaver brief so every LLM-generated beat follows the updated collaboration, tone, and safety guidelines designers requested.

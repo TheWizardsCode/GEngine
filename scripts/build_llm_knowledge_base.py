@@ -37,10 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_INPUT_GLOBS = [
-    "docs/gengine/**/*.md",
-    "content/worlds/**/*.yml",
-    "content/worlds/**/*.yaml",
-    "README.md",
+    "docs/narrative/**/*.md"
 ]
 
 
@@ -230,7 +227,7 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Build with default settings (stub provider)
+  # Build with default settings (foundry_local provider)
   uv run scripts/build_llm_knowledge_base.py
 
   # Clean and rebuild with OpenAI embeddings
@@ -258,8 +255,8 @@ Examples:
     parser.add_argument(
         "--provider",
         choices=["stub", "openai", "foundry_local"],
-        default="stub",
-        help="Embedding provider (default: stub)",
+        default="foundry_local",
+        help="Embedding provider (default: foundry_local)",
     )
     parser.add_argument(
         "--chunk-size",

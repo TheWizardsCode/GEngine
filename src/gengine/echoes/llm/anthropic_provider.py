@@ -21,6 +21,18 @@ from .settings import LLMSettings
 logger = logging.getLogger(__name__)
 
 
+def _format_json(data: Any) -> str:
+    """Return a pretty JSON string for logging."""
+    try:
+        if isinstance(data, str):
+            parsed = json.loads(data)
+        else:
+            parsed = data
+        return json.dumps(parsed, indent=2, ensure_ascii=False)
+    except Exception:
+        return str(data)
+
+
 class AnthropicProvider(LLMProvider):
     """Anthropic LLM provider using structured outputs."""
 
@@ -70,15 +82,27 @@ Respond with a JSON object matching this schema:
 
 Ensure the response is valid JSON that can be parsed."""
 
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=1000,
-                temperature=0.3,
-                system=INTENT_PARSING_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": full_prompt}],
-            )
+            request_payload = {
+                "model": self.model,
+                "max_tokens": 1000,
+                "temperature": 0.3,
+                "system": INTENT_PARSING_SYSTEM_PROMPT,
+                "messages": [{"role": "user", "content": full_prompt}],
+            }
+            if self.settings.verbose_logging:
+                logger.info(
+                    "Anthropic parse_intent request:\n%s",
+                    _format_json(request_payload),
+                )
+
+            response = self.client.messages.create(**request_payload)
 
             raw_response = response.model_dump_json()
+            if self.settings.verbose_logging:
+                logger.info(
+                    "Anthropic parse_intent response:\n%s",
+                    _format_json(raw_response),
+                )
 
             # Extract JSON from response
             content = response.content[0].text if response.content else ""
@@ -146,15 +170,27 @@ Ensure the response is valid JSON that can be parsed."""
             event_strings = [e.get("description", str(e)) for e in events]
             prompt = build_narration_prompt(event_strings, context=context)
 
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=500,
-                temperature=0.7,
-                system=NARRATION_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            request_payload = {
+                "model": self.model,
+                "max_tokens": 500,
+                "temperature": 0.7,
+                "system": NARRATION_SYSTEM_PROMPT,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            if self.settings.verbose_logging:
+                logger.info(
+                    "Anthropic narrate request:\n%s",
+                    _format_json(request_payload),
+                )
+
+            response = self.client.messages.create(**request_payload)
 
             raw_response = response.model_dump_json()
+            if self.settings.verbose_logging:
+                logger.info(
+                    "Anthropic narrate response:\n%s",
+                    _format_json(raw_response),
+                )
             narrative = response.content[0].text if response.content else ""
 
             metadata = {

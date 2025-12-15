@@ -24,6 +24,7 @@ class TestLLMSettings:
         assert settings.rag_db_path == "build/knowledge_base/index.db"
         assert settings.rag_top_k == 3
         assert settings.rag_min_score == 0.5
+        assert settings.verbose_logging is False
 
     def test_custom_settings(self) -> None:
         settings = LLMSettings(
@@ -219,3 +220,15 @@ class TestLLMSettings:
                     os.environ[key] = value
                 else:
                     os.environ.pop(key, None)
+
+    def test_verbose_logging_env_var(self) -> None:
+        old_value = os.environ.get("ECHOES_LLM_VERBOSE")
+        try:
+            os.environ["ECHOES_LLM_VERBOSE"] = "true"
+            settings = LLMSettings.from_env()
+            assert settings.verbose_logging is True
+        finally:
+            if old_value is not None:
+                os.environ["ECHOES_LLM_VERBOSE"] = old_value
+            else:
+                os.environ.pop("ECHOES_LLM_VERBOSE", None)

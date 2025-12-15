@@ -30,6 +30,40 @@ from .settings import LLMSettings
 logger = logging.getLogger(__name__)
 
 
+def _log_rag_details(
+    *,
+    endpoint: str,
+    query: str,
+    documents: list[Any],
+    context_chars: int,
+) -> None:
+    """Emit verbose log lines describing the RAG query/response lifecycle."""
+    snippet = query.strip().replace("\n", " ")[:300]
+    logger.info("[RAG][%s] Query: %s", endpoint, snippet or "<empty>")
+    if not documents:
+        logger.info("[RAG][%s] No documents retrieved", endpoint)
+        return
+    logger.info(
+        "[RAG][%s] Retrieved %d docs (%d chars of context)",
+        endpoint,
+        len(documents),
+        context_chars,
+    )
+    for idx, doc in enumerate(documents, 1):
+        metadata = getattr(doc, "metadata", {}) or {}
+        source = metadata.get("source", "unknown")
+        score = getattr(doc, "score", 0.0)
+        preview = (getattr(doc, "content", "") or "").strip().replace("\n", " ")[:160]
+        logger.info(
+            "[RAG][%s] #%d score=%.2f source=%s preview=%s",
+            endpoint,
+            idx,
+            score,
+            source,
+            preview or "<empty>",
+        )
+
+
 class LLMMetrics:
     """Prometheus metrics tracking for the LLM service."""
 
@@ -340,6 +374,13 @@ def create_llm_app(
                         f"Retrieved {len(retrieved_docs)} documents "
                         f"({len(rag_context)} chars) in {rag_latency:.3f}s"
                     )
+                    if app.state.llm_settings.verbose_logging:
+                        _log_rag_details(
+                            endpoint="parse_intent",
+                            query=request.user_input,
+                            documents=retrieved_docs,
+                            context_chars=len(rag_context),
+                        )
                 except Exception as e:
                     logger.warning(
                         f"RAG retrieval failed: {e}. Continuing without context."
@@ -400,6 +441,13 @@ def create_llm_app(
                         f"Retrieved {len(retrieved_docs)} documents "
                         f"({len(rag_context)} chars) in {rag_latency:.3f}s"
                     )
+                    if app.state.llm_settings.verbose_logging:
+                        _log_rag_details(
+                            endpoint="narrate",
+                            query=event_summary,
+                            documents=retrieved_docs,
+                            context_chars=len(rag_context),
+                        )
                 except Exception as e:
                     logger.warning(
                         f"RAG retrieval failed: {e}. Continuing without context."

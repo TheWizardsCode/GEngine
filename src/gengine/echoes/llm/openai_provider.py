@@ -21,6 +21,18 @@ from .settings import LLMSettings
 logger = logging.getLogger(__name__)
 
 
+def _format_json(data: Any) -> str:
+    """Return a pretty JSON string for logging."""
+    try:
+        if isinstance(data, str):
+            parsed = json.loads(data)
+        else:
+            parsed = data
+        return json.dumps(parsed, indent=2, ensure_ascii=False)
+    except Exception:
+        return str(data)
+
+
 class OpenAIProvider(LLMProvider):
     """OpenAI LLM provider using function calling for structured outputs."""
 
@@ -62,18 +74,31 @@ class OpenAIProvider(LLMProvider):
         try:
             prompt = build_intent_parsing_prompt(user_input, context=context)
 
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": INTENT_PARSING_SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
-                functions=OPENAI_INTENT_FUNCTIONS,
-                function_call="auto",
-                temperature=0.3,
-            )
+            messages = [
+                {"role": "system", "content": INTENT_PARSING_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ]
+            request_payload = {
+                "model": self.model,
+                "messages": messages,
+                "functions": OPENAI_INTENT_FUNCTIONS,
+                "function_call": "auto",
+                "temperature": 0.3,
+            }
+            if self.settings.verbose_logging:
+                logger.info(
+                    "OpenAI parse_intent request:\n%s",
+                    _format_json(request_payload),
+                )
+
+            response = await self.client.chat.completions.create(**request_payload)
 
             raw_response = response.model_dump_json()
+            if self.settings.verbose_logging:
+                logger.info(
+                    "OpenAI parse_intent response:\n%s",
+                    _format_json(raw_response),
+                )
             message = response.choices[0].message
 
             # Extract function call if present
@@ -135,17 +160,30 @@ class OpenAIProvider(LLMProvider):
             event_strings = [e.get("description", str(e)) for e in events]
             prompt = build_narration_prompt(event_strings, context=context)
 
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": NARRATION_SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.7,
-                max_tokens=500,
-            )
+            messages = [
+                {"role": "system", "content": NARRATION_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ]
+            request_payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 500,
+            }
+            if self.settings.verbose_logging:
+                logger.info(
+                    "OpenAI narrate request:\n%s",
+                    _format_json(request_payload),
+                )
+
+            response = await self.client.chat.completions.create(**request_payload)
 
             raw_response = response.model_dump_json()
+            if self.settings.verbose_logging:
+                logger.info(
+                    "OpenAI narrate response:\n%s",
+                    _format_json(raw_response),
+                )
             narrative = response.choices[0].message.content or ""
 
             metadata = {

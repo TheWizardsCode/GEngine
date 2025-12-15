@@ -922,6 +922,13 @@ uv run echoes-llm-service
 
 See `src/gengine/echoes/llm/settings.py` for all available configuration options.
 
+---
+
+**Related Documentation:**
+- [LLM Service Usage Guide](docs/gengine/llm_service_usage.md)
+- [Testing Guide](docs/gengine/testing_guide.md)
+- [How to Play Echoes](docs/gengine/how_to_play_echoes.md)
+
 ## Headless Regression Driver
 
 `scripts/run_headless_sim.py` advances long simulations without interactive
@@ -1236,6 +1243,74 @@ For hybrid strategies, additional telemetry is available via `strategy.telemetry
 - `llm_decisions`: Count of LLM-based decisions
 - `llm_budget`: Budget tracking (calls_used, estimated_cost, fallback_count)
 
+---
+
+## Playtesting the RAG Pipeline
+
+The Retrieval-Augmented Generation (RAG) pipeline grounds LLM responses in project documentation and simulation lore. Follow these steps to playtest and verify RAG functionality:
+
+> **NOTE:** At the time of writing the LLM services, including RAG must be run in Windows as the NPU drivers are not available on Linux.
+
+### 1. Build the Knowledge Base
+
+```bash
+uv run python scripts/build_llm_knowledge_base.py --clean
+```
+
+This ingests docs, content, and README into a vector DB at `build/knowledge_base/index.db`.
+
+### 2. Start the local LLM service
+
+> **Important:** RAG is only available when using a real LLM provider (not `stub`). For local testing with NPU, use the `foundry_local` provider. Example for Windows/PowerShell:
+
+```powershell
+
+foundry service set --port 8002
+foundry service start
+foundry model load $env:ECHOES_LLM_MODEL
+```
+
+### 3. Enable RAG in the LLM Service
+
+In a different instance of powershell that is in the project root, start the Echoes LLM Service:
+
+```powershell
+$env:ECHOES_LLM_PROVIDER = "foundry_local"
+$env:ECHOES_LLM_MODEL = "qwen2.5-7b-instruct-qnn-npu:2"
+$env:ECHOES_LLM_BASE_URL = "http://localhost:8002"
+$env:ECHOES_LLM_ENABLE_RAG = "true"
+uv run echoes-llm-service
+```
+
+The service will now retrieve context for `/parse_intent` and `/narrate` endpoints. RAG will not be enabled if the provider is set to `stub`.
+
+### 4. Verify RAG is Active
+
+Check the health endpoint:
+```bash
+curl http://localhost:8001/healthz
+# Should return: {"status": "ok", "provider": "...", "rag_enabled": true, "rag_documents": <count>}
+```
+
+Check metrics:
+```bash
+curl http://localhost:8001/metrics | grep rag
+# Look for llm_rag_hits_total, llm_rag_latency_seconds, llm_rag_context_chars
+```
+
+### 5. Playtest via LLM Chat Harness
+
+```bash
+uv run python scripts/echoes_llm_chat.py --service-url http://localhost:8001
+```
+Enter natural language commands or events. If RAG is working, responses will be grounded in project docs/lore.
+
+---
+
+For more details, see [LLM Service Usage Guide](docs/gengine/llm_service_usage.md) and [Testing Guide](docs/gengine/testing_guide.md).
+
+---
+
 ## LLM Service (Phase 6 M6.3)
 
 The LLM service provides natural language processing for intent parsing and narrative generation. It runs as a separate FastAPI service and communicates with the gateway/CLI.
@@ -1260,6 +1335,7 @@ export ECHOES_LLM_TEMPERATURE=0.7        # Sampling temperature (0.0-1.0)
 export ECHOES_LLM_MAX_TOKENS=500         # Max tokens in response
 export ECHOES_LLM_TIMEOUT=30             # Request timeout in seconds
 export ECHOES_LLM_MAX_RETRIES=2          # Number of retries on API errors
+export ECHOES_LLM_VERBOSE=false          # Set to true or run --verbose to log JSON payloads
 
 # RAG (Retrieval-Augmented Generation) configuration
 export ECHOES_LLM_ENABLE_RAG=true        # Enable RAG context retrieval
@@ -1269,6 +1345,8 @@ export ECHOES_LLM_RAG_MIN_SCORE=0.5      # Minimum relevance score threshold
 ```
 
 The `stub` provider is the default and requires no API key. It uses deterministic keyword matching for testing without API costs.
+
+Run `uv run echoes-llm-service -- --verbose` (or set `ECHOES_LLM_VERBOSE=true`) to print the JSON payloads sent to and received from your LLM provider for easier troubleshooting.
 
 #### Provider Configuration
 
@@ -1296,7 +1374,10 @@ Uses Anthropic Messages API with structured outputs. The provider includes inten
 
 Both real providers include retry logic for rate limits and transient errors, with configurable `max_retries` (default: 2).
 
+
 ### Retrieval-Augmented Generation (RAG)
+
+See the [Playtesting the RAG Pipeline](#playtesting-the-rag-pipeline) section above for a step-by-step guide.
 
 The LLM service supports RAG to ground responses in project documentation and lore. When enabled, it automatically retrieves relevant context from a knowledge base and injects it into prompts.
 
@@ -1507,11 +1588,11 @@ docker compose down
 
 When running via Docker Compose, services are available at:
 
-| Service    | URL                     | Description                              |
-| ---------- | ----------------------- | ---------------------------------------- |
-| Simulation | http://localhost:8000   | Core simulation API                      |
-| Gateway    | http://localhost:8100   | WebSocket gateway for CLI sessions       |
-| LLM        | http://localhost:8001   | Natural language processing service      |
+| Service    | URL                   | Description                         |
+| ---------- | --------------------- | ----------------------------------- |
+| Simulation | http://localhost:8000 | Core simulation API                 |
+| Gateway    | http://localhost:8100 | WebSocket gateway for CLI sessions  |
+| LLM        | http://localhost:8001 | Natural language processing service |
 
 ### Configuration
 
