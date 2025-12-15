@@ -187,7 +187,7 @@ class TestFoundryLocalStreaming:
         async def mock_lines():
             yield "data: " + '{"choices":[{"delta":{}}]}'  # No content
             yield "data: " + '{"choices":[{"delta":{"content":"Text"}}]}'
-            yield "data: " + '{"choices":[{"delta":{"content":null}}]}'  # Null
+            yield "data: " + '{"choices":[{"delta":{"content":null}}]}'  # JSON null
             yield "data: [DONE]"
 
         mock_response.aiter_lines = mock_lines
