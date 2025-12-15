@@ -155,6 +155,25 @@ class LLMMetrics:
             buckets=[100, 500, 1000, 2000, 5000, 10000],
             registry=self._registry,
         )
+        
+        # Streaming metrics
+        self._streaming_enabled_total = Counter(
+            "llm_streaming_enabled_total",
+            "Total number of requests with streaming enabled",
+            registry=self._registry,
+        )
+        self._streaming_disabled_total = Counter(
+            "llm_streaming_disabled_total",
+            "Total number of requests with streaming disabled",
+            ["reason"],
+            registry=self._registry,
+        )
+        self._streaming_chunks = Histogram(
+            "llm_streaming_chunks",
+            "Number of chunks in streaming responses",
+            buckets=[1, 5, 10, 20, 50, 100, 200],
+            registry=self._registry,
+        )
 
     @property
     def registry(self) -> CollectorRegistry:
@@ -209,6 +228,18 @@ class LLMMetrics:
         self._rag_hits.inc()
         self._rag_latency.observe(latency_seconds)
         self._rag_context_chars.observe(context_chars)
+    
+    def record_streaming_enabled(self) -> None:
+        """Record that streaming was enabled for a request."""
+        self._streaming_enabled_total.inc()
+    
+    def record_streaming_disabled(self, reason: str) -> None:
+        """Record that streaming was disabled for a request with a reason."""
+        self._streaming_disabled_total.labels(reason=reason).inc()
+    
+    def record_streaming_chunks(self, chunk_count: int) -> None:
+        """Record the number of chunks in a streaming response."""
+        self._streaming_chunks.observe(chunk_count)
 
 
 def _extract_token_usage(result: Any) -> tuple[int, int]:
@@ -419,6 +450,34 @@ def create_llm_app(
         suitable for presenting to the player.
         """
         start_time = time.perf_counter()
+        
+        # Check if streaming should be enabled
+        provider_supports_streaming = app.state.llm_provider.supports_streaming()
+        streaming_enabled = (
+            app.state.llm_settings.enable_streaming and provider_supports_streaming
+        )
+        
+        # Emit telemetry about streaming decision
+        if streaming_enabled:
+            metrics.record_streaming_enabled()
+            logger.debug("Streaming enabled for narrate request")
+        else:
+            if not app.state.llm_settings.enable_streaming:
+                reason = "disabled_by_config"
+                logger.info(
+                    "Streaming disabled: configuration override "
+                    "(--no-streaming or ECHOES_LLM_NO_STREAMING=true)"
+                )
+            elif not provider_supports_streaming:
+                reason = "provider_unsupported"
+                logger.info(
+                    "Streaming disabled: provider '%s' does not support streaming",
+                    app.state.llm_settings.provider
+                )
+            else:
+                reason = "unknown"
+            metrics.record_streaming_disabled(reason)
+        
         try:
             # Retrieve RAG context if enabled
             rag_context = ""
@@ -463,6 +522,13 @@ def create_llm_app(
                 enhanced_context,
             )
             latency_seconds = time.perf_counter() - start_time
+            
+            # Record streaming chunk count if streaming was used
+            if result.metadata and result.metadata.get("streaming"):
+                chunk_count = result.metadata.get("chunk_count", 0)
+                if chunk_count > 0:
+                    metrics.record_streaming_chunks(chunk_count)
+            
             # Extract token usage from result attributes or metadata
             input_tokens, output_tokens = _extract_token_usage(result)
             metrics.record_narrate(latency_seconds, input_tokens, output_tokens)

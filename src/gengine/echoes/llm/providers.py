@@ -60,6 +60,16 @@ class LLMProvider(ABC):
         """
         self.settings = settings
 
+    def supports_streaming(self) -> bool:
+        """Check if this provider supports streaming responses.
+        
+        Returns
+        -------
+        bool
+            True if streaming is supported, False otherwise
+        """
+        return False  # Default: no streaming support
+
     @abstractmethod
     async def parse_intent(
         self,

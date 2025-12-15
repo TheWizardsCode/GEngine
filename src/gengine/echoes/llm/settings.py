@@ -37,6 +37,8 @@ class LLMSettings:
         Minimum relevance score threshold for retrieved documents
     verbose_logging
         Enable verbose JSON logging of provider requests/responses
+    enable_streaming
+        Enable streaming responses for supported providers (default: True)
     """
 
     provider: str = "stub"
@@ -52,6 +54,7 @@ class LLMSettings:
     rag_top_k: int = 3
     rag_min_score: float = 0.5
     verbose_logging: bool = False
+    enable_streaming: bool = True
 
     def loggable_dict(self) -> dict[str, Any]:
         """Return a sanitized dict for logging without exposing secrets."""
@@ -90,6 +93,8 @@ class LLMSettings:
             Minimum relevance score for documents (default: 0.5)
         ECHOES_LLM_VERBOSE : bool
             Enable verbose provider logging (default: false)
+        ECHOES_LLM_NO_STREAMING : bool
+            Disable streaming responses (default: false)
         """
         provider = os.getenv("ECHOES_LLM_PROVIDER", "stub")
         api_key = os.getenv("ECHOES_LLM_API_KEY")
@@ -116,6 +121,13 @@ class LLMSettings:
             "1",
             "yes",
         )
+        # Streaming is enabled by default, disable with ECHOES_LLM_NO_STREAMING=true
+        no_streaming = os.getenv("ECHOES_LLM_NO_STREAMING", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+        enable_streaming = not no_streaming
 
         return cls(
             provider=provider,
@@ -131,6 +143,7 @@ class LLMSettings:
             rag_top_k=rag_top_k,
             rag_min_score=rag_min_score,
             verbose_logging=verbose_logging,
+            enable_streaming=enable_streaming,
         )
 
     def validate(self) -> None:

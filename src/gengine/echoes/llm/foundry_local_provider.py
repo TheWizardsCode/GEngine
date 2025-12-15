@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import socket
-from typing import Any
+from typing import Any, AsyncIterator
 
 import httpx
 
@@ -69,6 +69,10 @@ class FoundryLocalProvider(LLMProvider):
         self.base_url = (settings.base_url or "http://localhost:5272").rstrip("/")
         self.model = settings.model or "qwen2.5-0.5b-instruct-generic-cpu"
         self._transport = transport
+
+    def supports_streaming(self) -> bool:
+        """Foundry Local supports streaming via OpenAI-compatible API."""
+        return True
 
     async def parse_intent(
         self,
@@ -182,6 +186,48 @@ class FoundryLocalProvider(LLMProvider):
         context: dict[str, Any],
     ) -> NarrateResult:
         """Generate narration via Foundry Local."""
+        # Check if streaming is enabled and supported
+        should_stream = self.settings.enable_streaming and self.supports_streaming()
+        
+        if should_stream:
+            # Stream the narration and accumulate
+            narrative_chunks = []
+            metadata = {"streaming": True, "chunk_count": 0}
+            
+            try:
+                async for chunk in self.narrate_stream(events, context):
+                    narrative_chunks.append(chunk)
+                    metadata["chunk_count"] += 1
+                
+                narrative = "".join(narrative_chunks)
+                metadata["event_count"] = len(events)
+                metadata["model"] = self.model
+                
+                LOGGER.info(
+                    "Foundry Local narrated %d events via streaming (%d chunks)",
+                    len(events),
+                    metadata["chunk_count"],
+                )
+                
+                return NarrateResult(
+                    narrative=narrative,
+                    raw_response=f"Streamed {metadata['chunk_count']} chunks",
+                    metadata=metadata,
+                )
+            except Exception as exc:
+                message = _format_foundry_error(exc, self.base_url) if isinstance(exc, httpx.HTTPError) else str(exc)
+                LOGGER.error(
+                    "Foundry Local streaming narration failed (events=%d): %s",
+                    len(events),
+                    message,
+                )
+                return NarrateResult(
+                    narrative="",
+                    raw_response=message,
+                    metadata={"error": message, "streaming": True},
+                )
+        
+        # Non-streaming path
         event_strings = [event.get("description", str(event)) for event in events]
         payload = {
             "model": self.model,
@@ -197,14 +243,14 @@ class FoundryLocalProvider(LLMProvider):
         }
         if self.settings.verbose_logging:
             LOGGER.info(
-                "Foundry Local narrate request:\n%s",
+                "Foundry Local narrate request (buffered):\n%s",
                 _format_json(payload),
             )
         try:
             data, raw_text = await self._chat_completion(payload)
             if self.settings.verbose_logging:
                 LOGGER.info(
-                    "Foundry Local narrate response:\n%s",
+                    "Foundry Local narrate response (buffered):\n%s",
                     _format_json(raw_text or data),
                 )
             choices = data.get("choices") or []
@@ -216,8 +262,9 @@ class FoundryLocalProvider(LLMProvider):
                 "event_count": len(events),
                 "prompt_tokens": usage.get("prompt_tokens", 0),
                 "completion_tokens": usage.get("completion_tokens", 0),
+                "streaming": False,
             }
-            LOGGER.info("Foundry Local narrated %d events", len(events))
+            LOGGER.info("Foundry Local narrated %d events (buffered)", len(events))
             return NarrateResult(
                 narrative=narrative,
                 raw_response=raw_text,
@@ -235,8 +282,87 @@ class FoundryLocalProvider(LLMProvider):
             return NarrateResult(
                 narrative="",
                 raw_response=message,
-                metadata={"error": message},
+                metadata={"error": message, "streaming": False},
             )
+
+    async def narrate_stream(
+        self,
+        events: list[dict[str, Any]],
+        context: dict[str, Any],
+    ) -> AsyncIterator[str]:
+        """Stream narration chunks from Foundry Local.
+        
+        Parameters
+        ----------
+        events
+            List of game events to narrate
+        context
+            Game state context for narrative generation
+            
+        Yields
+        ------
+        str
+            Narrative text chunks as they arrive
+        """
+        event_strings = [event.get("description", str(event)) for event in events]
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": NARRATION_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": build_narration_prompt(event_strings, context=context),
+                },
+            ],
+            "temperature": self.settings.temperature,
+            "max_tokens": min(self.settings.max_tokens, 1000),
+            "stream": True,
+        }
+        
+        if self.settings.verbose_logging:
+            LOGGER.info(
+                "Foundry Local narrate_stream request:\n%s",
+                _format_json(payload),
+            )
+        
+        async with httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=self.settings.timeout_seconds,
+            transport=self._transport,
+        ) as client:
+            async with client.stream(
+                "POST",
+                "/v1/chat/completions",
+                json=payload,
+            ) as response:
+                response.raise_for_status()
+                
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line or not line.startswith("data: "):
+                        continue
+                    
+                    # Remove "data: " prefix
+                    data_str = line[6:]
+                    
+                    # Check for stream end
+                    if data_str == "[DONE]":
+                        break
+                    
+                    try:
+                        chunk_data = json.loads(data_str)
+                        choices = chunk_data.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content")
+                            if content:
+                                yield content
+                    except json.JSONDecodeError as exc:
+                        LOGGER.warning(
+                            "Failed to parse streaming chunk: %s",
+                            exc,
+                        )
+                        continue
 
     async def _chat_completion(
         self,

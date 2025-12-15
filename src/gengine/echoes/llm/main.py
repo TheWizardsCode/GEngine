@@ -35,6 +35,11 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Log JSON payloads sent to and received from the LLM provider",
     )
+    parser.add_argument(
+        "--no-streaming",
+        action="store_true",
+        help="Disable streaming responses (forces buffered mode)",
+    )
     return parser.parse_args(argv)
 
 
@@ -49,6 +54,10 @@ def main() -> None:
     settings = LLMSettings.from_env()
     effective_verbose = settings.verbose_logging or verbose_requested
     settings.verbose_logging = effective_verbose
+    
+    # Apply --no-streaming CLI flag (overrides environment variable)
+    if args.no_streaming:
+        settings.enable_streaming = False
 
     try:
         settings.validate()
