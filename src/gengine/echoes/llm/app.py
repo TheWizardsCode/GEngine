@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import time
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
@@ -17,7 +19,49 @@ from prometheus_client import (
 from pydantic import BaseModel, Field
 
 from .providers import LLMProvider, create_provider
+from .rag import (
+    RAGRetriever,
+    StubEmbeddingClient,
+    VectorStore,
+    format_retrieved_context,
+)
 from .settings import LLMSettings
+
+logger = logging.getLogger(__name__)
+
+
+def _log_rag_details(
+    *,
+    endpoint: str,
+    query: str,
+    documents: list[Any],
+    context_chars: int,
+) -> None:
+    """Emit verbose log lines describing the RAG query/response lifecycle."""
+    snippet = query.strip().replace("\n", " ")[:300]
+    logger.info("[RAG][%s] Query: %s", endpoint, snippet or "<empty>")
+    if not documents:
+        logger.info("[RAG][%s] No documents retrieved", endpoint)
+        return
+    logger.info(
+        "[RAG][%s] Retrieved %d docs (%d chars of context)",
+        endpoint,
+        len(documents),
+        context_chars,
+    )
+    for idx, doc in enumerate(documents, 1):
+        metadata = getattr(doc, "metadata", {}) or {}
+        source = metadata.get("source", "unknown")
+        score = getattr(doc, "score", 0.0)
+        preview = (getattr(doc, "content", "") or "").strip().replace("\n", " ")[:160]
+        logger.info(
+            "[RAG][%s] #%d score=%.2f source=%s preview=%s",
+            endpoint,
+            idx,
+            score,
+            source,
+            preview or "<empty>",
+        )
 
 
 class LLMMetrics:
@@ -93,6 +137,25 @@ class LLMMetrics:
             registry=self._registry,
         )
 
+        # RAG metrics
+        self._rag_hits = Counter(
+            "llm_rag_hits_total",
+            "Total number of RAG context retrievals",
+            registry=self._registry,
+        )
+        self._rag_latency = Histogram(
+            "llm_rag_latency_seconds",
+            "RAG retrieval latency in seconds",
+            buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5],
+            registry=self._registry,
+        )
+        self._rag_context_chars = Histogram(
+            "llm_rag_context_chars",
+            "Number of characters in RAG context",
+            buckets=[100, 500, 1000, 2000, 5000, 10000],
+            registry=self._registry,
+        )
+
     @property
     def registry(self) -> CollectorRegistry:
         """Return the Prometheus registry."""
@@ -136,6 +199,16 @@ class LLMMetrics:
         elif endpoint == "narrate":
             self._narrate_errors.inc()
         self._errors_by_type.labels(endpoint=endpoint, error_type=error_type).inc()
+
+    def record_rag_retrieval(
+        self,
+        latency_seconds: float,
+        context_chars: int,
+    ) -> None:
+        """Record a RAG retrieval operation."""
+        self._rag_hits.inc()
+        self._rag_latency.observe(latency_seconds)
+        self._rag_context_chars.observe(context_chars)
 
 
 def _extract_token_usage(result: Any) -> tuple[int, int]:
@@ -231,14 +304,41 @@ def create_llm_app(
     metrics = LLMMetrics()
     app.state.llm_metrics = metrics
 
+    # Initialize RAG retriever if enabled
+    app.state.rag_retriever = None
+    if provider.settings.enable_rag:
+        try:
+            db_path = provider.settings.rag_db_path
+            if Path(db_path).exists():
+                logger.info(f"Initializing RAG retriever with database: {db_path}")
+                vector_store = VectorStore(db_path)
+                embedding_client = StubEmbeddingClient(dimension=128)
+                app.state.rag_retriever = RAGRetriever(vector_store, embedding_client)
+                logger.info(f"RAG enabled with {vector_store.count()} documents")
+            else:
+                logger.warning(
+                    f"RAG enabled but knowledge base not found at {db_path}. "
+                    "Run scripts/build_llm_knowledge_base.py to create it. "
+                    "Continuing without RAG."
+                )
+        except Exception as e:
+            logger.error(
+                f"Failed to initialize RAG retriever: {e}. Continuing without RAG."
+            )
+            app.state.rag_retriever = None
+
     @app.get("/healthz")
     async def health_check() -> dict[str, Any]:
         """Health check endpoint."""
-        return {
+        health = {
             "status": "ok",
             "provider": app.state.llm_settings.provider,
             "model": app.state.llm_settings.model or "N/A",
+            "rag_enabled": app.state.llm_settings.enable_rag,
         }
+        if app.state.rag_retriever:
+            health["rag_documents"] = app.state.rag_retriever.vector_store.count()
+        return health
 
     @app.get("/metrics")
     async def get_metrics() -> Response:
@@ -257,9 +357,43 @@ def create_llm_app(
         """
         start_time = time.perf_counter()
         try:
+            # Retrieve RAG context if enabled
+            rag_context = ""
+            if app.state.rag_retriever:
+                rag_start = time.perf_counter()
+                try:
+                    retrieved_docs = await app.state.rag_retriever.retrieve(
+                        request.user_input,
+                        top_k=app.state.llm_settings.rag_top_k,
+                        min_score=app.state.llm_settings.rag_min_score,
+                    )
+                    rag_context = format_retrieved_context(retrieved_docs)
+                    rag_latency = time.perf_counter() - rag_start
+                    metrics.record_rag_retrieval(rag_latency, len(rag_context))
+                    logger.debug(
+                        f"Retrieved {len(retrieved_docs)} documents "
+                        f"({len(rag_context)} chars) in {rag_latency:.3f}s"
+                    )
+                    if app.state.llm_settings.verbose_logging:
+                        _log_rag_details(
+                            endpoint="parse_intent",
+                            query=request.user_input,
+                            documents=retrieved_docs,
+                            context_chars=len(rag_context),
+                        )
+                except Exception as e:
+                    logger.warning(
+                        f"RAG retrieval failed: {e}. Continuing without context."
+                    )
+
+            # Augment context with RAG results
+            enhanced_context = request.context.copy()
+            if rag_context:
+                enhanced_context["_rag_context"] = rag_context
+
             result = await app.state.llm_provider.parse_intent(
                 request.user_input,
-                request.context,
+                enhanced_context,
             )
             latency_seconds = time.perf_counter() - start_time
             # Extract token usage from result attributes or metadata
@@ -286,9 +420,47 @@ def create_llm_app(
         """
         start_time = time.perf_counter()
         try:
+            # Retrieve RAG context if enabled
+            rag_context = ""
+            if app.state.rag_retriever:
+                rag_start = time.perf_counter()
+                try:
+                    # Build query from events
+                    event_summary = " ".join(
+                        str(e.get("type", "")) for e in request.events
+                    )
+                    retrieved_docs = await app.state.rag_retriever.retrieve(
+                        event_summary,
+                        top_k=app.state.llm_settings.rag_top_k,
+                        min_score=app.state.llm_settings.rag_min_score,
+                    )
+                    rag_context = format_retrieved_context(retrieved_docs)
+                    rag_latency = time.perf_counter() - rag_start
+                    metrics.record_rag_retrieval(rag_latency, len(rag_context))
+                    logger.debug(
+                        f"Retrieved {len(retrieved_docs)} documents "
+                        f"({len(rag_context)} chars) in {rag_latency:.3f}s"
+                    )
+                    if app.state.llm_settings.verbose_logging:
+                        _log_rag_details(
+                            endpoint="narrate",
+                            query=event_summary,
+                            documents=retrieved_docs,
+                            context_chars=len(rag_context),
+                        )
+                except Exception as e:
+                    logger.warning(
+                        f"RAG retrieval failed: {e}. Continuing without context."
+                    )
+
+            # Augment context with RAG results
+            enhanced_context = request.context.copy()
+            if rag_context:
+                enhanced_context["_rag_context"] = rag_context
+
             result = await app.state.llm_provider.narrate(
                 request.events,
-                request.context,
+                enhanced_context,
             )
             latency_seconds = time.perf_counter() - start_time
             # Extract token usage from result attributes or metadata

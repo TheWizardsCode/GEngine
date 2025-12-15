@@ -201,6 +201,7 @@ class ChatSession:
             
         except httpx.HTTPStatusError as e:
             print(f"\n✗ HTTP Error {e.response.status_code}: {e.response.text}")
+<<<<<<< HEAD
             self._log_verbose_exception(e)
         except httpx.TimeoutException as e:
             self._report_timeout("intent parsing")
@@ -208,6 +209,14 @@ class ChatSession:
         except Exception as e:
             print(f"\n✗ Error: {e}")
             self._log_verbose_exception(e)
+=======
+        except httpx.RequestError as e:
+            print(
+                f"\n✗ Network Error ({type(e).__name__}): {e}. URL={getattr(e.request, 'url', 'unknown')}"
+            )
+        except Exception as e:
+            print(f"\n✗ Error ({type(e).__name__}): {e}")
+>>>>>>> copilot/add-rag-pipeline-echoes-llm
 
     async def handle_narrate_mode(
         self,
@@ -243,9 +252,12 @@ class ChatSession:
             print(f"\n⏱  Latency: {latency_ms:.0f}ms")
             if "metadata" in response and response["metadata"]:
                 metadata = response["metadata"]
-                if "input_tokens" in metadata:
-                    in_tokens = metadata.get('input_tokens', 0)
-                    out_tokens = metadata.get('output_tokens', 0)
+                error_message = metadata.get("error")
+                if error_message:
+                    raise RuntimeError(error_message)
+                if "input_tokens" in metadata or "output_tokens" in metadata:
+                    in_tokens = metadata.get("input_tokens", metadata.get("prompt_tokens", 0))
+                    out_tokens = metadata.get("output_tokens", metadata.get("completion_tokens", 0))
                     print(f"📊 Tokens: {in_tokens} in / {out_tokens} out")
             
             # Add to history
@@ -254,6 +266,7 @@ class ChatSession:
             
         except httpx.HTTPStatusError as e:
             print(f"\n✗ HTTP Error {e.response.status_code}: {e.response.text}")
+<<<<<<< HEAD
             self._log_verbose_exception(e)
         except httpx.TimeoutException as e:
             self._report_timeout("narration")
@@ -261,6 +274,14 @@ class ChatSession:
         except Exception as e:
             print(f"\n✗ Error: {e}")
             self._log_verbose_exception(e)
+=======
+        except httpx.RequestError as e:
+            print(
+                f"\n✗ Network Error ({type(e).__name__}): {e}. URL={getattr(e.request, 'url', 'unknown')}"
+            )
+        except Exception as e:
+            print(f"\n✗ Error ({type(e).__name__}): {e}")
+>>>>>>> copilot/add-rag-pipeline-echoes-llm
 
     async def run(self) -> None:
         """Run the interactive chat session."""

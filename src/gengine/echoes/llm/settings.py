@@ -27,6 +27,16 @@ class LLMSettings:
         Maximum tokens in response
     timeout_seconds
         Request timeout in seconds
+    enable_rag
+        Enable Retrieval-Augmented Generation (RAG) for context retrieval
+    rag_db_path
+        Path to the RAG knowledge base database file
+    rag_top_k
+        Number of top documents to retrieve for RAG context
+    rag_min_score
+        Minimum relevance score threshold for retrieved documents
+    verbose_logging
+        Enable verbose JSON logging of provider requests/responses
     """
 
     provider: str = "stub"
@@ -37,6 +47,11 @@ class LLMSettings:
     max_tokens: int = 1000
     timeout_seconds: int = 30
     max_retries: int = 2
+    enable_rag: bool = False
+    rag_db_path: str = "build/knowledge_base/index.db"
+    rag_top_k: int = 3
+    rag_min_score: float = 0.5
+    verbose_logging: bool = False
 
     def loggable_dict(self) -> dict[str, Any]:
         """Return a sanitized dict for logging without exposing secrets."""
@@ -62,9 +77,19 @@ class LLMSettings:
         ECHOES_LLM_MAX_TOKENS : int
             Max response tokens (default: 1000)
         ECHOES_LLM_TIMEOUT : int
-            Request timeout in seconds (default: 30)
+            Request timeout in seconds (default: 60)
         ECHOES_LLM_BASE_URL : str
             Base URL for HTTP-compatible providers (default varies per provider)
+        ECHOES_LLM_ENABLE_RAG : bool
+            Enable RAG context retrieval (default: false)
+        ECHOES_LLM_RAG_DB_PATH : str
+            Path to RAG knowledge base (default: build/knowledge_base/index.db)
+        ECHOES_LLM_RAG_TOP_K : int
+            Number of top documents to retrieve (default: 3)
+        ECHOES_LLM_RAG_MIN_SCORE : float
+            Minimum relevance score for documents (default: 0.5)
+        ECHOES_LLM_VERBOSE : bool
+            Enable verbose provider logging (default: false)
         """
         provider = os.getenv("ECHOES_LLM_PROVIDER", "stub")
         api_key = os.getenv("ECHOES_LLM_API_KEY")
@@ -73,8 +98,24 @@ class LLMSettings:
 
         temperature = float(os.getenv("ECHOES_LLM_TEMPERATURE", "0.7"))
         max_tokens = int(os.getenv("ECHOES_LLM_MAX_TOKENS", "1000"))
-        timeout_seconds = int(os.getenv("ECHOES_LLM_TIMEOUT", "30"))
+        timeout_seconds = int(os.getenv("ECHOES_LLM_TIMEOUT", "60"))
         max_retries = int(os.getenv("ECHOES_LLM_MAX_RETRIES", "2"))
+
+        enable_rag = os.getenv("ECHOES_LLM_ENABLE_RAG", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+        rag_db_path = os.getenv(
+            "ECHOES_LLM_RAG_DB_PATH", "build/knowledge_base/index.db"
+        )
+        rag_top_k = int(os.getenv("ECHOES_LLM_RAG_TOP_K", "3"))
+        rag_min_score = float(os.getenv("ECHOES_LLM_RAG_MIN_SCORE", "0.5"))
+        verbose_logging = os.getenv("ECHOES_LLM_VERBOSE", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
         return cls(
             provider=provider,
@@ -85,6 +126,11 @@ class LLMSettings:
             max_tokens=max_tokens,
             timeout_seconds=timeout_seconds,
             max_retries=max_retries,
+            enable_rag=enable_rag,
+            rag_db_path=rag_db_path,
+            rag_top_k=rag_top_k,
+            rag_min_score=rag_min_score,
+            verbose_logging=verbose_logging,
         )
 
     def validate(self) -> None:
@@ -114,3 +160,9 @@ class LLMSettings:
 
         if self.timeout_seconds < 1:
             raise ValueError("timeout_seconds must be at least 1")
+
+        if self.rag_top_k < 1:
+            raise ValueError("rag_top_k must be at least 1")
+
+        if not 0.0 <= self.rag_min_score <= 1.0:
+            raise ValueError("rag_min_score must be between 0.0 and 1.0")

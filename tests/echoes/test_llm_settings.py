@@ -20,6 +20,11 @@ class TestLLMSettings:
         assert settings.temperature == 0.7
         assert settings.max_tokens == 1000
         assert settings.timeout_seconds == 30
+        assert settings.enable_rag is False
+        assert settings.rag_db_path == "build/knowledge_base/index.db"
+        assert settings.rag_top_k == 3
+        assert settings.rag_min_score == 0.5
+        assert settings.verbose_logging is False
 
     def test_custom_settings(self) -> None:
         settings = LLMSettings(
@@ -157,3 +162,73 @@ class TestLLMSettings:
             base_url="http://localhost:5272",
         )
         settings.validate()
+
+    def test_rag_settings_defaults(self) -> None:
+        settings = LLMSettings()
+        assert settings.enable_rag is False
+        assert settings.rag_db_path == "build/knowledge_base/index.db"
+        assert settings.rag_top_k == 3
+        assert settings.rag_min_score == 0.5
+
+    def test_rag_settings_custom(self) -> None:
+        settings = LLMSettings(
+            enable_rag=True,
+            rag_db_path="custom/path.db",
+            rag_top_k=5,
+            rag_min_score=0.7,
+        )
+        assert settings.enable_rag is True
+        assert settings.rag_db_path == "custom/path.db"
+        assert settings.rag_top_k == 5
+        assert settings.rag_min_score == 0.7
+
+    def test_validate_invalid_rag_top_k(self) -> None:
+        settings = LLMSettings(rag_top_k=0)
+        with pytest.raises(ValueError, match="rag_top_k must be at least 1"):
+            settings.validate()
+
+    def test_validate_invalid_rag_min_score(self) -> None:
+        settings = LLMSettings(rag_min_score=-0.1)
+        with pytest.raises(ValueError, match="rag_min_score must be between"):
+            settings.validate()
+
+        settings = LLMSettings(rag_min_score=1.1)
+        with pytest.raises(ValueError, match="rag_min_score must be between"):
+            settings.validate()
+
+    def test_from_env_rag_settings(self) -> None:
+        old_env = {
+            "ECHOES_LLM_ENABLE_RAG": os.environ.get("ECHOES_LLM_ENABLE_RAG"),
+            "ECHOES_LLM_RAG_DB_PATH": os.environ.get("ECHOES_LLM_RAG_DB_PATH"),
+            "ECHOES_LLM_RAG_TOP_K": os.environ.get("ECHOES_LLM_RAG_TOP_K"),
+            "ECHOES_LLM_RAG_MIN_SCORE": os.environ.get("ECHOES_LLM_RAG_MIN_SCORE"),
+        }
+        try:
+            os.environ["ECHOES_LLM_ENABLE_RAG"] = "true"
+            os.environ["ECHOES_LLM_RAG_DB_PATH"] = "test/kb.db"
+            os.environ["ECHOES_LLM_RAG_TOP_K"] = "5"
+            os.environ["ECHOES_LLM_RAG_MIN_SCORE"] = "0.7"
+
+            settings = LLMSettings.from_env()
+            assert settings.enable_rag is True
+            assert settings.rag_db_path == "test/kb.db"
+            assert settings.rag_top_k == 5
+            assert settings.rag_min_score == 0.7
+        finally:
+            for key, value in old_env.items():
+                if value is not None:
+                    os.environ[key] = value
+                else:
+                    os.environ.pop(key, None)
+
+    def test_verbose_logging_env_var(self) -> None:
+        old_value = os.environ.get("ECHOES_LLM_VERBOSE")
+        try:
+            os.environ["ECHOES_LLM_VERBOSE"] = "true"
+            settings = LLMSettings.from_env()
+            assert settings.verbose_logging is True
+        finally:
+            if old_value is not None:
+                os.environ["ECHOES_LLM_VERBOSE"] = old_value
+            else:
+                os.environ.pop("ECHOES_LLM_VERBOSE", None)

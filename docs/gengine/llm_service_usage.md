@@ -100,6 +100,10 @@ export ECHOES_LLM_MAX_TOKENS=500
 
 # Request timeout in seconds
 export ECHOES_LLM_TIMEOUT_SECONDS=30
+
+# Verbose JSON logging (provider requests/responses)
+export ECHOES_LLM_VERBOSE=true
+# Or run: uv run echoes-llm-service -- --verbose
 ```
 
 ## Stub Provider

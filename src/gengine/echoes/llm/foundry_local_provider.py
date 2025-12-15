@@ -22,6 +22,18 @@ from .settings import LLMSettings
 LOGGER = logging.getLogger(__name__)
 
 
+def _format_json(data: Any) -> str:
+    """Return a pretty JSON string for logging."""
+    try:
+        if isinstance(data, str):
+            parsed = json.loads(data)
+        else:
+            parsed = data
+        return json.dumps(parsed, indent=2, ensure_ascii=False)
+    except Exception:
+        return str(data)
+
+
 def _format_foundry_error(exc: httpx.HTTPError, base_url: str) -> str:
     """Convert HTTP errors into actionable troubleshooting hints."""
     if isinstance(exc, httpx.ConnectError):
@@ -81,16 +93,18 @@ class FoundryLocalProvider(LLMProvider):
             "functions": OPENAI_INTENT_FUNCTIONS,
             "function_call": "auto",
         }
-        LOGGER.info("FoundryLocalProvider.parse_intent prompt: %s", prompt)
-        LOGGER.info("FoundryLocalProvider.parse_intent payload: %s", json.dumps(payload, indent=2))
+        if self.settings.verbose_logging:
+            LOGGER.info(
+                "Foundry Local parse_intent request:\n%s",
+                _format_json(payload),
+            )
         try:
             data, raw_text = await self._chat_completion(payload)
-            try:
-                import json as _json
-                pretty = _json.dumps(data, indent=2, ensure_ascii=False)
-                LOGGER.info("FoundryLocalProvider.parse_intent response (pretty):\n%s", pretty)
-            except Exception:
-                LOGGER.info("FoundryLocalProvider.parse_intent response (raw): %s", raw_text)
+            if self.settings.verbose_logging:
+                LOGGER.info(
+                    "Foundry Local parse_intent response:\n%s",
+                    _format_json(raw_text or data),
+                )
             intents = []
             choices = data.get("choices") or []
             if choices:
@@ -153,7 +167,13 @@ class FoundryLocalProvider(LLMProvider):
             )
         except httpx.HTTPError as exc:
             message = _format_foundry_error(exc, self.base_url)
-            LOGGER.error("Foundry Local intent parsing failed: %s", message)
+            LOGGER.error(
+                "Foundry Local intent parsing failed (query='%s', provider=%s, timeout=%ss): %s",
+                user_input[:120],
+                self.base_url,
+                self.settings.timeout_seconds,
+                message,
+            )
             return IntentParseResult(intents=[], raw_response=message, confidence=0.0)
 
     async def narrate(
@@ -175,8 +195,18 @@ class FoundryLocalProvider(LLMProvider):
             "temperature": self.settings.temperature,
             "max_tokens": min(self.settings.max_tokens, 1000),
         }
+        if self.settings.verbose_logging:
+            LOGGER.info(
+                "Foundry Local narrate request:\n%s",
+                _format_json(payload),
+            )
         try:
             data, raw_text = await self._chat_completion(payload)
+            if self.settings.verbose_logging:
+                LOGGER.info(
+                    "Foundry Local narrate response:\n%s",
+                    _format_json(raw_text or data),
+                )
             choices = data.get("choices") or []
             message = choices[0].get("message", {}) if choices else {}
             narrative = message.get("content", "") or ""
@@ -195,7 +225,13 @@ class FoundryLocalProvider(LLMProvider):
             )
         except httpx.HTTPError as exc:
             message = _format_foundry_error(exc, self.base_url)
-            LOGGER.error("Foundry Local narration failed: %s", message)
+            LOGGER.error(
+                "Foundry Local narration failed (events=%d, provider=%s, timeout=%ss): %s",
+                len(events),
+                self.base_url,
+                self.settings.timeout_seconds,
+                message,
+            )
             return NarrateResult(
                 narrative="",
                 raw_response=message,
