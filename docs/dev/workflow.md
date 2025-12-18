@@ -8,6 +8,7 @@ This document outlines a concise Git-centered workflow for AI and human agents c
 - Access to the repository remote and permissions to push branches and open pull requests.
 - [Beads](https://github.com/SorraTheOrc/beads) (`bd`) installed and initialized for issue tracking in this repository.
 - [Perles](https://github.com/SorraTheOrc/perles) (`perles`) installed and initialized for Kanban view of Beads.
+- Familiarity with the tooling and quality gates described in `docs/dev/tooling-and-quality-gates.md`.
 
 ## Setting up the environment
 Define the following environment variables before running commands. Defaults are provided and may be adjusted to your context.
@@ -55,7 +56,7 @@ ISSUE_ID="TBD"
 6. **Develop in small commits**: Make focused changes; before committing, ensure `.beads/issues.jsonl` is up to date.
 	- Prefer `bd sync --flush-only` (exports DB → JSONL, no git operations) or rely on the pre-commit hook.
 	- Use full `bd sync` for multi-device syncing when a remote is configured.
-7. **Test and lint**: Run project quality gates locally before pushing.
+7. **Test and lint**: Run project quality gates locally before pushing (see `docs/dev/tooling-and-quality-gates.md` for commands and expectations).
 8. **Push branch**: `git push -u "$REMOTE_NAME" "$BRANCH_NAME"` to set upstream for collaboration and CI.
 9. **Open PR**: Create a pull request referencing `$ISSUE_ID`, summarizing changes, risks, test results and guidance for manual testing when appropriate. Capture the PR URL in `$PR_URL` and record it on the issue. Example:
 	```bash

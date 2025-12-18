@@ -36,9 +36,9 @@ Agents may be specialized or composite (an agent can orchestrate sub-agents for 
 - Content Creation: `AI Art Agent` drafts assets; `Producer` selects and approves.
 - Plan: `AI Map Agent` (Product Manager) authors and maintains the implementation plan — a series of tracking issues and dependency links in `bd`; `Producer` is accountable and approves the plan.
 - Prototyping & Integration: `AI Implementation Agent` leads iteration; `Producer` verifies acceptance criteria.
-- Playtesting & QA: `AI QA Agent` is responsible for automated testing, telemetry analysis, and regression summaries; the `Producer` is responsible for organizing and conducting human playtesting, reviewing playtest findings, and approving fixes.
+- Playtesting & QA: `AI QA Agent` is responsible for automated testing, telemetry analysis, and regression summaries, using the quality gates defined in `docs/dev/tooling-and-quality-gates.md`; the `Producer` is responsible for organizing and conducting human playtesting, reviewing playtest findings, and approving fixes.
 - Documentation & Audit: `AI Docs Agent` drafts records; `Prompt Engineer` ensures prompts and templates are recorded; `Producer` signs off on key decisions.
-- CI / Release: `AI DevOps Agent` prepares pipeline artifacts; `Producer` approves release readiness.
+- CI / Release: `AI DevOps Agent` prepares pipeline artifacts and maintains automated enforcement of the quality gates in `docs/dev/tooling-and-quality-gates.md`; `Producer` approves release readiness.
 
 ## RACI — Responsible, Accountable, Consulted, Informed (detailed)
 | Role (short)          | Vision | Design | Plan | Impl.  | Art | QA | Docs | Prompts| Release |
