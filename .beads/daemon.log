@@ -1,0 +1,36 @@
+[2025-12-17 23:28:25] Daemon started (interval: 5s, auto-commit: false, auto-push: false)
+[2025-12-17 23:28:25] Using database: /home/rgardler/projects/GEngine/.beads/beads.db
+[2025-12-17 23:28:25] Error: cannot open database: failed to enable WAL mode: sqlite3: database disk image is malformed
+[2025-12-17 23:30:50] Daemon started (interval: 5s, auto-commit: false, auto-push: false)
+[2025-12-17 23:30:50] Using database: /home/rgardler/projects/GEngine/.beads/beads.db
+[2025-12-17 23:30:50] Error: cannot open database: failed to enable WAL mode: sqlite3: database disk image is malformed
+[2025-12-17 23:35:24] Daemon started (interval: 5s, auto-commit: false, auto-push: false)
+[2025-12-17 23:35:24] Using database: /home/rgardler/projects/GEngine/.beads/beads.db
+[2025-12-17 23:35:24] Error: cannot open database: failed to enable WAL mode: sqlite3: database disk image is malformed
+[2025-12-17 23:35:35] Daemon started (interval: 5s, auto-commit: false, auto-push: false)
+[2025-12-17 23:35:35] Using database: /home/rgardler/projects/GEngine/.beads/beads.db
+[2025-12-17 23:35:35] Database opened: /home/rgardler/projects/GEngine/.beads/beads.db (freshness checking enabled)
+[2025-12-17 23:35:35] Upgrading .beads/.gitignore...
+[2025-12-17 23:35:35] Warning: failed to upgrade .gitignore: open .beads/.gitignore: no such file or directory
+[2025-12-17 23:35:35] Repository fingerprint validated: 97233a2f
+[2025-12-17 23:35:35] Starting RPC server: /home/rgardler/projects/GEngine/.beads/bd.sock
+[2025-12-17 23:35:35] RPC server ready (socket listening)
+[2025-12-17 23:35:35] Registered in global registry
+[2025-12-17 23:35:35] Starting sync cycle...
+[2025-12-17 23:35:35] Exported to JSONL
+[2025-12-17 23:35:35] Imported from JSONL
+[2025-12-17 23:35:35] Sync cycle complete
+[2025-12-17 23:35:35] Monitoring parent process (PID 0)
+[2025-12-17 23:35:35] Using event-driven mode
+[2025-12-17 23:37:18] JSONL file created: /home/rgardler/projects/GEngine/.beads/issues.jsonl
+[2025-12-17 23:37:18] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
+[2025-12-17 23:37:19] JSONL file created: /home/rgardler/projects/GEngine/.beads/issues.jsonl
+[2025-12-17 23:37:19] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
+[2025-12-17 23:37:19] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
+[2025-12-17 23:37:19] Git ref change detected: /home/rgardler/projects/GEngine/.git/refs/heads/main.lock
+[2025-12-17 23:37:19] JSONL file created: /home/rgardler/projects/GEngine/.beads/issues.jsonl
+[2025-12-17 23:37:19] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
+[2025-12-17 23:37:20] Import triggered by file change
+[2025-12-17 23:37:20] Starting auto-import...
+[2025-12-17 23:37:20] Skipping auto-import: JSONL content unchanged
+[2025-12-17 23:38:44] Git ref change detected: /home/rgardler/projects/GEngine/.git/refs/heads/rename-beads-ge.lock
