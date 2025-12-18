@@ -34,3 +34,26 @@
 [2025-12-17 23:37:20] Starting auto-import...
 [2025-12-17 23:37:20] Skipping auto-import: JSONL content unchanged
 [2025-12-17 23:38:44] Git ref change detected: /home/rgardler/projects/GEngine/.git/refs/heads/rename-beads-ge.lock
+[2025-12-17 23:55:42] Daemon started (interval: 5s, auto-commit: false, auto-push: false)
+[2025-12-17 23:55:42] Using database: /home/rgardler/projects/GEngine/.beads/beads.db
+[2025-12-17 23:55:43] Database opened: /home/rgardler/projects/GEngine/.beads/beads.db (freshness checking enabled)
+[2025-12-17 23:55:43] Upgrading .beads/.gitignore...
+[2025-12-17 23:55:43] Warning: failed to upgrade .gitignore: open .beads/.gitignore: no such file or directory
+[2025-12-17 23:55:43] Repository fingerprint validated: 97233a2f
+[2025-12-17 23:55:43] Warning: Database schema version mismatch
+[2025-12-17 23:55:43]   Database version: 0.30.2
+[2025-12-17 23:55:43]   Daemon version: 0.30.3
+[2025-12-17 23:55:43]   Auto-upgrading database to daemon version...
+[2025-12-17 23:55:43]   Database version updated to 0.30.3
+[2025-12-17 23:55:43] Starting RPC server: /home/rgardler/projects/GEngine/.beads/bd.sock
+[2025-12-17 23:55:43] RPC server ready (socket listening)
+[2025-12-17 23:55:43] Registered in global registry
+[2025-12-17 23:55:43] Starting sync cycle...
+[2025-12-17 23:55:43] Exported to JSONL
+[2025-12-17 23:55:43] Imported from JSONL
+[2025-12-17 23:55:43] Sync cycle complete
+[2025-12-17 23:55:43] Monitoring parent process (PID 0)
+[2025-12-17 23:55:43] Using event-driven mode
+[2025-12-17 23:59:10] JSONL file created: /home/rgardler/projects/GEngine/.beads/issues.jsonl
+[2025-12-17 23:59:10] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
+[2025-12-17 23:59:10] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
