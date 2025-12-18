@@ -79,3 +79,11 @@
 [2025-12-18 00:00:34] JSONL file created: /home/rgardler/projects/GEngine/.beads/issues.jsonl
 [2025-12-18 00:00:34] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
 [2025-12-18 00:00:34] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
+[2025-12-18 00:00:35] JSONL file created: /home/rgardler/projects/GEngine/.beads/issues.jsonl
+[2025-12-18 00:00:35] JSONL removed/renamed, re-establishing watch
+[2025-12-18 00:00:35] Successfully re-established JSONL watch after 50ms
+[2025-12-18 00:00:35] File change detected: /home/rgardler/projects/GEngine/.beads/issues.jsonl (op: CHMOD)
+[2025-12-18 00:00:35] Git ref change detected: /home/rgardler/projects/GEngine/.git/refs/heads/main.lock
+[2025-12-18 00:00:36] Import triggered by file change
+[2025-12-18 00:00:36] Starting auto-import...
+[2025-12-18 00:00:36] Skipping auto-import: JSONL content unchanged
