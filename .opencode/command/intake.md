@@ -141,6 +141,6 @@ You are coordinating an intake brief as part of the [development workflow](docs/
 
 ## Finishing steps (must do)
 
-- Add a Label: "Intake: Completed" ` bd update bd <bead-id> --add-label "Intake: Completed" --json`
+- Add a Label: "Intake: Completed" ` bd update bd <bead-id> --add-label "Status: Intake Completed" --json`
 - Run `bd show <bead-id>` (not --json) to show the entire bead.
 - End with: "This completes the Intake process for <bd-id>".

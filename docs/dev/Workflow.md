@@ -57,7 +57,7 @@ Map the end-to-end user outcomes into one or more master epics that represent de
 - **Ownership:** assign an owner for PM, engineering, infra, security and UX per epic.
 
 Agent Commands:
-1) Decompose the PRD into master epic(s): `/milestones <PRD Path>` (OpenCode) or `waif milestones <PRD Path>` (CLI)
+1) Decompose the PRD into master epic(s): `/milestones <bead-id>` (OpenCode) or `waif milestones <bead-id>` (CLI)
 
 Summary: master epics turn the project definition into parallel, owned workstreams.
 
