@@ -33,13 +33,13 @@
   - Story runtime
     - Load one Ink story and execute it end-to-end at runtime.
     - Present branching choices and apply the selected choice to advance the story.
-    - Define a stable story identifier/version used for telemetry and saves (exact mechanism TBD).
+    - Define a stable story identifier/version used for telemetry and saves (mechanism TBD).
   - VN-style UX (text-only)
     - Textbox-style presentation with readable typography.
     - Choice list UI supports mouse, touch, keyboard, and controller input.
     - No backlog/rewind required in M1.
   - Save/load (single slot)
-    - Autosave: write save state automatically at safe points (definition of “safe” TBD).
+    - Autosave: write save state automatically at explicit story checkpoints (Ink tags/markers). Configurable option: autosave after every choice.
     - Manual save: user can explicitly write to the same single slot.
     - Load: user can restore the single slot and continue.
     - Capture story state + UI state (e.g., history/scroll position), as feasible.
@@ -60,7 +60,7 @@
   - Cross-platform: M1 must-pass quality gates for desktop, mobile, and WebGL.
   - Maintainability: keep the story runtime, UI, save/load, and telemetry separated so later milestones can evolve independently.
 - Integrations
-  - Ink runtime integration in Unity (exact plugin/package TBD).
+  - Use the project's forked Ink Unity integration (fork reference pending).
 - Security & privacy
   - Security note: treat save files and story content as untrusted inputs (especially for future external story loading); validate and fail safely.
   - Privacy note: telemetry should avoid collecting personal data by default; add identifiers only if explicitly required.
