@@ -50,7 +50,7 @@ You are helping create or update a Product Requirements Document (PRD) for an ar
 
 2) Automated review stages (must follow; no human intervention required)
 
-- After the user approves the draft PRD, run five review iterations. Each review MUST print a clear "finished" message as follows: 
+After the user approves the draft PRD, run five review iterations. Each review MUST provide a new draft if any changes are recommended and then print a clear "finished" message as follows: 
   - "Finished <Stage Name> review: <brief notes of improvements>"
   - If no improvements were made: "Finished <Stage Name> review: no changes needed"
 

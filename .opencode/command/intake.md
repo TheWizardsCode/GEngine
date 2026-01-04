@@ -88,9 +88,9 @@ You are coordinating an intake brief as part of the [development workflow](docs/
 
 5) Five mini-review stages (agent responsibility; must follow)
 
-- After the user approves the Key details draft, run five review iterations. Each review MUST print a clear "finished" message as follows: 
-  - "Finished <Stage Name> review: <brief notes of improvements>"
-  - If no improvements were made: "Finished <Stage Name> review: no changes needed"
+After the user approves the Key details draft, run five review iterations. Each review MUST provide a new draft if any changes are recommended and then print a clear "finished" message as follows: 
+- "Finished <Stage Name> review: <brief notes of improvements>"
+- If no improvements were made: "Finished <Stage Name> review: no changes needed"
 
 - The five Intake review mini-prompts (names and intents):
   1) Completeness review

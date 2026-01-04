@@ -72,9 +72,7 @@ Keep asking questions until the breakdown into features is clear.
 
 4) Automated review stages (must follow; no human intervention required)
 
-- After the user approves the feature list, run five review iterations. Each review MUST print a clear finish message as follows:
-  - Then output exactly: "Finished <Stage Name> review: <brief notes of improvements>"
-    - If no improvements were made: "Finished <Stage Name> review: no changes needed"
+- After the user approves the feature list, run five review iterations. Each review MUST provide a new draft if any changes are recommended and then output exactly: "Finished <Stage Name> review: <brief notes of improvements>"
 
 - General requirements for the automated reviews:
   - Run without human intervention.

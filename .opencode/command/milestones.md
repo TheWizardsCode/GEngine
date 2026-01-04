@@ -70,7 +70,7 @@ You are helping the team define a clear, actionable milestone plan for work trac
 
 4) Automated review stages (must follow; no human intervention required)
 
-- After the user approves the milestone list, run five review iterations. Each review MUST print a clear finish message as follows:
+After the user approves the milestone list, run five review iterations. Each review MUST provide a new draft if any changes are recommended and then print a clear finish message as follows:
   - Then output exactly: "Finished <Stage Name> review: <brief notes of improvements>"
     - If no improvements were made: "Finished <Stage Name> review: no changes needed"
 

@@ -74,18 +74,19 @@ Agent Commands:
 
 Summary: features make epics executable and testable in small increments.
 
-### Vertical Slices
+### Feature Implementation
 
-Implement each milestone/epicas vertical, end-to-end slices: each iteration delivers a working path from UI/CLI through backend, infra, tests, docs, and observability.
+Implement each feature one at a time. Each issue will have a set of child tasks for (at least) implementation, infra, docs, and tests. Workthrough each feature as a vertical slice that delivers end-to-end user value. 
 
 - **Complete slice:** include code, unit/integration tests, CI configuration, deployment config, runtime observability (metrics/logs), and a rollback/feature-flag plan.
 - **Demo-ready:** each slice should be deployable to a staging environment and demoable with a short script.
 
 Agent Commands:
-1) For each issue, generate implementation plan: `/plan <Issue ID>` (OpenCode) or `waif plan <Issue ID>` (CLI)
-2) For each issue, generate user documentation: `/doc <Issue ID>` (OpenCode) or `waif doc <Issue ID>` (CLI)
-3) For each issue, generate test plan: `/testplan <Issue ID>` (OpenCode) or `waif testplan <Issue ID>` (CLI)
-4) For each issue implement the feature and tests: `/implement <Issue ID>` (OpenCode) or `waif implement <Issue ID>` (CLI) 
+1) For the test issue, generate test plan: `/testplan <Issue ID>` (OpenCode) or `waif testplan <Issue ID>` (CLI)
+2) For the docs issue, generate user documentation: `/doc <Issue ID>` (OpenCode) or `waif doc <Issue ID>` (CLI)
+3) For the implementation issue, generate an implementation plan: `/plan <Issue ID>` (OpenCode) or `waif plan <Issue ID>` (CLI)
+4) Implement the feature and tests: `/implement <Issue ID>` (OpenCode) or `waif implement <Issue ID>` (CLI)
+5) Review the implementation: `/review <Pull Request URL>` (OpenCode) or `waif review <Pull Request URL>` (CLI)
 
 Summary: vertical slices reduce integration risk and make progress visible.
 
