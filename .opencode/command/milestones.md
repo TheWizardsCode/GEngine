@@ -126,9 +126,10 @@ You are helping the team define a clear, actionable milestone plan for work trac
 
 ## Finishing steps (must do)
 
-- From the parent bead remove the label: "Status: PRD Completed" ` bd update <bead-id> --remove-label "Status: PRD Completed" --json`
+- On the parent bead remove the label: "Status: PRD Completed" ` bd update <bead-id> --remove-label "Status: PRD Completed" --json`
 - On the parent bead add a Label: "Status: Milestones Defined" ` bd update <bead-id> --add-label "Status: Milestones Defined" --json`
 - If child beads were created, print their ids and add a short changelog entry to the parent bead.
+- Run `bs sync` to sync bead changes.
 - Run `bd show <parentBeadId>` (not --json) to show the entire bead.
 - End with: "This completes the Milestones process for <bd-id>".
 

@@ -100,6 +100,7 @@ You are helping create or update a Product Requirements Document (PRD) for an ar
 
   - Remove the label: "Status: Intake Completed" ` bd update <bead-id> --remove-label "Status: Intake Completed" --json`
   - Add a Label: "Status: PRD Completed" `bd update <bead-id> --add-label "Status: PRD Completed" --json`
+- Run `bs sync` to sync bead changes.
 - Run `bd show <bead-id>` (not --json) to show the entire bead.
 - End with: "This completes the PRD process for <bd-id>".
 
