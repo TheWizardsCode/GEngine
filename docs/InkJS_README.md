@@ -11,7 +11,7 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 
 ## Running the demo
 1. Open `web/demo/index.html` directly in a modern browser (desktop or mobile). No build is required.
-2. The page pulls InkJS from CDN (`https://unpkg.com/inkjs@1.0.0/dist/ink.js`). Internet access is required for that load. If offline, vendor the file locally under `web/demo/vendor/ink.js` and update the script tag.
+2. InkJS is vendored locally at `web/demo/vendor/ink.js` (offline-safe). If you prefer CDN, swap the script tag in `web/demo/index.html` to `https://unpkg.com/inkjs@1.11.1/dist/ink.js` (or desired version).
 3. On page load you should see the story text and available choices. Console logs will show `story_start` once the story begins.
 
 ## Interacting
