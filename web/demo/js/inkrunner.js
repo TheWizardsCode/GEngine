@@ -1,4 +1,5 @@
 (function() {
+"use strict";
   const storyEl = document.getElementById('story');
   const choicesEl = document.getElementById('choices');
   const tagsEl = document.getElementById('tags');
@@ -7,8 +8,22 @@
   const durationInput = document.getElementById('smoke-duration');
   const intensityInput = document.getElementById('smoke-intensity');
   const SAVE_KEY = 'ge-hch.smoke.save';
-
-  const DEMO_COMPILED = {"inkVersion":19,"root":[["^Hello from InkJS demo.\n","\n",["ev",["^smoke",["list",{"sp":0,"owner":0},["^smoke"],[[0,0,0],[1,0,0],[2,0,0]]]],"/ev","\n","ev",["str",null],["out","^\n"],"/ev",["ev",["^Do you want to continue?\n","\n",["list",{"sp":0,"owner":0},["^*"],[[0,0,0],[1,0,0],[2,0,0]]],"\n^Or stay here?\n","\n",["list",{"sp":0,"owner":0},["^*"],[[0,0,0],[1,0,0],[2,0,0]]],"\n"],"/ev",["nop"],"/ev","/ev","#","ev",["G",0],"/ev","ev",["list",{"sp":1,"origins":[]},["^smoke"],[[0,0,0],[1,0,0],[2,0,0]]],"/ev","/ev","/ev"],0,[]],"listDefs":{},"defaultEnvironment":"default","names":["default"]};
+  const STORY_PATH = '../stories/demo.ink';
+  const DEMO_SOURCE = `VAR seen_smoke = false
+-> start
+=== start ===
+Hello from InkJS demo.
+#smoke
+~ seen_smoke = true
+*   Do you want to continue? -> choice_one
+*   Or stay here? -> choice_two
+=== choice_one ===
+You move forward.
+- DONE
+=== choice_two ===
+You decide to stay. The smoke clears.
+- DONE
+`;
 
   let story;
 
@@ -21,7 +36,23 @@
       console.error('InkJS failed to load');
       return;
     }
-    story = new inkjs.Story(DEMO_COMPILED);
+    let source = DEMO_SOURCE;
+    // If served via HTTP, try loading external story; file:// will fall back.
+    try {
+      const res = await fetch(STORY_PATH, { cache: 'no-cache' });
+      if (res.ok) {
+        source = await res.text();
+      }
+    } catch (err) {
+      console.warn('Using embedded Ink story (fetch failed or not served over HTTP).');
+    }
+    try {
+      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(source).Compile() : source;
+      story = new inkjs.Story(compiled);
+    } catch (err) {
+      console.error('Failed to compile Ink story', err);
+      return;
+    }
     logTelemetry('story_start');
     storyEl.innerHTML = '';
     choicesEl.innerHTML = '';
@@ -109,7 +140,8 @@
     }
     try {
       const payload = JSON.parse(raw);
-      story = new inkjs.Story(DEMO_COMPILED);
+      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(DEMO_SOURCE).Compile() : DEMO_SOURCE;
+      story = new inkjs.Story(compiled);
       story.state.LoadJson(payload.story);
       durationInput.value = payload.config?.duration ?? durationInput.value;
       intensityInput.value = payload.config?.intensity ?? intensityInput.value;
