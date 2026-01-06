@@ -8,9 +8,22 @@
   const durationInput = document.getElementById('smoke-duration');
   const intensityInput = document.getElementById('smoke-intensity');
   const SAVE_KEY = 'ge-hch.smoke.save';
-  const STORY_JSON_PATH = './story.json';
-  // Embedded fallback if fetch fails (compiled via inkjs CLI)
-  const DEMO_COMPILED = (window.DEMO_STORY) ? window.DEMO_STORY : null;
+  const STORY_PATH = '../stories/demo.ink';
+  const DEMO_SOURCE = `VAR seen_smoke = false
+-> start
+=== start ===
+Hello from InkJS demo.
+#smoke
+~ seen_smoke = true
+*   Do you want to continue? -> choice_one
+*   Or stay here? -> choice_two
+=== choice_one ===
+You move forward.
+-> END
+=== choice_two ===
+You decide to stay. The smoke clears.
+-> END
+`;
 
   let story;
 
@@ -23,23 +36,20 @@
       console.error('InkJS failed to load');
       return;
     }
-    let compiled = DEMO_COMPILED;
-    // If served over HTTP, try loading precompiled JSON from ./story.json (in web/demo/).
+    let source = DEMO_SOURCE;
+    // If served over HTTP, try loading the .ink file; file:// will use embedded source.
     if (window.location.protocol.startsWith('http')) {
       try {
-        const res = await fetch(STORY_JSON_PATH, { cache: 'no-cache' });
+        const res = await fetch(STORY_PATH, { cache: 'no-cache' });
         if (res.ok) {
-          compiled = await res.json();
+          source = await res.text();
         }
       } catch (err) {
-        console.warn('Using embedded compiled story (fetch failed or not served over HTTP).');
+        console.warn('Using embedded Ink story (fetch failed or not served over HTTP).');
       }
     }
-    if (!compiled) {
-      console.error('No compiled story available');
-      return;
-    }
     try {
+      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(source).Compile() : source;
       story = new inkjs.Story(compiled);
     } catch (err) {
       console.error('Failed to load Ink story', err);
@@ -132,7 +142,7 @@
     }
     try {
       const payload = JSON.parse(raw);
-      let compiled = DEMO_COMPILED;
+      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(DEMO_SOURCE).Compile() : DEMO_SOURCE;
       story = new inkjs.Story(compiled);
       story.state.LoadJson(payload.story);
       durationInput.value = payload.config?.duration ?? durationInput.value;
