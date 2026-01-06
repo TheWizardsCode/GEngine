@@ -108,9 +108,9 @@ Keep asking questions until the breakdown into features is clear.
   - `bd create "<Short Title>" --description "<Full feature description>" --parent <beadId> -t feature --json --labels "feature" --priority P2 --validate`
 
 - For each created/reused feature bead, create implementation tasks as children (minimum set):
-  - `bd create "Implement: <Short Title>" --description "<Implementation task notes>" --parent <featureBeadId> -t task --json --labels "task" --priority P1 --validate`
-  - `bd create "Tests: <Short Title>" --description "<Test task notes>" --parent <featureBeadId> -t task --json --labels "test" --priority P1 --validate`
   - `bd create "Docs: <Short Title>" --description "<Docs task notes>" --parent <featureBeadId> -t task --json --labels "docs" --priority P2 --validate`
+  - `bd create "Tests: <Short Title>" --description "<Test task notes>" --parent <featureBeadId> -t task --json --labels "test" --priority P1 --validate`
+  - `bd create "Implement: <Short Title>" --description "<Implementation task notes>" --parent <featureBeadId> -t task --json --labels "task" --priority P1 --validate`
   - Add optional tasks (only if needed): Infra/Ops, UX, Security review.
 
 - Create dependency edges between feature beads where the plan specifies dependencies:

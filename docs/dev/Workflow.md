@@ -84,9 +84,8 @@ Implement each feature one at a time. Each issue will have a set of child tasks 
 Agent Commands:
 1) For the test issue, generate test plan: `/testplan <Issue ID>` (OpenCode) or `waif testplan <Issue ID>` (CLI)
 2) For the docs issue, generate user documentation: `/doc <Issue ID>` (OpenCode) or `waif doc <Issue ID>` (CLI)
-3) For the implementation issue, generate an implementation plan: `/plan <Issue ID>` (OpenCode) or `waif plan <Issue ID>` (CLI)
-4) Implement the feature and tests: `/implement <Issue ID>` (OpenCode) or `waif implement <Issue ID>` (CLI)
-5) Review the implementation: `/review <Pull Request URL>` (OpenCode) or `waif review <Pull Request URL>` (CLI)
+5) Implement the feature and tests: `/implement <Issue ID>` (OpenCode) or `waif implement <Issue ID>` (CLI)
+6) Review the implementation: `/review <Pull Request URL>` (OpenCode) or `waif review <Pull Request URL>` (CLI)
 
 Summary: vertical slices reduce integration risk and make progress visible.
 

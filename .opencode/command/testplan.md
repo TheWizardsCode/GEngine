@@ -11,12 +11,14 @@ You are helping the team design a **comprehensive automated test plan** that foc
 
 ## Quick inputs
 
-- The user *must* provide a feature bead issue id as the FIRST word in $ARGUMENTS.
-  - Example input: `/testplan bd-123`
-    - Feature Issue id: `bd-123`
-- This issue ID corresponds to the feature or epic being tested.
-- The feature bead should already have a child (title "Tests: <Short Title>") to act as the **test implementation bead**, the parent for test beads (created by the `.opencode/command/plan.md` command).
-  - If no such child exists, you must ask the user to ensure they have run the `/plan` command before proceeding.
+- The user should run this as `/tstplan <bd-id>`.
+    - Use `$1` as the initial Beads ID.
+    - This ID will be either the ID of a **Docs:** task or the ID of its parent feature. You will need both IDs, so fetch the parent/child as needed.
+- No other options/arguments are supported.
+  - If `$1` is empty/undefined, ask for the missing id and stop.
+  - If additional arguments are provided (e.g. `$2` exists), ask the user to re-run with exactly one argument and stop.
+- This issue ID corresponds to either the feature to be tested, or it is the test implementation bead itself, which will be a child of the feature bead. 
+- You will need both the feature bead and the test implementation bead. If you cannot identify both then report this to the user and ask them to confirm they have run the `/plan` command first.
 - If $ARGUMENTS does not contain an issue id, print: "I cannot parse the issue id from your input '$ARGUMENTS'" and ask the user for a valid bead id in your first interview question.
 
 ## Hard requirements
@@ -42,6 +44,7 @@ You are helping the team design a **comprehensive automated test plan** that foc
 
 - Run `bd show <beadId> --json` and summarise the bead in one paragraph: title, type (epic/feature/task), headline, acceptance criteria, and any existing plan/milestone links.
 - Read any PRD or plan linked in this bead or its parents to extract key user flows, acceptance criteria, and constraints.
+- Read the documentation identified in the sibling bead which focuses on documentation for this feature.
 - Identify the **test implementation bead** id to use for creating test-case children (see Quick Inputs, above). If ambiguous, stop and ask for clarification, asking the user to confirm they ran the `/plan` command, before proceeding.
 
 2) Interview
@@ -120,7 +123,7 @@ After draft approval, run five review iterations. Each review MUST provide a new
 ## Finishing steps (must do)
 
 - Add label to the test implementation bead: `bd update <testBeadId> --add-label "Status: Test Plan Created" --json` (leave existing labels intact).
-- Run `bs sync` to sync bead changes.
+- Run `bd sync` to sync bead changes.
 - Run `bd show <testBeadId>` (not --json) to show the entire bead.
 - End with: "This completes the Test Plan process for <testBeadId>".
 
