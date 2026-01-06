@@ -5,6 +5,10 @@ tags:
   - completion
   - git
 agent: ship
+permission:
+  bash:
+    "git*": allow
+    "bd*": allow
 ---
 
 You are guiding the end-of-session wrap-up so that work is fully synced, issues are updated, and no changes are stranded locally.
