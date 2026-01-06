@@ -9,10 +9,11 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 - `web/stories/demo.ink` — the demo Ink story with the `#smoke` tag.
 - `web/demo/assets/` — optional placeholder assets (currently empty).
 - `web/demo/vendor/ink.js` — vendored InkJS compiler build (ink-full). Replace this file to update version.
+- Embedded story JSON is bundled inside `web/demo/js/inkrunner.js` to avoid CORS issues when opened via `file://`. If you prefer external `.ink` or `.json`, serve the demo over HTTP (e.g., `npx http-server web/demo`).
 
 ## Running the demo
-1. Open `web/demo/index.html` directly in a modern browser (desktop or mobile). No build is required.
-2. InkJS is vendored locally at `web/demo/vendor/ink.js` (offline-safe). This is the ink-full build (includes compiler) so the demo can compile `.ink` source. If you prefer CDN, swap the script tag in `web/demo/index.html` to `https://unpkg.com/inkjs/dist/ink-full.js` (or desired version).
+1. Open `web/demo/index.html` directly in a modern browser (desktop or mobile). No build is required. For `file://` use, the embedded story JSON is used automatically.
+2. InkJS is vendored locally at `web/demo/vendor/ink.js` (offline-safe). This is the ink-full build (includes compiler). If you prefer CDN, swap the script tag in `web/demo/index.html` to `https://unpkg.com/inkjs/dist/ink-full.js` (or desired version).
 3. On page load you should see the story text and available choices. Console logs will show `story_start` once the story begins.
 
 ## Interacting
