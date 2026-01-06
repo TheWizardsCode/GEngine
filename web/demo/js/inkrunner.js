@@ -24,14 +24,16 @@
       return;
     }
     let compiled = DEMO_COMPILED;
-    // If served via HTTP, try loading precompiled JSON; otherwise use embedded compiled.
-    try {
-      const res = await fetch(STORY_JSON_PATH, { cache: 'no-cache' });
-      if (res.ok) {
-        compiled = await res.json();
+    // If served over HTTP, try loading precompiled JSON from ./story.json (in web/demo/).
+    if (window.location.protocol.startsWith('http')) {
+      try {
+        const res = await fetch(STORY_JSON_PATH, { cache: 'no-cache' });
+        if (res.ok) {
+          compiled = await res.json();
+        }
+      } catch (err) {
+        console.warn('Using embedded compiled story (fetch failed or not served over HTTP).');
       }
-    } catch (err) {
-      console.warn('Using embedded compiled story (fetch failed or not served over HTTP).');
     }
     try {
       story = new inkjs.Story(compiled);
