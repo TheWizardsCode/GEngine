@@ -10,15 +10,19 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    viewport: { width: 1280, height: 720 },
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'chromium-desktop',
       use: { ...devices['Desktop Chrome'] },
     },
-    // Uncomment to add WebKit/Firefox later
-    // { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    // { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    {
+      name: 'chromium-touch',
+      use: {
+        ...devices['Pixel 5'],
+        viewport: { width: 1080, height: 2340 },
+        hasTouch: true,
+      },
+    },
   ],
 });
