@@ -8,7 +8,7 @@ Hello from InkJS demo.
 *   Or stay here? -> choice_two
 === choice_one ===
 You move forward.
-- DONE
+-> END
 === choice_two ===
 You decide to stay. The smoke clears.
-- DONE
+-> END

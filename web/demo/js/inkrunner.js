@@ -8,24 +8,10 @@
   const durationInput = document.getElementById('smoke-duration');
   const intensityInput = document.getElementById('smoke-intensity');
   const SAVE_KEY = 'ge-hch.smoke.save';
-  const STORY_PATH = '../stories/demo.ink';
-  const DEMO_SOURCE = `VAR seen_smoke = false
--> start
-=== start ===
-Hello from InkJS demo.
-#smoke
-~ seen_smoke = true
-*   Do you want to continue? -> choice_one
-*   Or stay here? -> choice_two
-=== choice_one ===
-You move forward.
--> END
-=== choice_two ===
-You decide to stay. The smoke clears.
--> END
-`;
+  const STORY_PATH = '/stories/demo.ink';
 
   let story;
+
 
   function logTelemetry(event) {
     console.log(event);
@@ -36,23 +22,27 @@ You decide to stay. The smoke clears.
       console.error('InkJS failed to load');
       return;
     }
-    let source = DEMO_SOURCE;
-    // If served over HTTP, try loading the .ink file; file:// will use embedded source.
-    if (window.location.protocol.startsWith('http')) {
-      try {
-        const res = await fetch(STORY_PATH, { cache: 'no-cache' });
-        if (res.ok) {
-          source = await res.text();
-        }
-      } catch (err) {
-        console.warn('Using embedded Ink story (fetch failed or not served over HTTP).');
+    if (!inkjs.Compiler) {
+      console.error('InkJS Compiler missing; ensure vendor/ink.js is the ink-full build and server serves /demo/vendor/ink.js fresh.');
+      return;
+    }
+    let source;
+    try {
+      const res = await fetch(STORY_PATH, { cache: 'no-cache' });
+      if (!res.ok) {
+        console.error(`Failed to fetch Ink story at ${STORY_PATH} (status ${res.status}). Serve from repo root or web/.`);
+        return;
       }
+      source = await res.text();
+    } catch (err) {
+      console.error(`Failed to fetch Ink story at ${STORY_PATH}`, err);
+      return;
     }
     try {
-      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(source).Compile() : source;
-      story = new inkjs.Story(compiled);
+      const compiled = new inkjs.Compiler(source).Compile();
+      story = compiled instanceof inkjs.Story ? compiled : new inkjs.Story(compiled);
     } catch (err) {
-      console.error('Failed to load Ink story', err);
+      console.error('Failed to load Ink story', err, { usingSource: 'fetched', protocol: window.location.protocol });
       return;
     }
     logTelemetry('story_start');
@@ -142,8 +132,6 @@ You decide to stay. The smoke clears.
     }
     try {
       const payload = JSON.parse(raw);
-      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(DEMO_SOURCE).Compile() : DEMO_SOURCE;
-      story = new inkjs.Story(compiled);
       story.state.LoadJson(payload.story);
       durationInput.value = payload.config?.duration ?? durationInput.value;
       intensityInput.value = payload.config?.intensity ?? intensityInput.value;
