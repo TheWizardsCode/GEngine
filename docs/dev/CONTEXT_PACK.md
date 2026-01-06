@@ -8,7 +8,7 @@
 # Product Requirements Document
 ## Introduction
 - One-liner
-  - Build a Unity runtime narrative engine for story-first games, starting with a text-only Ink-powered MVP that runs on desktop, mobile, and WebGL.
+  - Build an InkJS runtime narrative engine for story-first games, starting with a text-only Ink-powered MVP that runs in browsers (desktop and mobile) and Node.
 - Problem statement
   - We need a repeatable way to ship immersive interactive stories with a runtime-ready vertical slice (story runtime + player UX + save/load + runtime telemetry) that supports fast iteration.
 - Goals
