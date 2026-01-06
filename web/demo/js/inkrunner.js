@@ -45,19 +45,19 @@ You decide to stay. The smoke clears.
     } catch (err) {
       console.warn('Falling back to embedded story', err);
     }
-    story = new inkjs.Story(inkjs.Compiler ? inkjs.Compiler.Compile(source) : source);
+    try {
+      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(source).Compile() : source;
+      story = new inkjs.Story(compiled);
+    } catch (err) {
+      console.error('Failed to compile Ink story', err);
+      return;
+    }
     logTelemetry('story_start');
     storyEl.innerHTML = '';
     choicesEl.innerHTML = '';
     continueStory();
   }
 
-
-  function loadStory() {
-    story = new inkjs.Story(inkjs.Compiler ? inkjs.Compiler.Compile(DEMO_STORY) : DEMO_STORY);
-    logTelemetry('story_start');
-    continueStory();
-  }
 
   function continueStory() {
     if (!story) return;
@@ -128,7 +128,7 @@ You decide to stay. The smoke clears.
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
   }
-
+ 
   function loadState() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return;
@@ -138,12 +138,8 @@ You decide to stay. The smoke clears.
     }
     try {
       const payload = JSON.parse(raw);
-    if (!window.inkjs || (!inkjs.Story)) {
-      console.error('InkJS failed to load');
-      return;
-    }
-    story = new inkjs.Story(inkjs.Compiler ? inkjs.Compiler.Compile(DEMO_STORY) : DEMO_STORY);
-
+      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(DEMO_STORY).Compile() : DEMO_STORY;
+      story = new inkjs.Story(compiled);
       story.state.LoadJson(payload.story);
       durationInput.value = payload.config?.duration ?? durationInput.value;
       intensityInput.value = payload.config?.intensity ?? intensityInput.value;
@@ -155,6 +151,7 @@ You decide to stay. The smoke clears.
       console.error('Failed to load save', err);
     }
   }
+
 
   saveBtn.addEventListener('click', saveState);
   loadBtn.addEventListener('click', loadState);
