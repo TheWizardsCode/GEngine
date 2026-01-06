@@ -10,7 +10,7 @@
   const SAVE_KEY = 'ge-hch.smoke.save';
   const STORY_JSON_PATH = './story.json';
   // Embedded fallback if fetch fails (compiled via inkjs CLI)
-  const DEMO_COMPILED = {"inkVersion":21,"root":[[{"->":"start"},["done",{"#f":5,"#n":"g-0"}],null],"done",{"start":[["^Hello from InkJS demo.","\n","#","^smoke","/#","ev",true,"/ev",{"VAR=":"seen_smoke","re":true},["ev",{"^->":"start.0.9.$r1"},{"temp=":"$r"},"str",{"->":".^.s"},[{"#n":"$r1"}],"/str","/ev",{"*":".^.^.c-0","flg":18},{"s":["^Do you want to continue? ",{"->":"$r","var":true},null]}],["ev",{"^->":"start.0.10.$r1"},{"temp=":"$r"},"str",{"->":".^.s"},[{"#n":"$r1"}],"/str","/ev",{"*":".^.^.c-1","flg":18},{"s":["^Or stay here? ",{"->":"$r","var":true},null]}],{"c-0":["ev",{"^->":"start.0.c-0.$r2"},"/ev",{"temp=":"$r"},{"->":".^.^.9.s"},[{"#n":"$r2"}],{"->":"choice_one"},"\n",{"#f":5}],"c-1":["ev",{"^->":"start.0.c-1.$r2"},"/ev",{"temp=":"$r"},{"->":".^.^.10.s"},[{"#n":"$r2"}],{"->":"choice_two"},"\n",{"#f":5}]}],{"#f":1}],"choice_one":[["^You move forward.","\n",["^DONE","\n",{"#f":5,"#n":"g-0"}],null],{"#f":1}],"choice_two":[["^You decide to stay. The smoke clears.","\n",["^DONE","\n",{"#f":5,"#n":"g-0"}],null],{"#f":1}],"global decl":["ev",false,{"VAR=":"seen_smoke"},"/ev","end",null,"#f":1]}],"listDefs":{}};
+  const DEMO_COMPILED = (window.DEMO_STORY) ? window.DEMO_STORY : null;
 
   let story;
 
@@ -34,6 +34,10 @@
       } catch (err) {
         console.warn('Using embedded compiled story (fetch failed or not served over HTTP).');
       }
+    }
+    if (!compiled) {
+      console.error('No compiled story available');
+      return;
     }
     try {
       story = new inkjs.Story(compiled);
