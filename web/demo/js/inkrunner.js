@@ -8,22 +8,9 @@
   const durationInput = document.getElementById('smoke-duration');
   const intensityInput = document.getElementById('smoke-intensity');
   const SAVE_KEY = 'ge-hch.smoke.save';
-  const STORY_PATH = '../stories/demo.ink';
-  const DEMO_SOURCE = `VAR seen_smoke = false
--> start
-=== start ===
-Hello from InkJS demo.
-#smoke
-~ seen_smoke = true
-*   Do you want to continue? -> choice_one
-*   Or stay here? -> choice_two
-=== choice_one ===
-You move forward.
-- DONE
-=== choice_two ===
-You decide to stay. The smoke clears.
-- DONE
-`;
+  const STORY_JSON_PATH = './story.json';
+  // Embedded fallback if fetch fails (compiled via inkjs CLI)
+  const DEMO_COMPILED = {"inkVersion":21,"root":[[{"->":"start"},["done",{"#n":"g-0"}],null],"done",{"start":[["^Hello from InkJS demo.","\n","#","^smoke","/#","ev",true,"/ev",{"VAR=":"seen_smoke","re":true},["ev",{"^->":"start.0.9.$r1"},{"temp=":"$r"},"str",{"->":".^.s"},[{"#n":"$r1"}],"/str","/ev",{"*":'.^. ^.c-0','flg':18},{"s":["^Do you want to continue? ",{"->":"$r","var":true},null]}],["ev",{"^->":"start.0.10.$r1"},{"temp=":"$r"},"str",{"->":".^.s"},[{"#n":"$r1"}],"/str","/ev",{"*":'.^. ^.c-1','flg':18},{"s":["^Or stay here? ",{"->":"$r","var":true},null]}],{"c-0":["ev",{"^->":"start.0.c-0.$r2"},"/ev",{"temp=":"$r"},{"->":".^.^.9.s"},[{"#n":"$r2"}],{"->":"choice_one"},"\n",{"#f":5}],"c-1":["ev",{"^->":"start.0.c-1.$r2"},"/ev",{"temp=":"$r"},{"->":".^.^.10.s"},[{"#n":"$r2"}],{"->":"choice_two"},"\n",{"#f":5}]}],null],"choice_one":[["^You move forward.","\n",["^DONE","\n",{"#n":"g-0"}],null],null],"choice_two":[["^You decide to stay. The smoke clears.","\n",["^DONE","\n",{"#n":"g-0"}],null],null],"global decl":["ev",false,{"VAR=":"seen_smoke"},"/ev","end",null]}],"listDefs":{}};
 
   let story;
 
@@ -36,21 +23,20 @@ You decide to stay. The smoke clears.
       console.error('InkJS failed to load');
       return;
     }
-    let source = DEMO_SOURCE;
-    // If served via HTTP, try loading external story; file:// will fall back.
+    let compiled = DEMO_COMPILED;
+    // If served via HTTP, try loading precompiled JSON; otherwise use embedded compiled.
     try {
-      const res = await fetch(STORY_PATH, { cache: 'no-cache' });
+      const res = await fetch(STORY_JSON_PATH, { cache: 'no-cache' });
       if (res.ok) {
-        source = await res.text();
+        compiled = await res.json();
       }
     } catch (err) {
-      console.warn('Using embedded Ink story (fetch failed or not served over HTTP).');
+      console.warn('Using embedded compiled story (fetch failed or not served over HTTP).');
     }
     try {
-      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(source).Compile() : source;
       story = new inkjs.Story(compiled);
     } catch (err) {
-      console.error('Failed to compile Ink story', err);
+      console.error('Failed to load Ink story', err);
       return;
     }
     logTelemetry('story_start');
@@ -140,7 +126,7 @@ You decide to stay. The smoke clears.
     }
     try {
       const payload = JSON.parse(raw);
-      const compiled = (inkjs.Compiler) ? new inkjs.Compiler(DEMO_SOURCE).Compile() : DEMO_SOURCE;
+      let compiled = DEMO_COMPILED;
       story = new inkjs.Story(compiled);
       story.state.LoadJson(payload.story);
       durationInput.value = payload.config?.duration ?? durationInput.value;

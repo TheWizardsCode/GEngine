@@ -7,14 +7,20 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 - `web/demo/js/inkrunner.js` — small runner that loads the story, renders choices, handles telemetry, and save/load.
 - `web/demo/js/smoke.js` — dependency-free smoke visual (canvas-based).
 - `web/stories/demo.ink` — the demo Ink story with the `#smoke` tag.
+- `web/stories/demo.ink.json` — precompiled story JSON (generated via inkjs CLI) copied to `web/demo/story.json` for HTTP/local use.
 - `web/demo/assets/` — optional placeholder assets (currently empty).
 - `web/demo/vendor/ink.js` — vendored InkJS compiler build (ink-full). Replace this file to update version.
-- Embedded story JSON is bundled inside `web/demo/js/inkrunner.js` to avoid CORS issues when opened via `file://`. If you prefer external `.ink` or `.json`, serve the demo over HTTP (e.g., `npx http-server web/demo`).
 
 ## Running the demo
-1. Open `web/demo/index.html` directly in a modern browser (desktop or mobile). No build is required. For `file://` use, the embedded story JSON is used automatically.
-2. InkJS is vendored locally at `web/demo/vendor/ink.js` (offline-safe). This is the ink-full build (includes compiler). If you prefer CDN, swap the script tag in `web/demo/index.html` to `https://unpkg.com/inkjs/dist/ink-full.js` (or desired version).
-3. On page load you should see the story text and available choices. Console logs will show `story_start` once the story begins.
+1. Serve over HTTP to avoid CORS for story loading (recommended):
+   ```bash
+   npx http-server web/demo
+   # or any static server rooted at web/demo
+   ```
+   Then open the served URL. The runner will load `story.json` (precompiled).
+2. If opened via `file://`, fetch will fail; the runner falls back to the embedded compiled JSON. Telemetry still works, but running over HTTP is preferred.
+3. InkJS is vendored locally at `web/demo/vendor/ink.js` (offline-safe). If you prefer CDN, swap the script tag in `web/demo/index.html` to `https://unpkg.com/inkjs/dist/ink-full.js` (or desired version).
+4. On page load you should see the story text and available choices. Console logs will show `story_start` once the story begins.
 
 ## Interacting
 - Click or tap choices to advance. A `choice_selected` telemetry log is emitted for every choice.
