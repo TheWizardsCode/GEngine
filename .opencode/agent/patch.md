@@ -19,6 +19,7 @@ permission:
     "git diff*": allow
     "git add*": allow
     "git commit*": allow
+    "git stash*": allow
     "gh pr*": allow
     "ls*": allow
     "mkdir*": allow
@@ -59,14 +60,3 @@ Boundaries:
   - Force-push shared branches or rewrite history.
   - Merge PRs, approve your own work, bypass QA expectations, or store planning outside `history/`.
   - Delete repository directories without explicit Producer approval.
-
-WIP edits by patch agent: implementing VN Text UI input handler and PlayMode tests.
-
-Branch: ge-hch.1.3/implement-vn-text-ui
-
-Files to add:
-- Assets/Scripts/VNInputHandler.cs
-- Assets/Prefabs/VNTextUI.prefab (or Assets/Scenes/VNTextUI.unity)
-- Assets/Tests/VNTextUIPlayModeTests.cs
-
-Tests: PlayMode test(s) to simulate click and keyboard input (Space/Enter).
