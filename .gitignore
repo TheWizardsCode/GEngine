@@ -1,2 +1,15 @@
-# bv (beads viewer) local config and caches
-.bv/
+node_modules/
+test-results/
+.playwright-cache/
+
+# Editor/OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# Playwright artifacts
+*.zip
+*.webm
+*.png
