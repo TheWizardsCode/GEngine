@@ -1,0 +1,15 @@
+{
+  "name": "gengine-demo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve-demo": "http-server web",
+    "test": "npm run test:demo",
+    "test:demo": "start-server-and-test \"npm run serve-demo -- --port 4173\" http://127.0.0.1:4173/demo \"playwright test --config=playwright.config.ts\""
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "http-server": "^14.1.1",
+    "start-server-and-test": "^2.0.0"
+  }
+}

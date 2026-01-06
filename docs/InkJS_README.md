@@ -1,55 +1,51 @@
-InkJS README — M0 web scaffold
+# InkJS Demo and Smoke Trigger
 
-Purpose
-This README documents the InkJS-based M0 web scaffold: where the demo lives, how to run it locally, where to put Ink stories, save/load guidance, and minimal telemetry hook examples.
+This document explains how to run the InkJS-based smoke demo and where to find its assets.
 
-Repo layout (suggested)
-- web/               ← web/demo app & build artifacts
-  - demo/            ← demo static files (optional)
-  - stories/         ← .ink story files (e.g., demo.ink)
-  - package.json     ← web build scripts (if present)
-- docs/              ← documentation (this file)
-- history/unity-archive/ ← archived Unity artifacts and docs
+## Layout
+- `web/demo/index.html` — lightweight static page that runs the InkJS story and UI.
+- `web/demo/js/inkrunner.js` — small runner that loads the story, renders choices, handles telemetry, and save/load.
+- `web/demo/js/smoke.js` — dependency-free smoke visual (canvas-based).
+- `web/stories/demo.ink` — the demo Ink story with the `#smoke` tag.
+- `web/demo/assets/` — optional placeholder assets (currently empty).
+- `web/demo/vendor/ink.js` — vendored InkJS compiler build (ink-full). Replace this file to update version. **Serve from repo root or web/ so this file and /stories/demo.ink are exposed.**
 
-Running the demo (developer)
-- Dev server (recommended)
-  - cd web
-  - npm ci
-  - npm start
-  - Open http://localhost:3000 (or port indicated by runner)
-- Static artifact (no server)
-  - Open web/demo/index.html in a browser
-  - Or serve with a static server: npx serve web/demo
+## Running the demo
+1. Serve over HTTP (only) so the runner can fetch `web/stories/demo.ink` and compile at runtime. **Serve from repo root or `web/` (not `web/demo`) so `/stories/demo.ink` is reachable**:
+   ```bash
+   npx http-server web    # serves /demo and /stories
+   # or any static server rooted at repo root or web/
+   ```
+2. InkJS is vendored locally at `web/demo/vendor/ink.js` (ink-full with Compiler). If you prefer CDN, swap the script tag in `web/demo/index.html` to `https://unpkg.com/inkjs/dist/ink-full.js` (or desired version).
+3. On page load you should see the story text and available choices. Console logs will show `story_start` once the story begins.
 
-Where to place Ink stories
-- Place story source files in web/stories/ (e.g., web/stories/demo.ink).
-- Build process should copy compiled JSON (if any) into the runtime assets directory as documented in web/README or build scripts.
+## Interacting
+- Click or tap choices to advance. A `choice_selected` telemetry log is emitted for every choice.
+- When the story line with tag `#smoke` is presented, the runner emits `smoke_triggered` and starts the smoke effect using the current control values.
+- Control panel: adjust smoke duration (seconds) and intensity (1–10). Save and Load buttons persist and restore story plus smoke state.
+- Save/load uses `localStorage` key `ge-hch.smoke.save`. Saved data includes Ink story state JSON, smoke state, and control settings.
 
-InkJS usage
-- Runtime: InkJS (Node / browser). We use a fork of InkJS (link or note).
-- Typical integration: demo app loads compiled Ink JSON or .ink as supported by our fork and invokes the Ink runtime to drive UI.
+## Telemetry hook locations
+- `story_start` — emitted when the InkJS story is initialized (see `loadStory()` in `inkrunner.js`).
+- `choice_selected` — emitted when a choice button is clicked before advancing the story.
+- `story_complete` — emitted when the story has no further content or choices.
+- `smoke_triggered` — emitted when current tags include `smoke` and the smoke effect is started.
 
-Save / load (single-slot)
-- Implement single-slot save using localStorage or downloadable save files:
-  - Save: localStorage.setItem('m0_save', JSON.stringify(saveData))
-  - Load: JSON.parse(localStorage.getItem('m0_save'))
-- Document format expectations if a separate serializer is used.
+Example calls (console-based):
+```js
+console.log('story_start');
+console.log('choice_selected');
+console.log('story_complete');
+console.log('smoke_triggered');
+```
 
-Telemetry hooks (examples)
-- The demo should expose clear hook points for telemetry. Example hook names:
-  - story_start(event)
-  - choice_selected(event)
-  - story_complete(event)
-- Example (console):
-  - console.log({event: 'story_start', story: 'demo.ink', ts: Date.now()})
+## Manual validation checklist
+- Open `web/demo/index.html` in browser with devtools console.
+- Observe `story_start` log on load and initial text displayed.
+- When the `#smoke` tagged line appears, observe `smoke_triggered` and visible smoke that fades out over ~3s.
+- Click choices; ensure `choice_selected` logs and text updates. When no choices remain, `story_complete` should log.
+- Click Save, refresh or click Load; state should restore, including position and smoke config. If the previous smoke was running, it restarts.
 
-Artifact & binary policy
-- Do not commit large Unity binaries into the mainline. For legacy Unity files, use history/unity-archive/ or an external artifact store.
-- CI artifacts: CI should build and archive web/demo static artifacts for smoke validation.
-
-Legacy Unity note
-- If docs/Unity_README.md or Unity project files exist, they are legacy and have been archived at history/unity-archive/docs/Unity_README.md.
-
-Contact / ownership
-- Owner: <team/person>
-- For runtime/test infra questions, contact @patch / @ship
+## Notes
+- Keep assets lightweight; avoid large binaries. Placeholder visuals are acceptable for this demo.
+- If replacing CDN with a vendored copy, prefer a minified build and update documentation accordingly.
