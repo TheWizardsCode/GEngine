@@ -1,22 +1,32 @@
 (function() {
+  function broadcastState(state) {
+    try {
+      window.dispatchEvent(new CustomEvent('smoke_state', { detail: state }));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   const canvas = document.getElementById('smoke-layer');
   if (!canvas) {
     window.Smoke = {
-      trigger() {},
-      getState() { return { running: false, durationMs: 0, intensity: 0 }; },
-      loadState() {},
+      trigger() { broadcastState({ running: false, durationMs: 0, intensity: 0, remainingMs: 0 }); },
+      getState() { return { running: false, durationMs: 0, intensity: 0, remainingMs: 0 }; },
+      loadState() { broadcastState({ running: false, durationMs: 0, intensity: 0, remainingMs: 0 }); },
       resize() {},
     };
+    broadcastState({ running: false, durationMs: 0, intensity: 0, remainingMs: 0 });
     return;
   }
   const ctx = canvas.getContext('2d');
   if (!ctx) {
     window.Smoke = {
-      trigger() {},
-      getState() { return { running: false, durationMs: 0, intensity: 0 }; },
-      loadState() {},
+      trigger() { broadcastState({ running: false, durationMs: 0, intensity: 0, remainingMs: 0 }); },
+      getState() { return { running: false, durationMs: 0, intensity: 0, remainingMs: 0 }; },
+      loadState() { broadcastState({ running: false, durationMs: 0, intensity: 0, remainingMs: 0 }); },
       resize() {},
     };
+    broadcastState({ running: false, durationMs: 0, intensity: 0, remainingMs: 0 });
     return;
   }
   let particles = [];
@@ -83,10 +93,12 @@
     }
 
     if (remaining > 0) {
+      broadcastState({ running, durationMs, remainingMs: remaining, intensity });
       requestAnimationFrame(draw);
     } else {
       running = false;
       reset();
+      broadcastState({ running, durationMs, remainingMs: 0, intensity });
     }
   }
 
@@ -96,6 +108,7 @@
     intensity = Math.min(10, Math.max(1, level));
     startTime = performance.now();
     running = true;
+    broadcastState({ running, durationMs, remainingMs: durationMs, intensity });
     draw();
   }
 
@@ -109,6 +122,8 @@
     intensity = state.intensity || intensity;
     if (state.running) {
       triggerSmoke({ duration: durationMs / 1000, intensity });
+    } else {
+      broadcastState({ running: false, durationMs, remainingMs: durationMs, intensity });
     }
   }
 
@@ -119,6 +134,7 @@
     resize,
   };
 
+  broadcastState({ running: false, durationMs, remainingMs: durationMs, intensity });
   resize();
   window.addEventListener('resize', resize);
 })();
