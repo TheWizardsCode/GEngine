@@ -3,8 +3,9 @@ description: Define project milestones and create milestone beads
 tags:
   - workflow
   - milestones
-agent: map
+agent: build
 ---
+
 
 You are helping the team define a clear, actionable milestone plan for work tracked by a Beads issue.
 

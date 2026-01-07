@@ -73,7 +73,7 @@ Seed context
 
 Process (must follow)
 
-1) Map the doc set (agent responsibility)
+1) Inventory the doc set (agent responsibility)
 
 - Identify the **target readers** and doc types required:
   - **User docs**: how to install/setup (if applicable), intended purpose within the product, how to use, examples, limitations, common errors.

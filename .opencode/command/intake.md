@@ -3,7 +3,7 @@ description: Create an intake brief (Workflow step 1)
 tags:
   - workflow
   - intake
-agent: map
+agent: build
 ---
 
 You are coordinating an intake brief as part of the [development workflow](docs/dev/Workflow.md).

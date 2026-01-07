@@ -1,7 +1,7 @@
 # Game Design Document (GDD) Template
 
 ## Introduction
-This template is designed for an AI-driven game development team with two human roles: `Producer` and `Prompt Engineer`, and multiple AI agents (e.g., `Muse`, `Map`, `Patch`, `Pixel`, `Probe`, `Scribbler`, `Ship`).
+This template is designed for an AI-driven game development team with two human roles: `Producer` and `Prompt Engineer`, and multiple AI agents (e.g., `Muse`, `Build`, `Patch`, `Pixel`, `Probe`, `Scribbler`, `Ship`).
 
 It is written to be filled in collaboratively:
 - The **Producer** is accountable for product decisions and final sign-off.
@@ -20,7 +20,7 @@ Use this as a living document: update it when the design changes, and link chang
   - the PR URL (if applicable)
 
 **AI Delegation guidance**
-- `Map` (Product Manager): creates/maintains an implementation plan (tracking issues + dependency graph).
+- `Build` (Product Manager): creates/maintains an implementation plan (tracking issues + dependency graph).
 - `Muse` (Designer): proposes mechanics, loops, balance, and variants.
 - `Patch` (Implementation): prototypes systems and integration.
 - `Pixel` (Art): proposes style + assets.
@@ -44,7 +44,7 @@ Use this as a living document: update it when the design changes, and link chang
 - Primary goal: <…>
 - Secondary goals: <…>
 
-**AI draft (Map + Muse):**
+**AI draft (Build + Muse):**
 - Translate goals into milestone outcomes and player-visible behaviors.
 
 ### 1.3 Non-goals
@@ -86,7 +86,7 @@ Use this as a living document: update it when the design changes, and link chang
 **Decision (Producer):**
 - <criteria with numbers/timeframes when possible>
 
-**AI draft (Map + Probe):**
+**AI draft (Build + Probe):**
 - Convert into measurable metrics and test plans.
 
 ---
@@ -128,7 +128,7 @@ Provide a list of major systems and the status of each.
 |--------|---------|--------------------------------------|------------|
 | <…>    | <…>     | <…>                                  | <Muse/Patch/etc> |
 
-**AI draft (Map):**
+**AI draft (Build):**
 - Break systems into tracking issues; add dependencies.
 
 ### 5.3 Tuning knobs
@@ -154,7 +154,7 @@ Provide a list of major systems and the status of each.
 - Currencies/resources: <…>
 - Sources/sinks: <…>
 
-**AI draft (Muse + Map):**
+**AI draft (Muse + Build):**
 - Identify risks (grind, inflation) and mitigation.
 
 ---
@@ -172,7 +172,7 @@ Provide a list of major systems and the status of each.
 **Decision (Producer):**
 - How is content created, validated, and shipped?
 
-**AI draft (Map + Ship + Scribbler):**
+**AI draft (Build + Ship + Scribbler):**
 - Propose a pipeline with quality gates and documentation hooks.
 
 ---
@@ -259,7 +259,7 @@ Provide a list of major systems and the status of each.
 **Decision (Producer):**
 - What is the delivery milestone for this feature/game?
 
-**AI draft (Map):**
+**AI draft (Build):**
 - Create the implementation plan as `bd` issues and dependencies.
 - Ensure each issue has: description, acceptance criteria, owner agent, and links back to this GDD.
 
@@ -278,7 +278,7 @@ Provide a list of major systems and the status of each.
 ### 13.1 Risks
 | Risk | Impact | Likelihood | Mitigation | Owner |
 |------|--------|------------|------------|-------|
-| <…>  | <…>    | <…>        | <…>        | <Map/Muse/Patch/etc> |
+| <…>  | <…>    | <…>        | <…>        | <Build/Muse/Patch/etc> |
 
 ### 13.2 Decisions log
 | Date | Decision | Rationale | Link (bd/PR) |

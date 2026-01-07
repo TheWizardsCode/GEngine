@@ -4,7 +4,7 @@ tags:
   - workflow
   - plan
   - decomposition
-agent: map
+agent: build
 ---
 
 You are helping the team decompose a Beads epic (or other Beads issue) into **features** and **implementation tasks**.
