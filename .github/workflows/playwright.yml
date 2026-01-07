@@ -9,9 +9,11 @@ on:
 
 jobs:
   tests:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       CI: true
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
