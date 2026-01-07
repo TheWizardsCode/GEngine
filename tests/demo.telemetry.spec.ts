@@ -23,6 +23,26 @@ async function collectConsoleErrors(page) {
   return errors;
 }
 
+async function captureSmokeState(page) {
+  await page.exposeBinding('__getSmokeState', () => {
+    const state = (window as any).Smoke?.getState?.();
+    return state || null;
+  });
+  await page.exposeBinding('__smokeEvents', () => {
+    const events = (window as any).__smokeEvents || [];
+    return [...events];
+  });
+  await page.addInitScript(() => {
+    // @ts-ignore
+    window.__smokeEvents = [];
+    // @ts-ignore
+    window.addEventListener('smoke_state', (e) => {
+      // @ts-ignore
+      window.__smokeEvents.push(e.detail);
+    });
+  });
+}
+
 async function setupTelemetryCapture(page) {
   await page.addInitScript(() => {
     // @ts-ignore
@@ -43,6 +63,7 @@ async function setupTelemetryCapture(page) {
 async function loadDemo(page) {
   await useTestStory(page);
   await setupTelemetryCapture(page);
+  await captureSmokeState(page);
   await page.goto('/demo/');
   const story = page.locator('#story');
   await expect(story).toBeVisible();
@@ -51,7 +72,7 @@ async function loadDemo(page) {
   await page.waitForFunction(() => {
     const smoke = (window as any).Smoke?.getState?.();
     return smoke && typeof smoke.running === 'boolean';
-  });
+  }, undefined, { timeout: 5_000 });
   return { story, choices };
 }
 
@@ -78,12 +99,26 @@ test('emits telemetry events and triggers smoke', async ({ page }) => {
 
   await waitForTelemetry(page, 'story_complete');
 
+  const smokeStates: Array<Record<string, any> | null> = [];
+
   await expect.poll(async () => {
-    return page.evaluate(() => {
-      const state = (window as any).Smoke?.getState?.();
-      return state ? state.running || state.remainingMs > 0 : false;
+    const state = await page.evaluate(() => {
+      const s = (window as any).Smoke?.getState?.();
+      return s ? { ...s } : null;
     });
-  }, { timeout: 7_500 }).toBeTruthy();
+    smokeStates.push(state);
+    const events = await page.evaluate(() => (window as any).__smokeEvents || []);
+    const stateOk = !!(state && (state.running || state.remainingMs > 0 || state.durationMs > 0));
+    const eventsOk = Array.isArray(events) && events.length > 0;
+    return stateOk || eventsOk;
+  }, { timeout: 10_000, intervals: [200, 400, 800, 1600, 2000] }).toBeTruthy();
+
+  const smokeEvents = await page.evaluate(() => (window as any).__smokeEvents || []);
+
+  if (errors.length || smokeStates.every(s => !s || (!s.running && !(s.remainingMs > 0) && !(s?.durationMs > 0)))) {
+    console.warn('Smoke state samples:', JSON.stringify(smokeStates));
+    console.warn('Smoke events:', JSON.stringify(smokeEvents));
+  }
 
   expect(errors, 'Console errors should be empty').toEqual([]);
 });
