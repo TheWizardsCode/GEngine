@@ -5,11 +5,9 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   tests:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       CI: true
