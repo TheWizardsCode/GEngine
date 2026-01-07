@@ -144,6 +144,27 @@
     }
   }
 
+  function setStory(testStory) {
+    story = testStory;
+  }
+
+  const testingExports = {
+    appendText,
+    renderChoices,
+    handleTags,
+    saveState,
+    loadState,
+    continueStory,
+    setStory,
+  };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = testingExports;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.__inkrunner = testingExports;
+  }
 
   saveBtn.addEventListener('click', saveState);
   loadBtn.addEventListener('click', loadState);
