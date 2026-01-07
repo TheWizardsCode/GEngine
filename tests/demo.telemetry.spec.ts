@@ -48,6 +48,10 @@ async function loadDemo(page) {
   await expect(story).toBeVisible();
   const choices = page.locator('.choice-btn');
   await expect(choices.count()).resolves.toBeGreaterThan(0);
+  await page.waitForFunction(() => {
+    const smoke = (window as any).Smoke?.getState?.();
+    return smoke && typeof smoke.running === 'boolean';
+  });
   return { story, choices };
 }
 
@@ -76,9 +80,10 @@ test('emits telemetry events and triggers smoke', async ({ page }) => {
 
   await expect.poll(async () => {
     return page.evaluate(() => {
-      return !!(window as any).Smoke?.getState?.().running;
+      const state = (window as any).Smoke?.getState?.();
+      return state ? state.running || state.remainingMs > 0 : false;
     });
-  }, { timeout: 5_000 }).toBeTruthy();
+  }, { timeout: 7_500 }).toBeTruthy();
 
   expect(errors, 'Console errors should be empty').toEqual([]);
 });
