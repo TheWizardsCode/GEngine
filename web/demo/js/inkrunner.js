@@ -13,8 +13,12 @@
   let story;
 
 
-  function logTelemetry(event) {
-    console.log(event);
+  function logTelemetry(event, payload) {
+    if (window.Telemetry && typeof window.Telemetry.emit === 'function') {
+      window.Telemetry.emit(event, payload);
+    } else {
+      console.log(event, payload);
+    }
   }
 
   async function loadStory() {

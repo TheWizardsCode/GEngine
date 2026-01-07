@@ -49,25 +49,30 @@ describe('inkrunner core', () => {
     return storyObj;
   };
 
-  beforeEach(() => {
-    jest.resetModules();
-    buildDOM();
-    story = mockStory();
+   beforeEach(() => {
+     jest.resetModules();
+     buildDOM();
+     story = mockStory();
+ 
+     global.window.Telemetry = {
+       emit: jest.fn(),
+       enabled: true,
+     };
+     global.window.inkjs = { Story: function Stub() {}, Compiler: function Stub() {} };
+     global.window.Smoke = {
+       trigger: jest.fn(),
+       getState: jest.fn(() => ({ smoke: 'state' })),
+       loadState: jest.fn(),
+     };
+ 
+     jest.spyOn(global.window, 'addEventListener').mockImplementation(() => {});
+ 
+     jest.isolateModules(() => {
+       inkrunner = require(path.join(process.cwd(), 'web/demo/js/inkrunner.js'));
+       inkrunner.setStory(story);
+     });
+   });
 
-    global.window.inkjs = { Story: function Stub() {}, Compiler: function Stub() {} };
-    global.window.Smoke = {
-      trigger: jest.fn(),
-      getState: jest.fn(() => ({ smoke: 'state' })),
-      loadState: jest.fn(),
-    };
-
-    jest.spyOn(global.window, 'addEventListener').mockImplementation(() => {});
-
-    jest.isolateModules(() => {
-      inkrunner = require(path.join(process.cwd(), 'web/demo/js/inkrunner.js'));
-      inkrunner.setStory(story);
-    });
-  });
 
   it('appendText creates a div with text', () => {
     inkrunner.appendText('hello');
@@ -75,20 +80,22 @@ describe('inkrunner core', () => {
     expect(storyEl.querySelectorAll('div')).toHaveLength(1);
   });
 
-  it('renderChoices creates buttons and handles clicks', () => {
-    const choiceStory = mockStory({ currentChoices: [{ text: 'A' }, { text: 'B' }] });
-    inkrunner.setStory(choiceStory);
+   it('renderChoices creates buttons and handles clicks', () => {
+     const choiceStory = mockStory({ currentChoices: [{ text: 'A' }, { text: 'B' }] });
+     inkrunner.setStory(choiceStory);
+ 
+     inkrunner.renderChoices();
+ 
+     const buttons = choicesEl.querySelectorAll('button.choice-btn');
+     expect(buttons).toHaveLength(2);
+     expect(buttons[0].textContent).toBe('A');
+ 
+     buttons[1].dispatchEvent(new window.Event('click'));
+     expect(choiceStory.ChooseChoiceIndex).toHaveBeenCalledWith(1);
+     expect(storyEl.innerHTML).toBe('');
+     expect(window.Telemetry.emit).toHaveBeenCalledWith('choice_selected', undefined);
+   });
 
-    inkrunner.renderChoices();
-
-    const buttons = choicesEl.querySelectorAll('button.choice-btn');
-    expect(buttons).toHaveLength(2);
-    expect(buttons[0].textContent).toBe('A');
-
-    buttons[1].dispatchEvent(new window.Event('click'));
-    expect(choiceStory.ChooseChoiceIndex).toHaveBeenCalledWith(1);
-    expect(storyEl.innerHTML).toBe('');
-  });
 
   it('renderChoices handles touchstart', () => {
     const choiceStory = mockStory({ currentChoices: [{ text: 'A' }, { text: 'B' }] });
