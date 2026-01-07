@@ -26,7 +26,7 @@ Use short, culturally and gender-neutral call-signs when assigning tasks. Choose
 - QA AI: `Probe`
 - Docs AI: `Scribbler`
 - DevOps AI: `Ship`
-- PM AI (Product Manager): `Map`
+- PM AI (Product Manager): `Build`
 
 Agents may be specialized or composite (an agent can orchestrate sub-agents for tasks such as content generation, testing, or asset pipeline tasks).
 
@@ -46,7 +46,7 @@ Agents may be specialized or composite (an agent can orchestrate sub-agents for 
 | Producer              |   A    |   A    |  A   |   C    |  A  | A  |  A   |   C    |    A    |
 | Prompt Engineer       |   C    |   C    |  C   |   C    |  C  | C  |  C   |   R    |    C    |
 | Designer (Muse)       |   C    |   R    |  C   |   C    |  C  | C  |  C   |   C    |    C    |
-| Product Manager (Map) |   C    |   C    |  R   |   C    |  C  | C  |  C   |   C    |    C    |
+| Product Manager (Build) |   C    |   C    |  R   |   C    |  C  | C  |  C   |   C    |    C    |
 | Implementation (Patch)|   C    |   C    |  C   |   R    |  C  | C  |  C   |   C    |    C    |
 | Art (Pixel)           |   C    |   C    |  C   |   C    |  R  | C  |  C   |   C    |    C    |
 | QA (Probe)            |   C    |   C    |  C   |   C    |  C  | R  |  C   |   C    |    C    |
@@ -61,7 +61,7 @@ Legend: R = Responsible (executes work), A = Accountable (final sign-off), C = C
 - Use `bd` to track decisions, link PRs, and add comments summarizing agent outputs and approvals.
 
 ## Example flow for a feature
-1. `Producer`, with help from `Designer (Muse)` and `Map (Product Manager)`, adds detailed feature information to a new or existing bd issue (goal, acceptance criteria, scope, rough timeline).
+1. `Producer`, with help from `Designer (Muse)` and `Build (Product Manager)`, adds detailed feature information to a new or existing bd issue (goal, acceptance criteria, scope, rough timeline).
 2. `Docs AI` (`Scribbler`) ensures the feature Bead is well defined and that relevant documentation (GDD using `docs/dev/gdd-template.md`, design notes, and the implementation plan) are aligned and linked.
 3. `Implementation AI` prototypes the top candidate and submits artifacts (branch + PR URL). `QA AI` ensures that new code is adequately tested and runs automated checks.
 4. `Producer` reviews results, organizes human playtesting as needed, requests refinements, and signs off for merge and release.

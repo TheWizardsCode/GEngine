@@ -1,6 +1,6 @@
 ---
 description: Create or edit a PRD through interview
-agent: map
+agent: build
 ---
 
 You are helping create or update a Product Requirements Document (PRD) for an arbitrary product, feature, or tool.

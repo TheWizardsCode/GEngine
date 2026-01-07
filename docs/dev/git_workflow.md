@@ -132,7 +132,7 @@ Agent boundaries and responsibilities (summary)
 - Probe (QA): runs tests and assesses risk; provides structured feedback in bd.
 - Ship (DevOps): keeps CI healthy and monitors release readiness.
 - Forge: maintains `.opencode/agent/*.md` and least-privilege permissions.
-- Map: coordinates bd state and assigns ownership; does not merge by default.
+- Build: coordinates bd state and assigns ownership; does not merge by default.
 - Scribbler / Muse / Pixel: doc/design/asset work; avoid publishing risky changes without Producer coordination.
 
 Handoffs and delegation
@@ -152,7 +152,7 @@ Handoff checklist (must include for hard handoffs)
 
 Delegation and merge ownership
 
-- Map or the Producer should designate the merge owner early.
+- Build or the Producer should designate the merge owner early.
 - Record delegations in bd using: `delegated-to:@<actor> (scope)`.
 - Do not assume merge authority unless it is explicitly delegated.
 
