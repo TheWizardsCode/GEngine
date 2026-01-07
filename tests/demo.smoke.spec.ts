@@ -1,4 +1,19 @@
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const TEST_STORY_PATH = path.join(__dirname, '..', 'web', 'stories', 'test.ink');
+const TEST_STORY_SOURCE = fs.readFileSync(TEST_STORY_PATH, 'utf8');
+
+async function useTestStory(page) {
+  await page.route('**/stories/demo.ink', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/plain; charset=utf-8',
+      body: TEST_STORY_SOURCE,
+    });
+  });
+}
 
 async function collectConsoleErrors(page) {
   const errors: string[] = [];
@@ -9,6 +24,7 @@ async function collectConsoleErrors(page) {
 }
 
 async function loadDemo(page) {
+  await useTestStory(page);
   await page.goto('/demo/');
   const story = page.locator('#story');
   await expect(story).toBeVisible();
