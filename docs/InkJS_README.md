@@ -4,10 +4,10 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 
 ## Layout
 - `web/demo/index.html` — lightweight static page that runs the InkJS story and UI.
-- `web/demo/js/inkrunner.js` — small runner that loads the story, renders choices, handles telemetry, and save/load.
+- `web/demo/js/telemetry.js` — telemetry facade (ConsoleTelemetry by default) with enable/disable toggle.
+- `web/demo/js/inkrunner.js` — runner that loads the story, renders choices, handles telemetry, and save/load.
 - `web/demo/js/smoke.js` — dependency-free smoke visual (canvas-based).
 - `web/stories/demo.ink` — the demo Ink story with the `#smoke` tag.
-- `web/demo/assets/` — optional placeholder assets (currently empty).
 - `web/demo/vendor/ink.js` — vendored InkJS compiler build (ink-full). Replace this file to update version. **Serve from repo root or web/ so this file and /stories/demo.ink are exposed.**
 
 ## Running the demo
@@ -25,19 +25,14 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 - Control panel: adjust smoke duration (seconds) and intensity (1–10). Save and Load buttons persist and restore story plus smoke state.
 - Save/load uses `localStorage` key `ge-hch.smoke.save`. Saved data includes Ink story state JSON, smoke state, and control settings.
 
-## Telemetry hook locations
-- `story_start` — emitted when the InkJS story is initialized (see `loadStory()` in `inkrunner.js`).
-- `choice_selected` — emitted when a choice button is clicked before advancing the story.
-- `story_complete` — emitted when the story has no further content or choices.
-- `smoke_triggered` — emitted when current tags include `smoke` and the smoke effect is started.
+## Telemetry configuration
+- Telemetry facade: `window.Telemetry` (ConsoleTelemetry by default) with methods `emit(eventName, payload?)`, `enable()`, `disable()`, and property `enabled` (boolean).
+- Events emitted by the runner: `story_start` (on story init), `choice_selected` (on every choice), `smoke_triggered` (when the #smoke tag is seen), `story_complete` (when story ends).
+- Toggle telemetry off: in devtools console run `window.Telemetry.disable()` or set `window.Telemetry.enabled = false`. Re-enable with `window.Telemetry.enable()`.
 
-Example calls (console-based):
-```js
-console.log('story_start');
-console.log('choice_selected');
-console.log('story_complete');
-console.log('smoke_triggered');
-```
+## Testing
+- Automated: `npm run test:unit` (Jest) and `npm run test:demo` (Playwright E2E against the demo). `npm test` runs both.
+- Manual: see checklist below.
 
 ## Manual validation checklist
 - Open `web/demo/index.html` in browser with devtools console.
@@ -45,6 +40,7 @@ console.log('smoke_triggered');
 - When the `#smoke` tagged line appears, observe `smoke_triggered` and visible smoke that fades out over ~3s.
 - Click choices; ensure `choice_selected` logs and text updates. When no choices remain, `story_complete` should log.
 - Click Save, refresh or click Load; state should restore, including position and smoke config. If the previous smoke was running, it restarts.
+- (Optional) Telemetry toggle: set `window.Telemetry.enabled = false` and confirm telemetry logs stop; re-enable and confirm logs resume.
 
 ## Notes
 - Keep assets lightweight; avoid large binaries. Placeholder visuals are acceptable for this demo.
