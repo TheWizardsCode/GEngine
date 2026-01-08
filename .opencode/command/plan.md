@@ -11,10 +11,18 @@ You are helping the team decompose a Beads epic (or other Beads issue) into **fe
 
 ## Quick inputs
 
-- The user *must* provide a beads issue id as the FIRST word in $ARGUMENTS.
+- The user *must* provide a beads issue id as the FIRST argument.
   - Example input: `/plan bd-123`
-    - Issue id: `bd-123`
-- If $ARGUMENTS does not contain an issue id, print: "I cannot parse the issue id from your input '$ARGUMENTS'" and ask the user for a valid bead id in your first interview question.
+    - Issue id: `bd-123` (accessed via $1)
+  - $ARGUMENTS contains all arguments passed to the command
+  - $1 contains the first argument (the beads issue id)
+- If $1 is empty, print: "I cannot parse the issue id from your input '$ARGUMENTS'" and ask the user for a valid bead id in your first interview question.
+
+## Argument parsing
+
+- Pattern: If the raw input begins with a slash-command token (a leading token that starts with `/`, e.g., `/plan`), strip that token first.
+- The first meaningful token after any leading slash-command is available as `$1` (the first argument). `$ARGUMENTS` contains the full arguments string (everything after the leading command token, if present).
+- This command expects a single beads id as the first argument. Validate that `$1` is present and that `$2` is empty; if not, ask the user to re-run with a single bead id argument.
 
 ## Hard requirements
 
