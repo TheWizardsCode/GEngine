@@ -18,13 +18,15 @@ You are coordinating an intake brief as part of the [development workflow](docs/
 
 - The user *must* provide a short short intake phrase as $ARGUMENTS.
   - Example: `/intake As a product manager I need to add an onboarding tutorial so that new users complete setup faster`
+  - $ARGUMENTS contains all arguments passed to the command
 - If $ARGUMENTS is empty, the command must ask one brief question to obtain a brief description of the product/epic/feature before starting the interview.
 
-## Argument parsing (must do)
+## Argument parsing
 
-- Treat $ARGUMENTS as a single freeform string (do not attempt to parse CLI flags).
-- From the string derive a concise working title (≤ 7 words) suitable for the bead title.
-- If multiple plausible titles exist, ask the user to confirm which to use.
+- Pattern: If the raw input begins with a slash-command token (a leading token that starts with `/`, e.g., `/intake`), strip that token first.
+- Take the first whitespace-separated token after any leading slash-command as the first meaningful argument (`$1`).
+- `$ARGUMENTS` contains the full arguments string (everything after the leading command token, if present). When this command expects a freeform brief, treat `$ARGUMENTS` as a single freeform string and do not attempt to parse CLI flags.
+- If the command expects exactly one required argument, validate that `$1` is present and that `$2` is empty; otherwise ask the user to re-run with the correct usage.
 
 ## Hard requirements:
 

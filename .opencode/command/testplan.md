@@ -12,14 +12,21 @@ You are helping the team design a **comprehensive automated test plan** that foc
 ## Quick inputs
 
 - The user should run this as `/tstplan <bd-id>`.
-    - Use `$1` as the initial Beads ID.
-    - This ID will be either the ID of a **Docs:** task or the ID of its parent feature. You will need both IDs, so fetch the parent/child as needed.
+  - Use $1 as the initial Beads ID (first argument).
+  - $ARGUMENTS contains all arguments passed to the command.
+  - This ID will be either the ID of a **Docs:** task or the ID of its parent feature. You will need both IDs, so fetch the parent/child as needed.
 - No other options/arguments are supported.
-  - If `$1` is empty/undefined, ask for the missing id and stop.
+  - If $1 is empty/undefined, ask for the missing id and stop.
   - If additional arguments are provided (e.g. `$2` exists), ask the user to re-run with exactly one argument and stop.
-- This issue ID corresponds to either the feature to be tested, or it is the test implementation bead itself, which will be a child of the feature bead. 
+- This issue ID corresponds to either the feature to be tested, or it is the test implementation bead itself, which will be a child of the feature bead.
 - You will need both the feature bead and the test implementation bead. If you cannot identify both then report this to the user and ask them to confirm they have run the `/plan` command first.
-- If $ARGUMENTS does not contain an issue id, print: "I cannot parse the issue id from your input '$ARGUMENTS'" and ask the user for a valid bead id in your first interview question.
+- If $1 is empty, print: "I cannot parse the issue id from your input '$ARGUMENTS'" and ask the user for a valid bead id in your first interview question.
+
+## Argument parsing
+
+- Pattern: If the raw input begins with a slash-command token (a leading token that starts with `/`, e.g., `/tstplan`), strip that token first.
+- The first meaningful token after any leading slash-command is available as `$1` (the first argument). `$ARGUMENTS` contains the full arguments string (everything after the leading command token, if present).
+- This command expects a single beads id as the first argument. Validate that `$1` is present and that `$2` is empty; if not, ask the user to re-run with a single bead id argument.
 
 ## Hard requirements
 
