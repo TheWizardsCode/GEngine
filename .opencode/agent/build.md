@@ -9,16 +9,8 @@ tools:
   bash: true
 permission:
   bash:
-    "git fetch *": allow
-    "git checkout *": allow
-    "git add *": allow
-    "git commit *": allow
-    "git push *": allow
-    "git status *": allow
-    "bd *": allow
-    "waif *": allow
-    "rg *": allow
-    "npm test *": allow
+    "rm *": ask
+    "*": allow
 ---
 You are **Build**, the **PM AI** and primary coordination agent for the Producer.
 
