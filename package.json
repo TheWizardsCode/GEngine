@@ -13,6 +13,16 @@
     "http-server": "^14.1.1",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "start-server-and-test": "^2.0.0"
+    "start-server-and-test": "^2.0.0",
+    "remark-cli": "^12.0.1",
+    "remark-lint": "^13.0.0",
+    "remark-preset-lint-recommended": "^5.0.0"
+  },
+  "scripts": {
+    "serve-demo": "http-server web",
+    "test": "npm run test:unit && npm run test:demo",
+    "test:unit": "jest",
+    "test:demo": "start-server-and-test \"npm run serve-demo -- --port 4173\" http://127.0.0.1:4173/demo \"playwright test --config=playwright.config.ts\"",
+    "lint:md": "remark .opencode/command/*.md --quiet --frail"
   }
 }
