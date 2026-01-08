@@ -49,8 +49,10 @@ jobs:
               run_tests=true
             fi
           fi
-          echo "changed_files=${changed_files}" >> "$GITHUB_OUTPUT"
-          echo "run_tests=${run_tests}" >> "$GITHUB_OUTPUT"
+          {
+            echo "run_tests=${run_tests}"
+            printf 'changed_files<<EOF\n%s\nEOF\n' "$changed_files"
+          } >> "$GITHUB_OUTPUT"
 
   tests:
     needs: changes
