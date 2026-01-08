@@ -1,7 +1,7 @@
 ---
 description: Implement a beads issue by id
 agent: patch
-#model: github-copilot/GPT-5.1-Codex-max
+model: github-copilot/gpt-5.1-Codex-max
 permission:
   bash:
     "git status*": allow
