@@ -107,7 +107,9 @@ After draft approval, run five review iterations. Each review MUST provide a new
 
 - Determine the **test implementation bead** (`<testBeadId>`). If not confidently resolved, stop and ask the user.
 - Create child beads (type: task) for each approved test case under `<testBeadId>`:
-  - `bd create "Test Case: <Short Title>" --description "<Test case details including Preconditions/Data, Steps, Expected Results, Automation Level, Tooling, Mocking vs real, Coverage tags, ## Acceptance Criteria>" --parent <testBeadId> -t task --json --labels "test-case" --priority P1 --validate`
+  - `bd create "Test Case: <Short Title>" --description "<Test case details including Preconditions/Data, Steps, Expected Results, Automation Level, Tooling, Mocking vs real, Coverage tags, ## Acceptance Criteria>" --parent <testBeadId> -t task --json --labels "test-case,test" --priority P1 --assignee Probe --validate`
+
+  Note: this command includes an explicit assignee following repository conventions: tests are assigned to Probe. If the test case represents a different type (e.g., performance or infra), override assignee after creation with `bd update`.
 - Idempotence rules:
   - Before creating, fetch existing children: `bd list --parent <testBeadId> --json` and reuse any child whose canonical title matches the planned test case.
   - Do not create duplicates; update descriptions instead when reuse occurs.
