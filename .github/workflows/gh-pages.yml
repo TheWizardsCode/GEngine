@@ -34,7 +34,8 @@ jobs:
 
       - name: Build demo
         run: |
-          mkdir -p dist/demo
+          mkdir -p dist
+          cp -r web/index.html dist/index.html
           cp -r web/demo dist/demo
           cp -r web/stories dist/stories
 
