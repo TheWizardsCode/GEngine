@@ -8,7 +8,8 @@
   const durationInput = document.getElementById('smoke-duration');
   const intensityInput = document.getElementById('smoke-intensity');
   const SAVE_KEY = 'ge-hch.smoke.save';
-  const STORY_PATH = '/stories/demo.ink';
+  // Support GitHub Pages project path prefixes (e.g., /GEngine/demo/)
+  const STORY_PATH = `${window.location.pathname.split('/demo')[0] || ''}/stories/demo.ink`;
 
   let story;
 
