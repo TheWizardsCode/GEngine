@@ -101,7 +101,9 @@ After the user approves the milestone list, run five review iterations. Each rev
 5) Create beads (agent)
 
 - Create child beads (type: epic) for each milestone with a parent link to the original bead:
-  - `bd create "<Short Title>" --description "Description>" --parent $1 -t epic --json --labels "milestone" --priority P1 --validate`
+  - `bd create "<Short Title>" --description "Description>" --parent $1 -t epic --json --labels "milestone" --priority P1 --assignee Build --validate`
+
+  Note: milestone epics are assigned to Build by default per repository conventions. If a different owner is requested, update the bead after creation with `bd update`.
 - Creating blocking relationship between each milestone as appropriate, this will be a "chain" of dependencies (e.g. M3 blocked by M2 blocked by M1).
   - `bd dep add <Bead ID> <Previous Milestone Bead ID>`
 - Update the parent bead description to add or update a "Milestones" section with the agreed list (minimal, non-destructive). Identify the Milestone epic ID.
