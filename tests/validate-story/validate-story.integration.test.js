@@ -12,8 +12,9 @@ function runCLI(args, env = {}){
 
 describe('validate-story CLI integration', () => {
   const fixturesDir = path.resolve(__dirname, '../fixtures')
-  const valid = path.join(fixturesDir, 'valid.ink')
-  const invalid = path.join(fixturesDir, 'invalid.ink')
+  // use fixtures placed under tests/fixtures/validate-story from the feature branch
+  const valid = path.join(fixturesDir, 'validate-story', 'branching.ink')
+  const invalid = path.join(fixturesDir, 'validate-story', 'single-choice.ink')
   const runtimeErr = path.join(fixturesDir, 'runtime_err.ink')
 
   test('parse failure returns non-zero and error field', () => {
