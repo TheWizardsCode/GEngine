@@ -76,7 +76,7 @@ describe('validate-story CLI integration', () => {
   })
 
   test('multi-story glob runs produce aggregated output', () => {
-    const r = runCLI(['--story', fixturesDir + '/*.ink', '--output', 'stdout'])
+    const r = runCLI(['--story', fixturesDir + '/validate-story/*.ink', '--output', 'stdout'])
     const parsed = JSON.parse(r.stdout.trim())
     // Expect an array of results
     expect(Array.isArray(parsed)).toBe(true)
