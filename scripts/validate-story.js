@@ -31,8 +31,8 @@ function parseArgs(argv) {
     seed: null,
     maxSteps: DEFAULT_MAX_STEPS,
     output: 'json',
-    stateFile: null,
-    stateEnabled: false,
+    stateFile: DEFAULT_STATE_FILE,
+    stateEnabled: true,
     clearState: false,
     maxRetries: DEFAULT_MAX_RETRIES,
   };
@@ -59,6 +59,10 @@ function parseArgs(argv) {
         args.stateFile = argv[++i] || DEFAULT_STATE_FILE;
         args.stateEnabled = true;
         break;
+      case '--state-file-default':
+        args.stateFile = DEFAULT_STATE_FILE;
+        args.stateEnabled = true;
+        break;
       case '--clear-state':
         args.clearState = true;
         args.stateEnabled = true;
@@ -67,12 +71,17 @@ function parseArgs(argv) {
       case '--max-retries':
         args.maxRetries = parseInt(argv[++i], 10) || DEFAULT_MAX_RETRIES;
         break;
+      case '--state-disabled':
+      case '--no-state':
+        args.stateEnabled = false;
+        args.stateFile = null;
+        break;
       case '--help':
       case '-h':
         args.help = true;
         break;
-      default:
-        break;
+    default:
+      break;
     }
   }
 
@@ -80,6 +89,7 @@ function parseArgs(argv) {
 }
 
 function resolveStories(pattern) {
+
   const resolvedPath = path.resolve(pattern);
   if (fs.existsSync(resolvedPath)) {
     const stats = fs.statSync(resolvedPath);
@@ -234,9 +244,11 @@ function runStoryOnce(filePath, opts, lastPath) {
 
 function runStoryWithRotation(filePath, opts, lastPath) {
   const maxRetries = Math.max(1, opts.maxRetries || DEFAULT_MAX_RETRIES);
+  // When state is disabled, seeded runs remain deterministic and ignore previous paths.
+  const rotationBaseline = opts.seed != null && opts.useState === false ? null : lastPath;
 
   for (let attempt = 0; attempt < maxRetries; attempt += 1) {
-    const result = runStoryOnce(filePath, opts, lastPath);
+    const result = runStoryOnce(filePath, opts, rotationBaseline);
 
     if (result.error) return result;
     if (result.exhausted) {
@@ -247,7 +259,7 @@ function runStoryWithRotation(filePath, opts, lastPath) {
       };
     }
 
-    if (!lastPath || !arraysEqual(result.path, lastPath)) {
+    if (!rotationBaseline || !arraysEqual(result.path, rotationBaseline)) {
       return result;
     }
 
@@ -265,7 +277,7 @@ function runStoryWithRotation(filePath, opts, lastPath) {
     story: filePath,
     pass: false,
     steps: 0,
-    path: lastPath || [],
+    path: rotationBaseline || [],
     error: `Failed to find alternate path for story ${filePath} after ${opts.maxRetries} retries`,
   };
 }
@@ -294,7 +306,7 @@ async function main() {
     return;
   }
 
-  const useState = args.stateEnabled || false;
+  const useState = args.stateEnabled;
   const stateFile = useState && (args.stateFile || DEFAULT_STATE_FILE)
     ? path.resolve(args.stateFile || DEFAULT_STATE_FILE)
     : null;
@@ -316,12 +328,14 @@ async function main() {
       seed: args.seed,
       maxSteps: args.maxSteps,
       maxRetries: args.maxRetries,
+      useState,
     }, prev?.lastPath);
 
     if (useState) {
       const runCount = prev?.runCount ? prev.runCount + 1 : 1;
+      const lastPath = result.path;
       state[file] = {
-        lastPath: result.path,
+        lastPath,
         lastRunAt: new Date().toISOString(),
         runCount,
       };
