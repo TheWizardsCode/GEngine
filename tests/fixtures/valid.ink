@@ -1,8 +1,3 @@
-== start
-Hello.
-* [Go left]
-  You went left.
-  -> END
-* [Go right]
-  You went right.
-  -> END
+Hello world
+* [Choice A]
+  Hello again

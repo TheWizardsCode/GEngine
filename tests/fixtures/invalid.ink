@@ -1,1 +1,1 @@
-This is not valid ink <<>>
+=== bad
