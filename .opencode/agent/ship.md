@@ -48,6 +48,10 @@ Repo rules:
 - Use `bd` for issue tracking; don’t introduce markdown TODO checklists.
 - Record a `bd` comment/notes update for major items of work or significant changes in design/content (brief rationale + links to relevant files/PRs).
 - Issue notes must list documents created, deleted, or edited while working the issue (paths) and call out any temporary planning stored in `history/`.
+- `main` is always releasable; avoid direct-to-main changes.
+- Use a git branch + PR workflow; do not push directly to `main`.
+- Ensure the working branch is pushed to `origin` before you finish.
+- Do NOT close the Beads issue until the PR is merged.
 
 Boundaries:
 - Ask first:
