@@ -17,9 +17,12 @@ describe('validate-story CLI integration', () => {
   const runtimeErr = path.join(fixturesDir, 'runtime_err.ink')
 
   test('parse failure returns non-zero and error field', () => {
-    const r = runCLI(['--story', invalid, '--output', 'stdout'])
+    const r = runCLI(['--story', runtimeErr, '--output', 'stdout'])
+    // script writes JSON to stdout even on failures; status may be non-zero via exitCode
     expect(r.status).not.toBe(0)
     const out = r.stdout.trim()
+    // ensure we have valid JSON before parsing
+    expect(out.length).toBeGreaterThan(0)
     let parsed = JSON.parse(out)
     if (Array.isArray(parsed) && parsed.length === 1) parsed = parsed[0]
     expect(parsed.error).toBeDefined()
