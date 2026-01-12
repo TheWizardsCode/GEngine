@@ -28,6 +28,7 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 ## Telemetry configuration
 - Telemetry facade: `window.Telemetry` (ConsoleTelemetry by default) with methods `emit(eventName, payload?)`, `enable()`, `disable()`, and property `enabled` (boolean).
 - Events emitted by the runner: `story_start` (on story init), `choice_selected` (on every choice), `smoke_triggered` (when the #smoke tag is seen), `story_complete` (when story ends).
+- Note: telemetry emission is performed by the runtime/player (web/demo/js/inkrunner.js) — it does not require content-level choice tags like `#choice_selected`. The runtime emits `choice_selected` when a player choice is selected.
 - Toggle telemetry off: in devtools console run `window.Telemetry.disable()` or set `window.Telemetry.enabled = false`. Re-enable with `window.Telemetry.enable()`.
 
 ## Testing
