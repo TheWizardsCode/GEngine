@@ -74,11 +74,9 @@ VAR DEBUG = false
 --------------------------------------------------------------------------------*/
 
 === start === 
- 
-// choice_selected tags intentionally omitted for telemetry validation
+
 #smoke
 ~ seen_smoke = true
-
 
 //  Intro
 	- 	They are keeping me waiting. 
