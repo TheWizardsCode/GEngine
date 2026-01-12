@@ -38,8 +38,8 @@ describe('validate-story CLI integration', () => {
   })
 
   test('deterministic seeded runs produce same path', () => {
-    const r1 = runCLI(['--story', valid, '--seed', '123', '--output', 'stdout'])
-    const r2 = runCLI(['--story', valid, '--seed', '123', '--output', 'stdout'])
+    const r1 = runCLI(['--story', valid, '--seed', '123', '--output', 'stdout', '--state-disabled'])
+    const r2 = runCLI(['--story', valid, '--seed', '123', '--output', 'stdout', '--state-disabled'])
     let p1 = JSON.parse(r1.stdout.trim())
     let p2 = JSON.parse(r2.stdout.trim())
     if (Array.isArray(p1) && p1.length === 1) p1 = p1[0]
