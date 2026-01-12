@@ -1,0 +1,28 @@
+name: Validate stories
+
+on:
+  pull_request:
+    paths:
+      - 'web/stories/**'
+      - 'scripts/validate-story.js'
+      - 'package.json'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+
+jobs:
+  validate-story:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Run validate-story
+        run: |
+          node scripts/validate-story.js --glob "web/stories/**/*.ink" --output json --max-steps 2000
