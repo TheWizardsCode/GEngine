@@ -7,13 +7,13 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 - `web/demo/js/telemetry.js` — telemetry facade (ConsoleTelemetry by default) with enable/disable toggle.
 - `web/demo/js/inkrunner.js` — runner that loads the story, renders choices, handles telemetry, and save/load.
 - `web/demo/js/smoke.js` — dependency-free smoke visual (canvas-based).
-- `web/stories/demo.ink` — the demo Ink story with the `#smoke` tag.
+- `web/stories/demo.ink` — the stable demo Ink story with the `#smoke` tag. CI and docs reference this as the canonical fallback story.
 - `web/demo/vendor/ink.js` — vendored InkJS compiler build (ink-full). Replace this file to update version. **Serve from repo root or web/ so this file and /stories/demo.ink are exposed.**
 
 ## Running the demo
 1. Serve over HTTP (only) so the runner can fetch `web/stories/demo.ink` and compile at runtime. **Serve from repo root or `web/` (not `web/demo`) so `/stories/demo.ink` is reachable**:
    ```bash
-   npx http-server web    # serves /demo and /stories
+   npx http-server web    # serves /demo and /stories (stable demo.ink included)
    # or any static server rooted at repo root or web/
    ```
 2. InkJS is vendored locally at `web/demo/vendor/ink.js` (ink-full with Compiler). If you prefer CDN, swap the script tag in `web/demo/index.html` to `https://unpkg.com/inkjs/dist/ink-full.js` (or desired version).
@@ -33,6 +33,7 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 
 ## Testing
 - Automated: `npm run test:unit` (Jest) and `npm run test:demo` (Playwright E2E against the demo). `npm test` runs both.
+- Story validation (CI/local): `node scripts/validate-story.js web/stories/demo.ink` parses and smoke-tests the stable story. CI also runs `.github/workflows/validate-story.yml` on story or validator changes.
 - Manual: see checklist below.
 
 ## Manual validation checklist
@@ -42,6 +43,12 @@ This document explains how to run the InkJS-based smoke demo and where to find i
 - Click choices; ensure `choice_selected` logs and text updates. When no choices remain, `story_complete` should log.
 - Click Save, refresh or click Load; state should restore, including position and smoke config. If the previous smoke was running, it restarts.
 - (Optional) Telemetry toggle: set `window.Telemetry.enabled = false` and confirm telemetry logs stop; re-enable and confirm logs resume.
+
+## Stable demo story
+- Location: `web/stories/demo.ink` (stable, versioned in git).
+- Swap instructions: to test a generated story, serve the repo from root and replace `web/stories/demo.ink` (or use Playwright routing) with your generated file, then run `node scripts/validate-story.js path/to/story.ink` followed by `npm run test:demo`.
+- Keep stories small (target 100–400 lines) so validation and Playwright runs stay fast. Ensure each story branches and reaches an `END`.
+- CI validate command: `node scripts/validate-story.js web/stories/demo.ink`.
 
 ## Notes
 - Keep assets lightweight; avoid large binaries. Placeholder visuals are acceptable for this demo.
