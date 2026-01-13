@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "serve-demo": "http-server web",
+    "build": "echo 'no-op build'",
+    "validate-story": "node scripts/validate-story.js --glob \"web/stories/**/*.ink\" --output json --max-steps 2000",
     "test": "npm run test:unit && npm run test:demo",
     "test:unit": "jest",
     "test:demo": "start-server-and-test \"npm run serve-demo -- --port 4173\" http://127.0.0.1:4173/demo \"playwright test --config=playwright.config.ts\"",
