@@ -2,8 +2,6 @@ name: Playwright E2E
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
   pull_request:
 
 jobs:
@@ -42,7 +40,8 @@ jobs:
           if [ -z "$changed_files" ]; then
             run_tests=true
           else
-            non_md=$(printf "%s\n" "$changed_files" | grep -vE '\.md$' || true)
+            non_md=$(printf "%s
+" "$changed_files" | grep -vE '\.md$' || true)
             if [ -z "$non_md" ]; then
               run_tests=false
             else
