@@ -66,10 +66,16 @@ jobs:
 
       - name: Run Playwright tests
         run: |
-          npx playwright test --config=playwright.config.ts --reporter=list,html
+          npx playwright test --config=playwright.config.ts
 
       - name: Upload Playwright HTML report
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-html-report
           path: playwright-report
+
+      - name: Upload Playwright junit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-junit
+          path: junit-report.xml

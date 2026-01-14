@@ -26,4 +26,9 @@ export default defineConfig({
       },
     },
   ],
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report' }],
+    ['junit', { outputFile: 'junit-report.xml' }]
+  ]
 });
