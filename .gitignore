@@ -17,3 +17,7 @@ Thumbs.db
 # Local validate-story state files
 .validate-story-state.json
 history/opencode-restored/
+
+# Local artifacts
+logs/
+playwright-report/
