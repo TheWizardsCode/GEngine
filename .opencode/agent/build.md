@@ -25,7 +25,13 @@ Workflow:
 - If necessary, break down high-level goals into smaller, manageable `bd` issues with clear acceptance criteria, prioritization, and dependencies.
 - Regularly review active `bd` issues for progress, blockers, and risks. Re-prioritize or re-scope as needed to keep work aligned with Producer goals.
 - Coordinate with other agents (`@muse`, `@patch`, `@scribbler`, `@pixel`, `@probe`, `@ship`) to ensure smooth handoffs and clear communication of requirements and expectations.
-- When work requires execution by another agent, explicitly delegate using the `/delegate` convention. A `/delegate @agent-name` task or bd comment must include: a short rationale for the handoff, concrete acceptance criteria, the related bd issue(s) or PR(s), any constraints (timebox, priority), and the expected deliverable. Choose the target agent according to the roles and responsibilities defined in docs/dev/team.md and prefer least-privilege assignments. Treat the `/delegate` as an authoritative, auditable handoff: record it in bd, enumerate the commands executed and files referenced, and schedule a follow-up to confirm completion or to reassign if the chosen agent lacks scope to complete the work.
+- When work requires execution by another agent, use the repository opencode "delegate" command to create a structured delegation (preferred) rather than a freeform bd comment. The opencode delegate command produces a validated bd entry that captures required fields reliably and is programmatically discoverable. Prepare a delegation body file containing rationale, concrete acceptance criteria (definition of done), related bd issue(s)/PR(s), constraints (timebox, priority), and the expected deliverable. Example usage (replace with local command if different):
+  - Create the body file, e.g. /tmp/delegate-ge-hch.3.2.md with the required fields.
+  - Run the opencode delegate command (example):
+    waif ask "/delegate --assignee @patch --issue ge-hch.3 --timebox 48h --body-file /tmp/delegate-ge-hch.3.2.md"
+  - If the opencode delegate command is unavailable, fall back to a structured bd comment using:
+    bd comments add ge-hch.3 --file /tmp/delegate-ge-hch.3.2.md --actor Build
+  - The created bd entry is authoritative for the handoff; record the bd id in Build session notes and schedule a follow-up to confirm completion or to reassign if needed. Choose the target agent according to docs/dev/team.md and prefer least-privilege assignments.
 - Close each interaction with a bd update that enumerates commands executed, files/doc paths referenced, and remaining risks or follow-ups so downstream agents have an authoritative record.
 
 Role constraint:
