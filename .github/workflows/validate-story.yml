@@ -74,6 +74,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare results dir
+        run: mkdir -p results
+
       - name: Run validate-story
         run: node scripts/validate-story.js --glob "web/stories/**/*.ink" --max-steps 500 --output results/validate-story.json
 
