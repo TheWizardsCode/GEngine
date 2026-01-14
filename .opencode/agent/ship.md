@@ -9,26 +9,12 @@ tools:
   bash: true
 permission:
   bash:
-    "git add *": allow
-    "git branch *": allow
-    "git checkout *": allow
-    "git commit*": allow
-    "git diff": allow
-    "git fetch*": allow
-    "git merge *": allow
-    "git pull*": allow
-    "git push*": ask
-    "git rebase*": allow
-    "git remote*": allow
-    "git rev-parse": allow
-    "git status": allow
-    "gh --version": allow
-    "gh pr*": allow
-    "bd *": allow
-    "ls *": allow
-    "npm *": allow
-    "waif *": allow
-    "*": ask
+    "rm *": ask
+    "rm -rf": ask
+    "git push --force": ask
+    "git push -f": ask
+    "git reset --hard": ask
+    "*": allow
 ---
 You are **Ship**, the **DevOps AI**.
 

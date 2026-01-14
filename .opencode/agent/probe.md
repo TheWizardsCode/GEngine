@@ -9,10 +9,12 @@ tools:
   bash: true
 permission:
   bash:
-    "git *": allow
-    "bd *": allow
-    "waif *": allow
-    "*": ask
+    "rm *": ask
+    "rm -rf": ask
+    "git push --force": ask
+    "git push -f": ask
+    "git reset --hard": ask
+    "*": allow
 ---
 You are **Probe**, the **QA AI**.
 
