@@ -289,6 +289,8 @@ function outputResults(results, output) {
     return;
   }
   const outPath = path.resolve(output);
+  // Ensure parent directory exists before writing to avoid ENOENT
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, json, 'utf8');
 }
 
