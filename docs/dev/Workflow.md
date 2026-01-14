@@ -69,6 +69,8 @@ Break each epic into discrete features: each feature should have a concise accep
 - **Prototype:** when assumptions are risky, describe a lightweight experiment (fake-API, mock UI, A/B) and success thresholds.
 - **Taskization:** create `bd` tasks for implementation, infra, docs, and tests; link to the PRD and epic.
 
+Tackle a single Milestone/Epic at a time. Do not attempt to decompose more than one epic at a timte. This allows each milestone to feed into the next, correcting any poor assumptiosn made in previous steps.
+
 Agent Commands:
 1) Decompose epics into features and tasks: `/plan <Epic ID>` (OpenCode) or `waif plan <Epic ID>` (CLI)
 
