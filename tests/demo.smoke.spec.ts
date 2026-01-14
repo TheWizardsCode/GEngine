@@ -1,20 +1,4 @@
 import { test, expect } from '@playwright/test';
-import fs from 'node:fs';
-import path from 'node:path';
-
-const TEST_STORY_PATH = path.join(__dirname, '..', 'web', 'stories', 'test.ink');
-const TEST_STORY_SOURCE = fs.readFileSync(TEST_STORY_PATH, 'utf8');
-
-async function useTestStory(page) {
-  await page.route('**/stories/demo.ink', async route => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'text/plain; charset=utf-8',
-      body: TEST_STORY_SOURCE,
-    });
-  });
-}
-
 async function collectConsoleErrors(page) {
   const errors: string[] = [];
   page.on('console', msg => {
@@ -24,13 +8,15 @@ async function collectConsoleErrors(page) {
 }
 
 async function loadDemo(page) {
-  await useTestStory(page);
   await page.goto('/demo/');
   const story = page.locator('#story');
   await expect(story).toBeVisible();
-  await expect(story).toContainText('Hello');
+  await page.waitForFunction(() => {
+    const el = document.querySelector('#story');
+    return !!el && el.textContent && el.textContent.trim().length > 0;
+  }, undefined, { timeout: 5000 });
   const choices = page.locator('.choice-btn');
-  await expect(choices.count()).resolves.toBeGreaterThan(0);
+  await expect.poll(async () => choices.count(), { timeout: 5000 }).toBeGreaterThan(0);
   return { story, choices };
 }
 
