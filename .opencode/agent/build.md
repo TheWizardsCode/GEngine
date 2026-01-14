@@ -33,7 +33,7 @@ Workflow:
 - When work requires execution by another agent, use the repository opencode "delegate" command to create a structured delegation (preferred) rather than a freeform bd comment. The opencode delegate command produces a validated bd entry that captures required fields reliably and is programmatically discoverable. Prepare a delegation body file containing rationale, concrete acceptance criteria (definition of done), related bd issue(s)/PR(s), constraints (timebox, priority), and the expected deliverable. Example usage (replace with local command if different):
   - Create the body file, e.g. /tmp/delegate-ge-hch.3.2.md with the required fields.
   - Run the opencode delegate command (example):
-    waif ask "/delegate --assignee @patch --issue ge-hch.3 --timebox 48h --body-file /tmp/delegate-ge-hch.3.2.md"
+    /delegate --assignee @patch --issue ge-hch.3 --timebox 48h --body-file /tmp/delegate-ge-hch.3.2.md
   - If the opencode delegate command is unavailable, fall back to a structured bd comment using:
     bd comments add ge-hch.3 --file /tmp/delegate-ge-hch.3.2.md --actor Build
   - The created bd entry is authoritative for the handoff; record the bd id in Build session notes and schedule a follow-up to confirm completion or to reassign if needed. Choose the target agent according to docs/dev/team.md and prefer least-privilege assignments.

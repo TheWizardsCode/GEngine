@@ -29,7 +29,7 @@ permission:
     "npx*": allow
     "python*": allow
     "rg*": allow
-    "waif *": allow
+    "waif *": deny
     "whoami": allow
     "*": ask
 ---
