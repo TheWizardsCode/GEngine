@@ -10,6 +10,11 @@ tools:
 permission:
   bash:
     "rm *": ask
+    "git push --force": ask
+    "git push -f": ask
+    "git reset --hard": ask
+    "rm -rf": ask
+    # Allow-by-default: permit non-destructive commands, interactive confirmation required for destructive ones.
     "*": allow
 ---
 You are **Build**, the **PM AI** and primary coordination agent for the Producer.
