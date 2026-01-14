@@ -57,8 +57,8 @@ bd update bd-42 --priority 1 --json
 
 ***Add Comments to Issue:**
 ```bash
-bd comment bd-42 "The content of the comment" --actor $AGENT_NAME|$USER --json
-bd comment bd-42 --file /tmp/comment.md --actor $AGENT_NAME|$USER --json
+bd comment bd-42 "The content of the comment" --actor @your-agent-name --json
+bd comment bd-42 --file /tmp/comment.md --actor @your-agent-name --json
 ```
 
 **Complete work:**
