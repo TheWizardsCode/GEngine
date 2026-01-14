@@ -10,7 +10,16 @@ tools:
 permission:
   bash:
     "rm *": ask
-    "*": allow
+    # Deny-by-default: only allow a minimal set of safe query commands used for planning and status.
+    # Any command not listed here should be run via a delegation or asked interactively.
+    "git status*": allow
+    "git branch*": allow
+    "git log*": allow
+    "bd *": allow
+    "rg*": allow
+    "ls*": allow
+    "whoami": allow
+    "*": ask
 ---
 You are **Build**, the **PM AI** and primary coordination agent for the Producer.
 
