@@ -40,7 +40,8 @@ Process (procedural steps)
 0) Safety gate: handle dirty working tree
 
 - Check whether the working tree is clean (`git status --porcelain=v1 -b`).
-- If any uncommitted changes exist (modified, staged, or untracked files), pause and ask the user what to do. Offer explicit choices: carry changes into the issue branch, commit current changes first, stash changes (and whether to pop later), revert/discard changes (explicit confirmation required), or abort implementation to let the user inspect.
+- If uncommitted changes exist that are limited to the `.beads` directory, automatically carry those changes into the new working branch (no need to ask the producer). Commit them on the issue branch as part of implementation.
+- If other uncommitted changes exist (outside `.beads`), pause and ask the user what to do. Offer explicit choices: carry changes into the issue branch, commit current changes first, stash changes (and whether to pop later), revert/discard changes (explicit confirmation required), or abort implementation to let the user inspect.
 
 1) Understand the issue
 
@@ -60,13 +61,13 @@ Process (procedural steps)
 
 2) Create a working branch
 
-- If already on an appropriate topic branch, use it.
+- Consider an "appropriate topic branch" to be any branch that belongs to this issue or any issue that is an ancestor of the current issue. If already on such an appropriate topic branch, use it.
 - Otherwise create a new branch named `feature/<id>-<short>` or `bug/<id>-<short>` (include the bead id).
 - Do not commit directly to `main`.
 
 3) Claim the issue
 
-- Claim the issue with: `bd update <id> --status in_progress --assignee "$USER" --json` (omit `--assignee` if not accepted in environment).
+- The executing agent must claim the issue by running: `bd update <id> --status in_progress --assignee "$AGENT" --json` (omit `--assignee` if not accepted in the environment). The agent should set its own agent identifier as the assignee.
 
 4) Implement
 
@@ -99,7 +100,7 @@ Process (procedural steps)
 9) Update Beads (do not close)
 
 - Add a label to indicate PR status (for example: `bd update <id> --add-label "Status: PR Created" --json`).
-- Update the bead with the PR URL using `--external-ref` or `--notes`.
+- Update the bead with the PR URL using `--external-ref`.
 - Keep the bead's status as `in_progress` until the PR is merged.
 - Run `bd sync` before ending the session.
 
@@ -108,10 +109,6 @@ Error responses (verbatim where possible)
 - "Error: missing bead id. Run `implement <bead-id>`."
 - "Error: bead <id> is not actionable — missing acceptance criteria. Run the intake interview to update the bead before implementing."
 
-Notes
-
-- This skill reproduces the full procedural behaviour of the previous `/implement` command but does so as a standalone skill invoked via `implement <bead-id>`. The implement command may be removed from the repository once this skill is deployed and adopted.
-
 Files that may be created/edited
 
 - Implementation code files relevant to the bead
@@ -119,33 +116,7 @@ Files that may be created/edited
 - docs/ and README updates describing usage
 - PR branch and commit history
 
-Acceptance criteria (for the skill changes themselves)
-
-- The SKILL.md provides sufficient procedural instructions for an agent to implement a bead end-to-end without relying on the legacy `/implement` command.
-- Argument parsing, safety gate, intake rules, branch/claim/implement/validate/PR/update-beads workflow, and automated self-review stages are documented.
-
 Examples of how to invoke the skill
 
 - `implement ge-hch.3`
-
----
-
-# Implement Skill
-
-To run this skill, invoke the agent with a command like:
-
-- `implement ge-hch.3`
-
-Behavior:
-
-- Parse the first argument as a single Beads id (e.g., `ge-hch.3`). If no id is provided or more than one argument is present, return a clear error asking the user to re-run with a single bead id.
-- Fetch the bead JSON with `bd show <id> --json` and evaluate whether the bead is actionable per the project implement workflow.
-- If the bead is actionable, claim it and update it using `bd update <id> --status in_progress --assignee "$USER" --json` (or the minimal accepted form in this environment). Do NOT create a new bead.
-- If the bead is not actionable (missing acceptance criteria or scope), respond with a clear message describing which fields are missing and stop. Do NOT create a new bead in this case.
-
-
-Examples of error responses (agent should use verbatim-style messages):
-
-- "Error: missing bead id. Run `implement <bead-id>`."
-- "Error: bead ge-hch.3 is not actionable — missing acceptance criteria. Run the intake interview to update the bead before implementing."
 
