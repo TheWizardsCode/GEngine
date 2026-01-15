@@ -25,7 +25,7 @@ Provide a concise, human-friendly summary of project status or a specific bead. 
      - Any items in a blocked state or missing assignees
      - A one-line suggestion for next action (e.g., "Review bd-123 assigned to @alice")
 3. If a bead id is provided:
-   - Run `bs show <bead-id> --json` (or use `scripts/run_status.py bs <bead-id>`) to fetch bead details.
+   - Run `bd show <bead-id> --json` (or use `scripts/run_status.py bd <bead-id>`) to fetch bead details.
    - Parse and present: title, status, assignee, priority, description, blockers, dependencies, comments count, and relevant links.
 4. Handle errors gracefully: if `waif` or `bs` are not available or return invalid JSON, present a helpful error and possible remediation steps.
 
