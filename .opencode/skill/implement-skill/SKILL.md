@@ -16,10 +16,6 @@ Behavior:
 - If the bead is actionable, claim it and update it using `bd update <id> --status in_progress --assignee "$USER" --json` (or the minimal accepted form in this environment). Do NOT create a new bead.
 - If the bead is not actionable (missing acceptance criteria or scope), respond with a clear message describing which fields are missing and stop. Do NOT create a new bead in this case.
 
-Notes for integrators:
-
-- This SKILL.md provides the procedural instructions the agent needs to perform implement actions programmatically. The runtime that loads skills should ensure this skill is selected when user input begins with `implement` and the first token after the command looks like a beads id.
-
 
 Examples of error responses (agent should use verbatim-style messages):
 
