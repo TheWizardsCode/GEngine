@@ -19,7 +19,7 @@ Behavior:
 Notes for integrators:
 
 - This SKILL.md provides the procedural instructions the agent needs to perform implement actions programmatically. The runtime that loads skills should ensure this skill is selected when user input begins with `implement` and the first token after the command looks like a beads id.
-- Keep changes minimal: the skill intentionally does not include runnable scripts to avoid environment-specific assumptions. If deterministic execution is required later, add a `scripts/` helper and update this SKILL.md to reference it.
+
 
 Examples of error responses (agent should use verbatim-style messages):
 
