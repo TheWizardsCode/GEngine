@@ -17,7 +17,6 @@ Thumbs.db
 # Local validate-story state files
 .validate-story-state.json
 history/
-.waif/
 history/ooda_snapshot_*.jsonl
 history/opencode-restored/
 
