@@ -65,7 +65,7 @@ Define a clear PRD, decompose work into milestones and features, then implement 
 ### 4) Implement Milestones / Epics
 - Deliver vertical, end-to-end slices including code, tests, CI/deploy config, observability, and a rollback/feature-flag plan.
 - Produce demo-ready slices deployable to staging.
-- Commands in this step: `/plan <Issue ID>`, `/doc <Issue ID>`, `/testplan <Issue ID>`, `/implement <Issue ID>`
+- Commands in this step: `plan <Issue ID>`, `doc <Issue ID>`, `testplan <Issue ID>`, `implement <Issue ID>`
 
 ---
 
