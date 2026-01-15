@@ -82,14 +82,6 @@ bd close bd-42 --reason "Completed" --json
 - `3` - Low (polish, optimization)
 - `4` - Backlog (future ideas)
 
-## Team
-
-This project is managed by a team consisting of both AI Agents and Humans. The team, along with responsibilities and a RACI matrix can be found in `docs/dev/team.md`. 
-
-Delegate work to agents named in `docs/dev/team.md` according to their defined roles and capabilities.
-
-When delegating work to another agent ensure full handoff notes are included in the bead describing the work to be done, acceptance criteria, related issues/PRs, constraints (timebox, priority), and expected deliverables. Assign the bead to the target agent and then delegate(to: agent).
-
 ### Workflow for AI Agents
 
 1. **Check issue is ready**: ensure the issue to be worked on appears in the output of `bd ready`
@@ -101,6 +93,15 @@ When delegating work to another agent ensure full handoff notes are included in 
    - `bd create "Found bug" -p 1 --deps discovered-from:<parent-id>`
 7. **Complete**: `bd close <id> --reason "Done"`
 8. **Commit together**: Always commit the `.beads/issues.jsonl` file together with the code changes so issue state stays in sync with code state
+
+### Boundaries
+- Ask first:
+  - Re-scoping milestones, high-priority work, or cross-team commitments set by the Producer.
+  - Retiring/repurposing agents or redefining their roles.
+  - Approving multi-issue rewrites or new epics that materially change roadmap assumptions.
+- Never:
+  - Create parallel tracking systems outside `bd`.
+  - Run destructive git commands (`reset`, `push --force`, branch deletions) or merge changes yourself unless given explicit permission.
 
 ### Auto-Sync
 
