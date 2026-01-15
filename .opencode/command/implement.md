@@ -12,6 +12,8 @@ permission:
 
 You are implementing a Beads issue in this repository.
 
+Note: A dedicated skill package for this command exists at `.opencode/skill/implement-skill/SKILL.md` which documents exact parsing, `bd update` behavior, and error messages to preserve existing alias behavior for `implement` and `/implement`.
+
 ## Argument parsing
 
 - Pattern: If the raw input begins with a slash-command token (a leading token that starts with `/`, e.g., `/implement`), strip that token first.
