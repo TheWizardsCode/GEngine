@@ -21,13 +21,6 @@ Before starting a session that will change something other than `.beads/issues.j
 - Agent-optimized: JSON output, ready work detection, discovered-from links
 - Prevents duplicate tracking systems and confusion
 
-### Quick Start
-
-**Check for ready work:**
-```bash
-bd ready --json
-```
-
 **Create new issues:**
 
 1. Before creating a new issue ensure that all details are clear. Pause and ask the user for more information and clarifications as necessary; provide advice and guidance when possible;
@@ -172,7 +165,7 @@ For example: `bd create --help` shows `--parent`, `--deps`, `--assignee`, etc.
 - ✅ Use bd for ALL task tracking
 - ✅ Always use `--json` flag for programmatic use
 - ✅ Link discovered work with discovered-from dependencies
-- ✅ Check `bd ready` before asking "what should I work on?"
+- ✅ Check `waif in-progress` before asking "what should I work on?"
 - ✅ Store AI planning docs in `history/` directory
 - ✅ Run `bd <cmd> --help` to discover available flags
 - ❌ Do NOT create markdown TODO lists
@@ -183,7 +176,7 @@ For example: `bd create --help` shows `--parent`, `--deps`, `--assignee`, etc.
 ## Quick Reference
 
 ```bash
-bd ready              # Find available work
+waif next             # Find available work
 bd show <id>          # View issue details
 bd update <id> --status in_progress  # Claim work
 bd close <id>         # Complete work
