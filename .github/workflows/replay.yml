@@ -4,8 +4,13 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    # run on PRs targeting main
+    types: [opened, synchronize, reopened]
     branches: [ main ]
+    paths:
+      - 'web/stories/**'
+      - 'scripts/**'
+      - 'tests/golden-path/**'
+      - '.github/workflows/replay.yml'
 
 jobs:
   replay:
@@ -13,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
-      group: replay-gate-${{ github.ref }}
+      group: replay-gate-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -115,7 +120,8 @@ jobs:
 
             out=artifacts/logs/replay.${name}.log
             echo "Running replay on story=$story script=$script -> $out"
-            node scripts/replay.js --story "$story" --script "$script" >"$out" 2>&1 || EXIT=$?
+            # prefer structured result-out; fall back to log parsing
+            node scripts/replay.js --story "$story" --script "$script" --result-out "artifacts/results/replay.${name}.result.json" >"$out" 2>&1 || EXIT=$? && true
             # capture exit per test
             if [ -z "${EXIT+x}" ]; then
               EXIT=0
@@ -125,8 +131,13 @@ jobs:
               echo "Replay failed for $name (exit=$EXIT)"
               # copy raw log (.failure.log) and write a small machine-readable JSON summary (.failure.json)
               cp "$out" "artifacts/results/replay.${name}.failure.log" || true
-              jq -n --arg story "$story" --arg script "$script" --arg log "artifacts/results/replay.${name}.failure.log" --argjson exit "$EXIT" '{ story: $story, script: $script, log: $log, exit: $exit }' >"artifacts/results/replay.${name}.failure.json" || \
-                echo "{ \"story\": \"$story\", \"script\": \"$script\", \"log\": \"artifacts/results/replay.${name}.failure.log\", \"exit\": $EXIT }" >"artifacts/results/replay.${name}.failure.json" || true
+              # Prefer the runner-produced result file; if missing, synthesize a failure JSON
+                if [ -f "artifacts/results/replay.${name}.result.json" ]; then
+                  cp "artifacts/results/replay.${name}.result.json" "artifacts/results/replay.${name}.failure.json" || true
+                else
+                  jq -n --arg story "$story" --arg script "$script" --arg log "artifacts/results/replay.${name}.failure.log" --argjson exit "$EXIT" '{ story: $story, script: $script, log: $log, exit: $exit }' >"artifacts/results/replay.${name}.failure.json" || \
+                    echo "{ \"story\": \"$story\", \"script\": \"$script\", \"log\": \"artifacts/results/replay.${name}.failure.log\", \"exit\": $EXIT }" >"artifacts/results/replay.${name}.failure.json" || true
+                fi
             fi
             EXIT_SUM=$((EXIT_SUM + EXIT))
             unset EXIT
