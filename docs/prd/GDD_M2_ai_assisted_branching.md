@@ -81,7 +81,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 
 #### Runtime integration hooks
 - Design hook points where validated branch content can be applied into the running story state with clear transaction boundaries.
-- Define rollback semantics: if a branch causes a runtime error or player complaint, operators can safely revert it without corrupting save state.
+- Define automatic rollback semantics: if a branch causes a runtime error, the system automatically reverts to the last checkpoint without corrupting save state.
 - Persistence model: integrated branches are logged to ensure reproducibility and audit trails.
 
 #### Observability for players, producers, and operators
