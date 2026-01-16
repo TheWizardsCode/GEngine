@@ -29,6 +29,30 @@ const SETTINGS_KEY = 'ge-ai-writer-settings';
 const API_KEY_PATTERN = /^sk-[a-zA-Z0-9_-]{20,}$/;
 
 /**
+ * Validates a URL format for API endpoints
+ * 
+ * @param {string} url - The URL to validate
+ * @returns {{valid: boolean, reason?: string}} Validation result
+ */
+function validateEndpointUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return { valid: false, reason: 'Endpoint URL is required' };
+  }
+  
+  const trimmedUrl = url.trim();
+  
+  try {
+    const parsed = new URL(trimmedUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { valid: false, reason: 'URL must use http or https protocol' };
+    }
+    return { valid: true };
+  } catch (e) {
+    return { valid: false, reason: 'Invalid URL format' };
+  }
+}
+
+/**
  * Default settings for the AI Writer
  * @const {Object}
  */
@@ -36,7 +60,9 @@ const DEFAULT_SETTINGS = {
   enabled: true,
   creativity: 0.7,
   aiChoiceStyle: 'distinct', // 'normal' or 'distinct'
-  showLoadingIndicator: true
+  showLoadingIndicator: true,
+  apiEndpoint: 'https://api.openai.com/v1/chat/completions', // OpenAI-compatible endpoint
+  useJsonMode: true // Some endpoints don't support response_format: { type: 'json_object' }
 };
 
 /**
@@ -124,6 +150,42 @@ function clearApiKey() {
  */
 function hasApiKey() {
   return getApiKey() !== null;
+}
+
+/**
+ * Gets the current API endpoint URL from settings
+ * 
+ * @returns {string} The endpoint URL (defaults to OpenAI)
+ */
+function getEndpointUrl() {
+  const settings = getSettings();
+  return settings.apiEndpoint || DEFAULT_SETTINGS.apiEndpoint;
+}
+
+/**
+ * Sets the API endpoint URL in settings
+ * 
+ * @param {string} url - The endpoint URL to set
+ * @returns {{success: boolean, reason?: string}} Result of the operation
+ */
+function setEndpointUrl(url) {
+  const validation = validateEndpointUrl(url);
+  if (!validation.valid) {
+    return { success: false, reason: validation.reason };
+  }
+  
+  const result = saveSettings({ apiEndpoint: url.trim() });
+  return result ? { success: true } : { success: false, reason: 'Failed to save settings' };
+}
+
+/**
+ * Checks if JSON mode is enabled for the current endpoint
+ * 
+ * @returns {boolean} True if JSON mode is enabled
+ */
+function isJsonModeEnabled() {
+  const settings = getSettings();
+  return settings.useJsonMode !== false; // Default to true
 }
 
 /**
@@ -344,6 +406,8 @@ function showSettingsPanel() {
   const settings = getSettings();
   const hasKey = hasApiKey();
   const maskedKey = hasKey ? maskApiKey(getApiKey()) : 'Not set';
+  const currentEndpoint = settings.apiEndpoint || DEFAULT_SETTINGS.apiEndpoint;
+  const isDefaultEndpoint = currentEndpoint === DEFAULT_SETTINGS.apiEndpoint;
   
   const panel = document.createElement('div');
   panel.id = 'ai-settings-panel';
@@ -362,6 +426,28 @@ function showSettingsPanel() {
       <label>API Key: <span class="ai-key-display">${maskedKey}</span></label>
       <button id="ai-update-key" class="ai-btn ai-btn-small">${hasKey ? 'Update' : 'Set Key'}</button>
       ${hasKey ? '<button id="ai-clear-key" class="ai-btn ai-btn-small ai-btn-danger">Clear</button>' : ''}
+    </div>
+    
+    <div class="ai-setting-row ai-setting-endpoint">
+      <label>
+        API Endpoint:
+        <input type="text" id="ai-endpoint-url" class="ai-endpoint-input" 
+               value="${currentEndpoint}" 
+               placeholder="https://api.openai.com/v1/chat/completions" />
+      </label>
+      <div class="ai-endpoint-hint">
+        ${isDefaultEndpoint ? 'OpenAI (default)' : 'Custom endpoint'}
+        ${!isDefaultEndpoint ? '<button id="ai-reset-endpoint" class="ai-btn ai-btn-small">Reset</button>' : ''}
+      </div>
+      <div id="ai-endpoint-error" class="ai-key-error" style="display: none;"></div>
+    </div>
+    
+    <div class="ai-setting-row">
+      <label>
+        <input type="checkbox" id="ai-json-mode" ${settings.useJsonMode !== false ? 'checked' : ''} />
+        Use JSON response mode
+        <span class="ai-setting-hint">(disable for Ollama/older models)</span>
+      </label>
     </div>
     
     <div class="ai-setting-row">
@@ -410,6 +496,39 @@ function showSettingsPanel() {
   
   document.getElementById('ai-loading-indicator').addEventListener('change', (e) => {
     saveSettings({ showLoadingIndicator: e.target.checked });
+  });
+  
+  // Endpoint URL handling
+  const endpointInput = document.getElementById('ai-endpoint-url');
+  const endpointError = document.getElementById('ai-endpoint-error');
+  
+  endpointInput.addEventListener('blur', () => {
+    const url = endpointInput.value.trim();
+    const validation = validateEndpointUrl(url);
+    
+    if (!validation.valid) {
+      endpointError.textContent = validation.reason;
+      endpointError.style.display = 'block';
+      endpointInput.classList.add('ai-key-input-error');
+    } else {
+      endpointError.style.display = 'none';
+      endpointInput.classList.remove('ai-key-input-error');
+      saveSettings({ apiEndpoint: url });
+    }
+  });
+  
+  const resetEndpointBtn = document.getElementById('ai-reset-endpoint');
+  if (resetEndpointBtn) {
+    resetEndpointBtn.addEventListener('click', () => {
+      endpointInput.value = DEFAULT_SETTINGS.apiEndpoint;
+      saveSettings({ apiEndpoint: DEFAULT_SETTINGS.apiEndpoint });
+      showSettingsPanel(); // Refresh panel to update hint
+    });
+  }
+  
+  // JSON mode handling
+  document.getElementById('ai-json-mode').addEventListener('change', (e) => {
+    saveSettings({ useJsonMode: e.target.checked });
   });
   
   const creativitySlider = document.getElementById('ai-creativity');
@@ -655,6 +774,48 @@ function injectStyles() {
     #ai-settings-btn:hover {
       background: #3b4356;
     }
+    
+    .ai-setting-endpoint {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .ai-setting-endpoint label {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .ai-endpoint-input {
+      width: 100%;
+      padding: 6px 8px;
+      background: #0f1116;
+      border: 1px solid #3c4457;
+      border-radius: 4px;
+      color: #e8ecf0;
+      font-size: 12px;
+      font-family: monospace;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+    
+    .ai-endpoint-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    
+    .ai-endpoint-hint {
+      font-size: 11px;
+      color: #7d8590;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .ai-setting-hint {
+      font-size: 11px;
+      color: #7d8590;
+    }
   `;
   
   document.head.appendChild(styles);
@@ -680,9 +841,13 @@ const ApiKeyManager = {
   clearApiKey,
   hasApiKey,
   validateKeyFormat,
+  validateEndpointUrl,
   maskApiKey,
   getSettings,
   saveSettings,
+  getEndpointUrl,
+  setEndpointUrl,
+  isJsonModeEnabled,
   showKeyModal,
   ensureApiKey,
   initSettingsUI,

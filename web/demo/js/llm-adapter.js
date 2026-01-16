@@ -1,8 +1,9 @@
 /**
- * LLM Adapter (OpenAI)
+ * LLM Adapter (OpenAI-compatible)
  * 
  * Provider-agnostic adapter for making LLM API calls from the browser.
- * Supports OpenAI API with creativity mapping and timeout handling.
+ * Supports OpenAI API and OpenAI-compatible endpoints (Ollama, LM Studio, vLLM, etc.)
+ * with creativity mapping and timeout handling.
  * 
  * @module llm-adapter
  */
@@ -16,10 +17,10 @@
 const DEFAULT_TIMEOUT_MS = 5000;
 
 /**
- * OpenAI API endpoint for chat completions
+ * Default OpenAI API endpoint for chat completions
  * @const {string}
  */
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const DEFAULT_BASE_URL = 'https://api.openai.com/v1/chat/completions';
 
 /**
  * Default model to use
@@ -119,15 +120,18 @@ function parseJsonResponse(text) {
 }
 
 /**
- * Generates a branch proposal using the OpenAI API
+ * Generates a branch proposal using an OpenAI-compatible API
  * 
  * @param {Object} options - Generation options
  * @param {string} options.systemPrompt - System prompt for the LLM
  * @param {string} options.userPrompt - User prompt with context
- * @param {string} options.apiKey - OpenAI API key
+ * @param {string} options.apiKey - API key for authentication
  * @param {number} [options.creativity=0.7] - Creativity level (0.0-1.0)
  * @param {number} [options.timeoutMs=5000] - Timeout in milliseconds
  * @param {string} [options.model] - Model to use (defaults to gpt-4o-mini)
+ * @param {string} [options.baseUrl] - API endpoint URL (defaults to OpenAI)
+ * @param {boolean} [options.useJsonMode=true] - Whether to request JSON response format (some endpoints don't support this)
+ * @param {Object} [options.extraHeaders] - Additional headers to include in the request
  * @returns {Promise<Object>} The parsed proposal or error object
  */
 async function generateProposal(options) {
@@ -137,7 +141,10 @@ async function generateProposal(options) {
     apiKey,
     creativity = 0.7,
     timeoutMs = DEFAULT_TIMEOUT_MS,
-    model = DEFAULT_MODEL
+    model = DEFAULT_MODEL,
+    baseUrl = DEFAULT_BASE_URL,
+    useJsonMode = true,
+    extraHeaders = {}
   } = options;
   
   // Validate required parameters
@@ -157,22 +164,34 @@ async function generateProposal(options) {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
   try {
-    const response = await fetch(OPENAI_API_URL, {
+    // Build request body
+    const requestBody = {
+      model: model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: temperature,
+      max_tokens: 1000
+    };
+    
+    // Only include response_format if JSON mode is enabled
+    // Some OpenAI-compatible endpoints (Ollama, older models) don't support this
+    if (useJsonMode) {
+      requestBody.response_format = { type: 'json_object' };
+    }
+    
+    // Build headers
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      ...extraHeaders
+    };
+    
+    const response = await fetch(baseUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: temperature,
-        max_tokens: 1000,
-        response_format: { type: 'json_object' }
-      }),
+      headers: headers,
+      body: JSON.stringify(requestBody),
       signal: controller.signal
     });
     
@@ -197,7 +216,7 @@ async function generateProposal(options) {
         return createError(ErrorType.RATE_LIMIT, 'Rate limit exceeded. Try again in a moment.', errorDetails);
       }
       if (response.status >= 500) {
-        return createError(ErrorType.API_ERROR, 'OpenAI service error', errorDetails);
+        return createError(ErrorType.API_ERROR, 'LLM service error', errorDetails);
       }
       
       return createError(
@@ -227,7 +246,8 @@ async function generateProposal(options) {
       model: model,
       temperature: temperature,
       generation_time_ms: generationTimeMs,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      endpoint: baseUrl
     };
     
     return proposal;
@@ -250,16 +270,23 @@ async function generateProposal(options) {
 /**
  * Tests the API connection with a minimal request
  * 
- * @param {string} apiKey - OpenAI API key to test
+ * @param {string} apiKey - API key to test
+ * @param {Object} [options] - Test options
+ * @param {string} [options.baseUrl] - API endpoint URL (defaults to OpenAI)
+ * @param {boolean} [options.useJsonMode=true] - Whether to use JSON mode
  * @returns {Promise<{success: boolean, error?: string}>}
  */
-async function testConnection(apiKey) {
+async function testConnection(apiKey, options = {}) {
+  const { baseUrl = DEFAULT_BASE_URL, useJsonMode = true } = options;
+  
   const result = await generateProposal({
     systemPrompt: 'You are a test assistant. Respond with valid JSON.',
     userPrompt: 'Return {"test": true}',
     apiKey: apiKey,
     creativity: 0,
-    timeoutMs: 10000
+    timeoutMs: 10000,
+    baseUrl: baseUrl,
+    useJsonMode: useJsonMode
   });
   
   if (result.error) {
@@ -293,7 +320,7 @@ const LLMAdapter = {
   ErrorType,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_MODEL,
-  OPENAI_API_URL
+  DEFAULT_BASE_URL
 };
 
 // CommonJS export for testing

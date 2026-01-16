@@ -205,7 +205,9 @@
         userPrompt,
         apiKey,
         creativity: settings.creativity || 0.7,
-        timeoutMs: 5000
+        timeoutMs: 5000,
+        baseUrl: settings.apiEndpoint || window.LLMAdapter.DEFAULT_BASE_URL,
+        useJsonMode: settings.useJsonMode !== false
       });
       
       // Check for errors
