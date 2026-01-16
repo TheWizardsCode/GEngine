@@ -490,19 +490,33 @@ If checks pass: PRESENT BRANCH as a choice option
 
 If any check fails, the branch is simply not shown as an option.
 
-### Key Insight: Delayed Content Generation
-**Important**: The Save-the-Cat structure and dialogue guidelines are written during Stage 2 (Detail), but the **actual interactive content is generated dynamically at runtime** (Stage 4).
+### Key Insight: Two-Phase Runtime Generation
 
-**Why this matters**:
-- **Stage 2**: Define the beats, themes, character arcs, and emotional pacing
-- **Stage 4**: Writer generates specific interactions, dialogue, and descriptions *as player progresses*
-  - Allows writer to react to player choices within the branch
-  - Keeps content fresh and responsive
-  - Reduces token bloat (don't pre-generate content player may skip)
-  - Enables director to adjust creativity based on real-time player state
+**Important**: Both Stage 2 (Detail) and Stage 4 (Execution) happen at runtime, but they serve different purposes and occur at different moments:
+
+| Aspect | Stage 2 (Detail) | Stage 4 (Execution) |
+|--------|------------------|---------------------|
+| **When** | Background, before player reaches choice point | Real-time, as player progresses through branch |
+| **Player awareness** | None - happens invisibly | Direct - player sees generated content |
+| **What's generated** | Save-the-Cat structure, beats, guidelines | Actual dialogue, descriptions, choices |
+| **Latency tolerance** | Higher (1-3s acceptable) | Lower (must feel responsive) |
+| **Trigger** | Director anticipates upcoming opportunities | Player selects branch option |
+
+**Why this two-phase approach matters**:
+- **Stage 2 (Background)**: The system prepares branch structures ahead of time while the player is engaged elsewhere. This pre-validation ensures only coherent, on-theme branches are ever offered. The player never waits for this work.
+- **Stage 4 (Player-Facing)**: When the player actually enters a branch, the Writer generates specific dialogue and descriptions following the pre-approved structure. This keeps content fresh and responsive to the player's exact choices within the branch.
+
+**Benefits**:
+- Director validates structure before player sees any option (no broken branches offered)
+- Fresh dialogue on each playthrough (not pre-baked text)
+- Writer can react to player choices within the branch
+- Director can adjust creativity based on real-time player engagement
+- Generation latency is masked by player reading time
 
 ### Dynamic Generation Example
-**Save-the-Cat beat from Stage 2:**
+
+**Stage 2 (Background - player unaware):**
+While the player is exploring chapter 1, the system generates and validates a branch structure:
 ```
 "beat_2_rising_action": {
   "narrative": "The guard's suspicion deepens. He questions your motives.",
@@ -511,8 +525,10 @@ If any check fails, the branch is simply not shown as an option.
   "character_voice": "guard_captain"
 }
 ```
+This structure is validated, risk-scored, and marked READY_FOR_RUNTIME before the player ever reaches chapter 2.
 
-**Runtime dynamic generation (Stage 4):**
+**Stage 4 (Player-facing - in direct response to player):**
+When the player selects the branch option, the Writer generates actual dialogue:
 Writer is called with:
 ```
 {
