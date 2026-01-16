@@ -55,6 +55,14 @@ function loadStory(storyPath) {
     throw new Error(`Story not found: ${abs}`);
   }
   const content = fs.readFileSync(abs, 'utf8');
+  // If the story file contains compiled JSON (e.g. .ink.json), accept it directly.
+  try {
+    const parsed = JSON.parse(content);
+    // Pass a JSON string to inkjs.Story (it accepts a JSON string of the compiled story).
+    return new inkjs.Story(JSON.stringify(parsed));
+  } catch (e) {
+    // Not JSON, fall through to compile raw .ink source
+  }
   if (!inkjs.Compiler) {
     throw new Error('InkJS Compiler missing (expected inkjs/full)');
   }
