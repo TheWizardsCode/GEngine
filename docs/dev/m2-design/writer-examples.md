@@ -2,6 +2,70 @@
 
 This document provides 5 complete example proposals showing how the AI Writer generates branches across different narrative scenarios. Each example demonstrates prompt → output flow and Writer design principles.
 
+## Schema Relationship: Internal vs. Submission Format
+
+**Important**: The examples in this document show the **internal expanded format** that the AI Writer uses during the Detail stage to fully specify branch structure. This format is richer than the formal `branch-proposal.json` schema because:
+
+1. **Internal format** (shown here): Contains full dialogue trees, continuation paths, consequence mappings, and beat-by-beat structure. Used by the Writer and Director during validation.
+
+2. **Submission format** (`branch-proposal.json`): A flattened representation for storage, API transmission, and audit logging. The `content.text` field contains either:
+   - An Ink fragment for direct injection (`branch_type: "ink_fragment"`)
+   - A narrative delta for prose additions (`branch_type: "narrative_delta"`)
+   - A serialized JSON string of the expanded structure for complex branches (`branch_type: "ink_knot"`)
+
+### Format Mapping
+
+| Internal Format Field | Submission Schema Field |
+|-----------------------|-------------------------|
+| `id` | `id` |
+| `branch_type` | `content.branch_type` (mapped to enum) |
+| `title` | Stored in `content.text` metadata |
+| `branch_outline.beats` | Serialized into `content.text` |
+| `branch_content.*` | Serialized into `content.text` |
+| `return_path.return_scene_id` | `content.return_path` |
+| `metadata.coherence_confidence` | `metadata.confidence_score` |
+| `metadata.character_voice_match` | Used for validation, not stored |
+| `metadata.thematic_fit` | Used for validation, not stored |
+| `version_info.*` | `metadata.*` fields |
+
+### Conversion Example
+
+The internal format:
+```json
+{
+  "id": "proposal-87f4c290",
+  "branch_type": "companion_dialogue",
+  "title": "Lyra's Plea at Dusk",
+  "branch_outline": { "beats": [...] },
+  "branch_content": { "opening_scene": {...}, "dialogue_options": [...] },
+  "return_path": { "return_scene_id": "main_story.act2.campfire_next_morning" },
+  "metadata": { "coherence_confidence": 0.89 }
+}
+```
+
+Converts to submission format:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "metadata": {
+    "created_at": "2026-01-16T14:30:22Z",
+    "llm_model": "gpt-4-turbo",
+    "confidence_score": 0.89
+  },
+  "story_context": { "current_scene": "act2.campfire", ... },
+  "content": {
+    "branch_type": "ink_knot",
+    "text": "{serialized JSON of branch_outline + branch_content}",
+    "return_path": "main_story.act2.campfire_next_morning",
+    "return_path_confidence": 0.89
+  }
+}
+```
+
+The internal format is used during generation and validation; the submission format is used for storage and API calls.
+
+---
+
 ## Example 1: Companion Dialogue Branch (Character-Focused)
 
 ### Input Context (LORE Snapshot)
