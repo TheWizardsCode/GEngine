@@ -194,6 +194,36 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Mitigation: include thematic alignment as a Director risk metric; require branches to include explicit narrative intent statements.
 - Mitigation (post-M2): future phases may add producer tools to review and disable problematic branches based on post-launch analysis.
 
+## Resources
+
+### M2 Design Documents
+
+#### Core Design Specs
+- **[Director Algorithm](../dev/m2-design/director-algorithm.md)** — Complete 5-step real-time governance algorithm with risk-scoring metrics, return-path feasibility validation, and fail-safe mechanisms.
+- **[Policy Ruleset](../dev/m2-design/policy-ruleset.md)** — Validation rules across 5 categories (content safety, narrative consistency, structure, format, return path) with severity levels and tuning parameters.
+- **[Sanitization Transforms](../dev/m2-design/sanitization-transforms.md)** — Deterministic content transformation algorithms (profanity redaction, HTML stripping, whitespace normalization) with test cases.
+- **[Proposal Lifecycle](../dev/m2-design/proposal-lifecycle.md)** — Multi-stage process from Outline through Detail, Placement, Runtime, and Terminal states with key insights on late content generation.
+
+#### AI Writer Design
+- **[LORE Data Model](../dev/m2-design/lore-model.md)** — Complete specification of runtime context (player state, game state, narrative context, player behavior) that feeds Writer generation.
+- **[Writer Prompts](../dev/m2-design/writer-prompts.md)** — 4 prompt templates (dialogue, exploration, combat, consequences) with constraint enforcement mechanisms and latency targets.
+- **[Writer Examples](../dev/m2-design/writer-examples.md)** — 5 detailed proposal examples across branch types showing quality metrics and Writer capabilities.
+- **[Determinism Specification](../dev/m2-design/determinism-spec.md)** — Reproducibility framework via input hashing and LLM seed management with fallback strategies.
+
+#### Runtime & Integration
+- **[Runtime Integration Hooks](../dev/m2-design/runtime-hooks.md)** — 5 safe hook point categories (scene boundaries, choice points, quests, rest/load, combat) with 12-state integration state machine and automatic rollback semantics.
+- **[Telemetry Schema](../dev/m2-design/telemetry-schema.md)** — 6 event types spanning generation, validation, Director decision, presentation, choice, and outcome with 5 observability dashboards and post-launch analysis workflow.
+
+### M2 Schemas
+- **[Branch Proposal Schema](../dev/m2-schemas/branch-proposal.json)** — JSON Schema definition with all required fields for proposal submissions.
+- **[Validation Report Schema](../dev/m2-schemas/validation-report.json)** — Validation pipeline output structure with rule-level diagnostics.
+- **[Example Proposals](../dev/m2-schemas/examples/)** — 10 detailed proposal examples across different narrative scenarios.
+
+### Schema Documentation
+- **[Schema Docs](../dev/m2-design/schema-docs.md)** — Field-by-field explanation of branch proposal schema with integration guidance.
+
+---
+
 ## Open Questions
 
 ### Runtime constraints
