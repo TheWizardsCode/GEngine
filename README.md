@@ -104,14 +104,24 @@ These APIs don't include CORS headers for browser requests. Local models (Ollama
 
 #### Development Workaround: CORS Proxy
 
-For development, use a local CORS proxy:
+For development, use a local CORS proxy. The CORS Proxy field accepts a proxy base URL - requests are sent to `{proxy}/{endpoint}`.
 
+**Option 1: cors-anywhere style proxy**
 ```bash
-# Install and run local-cors-proxy
-npx local-cors-proxy --proxyUrl https://your-endpoint.openai.azure.com --proxyPartial ""
+# Run your own cors-anywhere instance (recommended for dev)
+npx cors-anywhere
+# Proxy runs at http://localhost:8080
 ```
+Then in AI Settings, set **CORS Proxy** to: `http://localhost:8080`
 
-Then in AI Settings, set **CORS Proxy** to: `http://localhost:8010`
+**Option 2: local-cors-proxy**
+```bash
+# Start proxy pointing to your specific endpoint
+npx local-cors-proxy --proxyUrl https://your-endpoint.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview --proxyPartial ""
+```
+Then in AI Settings:
+- Set **API Endpoint** to: `http://localhost:8010`
+- Leave **CORS Proxy** empty (proxy is the endpoint itself)
 
 The proxy rewrites requests to include proper CORS headers.
 
