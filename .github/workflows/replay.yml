@@ -1,0 +1,100 @@
+name: Replay Gate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    # run on PRs targeting main
+    branches: [ main ]
+
+jobs:
+  replay:
+    name: replay
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]
+        os: [ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Create artifacts dir
+        run: mkdir -p artifacts/logs artifacts/results
+
+      - name: Run replay harness for golden scripts
+        id: run-replay
+        shell: bash
+        run: |
+          set -o pipefail
+          EXIT_SUM=0
+          echo "Scanning for golden scripts..."
+          for script in web/stories/golden.*.json; do
+            [ -e "$script" ] || continue
+            base=$(basename "$script")
+            name=${base#golden.}
+            name=${name%.json}
+            # prefer .ink story; fall back to compiled .ink.json if present
+            story=web/stories/${name}.ink
+            if [ ! -f "$story" ]; then
+              if [ -f "web/stories/${name}.ink.json" ]; then
+                # some workflows may want compiled JSON; scripts/replay.js expects ink source, so fail if .ink missing
+                echo "WARNING: $story not found but compiled JSON exists; scripts/replay.js expects .ink source."
+                story="web/stories/${name}.ink.json"
+              fi
+            fi
+
+            out=artifacts/logs/replay.${name}.log
+            echo "Running replay on story=$story script=$script -> $out"
+            node scripts/replay.js --story "$story" --script "$script" >"$out" 2>&1 || EXIT=$?
+            # capture exit per test
+            if [ -z "${EXIT+x}" ]; then
+              EXIT=0
+            fi
+            echo "REPLAY_EXIT=$EXIT" >>"$out"
+            if [ "$EXIT" -ne 0 ]; then
+              echo "Replay failed for $name (exit=$EXIT)"
+              cp "$out" "artifacts/results/replay.${name}.failure.json" || true
+            fi
+            EXIT_SUM=$((EXIT_SUM + EXIT))
+            unset EXIT
+          done
+
+          echo "Total exit sum: $EXIT_SUM"
+          # write a small summary
+          echo "{ \"exit_sum\": $EXIT_SUM }" >artifacts/results/summary.json
+          # expose exit via step output
+          echo "exit_sum=$EXIT_SUM" >>$GITHUB_OUTPUT
+          # fail the step if any non-zero exit
+          if [ "$EXIT_SUM" -ne 0 ]; then
+            echo "One or more replays failed"
+            exit 1
+          fi
+        
+      - name: Upload replay logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: replay-logs
+          path: artifacts/logs/
+          retention-days: 14
+
+      - name: Upload replay results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: replay-results
+          path: artifacts/results/
+          retention-days: 30
+
+      # optional: make this job explicitly required in branch protection settings
