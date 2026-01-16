@@ -1,7 +1,8 @@
 /**
  * API Key Management
  * 
- * Manages OpenAI API key storage, retrieval, and UI for the AI Writer.
+ * Manages API key storage, retrieval, and UI for the AI Writer.
+ * Supports any OpenAI-compatible API (OpenAI, Azure OpenAI, Ollama, etc.)
  * Keys are stored in localStorage and prompted on first use.
  * 
  * @module api-key-manager
@@ -20,13 +21,6 @@ const STORAGE_KEY = 'ge-ai-writer-api-key';
  * @const {string}
  */
 const SETTINGS_KEY = 'ge-ai-writer-settings';
-
-/**
- * Pattern for validating OpenAI API key format
- * Supports both old (sk-...) and new (sk-proj-...) formats
- * @const {RegExp}
- */
-const API_KEY_PATTERN = /^sk-[a-zA-Z0-9_-]{20,}$/;
 
 /**
  * Validates a URL format for API endpoints
@@ -67,6 +61,7 @@ const DEFAULT_SETTINGS = {
 
 /**
  * Validates an API key format
+ * Accepts any non-empty string to support various providers (OpenAI, Azure, Ollama, etc.)
  * 
  * @param {string} key - The API key to validate
  * @returns {{valid: boolean, reason?: string}} Validation result
@@ -78,16 +73,13 @@ function validateKeyFormat(key) {
   
   const trimmedKey = key.trim();
   
-  if (!trimmedKey.startsWith('sk-')) {
-    return { valid: false, reason: 'API key should start with "sk-"' };
+  if (trimmedKey.length === 0) {
+    return { valid: false, reason: 'API key cannot be empty' };
   }
   
-  if (trimmedKey.length < 20) {
+  // Minimum length check - most API keys are at least 10 characters
+  if (trimmedKey.length < 10) {
     return { valid: false, reason: 'API key appears too short' };
-  }
-  
-  if (!API_KEY_PATTERN.test(trimmedKey)) {
-    return { valid: false, reason: 'API key format is invalid' };
   }
   
   return { valid: true };
@@ -227,13 +219,13 @@ function saveSettings(settings) {
  * Masks an API key for display (shows only last 4 characters)
  * 
  * @param {string} key - The API key to mask
- * @returns {string} Masked key like "sk-...xxxx"
+ * @returns {string} Masked key like "***xxxx"
  */
 function maskApiKey(key) {
   if (!key || key.length < 8) {
     return '(invalid key)';
   }
-  return `sk-...${key.slice(-4)}`;
+  return `***${key.slice(-4)}`;
 }
 
 // ============================================================================
@@ -250,7 +242,7 @@ function maskApiKey(key) {
  * @returns {Promise<string|null>} The entered API key or null if cancelled
  */
 function showKeyModal(options = {}) {
-  const { allowCancel = true, title = 'Enter OpenAI API Key' } = options;
+  const { allowCancel = true, title = 'Enter API Key' } = options;
   
   return new Promise((resolve) => {
     // Remove any existing modal
@@ -267,14 +259,14 @@ function showKeyModal(options = {}) {
       <div class="ai-modal">
         <h2 class="ai-modal-title">${title}</h2>
         <p class="ai-modal-desc">
-          To use AI-generated story branches, enter your OpenAI API key.
+          To use AI-generated story branches, enter your API key.
           Your key is stored locally in your browser.
         </p>
         <input 
           type="password" 
           id="ai-key-input" 
           class="ai-key-input" 
-          placeholder="sk-..."
+          placeholder="Enter your API key"
           autocomplete="off"
         />
         <div id="ai-key-error" class="ai-key-error" style="display: none;"></div>
@@ -282,9 +274,6 @@ function showKeyModal(options = {}) {
           ${allowCancel ? '<button id="ai-key-cancel" class="ai-btn ai-btn-secondary">Cancel</button>' : ''}
           <button id="ai-key-save" class="ai-btn ai-btn-primary">Save Key</button>
         </div>
-        <p class="ai-modal-note">
-          Get an API key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>
-        </p>
       </div>
     `;
     
