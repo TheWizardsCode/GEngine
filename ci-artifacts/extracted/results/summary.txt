@@ -1,0 +1,2 @@
+replays_total_exit_sum: 0
+replays_failed_count: 0

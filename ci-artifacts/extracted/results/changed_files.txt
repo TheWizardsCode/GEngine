@@ -1,0 +1,9 @@
+.beads/issues.jsonl
+.github/workflows/replay.yml
+.gitignore
+.opencode/skill/status/SKILL.md
+AGENTS.md
+artifacts/README.md
+scripts/replay.js
+web/stories/golden.test_minimal.json
+web/stories/test_minimal.ink
