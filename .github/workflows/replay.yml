@@ -94,7 +94,7 @@ jobs:
           changed=$(git diff --name-only $BASE_SHA $HEAD_SHA || true)
           echo "$changed" > artifacts/results/changed_files.txt || true
           echo "Changed files:\n$changed"
-          if echo "$changed" | rg -q -- "^(web/stories/|scripts/|tests/golden-path/)"; then
+          if echo "$changed" | grep -qE "^(web/stories/|scripts/|tests/golden-path/)"; then
             echo "run_replay=true" >> $GITHUB_OUTPUT
           else
             echo "run_replay=false" >> $GITHUB_OUTPUT
