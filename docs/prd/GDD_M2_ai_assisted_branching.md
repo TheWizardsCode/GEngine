@@ -19,6 +19,27 @@ At runtime, players will be able to drive the story into unscripted flows. The p
 - This PRD does not require human-in-loop approval for every branch proposal (the chosen guardrail model is automated policy and sanitization).
 - This PRD does not cover complex branching scenarios (e.g., multi-threading, permanent world state changes, or dynamic character resurrection).
 
+## Terminology
+
+This glossary defines key terms used throughout M2 documentation to ensure consistency:
+
+| Term | Definition |
+|------|------------|
+| **AI Director** | Runtime governance component that evaluates branch proposals, enforces return window constraints, controls Writer creativity, and makes accept/reject decisions. Latency target: < 500ms. |
+| **AI Writer** | Content generation component that produces branch proposals and runtime dialogue using LORE context and LLM calls. Latency target: 1–3s per generation. |
+| **Branch Proposal** | A structured document containing metadata, story context, and content for an AI-generated story branch. Conforms to `branch-proposal.json` schema. |
+| **Confidence Score** | AI Writer's self-assessed certainty (0.0–1.0) that a proposal is coherent and on-theme. Stored in `metadata.confidence_score`. |
+| **Creativity Parameter** | Director-controlled value (0.0–1.0) that adjusts Writer's output variance. 0.0 = conservative/predictable; 1.0 = surprising/imaginative. Maps to LLM temperature. |
+| **Hook Point** | A safe moment in the story runtime where a branch can be injected (scene boundary, choice point, quest completion, rest/load, combat victory). |
+| **LORE** | Living Observed Runtime Experience — the contextual data (player state, game state, narrative context, player behavior) that feeds Writer generation. See `lore-model.md`. |
+| **Return Path** | The scripted scene/knot that a branch returns to after completion. Specified in `content.return_path`. |
+| **Return Path Confidence** | AI Writer's certainty (0.0–1.0) that the return path is narratively coherent. Stored in `content.return_path_confidence`. |
+| **Return Window** | Maximum number of player choice points before a branch must return to scripted content. Configured value: 3–5 choices. |
+| **Risk Score** | Director's weighted assessment (0.0–1.0) of proposal risk across 5 metrics: thematic consistency, LORE adherence, character voice, narrative pacing, proposal confidence. |
+| **Rollback** | Automatic recovery mechanism that reverts game state to last checkpoint when a branch fails during execution. |
+| **Sanitization** | Deterministic content transforms applied to proposals (profanity redaction, HTML stripping, whitespace normalization) to ensure safety. |
+| **Validation Pipeline** | Automated policy checks that evaluate proposals against rules (content safety, narrative consistency, structure, format, return path). Produces validation reports. |
+
 ## Users
 
 ### Primary users (end-players)
@@ -125,6 +146,27 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - High-level stages: Outline (concept review) → Detail (full development + validation) → Placement (identify insertion points) → Runtime (dynamic generation + sanitization) → Terminal (archived/reverted/deprecated)
 - Key insight: Save-the-Cat structure and beats are written during Detail stage; actual interactive dialogue/content is generated dynamically at runtime based on player choices and director's creativity parameter
 
+### Runtime Content Generation Architecture
+
+**Critical architectural insight**: M2 uses a **two-phase content generation model**:
+
+1. **Pre-validation phase (Detail stage)**: The AI Writer generates a **branch structure** — a Save-the-Cat outline with 4 beats (hook, rising action, climax, resolution), character voice guidelines, thematic constraints, and return path specification. This structure is validated by the policy pipeline and approved by the Director. The structure is stored and ready for runtime.
+
+2. **Runtime phase (Execution)**: When a player triggers the branch, the AI Writer **dynamically generates the actual dialogue and narrative content** following the pre-approved structure. Each beat's content is generated on-demand, sanitized in real-time, and presented to the player. This enables:
+   - Adaptive responses to player choices within the branch
+   - Fresh, varied dialogue on each playthrough
+   - Director-controlled creativity adjustment based on player engagement
+
+**Latency implications**:
+- The 500ms Director decision latency applies to **approving the branch structure** (pre-validated)
+- Runtime content generation (1–3s per beat) happens **during branch execution**, not at the approval decision point
+- Players experience natural dialogue pacing; generation latency is masked by reading time
+
+**Fail-safe behavior**:
+- If runtime generation fails, the system displays a pre-authored fallback line and logs the error
+- If the branch cannot complete, automatic rollback restores the player to the last checkpoint
+- Player notification: "The story encountered an issue. Returning to last save point."
+
 ## Release & Operations
 
 ### Rollout plan
@@ -224,33 +266,71 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 
 ---
 
-## Open Questions
+## Design Decisions
 
-### Runtime constraints
-- What should the Director 'return window' be (number of player choice points)? (Suggested: 3–5 choices).
-- What latency target should the Director and AI Writer meet? (Suggested: Director < 500ms; Writer 1–3s).
+The following decisions have been finalized for M2 implementation:
+
+### Runtime Constraints
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Return window** | 3–5 player choice points | Balances emergent exploration with narrative coherence; prevents infinite loops while allowing meaningful detours |
+| **Director latency target** | < 500ms | Player-facing decision must feel instantaneous; validation happens on pre-approved structures |
+| **Writer latency target** | 1–3s per beat | Acceptable for background/async generation; masked by player reading time during execution |
 
 ### AI Writer and LORE
-- How is LORE recorded and updated at runtime (manual annotations, auto-extracted, hybrid)?
-- What is the minimum context size (LORE + character state) needed for coherent Writer output?
-- How should the Director's creativity parameter map to LLM temperature/sampling settings? (Suggested: 0.0 = low temp; 1.0 = high temp)
-- Should the Writer cache proposals by context to avoid redundant generation?
 
-### Policy and safety
-- What are concrete rule categories for the policy (e.g., profanity, sexual content, political content, narrative red lines)?
-- Should the policy be story-specific or global?
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **LORE capture method** | Hybrid (auto-extracted + manual annotations) | Auto-extract player actions, inventory, relationships; manual annotations for narrative themes and character arcs |
+| **Minimum LORE context** | 5–15 KB compressed | Sufficient for coherent generation; fits in LLM context windows; see lore-model.md for field specifications |
+| **Creativity parameter mapping** | 0.0 = temperature 0.0 (deterministic); 1.0 = temperature 1.5 (high variance) | Linear mapping provides intuitive control; clamped to prevent incoherent outputs |
+| **Proposal caching** | Yes, by context hash | Avoid redundant generation for identical contexts; cache invalidated when LORE changes |
+| **Embedding model** | text-embedding-ada-002 (or equivalent) | Industry standard for semantic similarity; used in validation and Director risk scoring |
 
-### Storage & access
-- What retention period and access controls should apply to proposal storage?
-- Should proposal data be encrypted or anonymized after a branch is deployed?
+### Policy and Safety
 
-### Player experience metrics
-- How should we measure player coherence perception (survey, behavioral signals, implicit feedback)?
-- Should players be told when they encounter an AI-generated branch (transparency) or not (seamlessness)?
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Policy rule categories** | Content safety (profanity, explicit, hate speech), Narrative consistency (LORE, character voice, theme), Structural (length, format, Ink syntax), Return path validation | Comprehensive coverage; see policy-ruleset.md for full specification |
+| **Policy scope** | Global defaults + story-specific overrides | Global rules ensure baseline safety; story-specific rules allow genre-appropriate content (e.g., darker themes in horror stories) |
+
+### Storage & Access
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Proposal retention** | 2 years for audit logs; 6 months for raw proposals with content | Compliance requirement; enables post-launch learning; older proposals archived |
+| **Data handling** | Encrypt at rest; redact PII before storage; access limited to analytics roles | Privacy by design; GDPR-compatible |
+
+### Player Experience
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Coherence measurement** | Behavioral signals (reload frequency, skip rate, session continuation) + optional post-story survey | Non-intrusive primary measurement; explicit feedback for deep analysis |
+| **AI transparency** | Seamless by default (no indication); opt-in transparency mode in settings | Prioritizes immersion; respects player choice for those who want to know |
 
 ### Validation UX
-- Should validation run synchronously in authoring tools, or should large proposals be validated asynchronously?
-- Should sanitized diffs be exposed automatically to downstream writers for review?
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Authoring validation** | Asynchronous for proposals > 1000 tokens; synchronous for smaller proposals | Responsive UX for quick edits; background processing for large content |
+| **Sanitization visibility** | Sanitized diffs logged but not auto-exposed; available on request | Reduces noise; diffs available for debugging when needed |
+
+## Remaining Open Questions
+
+The following questions require stakeholder input before Phase 1 implementation:
+
+### Story-Specific Configuration
+- What story-specific policy overrides are needed for the initial pilot story?
+- Which characters have custom voice profiles that need explicit constraints?
+
+### Operational Readiness
+- What alerting channels should receive fail-safe notifications (Slack, PagerDuty, email)?
+- Who is the on-call contact for Phase 2 pilot issues?
+
+### Player Research
+- Should we conduct A/B testing with AI-branches enabled vs. disabled?
+- What is the target sample size for coherence perception surveys?
 
 ## Clarification: No Human-in-Loop in M2
 

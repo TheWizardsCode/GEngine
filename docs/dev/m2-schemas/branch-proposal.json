@@ -31,13 +31,14 @@
           "description": "Model version or release date (e.g., '2024-01-15' or '1.0.0')."
         },
         "llm_seed": {
-          "type": "integer",
+          "type": ["integer", "null"],
           "description": "Random seed used during generation for reproducibility. Optional; null if seed was not set.",
           "minimum": 0
         },
         "context_hash": {
           "type": "string",
-          "description": "SHA-256 hash of the input context (LORE + character state) for reproducibility verification."
+          "description": "SHA-256 hash of the input context (LORE + character state) for reproducibility verification.",
+          "pattern": "^[a-f0-9]{64}$"
         },
         "confidence_score": {
           "type": "number",
