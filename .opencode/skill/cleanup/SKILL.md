@@ -75,6 +75,7 @@ Triggers
 - Cross-reference beads with branches found in the repo. For each in-progress bead, show last updated, linked branches, and recommend close if: bead's branch is merged and PRs/commits indicate completion or inactivity (configurable age threshold).
 - For each bead use the status skill to evaluate their suitability for closure.
 - Present candidate bead closures and ask for confirmation. If confirmed and not `dry-run`: `bd close <id> --reason "Completed" --json` then `bd sync`.
+  - If there are no candidates, report none found.
 
 8) Final report
 - Produce concise report including:
