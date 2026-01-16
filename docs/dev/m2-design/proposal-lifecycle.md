@@ -203,6 +203,7 @@ Develop complete branch content with all story beats, dialogue, and mechanics fu
    - LORE adherence risk
    - Character voice risk
    - Narrative pacing risk
+   - Player preference risk (will player enjoy this branch?)
    - Return-path coherence risk
 3. If aggregate risk > THRESHOLD → REJECTED
 4. If aggregate risk ≤ THRESHOLD → APPROVED (proceed to Stage 3)

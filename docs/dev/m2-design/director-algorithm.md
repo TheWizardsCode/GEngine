@@ -42,6 +42,7 @@ Branch Proposal from AI Writer
     - Compute LORE adherence score
     - Compute character voice consistency
     - Compute narrative pacing fit
+    - Compute player preference fit
     - Aggregate into overall risk score (0.0–1.0)
     ↓
 [4] Return-Path Coherence Check
@@ -128,6 +129,7 @@ risk_score = weighted_avg([
     lore_adherence_risk,
     character_voice_risk,
     narrative_pacing_risk,
+    player_preference_risk,
     proposal_confidence_risk
 ])
 
@@ -136,11 +138,12 @@ where each risk is in [0.0, 1.0], 0.0 = low risk, 1.0 = high risk
 
 **Weights** (tunable):
 ```
-thematic_consistency_weight: 0.25
-lore_adherence_weight: 0.25
-character_voice_weight: 0.20
+thematic_consistency_weight: 0.20
+lore_adherence_weight: 0.20
+character_voice_weight: 0.15
 narrative_pacing_weight: 0.15
-proposal_confidence_weight: 0.15
+player_preference_weight: 0.20
+proposal_confidence_weight: 0.10
 ```
 
 ### 3a. Thematic Consistency Risk
@@ -324,6 +327,104 @@ def proposal_confidence_risk(proposal):
 
 **Inputs**:
 - `proposal.metadata.confidence_score`: AI Writer's confidence (0.0–1.0)
+
+### 3f. Player Preference Risk
+
+**Goal**: Assess whether the branch aligns with the player's demonstrated preferences and play style, predicting whether they will enjoy the branch.
+
+**Algorithm**:
+```
+def player_preference_risk(proposal, player_profile):
+    risk = 0.0
+    
+    # [1] Branch type preference match
+    branch_type = proposal.content.branch_type  # e.g., "dialogue", "combat", "exploration"
+    type_preference = player_profile.branch_type_preferences.get(branch_type, 0.5)
+    type_risk = 1.0 - type_preference  # Low preference = high risk
+    
+    # [2] Theme preference match
+    branch_themes = proposal.content.themes  # e.g., ["redemption", "mystery"]
+    theme_matches = [
+        player_profile.theme_preferences.get(theme, 0.5)
+        for theme in branch_themes
+    ]
+    theme_preference = mean(theme_matches) if theme_matches else 0.5
+    theme_risk = 1.0 - theme_preference
+    
+    # [3] Complexity preference (based on player's historical choices)
+    branch_complexity = proposal.metadata.complexity_score  # 0.0 = simple, 1.0 = complex
+    preferred_complexity = player_profile.preferred_complexity  # Learned from history
+    complexity_deviation = abs(branch_complexity - preferred_complexity)
+    complexity_risk = complexity_deviation
+    
+    # [4] Engagement prediction (based on similar past branches)
+    similar_branch_outcomes = find_similar_branch_outcomes(
+        proposal, 
+        player_profile.branch_history
+    )
+    if similar_branch_outcomes:
+        # Historical engagement with similar branches
+        avg_engagement = mean([o.engagement_score for o in similar_branch_outcomes])
+        engagement_risk = 1.0 - avg_engagement
+    else:
+        # No history; use neutral risk
+        engagement_risk = 0.5
+    
+    # [5] Pacing preference (does player like frequent branches or sparse?)
+    time_since_last_branch = player_profile.time_since_last_branch_minutes
+    preferred_frequency = player_profile.preferred_branch_frequency_minutes
+    if time_since_last_branch < preferred_frequency * 0.5:
+        # Too soon; player may feel overwhelmed
+        frequency_risk = 0.3
+    elif time_since_last_branch > preferred_frequency * 2.0:
+        # Overdue; player may welcome a branch
+        frequency_risk = 0.0
+    else:
+        frequency_risk = 0.1
+    
+    # Weighted combination
+    risk = (
+        type_risk * 0.25 +
+        theme_risk * 0.25 +
+        complexity_risk * 0.15 +
+        engagement_risk * 0.25 +
+        frequency_risk * 0.10
+    )
+    
+    return clamp(risk, 0.0, 1.0)
+```
+
+**Inputs**:
+- `proposal.content.branch_type`: Type of branch (dialogue, combat, exploration, moral_dilemma, etc.)
+- `proposal.content.themes`: Themes present in the branch
+- `proposal.metadata.complexity_score`: Estimated complexity (0.0–1.0)
+- `player_profile.branch_type_preferences`: Dict mapping branch types to preference scores (0.0–1.0)
+- `player_profile.theme_preferences`: Dict mapping themes to preference scores (0.0–1.0)
+- `player_profile.preferred_complexity`: Player's preferred complexity level (learned)
+- `player_profile.branch_history`: List of past branch outcomes with engagement scores
+- `player_profile.time_since_last_branch_minutes`: Minutes since last branch was offered
+- `player_profile.preferred_branch_frequency_minutes`: Estimated preferred frequency
+
+**Player Profile Learning**:
+The player profile is built incrementally from telemetry:
+- **Branch type preferences**: Updated based on accept/decline rates per type
+- **Theme preferences**: Updated based on engagement scores with themed branches
+- **Complexity preference**: Learned from which branches player completes vs. abandons
+- **Preferred frequency**: Learned from accept rates relative to time gaps
+
+**Cold Start Handling**:
+For new players with no history:
+- Use population-level defaults (average preferences across all players)
+- Apply conservative risk estimate (0.4–0.5 for unknown factors)
+- Update preferences aggressively during first 5 branches
+
+**Tuning parameters**:
+- `type_preference_weight` (0.0–1.0): Weight for branch type match (default: 0.25)
+- `theme_preference_weight` (0.0–1.0): Weight for theme match (default: 0.25)
+- `complexity_weight` (0.0–1.0): Weight for complexity match (default: 0.15)
+- `engagement_weight` (0.0–1.0): Weight for historical engagement (default: 0.25)
+- `frequency_weight` (0.0–1.0): Weight for timing preference (default: 0.10)
+- `cold_start_risk` (0.0–1.0): Default risk for new players (default: 0.45)
 
 ---
 

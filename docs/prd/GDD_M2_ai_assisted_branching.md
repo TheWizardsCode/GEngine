@@ -82,7 +82,8 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 
 #### AI Director (runtime governance)
 - Evaluates incoming branch proposals from the AI Writer in real-time (latency target: < 500ms per decision).
-- Applies risk metrics and coherence checks: thematic consistency, LORE adherence, character voice preservation, narrative pacing.
+- Applies risk metrics and coherence checks: thematic consistency, LORE adherence, character voice preservation, narrative pacing, and player preference fit.
+- Predicts player enjoyment: assesses whether the branch aligns with demonstrated player preferences (branch types, themes, complexity, historical engagement).
 - Enforces the 'return window' constraint: ensures the proposed branch includes a bridging pathway back to scripted content.
 - Provides a fail-safe mechanism: if the Director cannot find a coherent return path, it auto-reverts to scripted content and logs the event.
 - Emits decision telemetry: proposal timestamp, approval/rejection reason, detected risk score.
