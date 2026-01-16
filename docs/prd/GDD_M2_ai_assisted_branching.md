@@ -76,7 +76,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Automated policy checks: profanity, disallowed categories, length limits, prohibited narrative patterns.
 - Sanitization transforms: strip unsafe HTML, normalize whitespace, enforce character encoding.
 - Produces validation reports with pass/fail status and rule-level diagnostics (which rules triggered, which content was sanitized).
-- Stores proposals with states: `submitted`, `validated`, `rejected`, `sanitized`, `integrated`, `reverted`.
+- Follows multi-stage proposal lifecycle: Outline (high-level concept review) → Detail (full Save-the-Cat definition + validation) → Placement (identify insertion points) → Runtime (dynamic content generation with sanitization) → Terminal (archived/reverted/deprecated).
 - Allows queryable access to proposals and validation reports via API or database.
 
 #### Runtime integration hooks
@@ -119,6 +119,11 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Security note: treat proposal content as untrusted input; run sanitizers and Writer/Director processing in isolated execution environments and validate encoding before applying to runtime.
 - Privacy note: redact or avoid storing PII in proposals; if storing is required, ensure encryption-at-rest and limited access.
 - Safety note: failed branches and policy violations must be logged (not silently dropped) to detect potential attacks or author errors.
+
+### Proposal Lifecycle
+- **Reference**: See `history/m2-design/proposal-lifecycle.md` for complete multi-stage proposal lifecycle
+- High-level stages: Outline (concept review) → Detail (full development + validation) → Placement (identify insertion points) → Runtime (dynamic generation + sanitization) → Terminal (archived/reverted/deprecated)
+- Key insight: Save-the-Cat structure and beats are written during Detail stage; actual interactive dialogue/content is generated dynamically at runtime based on player choices and director's creativity parameter
 
 ## Release & Operations
 
