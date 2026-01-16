@@ -35,7 +35,7 @@ This glossary defines key terms used throughout M2 documentation to ensure consi
 | **Return Path** | The scripted scene/knot that a branch returns to after completion. Specified in `content.return_path`. |
 | **Return Path Confidence** | AI Writer's certainty (0.0–1.0) that the return path is narratively coherent. Stored in `content.return_path_confidence`. |
 | **Return Window** | Maximum number of player choice points before a branch must return to scripted content. Configured value: 3–5 choices. |
-| **Risk Score** | Director's weighted assessment (0.0–1.0) of proposal risk across 5 metrics: thematic consistency, LORE adherence, character voice, narrative pacing, proposal confidence. |
+| **Risk Score** | Director's weighted assessment (0.0–1.0) of proposal risk across 6 metrics: thematic consistency, LORE adherence, character voice, narrative pacing, player preference fit, and proposal confidence. |
 | **Rollback** | Automatic recovery mechanism that reverts game state to last checkpoint when a branch fails during execution. |
 | **Sanitization** | Deterministic content transforms applied to proposals (profanity redaction, HTML stripping, whitespace normalization) to ensure safety. |
 | **Validation Pipeline** | Automated policy checks that evaluate proposals against rules (content safety, narrative consistency, structure, format, return path). Produces validation reports. |
