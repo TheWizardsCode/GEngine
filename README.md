@@ -57,14 +57,15 @@ npx playwright install
 
 ## AI Writer (Milestone 2)
 
-The demo includes an experimental AI Writer that generates additional story choices at each decision point using OpenAI's API.
+The demo includes an experimental AI Writer that generates additional story choices at each decision point using OpenAI-compatible APIs.
 
 ### How to use
 
 1. Click **AI Settings** in the demo header
-2. Enter your OpenAI API key (stored locally in browser)
-3. Enable AI-generated choices
-4. Play the story — AI choices appear with a distinctive style at each decision point
+2. Enter your API key (stored locally in browser)
+3. (Optional) Configure a custom API endpoint for Ollama, LM Studio, vLLM, or other OpenAI-compatible servers
+4. Enable AI-generated choices
+5. Play the story — AI choices appear with a distinctive style at each decision point
 
 ### Features
 - **LORE Context Assembly**: Extracts player state and narrative context from the Ink runtime
@@ -72,18 +73,32 @@ The demo includes an experimental AI Writer that generates additional story choi
 - **Naive Branch Injection**: AI choices appear at every choice point (Director filtering coming in M3)
 - **Safety Validation**: Basic profanity filter and schema validation
 - **Configurable**: Toggle AI, adjust creativity, change choice styling
+- **OpenAI-Compatible Endpoints**: Works with OpenAI, Ollama, LM Studio, vLLM, and other compatible servers
 
 ### Configuration
+- **API Endpoint**: Custom endpoint URL for OpenAI-compatible servers (defaults to OpenAI)
+- **JSON Mode**: Toggle off for endpoints that don't support `response_format: { type: 'json_object' }` (e.g., Ollama)
 - **Creativity**: 0.0 (deterministic) to 1.0 (creative) — maps to temperature 0.0-2.0
 - **Choice Style**: Distinct (highlighted with AI badge) or Normal (blends in)
 - **Loading Indicator**: Show/hide while AI generates
+
+### Using with Local Models
+
+To use with local models via Ollama or LM Studio:
+
+1. Start your local server (e.g., `ollama serve`)
+2. In AI Settings, set the API Endpoint to your local server URL:
+   - Ollama: `http://localhost:11434/v1/chat/completions`
+   - LM Studio: `http://localhost:1234/v1/chat/completions`
+3. Disable **Use JSON response mode** if your model doesn't support structured output
+4. Enter any non-empty API key (local servers may not require authentication)
 
 ### Modules
 | Module | Path | Description |
 |--------|------|-------------|
 | LORE Assembler | `web/demo/js/lore-assembler.js` | Extracts context from Ink runtime |
 | Prompt Engine | `web/demo/js/prompt-engine.js` | Builds prompts for the LLM |
-| LLM Adapter | `web/demo/js/llm-adapter.js` | OpenAI API integration |
+| LLM Adapter | `web/demo/js/llm-adapter.js` | OpenAI-compatible API integration |
 | API Key Manager | `web/demo/js/api-key-manager.js` | Key storage and settings UI |
 | Proposal Validator | `web/demo/js/proposal-validator.js` | Schema and safety validation |
 
