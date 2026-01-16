@@ -27,3 +27,6 @@ artifacts/
 
 # Allow README in artifacts
 !artifacts/README.md
+
+# Local CI artifacts download
+ci-artifacts/
