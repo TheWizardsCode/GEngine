@@ -24,10 +24,10 @@ At runtime, players will be able to drive the story into unscripted flows. The p
 ### Primary users (end-players)
 Players on desktop/mobile browsers who will experience emergent story branches during gameplay.
 
-### Secondary users (authoring and ops)
-- Producers and tooling engineers who will generate and validate AI-proposed branches for demo stories.
-- Writers and designers who may review, refine, or disable AI-generated branches post-launch.
-- Runtime operators who monitor telemetry and Director performance.
+### Secondary users (post-M2 phases)
+- Producers and tooling engineers who generate and validate AI-proposed branches during development (Phase 0–1).
+- Writers and designers who may analyze branch performance and refine proposals between phases (post-Phase 3).
+- Analytics teams who analyze telemetry to improve policy rules and Director heuristics.
 
 ### Key user journeys
 
