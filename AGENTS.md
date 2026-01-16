@@ -204,6 +204,8 @@ bd sync               # Sync with git
 7. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
+- Whenever listing a bead ID ALWAYS add the title in parentheses
+- ALWAYS run `bd sync` after any git operation that changes `.beads/issues.jsonl
 - Work is NOT complete until changes are pushed to the canonical remote
 - If no remote is configured yet, configure it first, then push
 - NEVER stop before pushing - that leaves work stranded locally
