@@ -9,131 +9,211 @@ Add M2: AI-assisted branching support to enable runtime integration of AI-propos
 At runtime, players will be able to drive the story into unscripted flows. The priority is the player's experience: the AI Director guides unscripted branching so the story remains coherent and returns the narrative to the scripted path within a defined number of player choice points. An AI Writer will dynamically author story content using recorded LORE, character definitions, and the player's recent actions as inputs. The system must ensure the emergent branches remain playable, on-theme, and do not create dead-ends or permanent divergence from the intended story arc.
 
 ### Goals
-- Define a clear design for accepting AI-proposed branches, running automated policy checks and sanitization, and integrating approved branches into the runtime story state.
-- Provide acceptance criteria and testable validation for the policy pipeline and serialization schema for proposals.
-- Produce integration guidance for runtime hooks and developer UX for approving and reverting branches.
+- Enable players to experience emergent, AI-generated story branches that feel coherent and on-theme without author hand-crafting every branch.
+- Ensure the AI Director reliably steers unscripted flows back to the authored narrative within a configurable 'return window' (player choice points).
+- Design a safe, policy-driven validation pipeline that prevents unsafe, incoherent, or off-theme content from reaching players.
+- Provide producers and designers with tooling to monitor, validate, and refine emergent branching in production.
 
 ### Non-goals
 - This PRD does not mandate specific LLM providers or runtime hosting choices.
-- This PRD does not require human-in-loop approval (the chosen guardrail model is automated policy and sanitization).
+- This PRD does not require human-in-loop approval for every branch proposal (the chosen guardrail model is automated policy and sanitization).
+- This PRD does not cover complex branching scenarios (e.g., multi-threading, permanent world state changes, or dynamic character resurrection).
 
 ## Users
 
-### Primary users
-Internal producers and tooling engineers who will generate and validate AI-proposed branches for demo stories.
+### Primary users (end-players)
+Players on desktop/mobile browsers who will experience emergent story branches during gameplay.
 
-### Secondary users (optional)
-Writers and designers who may later review, accept, or refine AI-proposed branches.
+### Secondary users (authoring and ops)
+- Producers and tooling engineers who will generate and validate AI-proposed branches for demo stories.
+- Writers and designers who may review, refine, or disable AI-generated branches post-launch.
+- Runtime operators who monitor telemetry and Director performance.
 
 ### Key user journeys
-- Propose branch: an authoring tool or automated process generates candidate branches for a given story context and submits them to the validation pipeline.
-- Validate branch: automated policy and sanitization checks run; if the branch passes, it is marked `validated` and becomes eligible for integration.
-- Integrate branch: runtime hooks apply the validated branch into story state; the branch can be persisted and surfaced in telemetry.
-- Revert branch: if issues are discovered post-integration, a rollback mechanism removes or disables the branch.
+
+#### Player journey: unscripted branching
+- Player makes a story choice that triggers an unscripted condition.
+- AI Writer generates a branch proposal based on LORE, character state, and player action.
+- AI Director validates and evaluates the proposal against constraints and pacing.
+- If approved, the branch is seamlessly integrated into the story; the player continues without interruption.
+- The Director ensures the branch paces toward a return to the scripted path within the configured window.
+
+#### Producer/designer journey: branch validation and refinement
+- Authoring tool or batch process generates candidate branches for a given story context.
+- Policy and sanitization pipeline automatically validates proposals (profanity, coherence, theme consistency).
+- Producers review validation reports and can approve, reject, or request refinements.
+- Approved branches are marked eligible for runtime integration; rejected branches are logged for analysis.
+
+#### Runtime operator journey: monitoring and safety
+- Operators observe telemetry events for branch proposals, Director decisions, and player outcomes.
+- If a branch causes player confusion or breaks immersion, operators can disable or revert it via feature flags.
+- Logs and audit trails track all decisions for post-mortem analysis.
 
 ## Requirements
 
 ### Functional requirements (MVP)
 
-#### Branch proposal interface
-- Define a stable JSON schema for branch proposals that includes metadata (source, model version, confidence), story context, and branch content (Ink fragment or delta).
-- Provide an API endpoint or CLI command for submitting proposals for validation.
+#### Player experience: unscripted branching at runtime
+- At runtime, when a player choice triggers an unscripted condition, the system generates and integrates an AI-authored branch.
+- The branch seamlessly continues the story without breaking immersion or narrative coherence.
+- Players cannot distinguish between hand-authored and AI-generated branches (quality target).
+- The system guarantees a return to the scripted narrative within the configured 'return window' (e.g., N player choice points).
 
-#### Policy & sanitization pipeline
-- Implement automated policy checks (profanity, disallowed categories, length limits, prohibited patterns) configurable via a ruleset.
-- Implement sanitization transforms (strip unsafe HTML, normalize whitespace, enforce encoding) and a deterministic sanitizer to reduce variance.
-- Produce a validation report schema indicating pass/fail and rule-level diagnostics.
+#### AI Director (runtime governance)
+- Evaluates incoming branch proposals from the AI Writer in real-time (latency target: < 500ms per decision).
+- Applies risk metrics and coherence checks: thematic consistency, LORE adherence, character voice preservation, narrative pacing.
+- Enforces the 'return window' constraint: ensures the proposed branch includes a bridging pathway back to scripted content.
+- Provides a fail-safe mechanism: if the Director cannot find a coherent return path, it auto-reverts to scripted content and logs the event.
+- Emits decision telemetry: proposal timestamp, approval/rejection reason, detected risk score.
 
-#### Validation outcome and lifecycle
-- Store proposals with states: `submitted`, `validated`, `rejected`, `sanitized`, `integrated`, `reverted`.
-- Attach validation reports and timestamps to proposals; make them queryable via API.
+#### AI Writer (runtime content generation)
+- Generates branch proposals using recorded LORE, character definitions, and recent player actions as context.
+- Proposal schema includes: metadata (confidence score, provenance), story context (current scene, player inventory, character state), branch content (Ink fragment or delta).
+- Produces deterministic, reproducible output for the same inputs (same context + same LLM seed = same proposal).
+- Outputs proposals that conform to the branch proposal schema and include provenance metadata (LLM model version, timestamp).
 
-#### Runtime integration hooks (design only)
+#### Branch proposal validation pipeline
+- Automated policy checks: profanity, disallowed categories, length limits, prohibited narrative patterns.
+- Sanitization transforms: strip unsafe HTML, normalize whitespace, enforce character encoding.
+- Produces validation reports with pass/fail status and rule-level diagnostics (which rules triggered, which content was sanitized).
+- Stores proposals with states: `submitted`, `validated`, `rejected`, `sanitized`, `integrated`, `reverted`.
+- Allows queryable access to proposals and validation reports via API or database.
+
+#### Runtime integration hooks
 - Design hook points where validated branch content can be applied into the running story state with clear transaction boundaries.
-- Define rollback semantics and persistence model for integrated branches.
+- Define rollback semantics: if a branch causes a runtime error or player complaint, operators can safely revert it without corrupting save state.
+- Persistence model: integrated branches are logged to ensure reproducibility and audit trails.
 
-#### AI Director and AI Writer (design inputs)
-- AI Director
-  - Runtime control component responsible for steering emergent AI-generated flows toward coherence.
-  - Enforces a configurable 'return window' (maximum number of player choice points before forcing a return to scripted path).
-  - Evaluates player context, branch proposals, pacing, and risk metrics before triggering integration.
-- AI Writer
-  - Dynamically authors branch content using recorded LORE, character definitions, and recent player actions.
-  - Produces proposals that conform to the branch proposal schema and include provenance metadata.
-
-#### Observability
-- Emit telemetry events for proposal submission, validation result, integration, reversion, and Director decisions with a minimal schema.
+#### Observability for players, producers, and operators
+- Emit telemetry events for each stage: proposal submission, validation result, Director decision, branch integration, player outcome.
+- Minimal schema: event type, timestamp, branch ID, decision outcome, confidence/risk score.
+- Player-facing telemetry: detect whether a player found a branch confusing or satisfying (via post-story survey or behavioral signals).
+- Operator dashboard: real-time and historical views of branch success rates, Director decision latency, and policy violation patterns.
 
 ### Non-functional requirements
 
-#### Determinism
-- Validation pipeline should be deterministic given the same input and ruleset version.
+#### Determinism and reproducibility
+- Validation pipeline must be deterministic: same input + same ruleset version → same validation result.
+- AI Writer proposals should be reproducible: same LORE + same player context + same LLM seed → same proposal.
 
-#### Performance
-- Validation should complete within a target (e.g., < 2s) for small proposals to allow near-interactive workflows.
-- Director decisions should meet a lower-latency target appropriate for player-facing flows.
+#### Performance and responsiveness
+- Branch proposal validation: complete within 2s (authoring time, not latency-critical).
+- AI Director decision: complete within 500ms (player-facing, latency-critical; must feel real-time).
+- Proposal generation (AI Writer): target 1–3s per branch (background process; can be async).
 
 #### Configurability
-- Policy rulesets, sanitizers, and the Director's 'return window' should be configurable without code changes.
+- Policy rulesets, sanitizers, and the Director's 'return window' should be configurable without code changes (e.g., via config file or runtime flags).
+- Director risk thresholds and coherence weights should be tunable.
 
-#### Auditability
+#### Auditability and logging
 - All proposals, validation reports, and Director decisions must be retained with versioning for audits.
+- Audit logs include timestamps, actor (system component), action, and outcome.
+- Support historical analysis: "why did a branch get rejected?" or "when did the Director last fail to find a return path?"
 
 ### Integrations
-- The PRD is provider-agnostic: allow pluggable LLMs or authoring tools to submit proposals via a standard schema.
-- Validation ruleset should be compatible with existing telemetry and logging systems.
+- The PRD is provider-agnostic: allow pluggable LLMs (OpenAI, Claude, local models) or authoring tools to submit proposals via a standard schema.
+- Validation ruleset should be compatible with existing telemetry and logging systems (e.g., event streaming, analytics warehouses).
+- Support integration with the existing Ink runtime and save/load systems (branch state must not corrupt existing save files).
 
 ### Security & privacy
 - Security note: treat proposal content as untrusted input; run sanitizers and Writer/Director processing in isolated execution environments and validate encoding before applying to runtime.
 - Privacy note: redact or avoid storing PII in proposals; if storing is required, ensure encryption-at-rest and limited access.
+- Safety note: failed branches and policy violations must be logged (not silently dropped) to detect potential attacks or author errors.
 
 ## Release & Operations
 
 ### Rollout plan
-#### Phase 0 — Design
-- Final PRD approval and schema definitions; spike validation pipeline prototypes in dev.
+#### Phase 0 — Design (this PRD)
+- Final PRD approval and schema definitions.
+- Spike validation pipeline prototypes in dev.
+- Prototype AI Director and AI Writer interfaces.
+- Define 'return window' semantics and test cases.
 
 #### Phase 1 — Validation-only
-- Implement pipeline and run validation on proposals; no automatic runtime integration.
+- Implement branch proposal validation pipeline.
+- Run validation on candidate branches; collect statistics (acceptance rate, top policy violations).
+- No automatic runtime integration; branches are validated but not yet served to players.
+- Gather feedback from producers on policy ruleset tuning.
 
-#### Phase 2 — Integration
-- Enable runtime hooks for auto-integration of validated branches (behind feature flag) and pilot the Director/Writer in controlled stories.
+#### Phase 2 — Limited integration (feature-flagged)
+- Enable runtime hooks for branch integration in a controlled story or demo.
+- Implement AI Director with initial coherence heuristics and 'return window' enforcement.
+- Implement AI Writer with basic LORE-based generation.
+- Pilot with internal playtesters and gather telemetry on Director success rate, player coherence perception.
 
-#### Phase 3 — Monitor & iterate
-- Gather telemetry, refine rulesets and Director heuristics, and consider adding human-in-loop for safety-sensitive content.
+#### Phase 3 — Soft launch and monitoring
+- Roll out to live players with feature flags and kill-switches.
+- Gather player feedback, Director decision latency, and policy violation patterns.
+- Refine rulesets, Director heuristics, and Writer LORE context based on telemetry.
+- Plan for human-in-loop review if safety concerns emerge.
+
+#### Phase 4 — Scale and iterate (post-M2)
+- Expand to additional stories and narrative scenarios.
+- Add player-facing UX signals (e.g., "this choice was AI-generated"; trust/transparency features).
+- Continuous tuning of Director heuristics and Writer prompts based on production telemetry.
 
 ### Quality gates / definition of done
-- Proposal schema defined and documented.
-- Policy and sanitization ruleset implemented and tested against a corpus of example proposals.
-- Validation pipeline deterministic and passing an agreed test suite.
-- Director design specifies 'return window' semantics and test cases; Writer produces example proposals that preserve LORE and character consistency.
+- Proposal schema defined, documented, and validated with at least 10 example proposals.
+- Policy ruleset implemented and tested against a corpus of ≥100 example branches; documented ruleset with rationale for each rule.
+- Validation pipeline deterministic and passing an agreed test suite (≥20 test cases covering edge cases).
+- AI Director design specifies 'return window' semantics, risk-scoring algorithm, and fail-safe fallback; includes test cases for both success and failure scenarios.
+- AI Writer produces ≥5 example proposals that preserve LORE consistency, character voice, and narrative coherence.
+- Branch integration hooks designed with rollback semantics tested (e.g., corrupted branch can be safely reverted).
+- Telemetry schema defined and emitted correctly in test environment.
+- Player experience validation: internal playtesters rate merged (hand-authored + AI-generated) stories; coherence score ≥4/5 (arbitrary scale).
 
 ### Risks & mitigations
-#### Risk: Director fails to return to scripted path within the window
-- Mitigation: add fail-safe that forces a deterministic fallback to scripted content after the window expires and log the event for analysis.
 
-#### Risk: Writer produces content that drifts off-theme
-- Mitigation: enforce strong contextualization using LORE and character constraints and add style/content tests in the validation suite.
+#### Risk: AI Director fails to return to scripted path within the window
+- Impact: player gets stuck in an infinite or dead-end unscripted loop; breaks immersion and breaks the story.
+- Mitigation: implement a deterministic fail-safe that forces a return to scripted content after the window expires; log the event with high priority (alert operators).
+- Mitigation: test the Director's return-path logic exhaustively during Phase 1–2; profile common failure modes.
 
-#### Risk: Performance bottleneck in validation or Director decisioning
-- Mitigation: profile and set size/complexity limits; consider async validation for large proposals.
+#### Risk: AI Writer produces content that drifts off-theme or contradicts LORE
+- Impact: player experiences an incoherent or jarring branch; reduces trust in emergent storytelling.
+- Mitigation: enforce strong LORE and character constraints in the Writer's prompt; include embeddings or semantic similarity checks in the validation suite.
+- Mitigation: add style/content tests that flag branches differing >N% from the original story's tone; collect examples from playtesters.
+
+#### Risk: Policy pipeline is over-restrictive or under-restrictive
+- Impact: either rejects too many valid branches (reduces emergent variety) or allows policy violations (safety breach).
+- Mitigation: keep ruleset configurable and provide diagnostics for each rule (why was this branch rejected?); gather feedback from producers in Phase 1.
+- Mitigation: start with a conservative policy and loosen it iteratively based on playtest feedback.
+
+#### Risk: Performance bottleneck in Director decision latency
+- Impact: branch integration is delayed; player sees a stall or "thinking" state; breaks immersion.
+- Mitigation: profile Director decision-making during Phase 2; optimize hot paths (risk scoring, return-path search).
+- Mitigation: consider pre-computing Director decisions for likely player choices (offline analysis).
+
+#### Risk: Emergent branches undermine authored narrative intent
+- Impact: players explore unscripted content that diminishes the story's themes or message.
+- Mitigation: include thematic alignment as a Director risk metric; require branches to include explicit narrative intent statements.
+- Mitigation: empower producers with tools to review and disable problematic branches; maintain a "banned branches" list.
 
 ## Open Questions
 
 ### Runtime constraints
-- What should the Director 'return window' be (number of player choice points)?
+- What should the Director 'return window' be (number of player choice points)? (Suggested: 3–5 choices).
+- What latency target should the Director and AI Writer meet? (Suggested: Director < 500ms; Writer 1–3s).
 
-### Policy
-- What are concrete rule categories for the policy (e.g., profanity, sexual content, political content)?
+### AI Writer and LORE
+- How is LORE recorded and updated at runtime (manual annotations, auto-extracted, hybrid)?
+- What is the minimum context size (LORE + character state) needed for coherent Writer output?
+
+### Policy and safety
+- What are concrete rule categories for the policy (e.g., profanity, sexual content, political content, narrative red lines)?
+- Should the policy be story-specific or global?
 
 ### Storage & access
 - What retention period and access controls should apply to proposal storage?
+- Should proposal data be encrypted or anonymized after a branch is deployed?
+
+### Player experience metrics
+- How should we measure player coherence perception (survey, behavioral signals, implicit feedback)?
+- Should players be told when they encounter an AI-generated branch (transparency) or not (seamlessness)?
 
 ### Validation UX
 - Should validation run synchronously in authoring tools, or should large proposals be validated asynchronously?
-
-### Authoring visibility
 - Should sanitized diffs be exposed automatically to downstream writers for review?
 
 ## Open Questions (Technical Consistency Notes)
-- Document states automated-only; mentions human-in-loop elsewhere but not as requirement; adding Open Question to clarify if human-in-loop may be added later
+- Document states automated-only; mentions human-in-loop elsewhere but not as requirement; clarify if human-in-loop review is planned for Phase 3 or later.
