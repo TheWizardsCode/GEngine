@@ -1,5 +1,5 @@
  This is a test.
-// PR trigger: touch file to run replay CI
+// Trigger replay harness (rg->grep fix)
 + Go
     -> END
 + Stay
