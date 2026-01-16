@@ -93,6 +93,37 @@ To use with local models via Ollama or LM Studio:
 3. Disable **Use JSON response mode** if your model doesn't support structured output
 4. Enter any non-empty API key (local servers may not require authentication)
 
+### CORS Limitations
+
+**Browser-based API calls are blocked by CORS on many enterprise endpoints** including:
+- Azure OpenAI
+- Anthropic API
+- Most enterprise/self-hosted APIs
+
+These APIs don't include CORS headers for browser requests. Local models (Ollama, LM Studio) typically work because they allow localhost origins.
+
+#### Development Workaround: CORS Proxy
+
+For development, use a local CORS proxy:
+
+```bash
+# Install and run local-cors-proxy
+npx local-cors-proxy --proxyUrl https://your-endpoint.openai.azure.com --proxyPartial ""
+```
+
+Then in AI Settings, set **CORS Proxy** to: `http://localhost:8010`
+
+The proxy rewrites requests to include proper CORS headers.
+
+#### Production Solution
+
+For production deployments, a backend API relay is needed to:
+- Proxy requests server-side (avoids CORS entirely)
+- Protect API keys from browser exposure
+- Enable usage telemetry and rate limiting
+
+See issue `ge-hch.5.20.1` (Backend API Relay) for the planned implementation.
+
 ### Modules
 | Module | Path | Description |
 |--------|------|-------------|

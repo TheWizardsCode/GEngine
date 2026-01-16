@@ -56,7 +56,8 @@ const DEFAULT_SETTINGS = {
   aiChoiceStyle: 'distinct', // 'normal' or 'distinct'
   showLoadingIndicator: true,
   apiEndpoint: 'https://api.openai.com/v1/chat/completions', // OpenAI-compatible endpoint
-  useJsonMode: true // Some endpoints don't support response_format: { type: 'json_object' }
+  useJsonMode: true, // Some endpoints don't support response_format: { type: 'json_object' }
+  corsProxyUrl: '' // Optional CORS proxy URL for development (e.g., http://localhost:8010/proxy)
 };
 
 /**
@@ -178,6 +179,37 @@ function setEndpointUrl(url) {
 function isJsonModeEnabled() {
   const settings = getSettings();
   return settings.useJsonMode !== false; // Default to true
+}
+
+/**
+ * Gets the CORS proxy URL if configured
+ * 
+ * @returns {string} The proxy URL or empty string if not set
+ */
+function getCorsProxyUrl() {
+  const settings = getSettings();
+  return settings.corsProxyUrl || '';
+}
+
+/**
+ * Builds the effective API URL, applying CORS proxy if configured
+ * 
+ * @param {string} [endpoint] - The API endpoint URL (uses settings if not provided)
+ * @returns {string} The effective URL to use for API calls
+ */
+function getEffectiveApiUrl(endpoint) {
+  const settings = getSettings();
+  const apiEndpoint = endpoint || settings.apiEndpoint || DEFAULT_SETTINGS.apiEndpoint;
+  const proxyUrl = settings.corsProxyUrl;
+  
+  if (proxyUrl && proxyUrl.trim()) {
+    // Proxy URL should be the base, and we append the target URL
+    // Format: {proxyUrl}/{targetUrl}
+    const trimmedProxy = proxyUrl.trim().replace(/\/+$/, ''); // Remove trailing slashes
+    return `${trimmedProxy}/${apiEndpoint}`;
+  }
+  
+  return apiEndpoint;
 }
 
 /**
@@ -439,6 +471,20 @@ function showSettingsPanel() {
       </label>
     </div>
     
+    <div class="ai-setting-row ai-setting-endpoint">
+      <label>
+        CORS Proxy (dev only):
+        <input type="text" id="ai-cors-proxy" class="ai-endpoint-input" 
+               value="${settings.corsProxyUrl || ''}" 
+               placeholder="http://localhost:8010/proxy" />
+      </label>
+      <div class="ai-endpoint-hint">
+        ${settings.corsProxyUrl ? 'Proxy enabled' : 'Not set (direct connection)'}
+        ${settings.corsProxyUrl ? '<button id="ai-clear-proxy" class="ai-btn ai-btn-small">Clear</button>' : ''}
+      </div>
+      <div class="ai-proxy-hint">Required for Azure OpenAI and other CORS-restricted APIs</div>
+    </div>
+    
     <div class="ai-setting-row ai-test-connection">
       <button id="ai-test-connection" class="ai-btn ai-btn-small" ${!hasKey ? 'disabled' : ''}>Test Connection</button>
       <div id="ai-test-result" class="ai-test-result" style="display: none;"></div>
@@ -525,6 +571,32 @@ function showSettingsPanel() {
     saveSettings({ useJsonMode: e.target.checked });
   });
   
+  // CORS proxy handling
+  const corsProxyInput = document.getElementById('ai-cors-proxy');
+  
+  corsProxyInput.addEventListener('blur', () => {
+    const proxyUrl = corsProxyInput.value.trim();
+    
+    if (proxyUrl) {
+      const validation = validateEndpointUrl(proxyUrl);
+      if (!validation.valid) {
+        // Show error but don't block - user might be typing
+        console.warn('[api-key-manager] Invalid proxy URL:', validation.reason);
+      }
+    }
+    
+    saveSettings({ corsProxyUrl: proxyUrl });
+  });
+  
+  const clearProxyBtn = document.getElementById('ai-clear-proxy');
+  if (clearProxyBtn) {
+    clearProxyBtn.addEventListener('click', () => {
+      corsProxyInput.value = '';
+      saveSettings({ corsProxyUrl: '' });
+      showSettingsPanel(); // Refresh panel to update hint
+    });
+  }
+  
   // Test connection handling
   const testBtn = document.getElementById('ai-test-connection');
   const testResult = document.getElementById('ai-test-result');
@@ -546,15 +618,23 @@ function showSettingsPanel() {
     testResult.style.display = 'block';
     
     try {
-      // Get current settings for endpoint and JSON mode
+      // Get current settings for endpoint, JSON mode, and proxy
       const currentSettings = getSettings();
       const endpoint = endpointInput.value.trim() || DEFAULT_SETTINGS.apiEndpoint;
       const useJsonMode = document.getElementById('ai-json-mode').checked;
+      const proxyUrl = corsProxyInput.value.trim();
+      
+      // Build effective URL (with proxy if set)
+      let effectiveUrl = endpoint;
+      if (proxyUrl) {
+        const trimmedProxy = proxyUrl.replace(/\/+$/, '');
+        effectiveUrl = `${trimmedProxy}/${endpoint}`;
+      }
       
       // Use LLMAdapter.testConnection if available
       if (window.LLMAdapter && typeof window.LLMAdapter.testConnection === 'function') {
         const result = await window.LLMAdapter.testConnection(apiKey, {
-          baseUrl: endpoint,
+          baseUrl: effectiveUrl,
           useJsonMode: useJsonMode
         });
         
@@ -859,6 +939,13 @@ function injectStyles() {
       gap: 8px;
     }
     
+    .ai-proxy-hint {
+      font-size: 10px;
+      color: #7d8590;
+      margin-top: 2px;
+      font-style: italic;
+    }
+    
     .ai-setting-hint {
       font-size: 11px;
       color: #7d8590;
@@ -923,6 +1010,8 @@ const ApiKeyManager = {
   getEndpointUrl,
   setEndpointUrl,
   isJsonModeEnabled,
+  getCorsProxyUrl,
+  getEffectiveApiUrl,
   showKeyModal,
   ensureApiKey,
   initSettingsUI,
