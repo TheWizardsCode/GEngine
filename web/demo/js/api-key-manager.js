@@ -439,6 +439,11 @@ function showSettingsPanel() {
       </label>
     </div>
     
+    <div class="ai-setting-row ai-test-connection">
+      <button id="ai-test-connection" class="ai-btn ai-btn-small" ${!hasKey ? 'disabled' : ''}>Test Connection</button>
+      <div id="ai-test-result" class="ai-test-result" style="display: none;"></div>
+    </div>
+    
     <div class="ai-setting-row">
       <label>
         AI Choice Style:
@@ -518,6 +523,59 @@ function showSettingsPanel() {
   // JSON mode handling
   document.getElementById('ai-json-mode').addEventListener('change', (e) => {
     saveSettings({ useJsonMode: e.target.checked });
+  });
+  
+  // Test connection handling
+  const testBtn = document.getElementById('ai-test-connection');
+  const testResult = document.getElementById('ai-test-result');
+  
+  testBtn.addEventListener('click', async () => {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      testResult.className = 'ai-test-result ai-test-error';
+      testResult.textContent = 'No API key set';
+      testResult.style.display = 'block';
+      return;
+    }
+    
+    // Show loading state
+    testBtn.disabled = true;
+    testBtn.textContent = 'Testing...';
+    testResult.className = 'ai-test-result ai-test-pending';
+    testResult.textContent = 'Connecting...';
+    testResult.style.display = 'block';
+    
+    try {
+      // Get current settings for endpoint and JSON mode
+      const currentSettings = getSettings();
+      const endpoint = endpointInput.value.trim() || DEFAULT_SETTINGS.apiEndpoint;
+      const useJsonMode = document.getElementById('ai-json-mode').checked;
+      
+      // Use LLMAdapter.testConnection if available
+      if (window.LLMAdapter && typeof window.LLMAdapter.testConnection === 'function') {
+        const result = await window.LLMAdapter.testConnection(apiKey, {
+          baseUrl: endpoint,
+          useJsonMode: useJsonMode
+        });
+        
+        if (result.success) {
+          testResult.className = 'ai-test-result ai-test-success';
+          testResult.textContent = 'Connection successful!';
+        } else {
+          testResult.className = 'ai-test-result ai-test-error';
+          testResult.textContent = result.error || 'Connection failed';
+        }
+      } else {
+        testResult.className = 'ai-test-result ai-test-error';
+        testResult.textContent = 'LLM Adapter not loaded';
+      }
+    } catch (e) {
+      testResult.className = 'ai-test-result ai-test-error';
+      testResult.textContent = e.message || 'Connection failed';
+    } finally {
+      testBtn.disabled = false;
+      testBtn.textContent = 'Test Connection';
+    }
   });
   
   const creativitySlider = document.getElementById('ai-creativity');
@@ -804,6 +862,34 @@ function injectStyles() {
     .ai-setting-hint {
       font-size: 11px;
       color: #7d8590;
+    }
+    
+    .ai-test-connection {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .ai-test-result {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    
+    .ai-test-pending {
+      color: #7d8590;
+      background: #1c2128;
+    }
+    
+    .ai-test-success {
+      color: #3fb950;
+      background: #238636aa;
+    }
+    
+    .ai-test-error {
+      color: #f85149;
+      background: #f8514922;
     }
   `;
   
