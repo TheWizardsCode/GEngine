@@ -76,11 +76,16 @@ jobs:
         run: |
           set -e
           echo "Determining changed files..."
-          # ensure enough history for diff
-          git fetch --no-tags --prune --depth=50 origin || true
+          # ensure enough history for diff and fetch base refs
+          git fetch --no-tags --prune origin '+refs/heads/*:refs/remotes/origin/*' --depth=50 || true
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE_SHA=${{ github.event.pull_request.base.sha }}
             HEAD_SHA=${{ github.event.pull_request.head.sha }}
+            # fallback if base sha missing in shallow checkout
+            if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "null" ]; then
+              echo "BASE sha missing; computing merge-base with origin/main"
+              BASE_SHA=$(git merge-base origin/main $HEAD_SHA || true)
+            fi
           else
             BASE_SHA=${{ github.event.before }}
             HEAD_SHA=${{ github.sha }}
