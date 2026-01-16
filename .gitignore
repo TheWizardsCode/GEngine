@@ -22,3 +22,8 @@ history/opencode-restored/
 # Local artifacts
 logs/
 playwright-report/
+# CI and local artifacts
+artifacts/
+
+# Allow README in artifacts
+!artifacts/README.md

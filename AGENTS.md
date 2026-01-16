@@ -204,6 +204,7 @@ bd sync               # Sync with git
 7. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
+- NEVER close, or recommend closing, beads unless work is fully complete, including children and sub-tasks per acceptance criteria
 - Whenever listing a bead ID ALWAYS add the title in parentheses
 - ALWAYS run `bd sync` after any git operation that changes `.beads/issues.jsonl
 - Work is NOT complete until changes are pushed to the canonical remote

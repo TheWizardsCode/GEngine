@@ -26,7 +26,8 @@ Provide a concise, human-friendly summary of project status or a specific bead. 
 4. If a bead id is provided:
    - Run `bd show <bead-id> --thread --refs --json` to fetch bead details.
    - Parse and present: title, status, assignee, priority, description, blockers, dependencies, summary of all comments, and relevant links.
-   - Walk through all open and in-progress dependencies and blockers, summarizing their status as well.
+   - Walk through all open and in-progress subtasks, children, and blockers, summarizing their status as well.
+     - Never skip any related bead that is open or in-progress. 
    - Make a very clear statement about whether the bead can be closed or not. If it cannot be closed, explain why (e.g., blockers, dependencies, incomplete tasks).
 5. Provide numbered actionable next steps based on the status information. 
   - If no bead id is provided, always offer to run `audit <bead-id>` (do not mention `bd show`) against the most important in-progress bead (show ID and title), add one or two  alternative next actions relevant to the current status. 
