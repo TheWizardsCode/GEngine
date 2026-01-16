@@ -440,41 +440,55 @@ Execute the approved branch in response to player choice, with dynamic content g
 
 ### Runtime Flow
 ```
-[Player makes a choice that triggers the branch]
+[Player approaches a choice point in the story]
     ↓
-Director checks placement rules:
-- Is player in the right scene?
-- Does player meet prerequisites?
-- Is there a viable return path?
+Director checks if any READY_FOR_RUNTIME branches apply:
+- Is player in a scene where a branch can be offered?
+- Does player meet prerequisites (inventory, state, relationships)?
+- Is the return path still reachable from here?
     ↓
-If all checks pass: ACTIVATE BRANCH
+If checks pass: PRESENT BRANCH as a choice option
     ↓
-[Beat 1: Hook]
+[Player sees choice: branch option OR continue main story]
     ↓
-AI Writer generates dynamic interaction/dialogue
-    (Uses Save-the-Cat beat as structure)
-    ↓
-Sanitize content in real-time
-    (Run policy filters on generated text)
-    ↓
-Display to player
-    ↓
-[Player can make choices within the branch OR skip]
-    ↓
-[Beats 2, 3, 4: Rising Action, Climax, Resolution]
-    ↓
-(Same dynamic generation, sanitization, display loop)
-    ↓
-[Branch reaches resolution]
-    ↓
-Apply player state changes (inventory, relationships, reputation)
-    ↓
-Transition to return path using bridging narrative
-    ↓
-Resume scripted content
-    ↓
-Log telemetry: branch completed successfully
+    ├─ Player chooses main story → Branch remains READY_FOR_RUNTIME (may be offered later)
+    └─ Player chooses branch → ACTIVATE BRANCH
+        ↓
+    [Beat 1: Hook]
+        ↓
+    AI Writer generates dynamic interaction/dialogue
+        (Uses Save-the-Cat beat as structure)
+        ↓
+    Sanitize content in real-time
+        (Run policy filters on generated text)
+        ↓
+    Display to player
+        ↓
+    [Player can make choices within the branch OR skip]
+        ↓
+    [Beats 2, 3, 4: Rising Action, Climax, Resolution]
+        ↓
+    (Same dynamic generation, sanitization, display loop)
+        ↓
+    [Branch reaches resolution]
+        ↓
+    Apply player state changes (inventory, relationships, reputation)
+        ↓
+    Transition to return path using bridging narrative
+        ↓
+    Resume scripted content
+        ↓
+    Log telemetry: branch completed successfully
 ```
+
+**Critical**: The Director validates branch eligibility *before* presenting the choice to the player. Players should never see a branch option that isn't valid for their current state. The checks that happen at choice-point time are:
+
+1. **Scene match**: Is the player at a valid offer point for this branch?
+2. **Prerequisites met**: Does player have required items/state/relationships?
+3. **Return path viable**: Can the branch still return to scripted content from here?
+4. **Not already offered**: Has this branch been declined recently? (avoid spam)
+
+If any check fails, the branch is simply not shown as an option.
 
 ### Key Insight: Delayed Content Generation
 **Important**: The Save-the-Cat structure and dialogue guidelines are written during Stage 2 (Detail), but the **actual interactive content is generated dynamically at runtime** (Stage 4).
@@ -766,8 +780,10 @@ These features may be considered in future phases if player feedback indicates d
 - Marks as READY_FOR_RUNTIME
 
 **Stage 4 (Runtime)**:
-- Player reaches chapter 2, encounters choice: "Confront the guard directly"
-- Player selects branch
+- Player reaches chapter 2, approaches guard encounter choice point
+- Director checks: Player has "grandfather_compass"? ✓ Return path viable? ✓
+- Director presents branch as choice option: "Confront the guard directly"
+- Player selects branch option (activates branch)
 - Beat 1 (Hook): Writer generates description of guard's suspicion
 - Player makes choice within branch
 - Beat 2 (Rising Action): Writer generates guard's challenge about compass
