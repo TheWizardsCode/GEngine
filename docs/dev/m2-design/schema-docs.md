@@ -103,7 +103,13 @@ Human-readable title, e.g., "The Lost Expedition".
 ### `story_context.current_scene` (string, required)
 The current scene/knot in Ink script (e.g., `chapter_2.encounter_with_guard`).
 
-**Format**: Use Ink knot notation (`knot.subknot.further_sub`).
+**Format**: Use Ink knot notation (`knot.stitch` or `knot.stitch.nested`).
+
+**Ink Terminology Note**: This field represents the game-level scene identifier, which maps directly to an Ink knot or knot.stitch path:
+- `act2.campfire` maps to Ink: `=== act2 === = campfire`
+- `chapter_2.encounter_with_guard` maps to Ink: `=== chapter_2 === = encounter_with_guard`
+
+The value must be a valid Ink divert target that exists in the compiled story.
 
 ### `story_context.player_action` (string, optional)
 The choice or action the player took that triggered branch generation, e.g., "chose to confront the guard directly".
@@ -226,6 +232,13 @@ Used for:
 
 ### `content.return_path` (string, optional)
 The scripted scene/knot this branch should return to, e.g., `chapter_2.after_confrontation`.
+
+**Ink Implementation**: This value must be a valid Ink divert target. At branch completion, the runtime executes:
+```ink
+-> chapter_2.after_confrontation
+```
+
+The validation pipeline checks that this knot (and stitch, if specified) exists in the compiled story using `story.allKnots` or equivalent InkJS API.
 
 **Critical for Director**: Guides the return-path algorithm. If omitted, the Director must infer a return path.
 

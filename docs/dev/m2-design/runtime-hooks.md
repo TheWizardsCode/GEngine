@@ -354,6 +354,61 @@ class BranchProposalStateMachine:
 
 ## Rollback Semantics
 
+### Ink Variable State Management
+
+When integrating branches, the runtime must capture and potentially restore Ink story state, including all variables.
+
+#### Ink State Snapshot
+
+Before branch integration, capture the complete Ink state:
+
+```javascript
+function captureInkState(story) {
+    return {
+        // Capture all Ink variables
+        variablesState: JSON.stringify(story.variablesState.jsonToken),
+        
+        // Capture visit counts (how many times each knot was visited)
+        visitCounts: JSON.stringify(story.state.visitCounts),
+        
+        // Capture current path in story
+        currentPath: story.state.currentPathString,
+        
+        // Capture choice threads if any
+        currentChoices: story.currentChoices.map(c => ({
+            text: c.text,
+            index: c.index,
+            targetPath: c.targetPath
+        }))
+    };
+}
+```
+
+#### Ink State Restoration (Rollback)
+
+If rollback is required, restore the Ink state:
+
+```javascript
+function restoreInkState(story, snapshot) {
+    // Restore variables
+    story.variablesState.jsonToken = JSON.parse(snapshot.variablesState);
+    
+    // Restore visit counts
+    story.state.visitCounts = JSON.parse(snapshot.visitCounts);
+    
+    // Reset to the saved path
+    story.ChoosePathString(snapshot.currentPath);
+    
+    // Rebuild choices
+    story.Continue();  // Re-evaluate to restore choices
+}
+```
+
+**Critical**: Ink variables modified during branch execution are automatically undone by restoring the `variablesState` snapshot. This includes:
+- Global variables (`VAR player_health = 100`)
+- Temporary variables (`temp local_var = "value"`)
+- List state (`LIST inventory = (torch), compass, map`)
+
 ### Rollback Mechanism
 
 When a branch encounters a critical error during execution, the system **automatically reverts** to the last known good state without requiring player intervention.
