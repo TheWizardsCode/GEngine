@@ -558,12 +558,17 @@ hear footsteps. The other guards are moving closer."
 | APPROVED_FOR_DETAIL | Validation passes | APPROVED_CLEAN or APPROVED_WITH_SANITIZATION | Proceed to Stage 2b |
 | APPROVED_CLEAN/SANITIZED | Director risk check | REJECTED | Discard or revise |
 | APPROVED_CLEAN/SANITIZED | Director risk check | READY_FOR_PLACEMENT | Proceed to Stage 3 |
-| READY_FOR_PLACEMENT | Placement algorithm runs | PLACEMENT_FAILED | Revise outline or return path |
+| READY_FOR_PLACEMENT | Placement algorithm runs | PLACEMENT_FAILED | Evaluate relevance |
+| PLACEMENT_FAILED | Branch still relevant | RETRY_PLACEMENT | Retry with adjusted params (max 3) |
+| PLACEMENT_FAILED | Branch no longer relevant | DEFERRED_FOR_REUSE | Archive for future playthroughs |
+| RETRY_PLACEMENT | Retry succeeds | READY_FOR_RUNTIME | Approve for player offering |
+| RETRY_PLACEMENT | Max retries exceeded | DEFERRED_FOR_REUSE | Archive for future playthroughs |
 | READY_FOR_PLACEMENT | Placement algorithm runs | READY_FOR_RUNTIME | Approve for player offering |
 | READY_FOR_RUNTIME | Player triggers choice | ACTIVE | Branch executing |
 | ACTIVE | Player completes branch | COMPLETED | Runtime execution done |
 | COMPLETED | Success logged | ARCHIVED | Success; learn from it |
 | COMPLETED | Error detected | REVERTED | Rollback; analyze failure |
+| DEFERRED_FOR_REUSE | New playthrough matches context | READY_FOR_PLACEMENT | Re-attempt placement |
 | (Any) | Policy rule change/deprecation | DEPRECATED | Mark obsolete; don't offer |
 
 ---
