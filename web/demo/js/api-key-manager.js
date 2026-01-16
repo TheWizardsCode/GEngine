@@ -476,13 +476,13 @@ function showSettingsPanel() {
         CORS Proxy (dev only):
         <input type="text" id="ai-cors-proxy" class="ai-endpoint-input" 
                value="${settings.corsProxyUrl || ''}" 
-               placeholder="http://localhost:8010/proxy" />
+               placeholder="http://localhost:8080" />
       </label>
       <div class="ai-endpoint-hint">
         ${settings.corsProxyUrl ? 'Proxy enabled' : 'Not set (direct connection)'}
         ${settings.corsProxyUrl ? '<button id="ai-clear-proxy" class="ai-btn ai-btn-small">Clear</button>' : ''}
       </div>
-      <div class="ai-proxy-hint">Required for Azure OpenAI and other CORS-restricted APIs</div>
+      <div class="ai-proxy-hint">For cors-anywhere style proxies. See README for local-cors-proxy setup.</div>
     </div>
     
     <div class="ai-setting-row ai-test-connection">
