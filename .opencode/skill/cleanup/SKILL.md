@@ -11,27 +11,27 @@ Triggers
 - "cleanup"
 - "housekeeping"
 
-Purpose
+## Purpose
 - Inspect repository branches and beads, identify merged or stale work, remove safely deletable branches, propose bead closures, and produce a concise report of actions and next steps.
 
-Required tools
+## Required tools
 - `git` (required)
 - `bd` (beads CLI) — optional but recommended for bead metadata
 - `gh` (GitHub CLI) — optional for PR summaries
 
-Runtime flags (recommended)
+## Runtime flags (recommended)
 - `dry-run` (default): list actions without performing deletes or closes
 - `confirm_all`: allow single confirmation to apply a group of safe actions
 - `delete-remote` (opt-in): permit remote branch deletion when explicitly confirmed
 
-Preconditions & safety
+## Preconditions & safety
 - Never delete a remote branch or close a bead without explicit confirmation.
 - Never rewrite history or force-push without explicit permission.
 - Default protected branches: `main`, `master`, `develop` (do not delete or target for deletion).
 - Detect default branch dynamically when possible (check `git remote show origin` or fallback to `main`).
 - Use conservative merge checks (`git merge-base --is-ancestor`) to determine whether a branch's HEAD is contained in the default branch.
 
-High-level Steps
+## High-level Steps
 
 1) Inspect current branch
 - Show current branch: `git rev-parse --abbrev-ref HEAD`.
@@ -70,9 +70,12 @@ High-level Steps
 - For each remaining branch, offer actions: keep / delete / create PR / assign bead / rebase / merge.
 
 7) Beads (bd) review
+- Run `bd sync` to ensure bead data is current.
 - If `bd` available: `bd list --status in_progress --json`.
 - Cross-reference beads with branches found in the repo. For each in-progress bead, show last updated, linked branches, and recommend close if: bead's branch is merged and PRs/commits indicate completion or inactivity (configurable age threshold).
+- For each bead use the status skill to evaluate their suitability for closure.
 - Present candidate bead closures and ask for confirmation. If confirmed and not `dry-run`: `bd close <id> --reason "Completed" --json` then `bd sync`.
+  - If there are no candidates, report none found.
 
 8) Final report
 - Produce concise report including:
