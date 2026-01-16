@@ -9,14 +9,62 @@ on:
 
 jobs:
   replay:
-    name: replay
+    name: replay-gate
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: replay-gate-${{ github.ref }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
         node-version: [18.x, 20.x]
         os: [ubuntu-latest]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Pre-check golden scripts and story sources
+        shell: bash
+        run: |
+          set -e
+          echo "Checking for golden scripts and matching .ink sources..."
+          found=0
+          for script in web/stories/golden.*.json; do
+            [ -e "$script" ] || continue
+            base=$(basename "$script")
+            name=${base#golden.}
+            name=${name%.json}
+            if [ -f "web/stories/${name}.ink" ] || [ -f "web/stories/${name}.ink.json" ]; then
+              found=1
+              break
+            fi
+          done
+          if [ "$found" -ne 1 ]; then
+            echo "ERROR: No golden scripts found or matching story sources missing under web/stories/. Ensure at least one web/stories/golden.*.json and corresponding .ink exist."
+            exit 1
+          fi
+
+      - name: Create artifacts dir
+        run: mkdir -p artifacts/logs artifacts/results
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -81,20 +129,56 @@ jobs:
             exit 1
           fi
         
-      - name: Upload replay logs
+      - name: Summarize replay results
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          failed=0
+          for f in artifacts/results/*.failure.*; do
+            [ -e "$f" ] || continue
+            failed=$((failed+1))
+          done
+          total=0
+          if [ -f artifacts/results/summary.json ]; then
+            total=$(grep -oE '"exit_sum"[[:space:]]*:[[:space:]]*[0-9]+' artifacts/results/summary.json | grep -oE '[0-9]+' || true)
+            total=${total:-0}
+          fi
+          echo "replays_total_exit_sum: $total" > artifacts/results/summary.txt
+          echo "replays_failed_count: $failed" >> artifacts/results/summary.txt
+          echo "Replay summary:"; cat artifacts/results/summary.txt
+
+      - name: Compress artifacts
+        if: always()
+        shell: bash
+        run: |
+          set -e
+          # compress logs and results to single archives (skip if empty)
+          if [ -d artifacts/logs ] && [ "$(ls -A artifacts/logs)" ]; then
+            tar -czf artifacts/replay-logs.tgz -C artifacts logs || true
+          else
+            echo "No logs to compress"
+          fi
+          if [ -d artifacts/results ] && [ "$(ls -A artifacts/results)" ]; then
+            tar -czf artifacts/replay-results.tgz -C artifacts results || true
+          else
+            echo "No results to compress"
+          fi
+
+      - name: Upload replay logs (archive)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: replay-logs
-          path: artifacts/logs/
+          path: artifacts/replay-logs.tgz
           retention-days: 14
 
-      - name: Upload replay results
+      - name: Upload replay results (archive)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: replay-results
-          path: artifacts/results/
+          path: artifacts/replay-results.tgz
           retention-days: 30
 
       # optional: make this job explicitly required in branch protection settings
