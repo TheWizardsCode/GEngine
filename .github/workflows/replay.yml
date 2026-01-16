@@ -180,7 +180,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: replay-logs
+          name: replay-logs-${{ matrix.node-version }}
           path: artifacts/replay-logs.tgz
           retention-days: 14
 
@@ -188,7 +188,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: replay-results
+          name: replay-results-${{ matrix.node-version }}
           path: artifacts/replay-results.tgz
           retention-days: 30
 
