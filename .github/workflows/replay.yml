@@ -140,8 +140,7 @@ jobs:
                 if [ -f "artifacts/results/replay.${name}.result.json" ]; then
                   cp "artifacts/results/replay.${name}.result.json" "artifacts/results/replay.${name}.failure.json" || true
                 else
-                  jq -n --arg story "$story" --arg script "$script" --arg log "artifacts/results/replay.${name}.failure.log" --argjson exit "$EXIT" '{ story: $story, script: $script, log: $log, exit: $exit }' >"artifacts/results/replay.${name}.failure.json" || \
-                    echo "{ \"story\": \"$story\", \"script\": \"$script\", \"log\": \"artifacts/results/replay.${name}.failure.log\", \"exit\": $EXIT }" >"artifacts/results/replay.${name}.failure.json" || true
+                  printf '%s\n' "{\"story\":\"$story\",\"script\":\"$script\",\"log\":\"artifacts/results/replay.${name}.failure.log\",\"exit\":$EXIT}" > "artifacts/results/replay.${name}.failure.json" || true
                 fi
             fi
             EXIT_SUM=$((EXIT_SUM + EXIT))
