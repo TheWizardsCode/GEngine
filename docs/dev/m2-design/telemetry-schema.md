@@ -44,7 +44,7 @@ All telemetry events follow this base schema:
 
 ### Event Types
 
-M2 emits events at 6 key decision points:
+M2 emits events at 7 key decision points:
 
 #### Event 1: Branch Proposal Generated
 
@@ -189,6 +189,83 @@ M2 emits events at 6 key decision points:
 - Engagement-to-creativity mapping effectiveness
 - Director decision latency
 - Success rate by risk metric
+
+#### Event 3b: Placement Stage Outcome
+
+**When**: Director attempts to place approved proposal into story script
+
+**Purpose**: Track placement success rate, retry patterns, and deferred proposals
+
+```json
+{
+  "event_type": "placement_outcome",
+  "event_data": {
+    "proposal_id": "proposal-87f4c290",
+    "placement_status": "placement_successful",
+    
+    "placement_details": {
+      "insertion_points_found": 2,
+      "best_confidence_score": 0.92,
+      "placement_latency_ms": 180
+    }
+  }
+}
+```
+
+OR (if placement failed and retrying):
+
+```json
+{
+  "event_type": "placement_retry",
+  "event_data": {
+    "proposal_id": "proposal-87f4c290",
+    "retry_count": 1,
+    "max_retries": 3,
+    
+    "failure_reason": "no_viable_insertion_points",
+    "relevance_status": "still_relevant",
+    
+    "adjustments_applied": [
+      "relaxed_thematic_threshold",
+      "alternative_return_path"
+    ],
+    
+    "retry_outcome": "placement_successful"
+  }
+}
+```
+
+OR (if deferred for future reuse):
+
+```json
+{
+  "event_type": "placement_deferred",
+  "event_data": {
+    "proposal_id": "proposal-87f4c290",
+    "failure_reason": "story_progression_mismatch",
+    "relevance_status": "no_longer_relevant",
+    
+    "current_story_position": "chapter_3.temple_entrance",
+    "branch_required_position": "chapter_2.guard_encounter",
+    
+    "reuse_metadata": {
+      "reuse_eligible": true,
+      "applicable_story_phases": ["chapter_2"],
+      "quality_score": 0.88
+    },
+    
+    "storage_action": "archive_for_future_runs"
+  }
+}
+```
+
+**Metrics extracted**:
+- Placement success rate
+- Retry frequency and success rate after retry
+- Deferral rate (proposals saved for future playthroughs)
+- Story position mismatches (indicates timing issues in proposal generation)
+- Average retries before success/deferral
+- Reuse pool size and utilization
 
 #### Event 4: Player Encounters Branch Choice
 
