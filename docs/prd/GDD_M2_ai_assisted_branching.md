@@ -88,7 +88,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Emit telemetry events for each stage: proposal submission, validation result, Director decision, branch integration, player outcome.
 - Minimal schema: event type, timestamp, branch ID, decision outcome, confidence/risk score.
 - Player-facing telemetry: detect whether a player found a branch confusing or satisfying (via post-story survey or behavioral signals).
-- Operator dashboard: real-time and historical views of branch success rates, Director decision latency, and policy violation patterns.
+- Post-launch analysis: historical views of branch success rates, Director decision latency, and policy violation patterns for iterative improvement between phases.
 
 ### Non-functional requirements
 
