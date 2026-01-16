@@ -142,7 +142,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Safety note: failed branches and policy violations must be logged (not silently dropped) to detect potential attacks or author errors.
 
 ### Proposal Lifecycle
-- **Reference**: See `docs/dev/m2-design/proposal-lifecycle.md` for complete multi-stage proposal lifecycle
+- **Reference**: See [proposal-lifecycle.md](../dev/m2-design/proposal-lifecycle.md) for complete multi-stage proposal lifecycle
 - High-level stages: Outline (concept review) → Detail (full development + validation) → Placement (identify insertion points) → Runtime (dynamic generation + sanitization) → Terminal (archived/reverted/deprecated)
 - Key insight: Save-the-Cat structure and beats are written during Detail stage; actual interactive dialogue/content is generated dynamically at runtime based on player choices and director's creativity parameter
 

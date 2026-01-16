@@ -17,7 +17,7 @@ The **branch proposal lifecycle** defines the multi-stage process from initial c
     ├─ REJECTED (incoherent, off-theme, no viable return)
     └─ APPROVED_FOR_DETAIL
     
-[2] DETAIL STAGE
+[2] DETAIL STAGE (if approved)
     ↓
     Full Save-the-Cat definition developed
     Validation pipeline runs (policy checks, sanitization)
@@ -309,13 +309,124 @@ def find_placement_points(proposal, story_script, player_state):
 }
 ```
 
-### Placement Failure Example
+### Placement Failure Handling
+
+When placement fails, the Director evaluates whether the branch is still relevant to the current story state:
+
+#### Decision Flow for PLACEMENT_FAILED
 ```
+PLACEMENT_FAILED
+    ↓
+Director checks: Is branch still relevant to current story position?
+    ↓
+    ├─ YES (story hasn't progressed past branch context)
+    │   → RETRY_PLACEMENT
+    │   → Return to Placement Stage with adjusted parameters
+    │   → May adjust return_path or relax thematic constraints
+    │
+    └─ NO (story has progressed; branch context is stale)
+        → DEFERRED_FOR_REUSE
+        → Flag proposal for potential reuse in future playthroughs
+        → Reject for current run
+```
+
+#### Path 1: RETRY_PLACEMENT (Branch Still Relevant)
+
+If the story hasn't progressed past the branch's context, the proposal can be retried:
+
+```json
 {
   "proposal_id": "detail-550e8400-...",
   "placement_status": "PLACEMENT_FAILED",
-  "reason": "No choice points found between proposed branch start and return path. Branch requires player to have 'ancient_key' but player only acquires it 3 scenes after return path.",
-  "recommendation": "Revise outline to place branch earlier in narrative arc, or modify return path to align with story progression."
+  "relevance_check": "STILL_RELEVANT",
+  "decision": "RETRY_PLACEMENT",
+  
+  "failure_reason": "No viable insertion points with current return_path",
+  "retry_strategy": {
+    "action": "adjust_return_path",
+    "original_return_path": "chapter_2.after_confrontation",
+    "suggested_return_paths": [
+      "chapter_2.guard_post_exit",
+      "chapter_2.courtyard_entrance"
+    ],
+    "relaxations_applied": [
+      "thematic_distance_threshold: 0.3 → 0.4",
+      "bridge_score_minimum: 0.5 → 0.4"
+    ]
+  },
+  
+  "retry_count": 1,
+  "max_retries": 3,
+  "next_action": "re_run_placement_algorithm"
+}
+```
+
+**Retry limits**: Maximum 3 placement retries before escalating to DEFERRED_FOR_REUSE.
+
+#### Path 2: DEFERRED_FOR_REUSE (Branch No Longer Relevant)
+
+If the story has progressed past the branch's context (e.g., player is now in chapter 3, but branch requires chapter 2 context), the proposal is flagged for future reuse:
+
+```json
+{
+  "proposal_id": "detail-550e8400-...",
+  "placement_status": "PLACEMENT_FAILED",
+  "relevance_check": "NO_LONGER_RELEVANT",
+  "decision": "DEFERRED_FOR_REUSE",
+  
+  "failure_reason": "Story has progressed past branch context. Player is now in chapter_3; branch requires chapter_2 scene state.",
+  
+  "current_story_position": "chapter_3.temple_entrance",
+  "branch_required_position": "chapter_2.guard_encounter",
+  
+  "reuse_metadata": {
+    "reuse_eligible": true,
+    "applicable_story_phases": ["chapter_2"],
+    "required_player_state": {
+      "has_item": "grandfather_compass",
+      "reputation_range": ["neutral", "wary_outsider"]
+    },
+    "themes": ["redemption", "family_legacy"],
+    "quality_score": 0.88
+  },
+  
+  "storage_action": "archive_for_future_runs",
+  "current_run_status": "REJECTED"
+}
+```
+
+**Reuse pool**: Deferred proposals are stored in a reuse pool, indexed by:
+- Applicable story phases/chapters
+- Required player state prerequisites
+- Thematic tags
+- Quality score
+
+When a new playthrough reaches a matching context, the Director can retrieve and re-attempt placement for these proposals.
+
+### Placement Failure Telemetry
+
+```json
+{
+  "event_type": "placement_failed",
+  "proposal_id": "detail-550e8400-...",
+  "timestamp": "2026-01-16T11:00:00Z",
+  "failure_reason": "story_progression_mismatch",
+  "relevance_status": "no_longer_relevant",
+  "decision": "deferred_for_reuse",
+  "current_story_position": "chapter_3.temple_entrance",
+  "branch_context": "chapter_2.guard_encounter",
+  "reuse_eligible": true
+}
+```
+
+```json
+{
+  "event_type": "placement_retry",
+  "proposal_id": "detail-550e8400-...",
+  "timestamp": "2026-01-16T11:00:05Z",
+  "retry_count": 2,
+  "adjustments_applied": ["relaxed_thematic_threshold", "alternative_return_path"],
+  "outcome": "placement_successful"
 }
 ```
 
