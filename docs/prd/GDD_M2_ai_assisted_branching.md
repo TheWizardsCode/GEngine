@@ -8,7 +8,7 @@ Add M2: AI-assisted branching support to enable runtime integration of AI-propos
 
 Problem statement
 
-Authors and producers need a safe, repeatable way to propose and integrate AI-generated branches without introducing unsafe, incoherent, or policy-violating content.
+At runtime, players will be able to drive the story into unscripted flows. The priority is the player's experience: the AI Director guides unscripted branching so the story remains coherent and returns the narrative to the scripted path within a defined number of player choice points. An AI Writer will dynamically author story content using recorded LORE, character definitions, and the player's recent actions as inputs. The system must ensure the emergent branches remain playable, on-theme, and do not create dead-ends or permanent divergence from the intended story arc.
 
 Goals
 
@@ -58,19 +58,25 @@ Runtime integration hooks (design only)
 
 Design hook points where validated branch content can be applied into the running story state with clear transaction boundaries. Define rollback semantics and persistence model for integrated branches.
 
+AI Director and AI Writer (design inputs)
+
+- AI Director: runtime control component responsible for steering emergent AI-generated flows toward coherence and guaranteeing a return-to-script within a configured maximum number of player choice points (configurable 'return window'). The Director evaluates player context, branch proposals, and pacing constraints before triggering integration.
+
+- AI Writer: component responsible for dynamically authoring branch content using recorded LORE, character definitions, and player actions. The Writer produces proposals that conform to the branch proposal schema and include provenance metadata.
+
 Observability
 
-Emit telemetry events for proposal submission, validation result, integration, and reversion with a minimal schema.
+Emit telemetry events for proposal submission, validation result, integration, reversion, and director decisions with a minimal schema.
 
 Non-functional requirements
 
 Determinism: the validation pipeline should be deterministic given the same input and ruleset version.
 
-Performance: validation should complete within a target (e.g., < 2s) for small proposals to allow near-interactive workflows.
+Performance: validation should complete within a target (e.g., < 2s) for small proposals to allow near-interactive workflows; Director decisions should meet a lower-latency target appropriate for player-facing flows.
 
-Configurability: policy rulesets and sanitizers should be configurable without code changes.
+Configurability: policy rulesets, sanitizers, and the Director's 'return window' should be configurable without code changes.
 
-Auditability: all proposals and validation reports must be retained with versioning for audits.
+Auditability: all proposals, validation reports, and Director decisions must be retained with versioning for audits.
 
 Integrations
 
@@ -78,7 +84,7 @@ The PRD is provider-agnostic: allow pluggable LLMs or authoring tools to submit 
 
 Security & privacy
 
-Security note: treat proposal content as untrusted input; run sanitizers in an isolated execution environment and validate encoding before applying to runtime.
+Security note: treat proposal content as untrusted input; run sanitizers and Writer/Director processing in isolated execution environments and validate encoding before applying to runtime.
 
 Privacy note: redact or avoid storing PII in proposals; if storing is required, ensure encryption-at-rest and limited access.
 
@@ -90,26 +96,25 @@ Phase 0 (Design): final PRD approval and schema definitions; spike validation pi
 
 Phase 1 (Validation-only): implement pipeline and run validation on proposals; no automatic runtime integration.
 
-Phase 2 (Integration): enable runtime hooks for auto-integration of validated branches (behind feature flag).
+Phase 2 (Integration): enable runtime hooks for auto-integration of validated branches (behind feature flag) and pilot the Director/Writer in controlled stories.
 
-Phase 3 (Monitor & iterate): gather telemetry, refine rulesets, and consider adding human-in-loop if necessary.
+Phase 3 (Monitor & iterate): gather telemetry, refine rulesets and Director heuristics, and consider adding human-in-loop for safety-sensitive content.
 
 Quality gates / definition of done
 
-Proposal schema defined and documented. Policy and sanitization ruleset implemented and tested against a corpus of example proposals. Validation pipeline deterministic and passing an agreed test suite. Rollback semantics documented and a revert mechanism exists in design (implementation optional for design phase).
+Proposal schema defined and documented. Policy and sanitization ruleset implemented and tested against a corpus of example proposals. Validation pipeline deterministic and passing an agreed test suite. Director design specifies 'return window' semantics and test cases; Writer produces example proposals that preserve LORE and character consistency.
 
 Risks & mitigations
 
-Risk: Over-restrictive ruleset rejects useful branches.
-Mitigation: keep ruleset configurable and provide clear diagnostics for tuning.
+Risk: Director fails to return to scripted path within the window. Mitigation: add fail-safe that forces a deterministic fallback to scripted content after the window expires and log the event for analysis.
 
-Risk: Sanitization alters story intent.
-Mitigation: log diffs between original and sanitized content and provide developer-visible diagnostics.
+Risk: Writer produces content that drifts off-theme. Mitigation: enforce strong contextualization using LORE and character constraints and add style/content tests in the validation suite.
 
-Risk: Performance bottleneck in validation.
-Mitigation: profile and set size limits; consider async validation for large proposals.
+Risk: Performance bottleneck in validation or Director decisioning. Mitigation: profile and set size/complexity limits; consider async validation for large proposals.
 
 ## Open Questions
+
+What should the Director 'return window' be (number of player choice points)?
 
 What are concrete rule categories for the policy (e.g., profanity, sexual content, political content)?
 
