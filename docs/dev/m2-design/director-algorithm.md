@@ -4,7 +4,7 @@
 
 The **AI Director** is a runtime governance component that evaluates incoming branch proposals from the AI Writer in real-time. Its core responsibility is:
 
-> **Guarantee that any approved branch will coherently return to the scripted narrative within the configured "return window" (N player choice points), while maintaining narrative quality and player immersion.**
+> **Seek to ensure that any approved branch will coherently return to the scripted narrative within the configured "return window" (N player choice points), while maintaining narrative quality and player immersion.**
 
 This document specifies the Director's decision-making logic, risk-scoring algorithm, return-path validation, and fail-safe mechanisms.
 
