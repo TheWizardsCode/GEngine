@@ -69,7 +69,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 #### AI Writer (runtime content generation)
 - Generates branch proposals using recorded LORE, character definitions, and recent player actions as context.
 - Proposal schema includes: metadata (confidence score, provenance), story context (current scene, player inventory, character state), branch content (Ink fragment or delta).
-- Produces deterministic, reproducible output for the same inputs (same context + same LLM seed = same proposal).
+- Accepts a **creativity parameter** (0.0–1.0) from the Director based on player state: lower values produce conservative, predictable branches; higher values produce more surprising, imaginative content.
 - Outputs proposals that conform to the branch proposal schema and include provenance metadata (LLM model version, timestamp).
 
 #### Branch proposal validation pipeline
@@ -94,7 +94,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 
 #### Determinism and reproducibility
 - Validation pipeline must be deterministic: same input + same ruleset version → same validation result.
-- AI Writer proposals should be reproducible: same LORE + same player context + same LLM seed → same proposal.
+- AI Writer proposals should be varied and creative: the same context may produce different proposals, controlled by the Director's creativity parameter (0.0–1.0).
 
 #### Performance and responsiveness
 - Branch proposal validation: complete within 2s (authoring time, not latency-critical).
@@ -198,6 +198,8 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 ### AI Writer and LORE
 - How is LORE recorded and updated at runtime (manual annotations, auto-extracted, hybrid)?
 - What is the minimum context size (LORE + character state) needed for coherent Writer output?
+- How should the Director's creativity parameter map to LLM temperature/sampling settings? (Suggested: 0.0 = low temp; 1.0 = high temp)
+- Should the Writer cache proposals by context to avoid redundant generation?
 
 ### Policy and safety
 - What are concrete rule categories for the policy (e.g., profanity, sexual content, political content, narrative red lines)?
