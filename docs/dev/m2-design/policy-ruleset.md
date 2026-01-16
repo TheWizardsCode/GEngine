@@ -221,6 +221,52 @@ These rules check technical validity of the proposal.
 - Check for unmatched brackets, invalid knot names, malformed choice syntax
 - Validate that referenced knots/stitches exist (if context includes story JSON)
 
+**Fragment Validation**: For `ink_fragment` type (inline content without knot headers), wrap content in a test knot before parsing:
+
+```javascript
+function validateInkSyntax(content, branchType) {
+    let contentToValidate = content;
+    
+    // Wrap fragments in a test knot for parsing
+    if (branchType === 'ink_fragment') {
+        contentToValidate = `=== _validation_wrapper ===\n${content}\n-> END`;
+    }
+    
+    try {
+        const compiler = new inkjs.Compiler(contentToValidate);
+        const story = compiler.Compile();
+        return { result: 'pass' };
+    } catch (parseError) {
+        return { result: 'fail', message: parseError.message };
+    }
+}
+```
+
+**Knot/Stitch Reference Validation**: When validating return paths or divert targets:
+
+```javascript
+function validateDivertTarget(targetPath, compiledStory) {
+    const [knot, stitch] = targetPath.split('.');
+    
+    // Check knot exists
+    const allKnots = Object.keys(compiledStory.mainContentContainer.namedContent);
+    if (!allKnots.includes(knot)) {
+        return { result: 'fail', message: `Knot '${knot}' not found in story` };
+    }
+    
+    // Check stitch exists (if specified)
+    if (stitch) {
+        const knotContent = compiledStory.KnotContainerWithName(knot);
+        const stitches = Object.keys(knotContent.namedContent || {});
+        if (!stitches.includes(stitch)) {
+            return { result: 'fail', message: `Stitch '${stitch}' not found in knot '${knot}'` };
+        }
+    }
+    
+    return { result: 'pass' };
+}
+```
+
 **Action on violation**: Auto-reject if critical syntax error; flag as warning if minor.
 
 **Example**:

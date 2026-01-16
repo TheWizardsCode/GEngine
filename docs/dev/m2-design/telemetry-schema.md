@@ -423,8 +423,8 @@ OR (if error occurred):
     
     "errors": [
       {
-        "error_type": "dialogue_node_not_found",
-        "error_message": "Dialogue node 'npc_lyra_response_2a' does not exist",
+        "error_type": "ink_divert_target_missing",
+        "error_message": "Ink divert target 'npc_lyra_response_2a' does not exist in story",
         "occurred_at_dialogue_choice": 2,
         "execution_stage": "executing"
       }
@@ -615,7 +615,7 @@ OR (if error occurred):
 │ Declined at Last Moment: 18 (0.6%)                        │
 │                                                               │
 │ Rollback Reasons:                                           │
-│ ├─ Dialogue Node Not Found: 34 (39.1%)                    │
+│ ├─ Ink Divert Target Missing: 34 (39.1%)                   │
 │ ├─ State Inconsistency: 28 (32.2%)                        │
 │ ├─ NPC Reference Error: 15 (17.2%)                        │
 │ └─ Other: 10 (11.5%)                                      │

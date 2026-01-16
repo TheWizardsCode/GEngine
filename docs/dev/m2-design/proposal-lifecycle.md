@@ -680,6 +680,72 @@ hear footsteps. The other guards are moving closer."
 
 ---
 
+## Ink-Specific Implementation Notes
+
+### Ink Features Used
+
+M2 AI-assisted branching uses these Ink language features:
+
+| Ink Feature | M2 Usage |
+|-------------|----------|
+| **Knots** (`=== knot ===`) | Branch structure; each branch is typically one or more knots |
+| **Stitches** (`= stitch`) | Sub-sections within branches for beat organization |
+| **Choices** (`* [text] -> target`) | Player decision points within branches |
+| **Diverts** (`-> knot.stitch`) | Navigation between knots; used for return paths |
+| **Variables** (`VAR x = 0`) | Player state tracked in Ink (health, reputation, etc.) |
+| **Tags** (`# tag`) | Metadata for styling/animation (e.g., `# dialogue`, `# action`) |
+| **External functions** | Host integration for dynamic content (see below) |
+
+### Dynamic Content via External Functions
+
+Runtime dialogue generation uses Ink external functions to inject AI-generated content:
+
+```ink
+EXTERNAL get_ai_dialogue(beat_id)
+EXTERNAL get_ai_choice(choice_id)
+
+=== ai_branch_hook ===
+{get_ai_dialogue("hook")}
+
+* [{get_ai_choice("accept")}] -> branch_rising_action
+* [{get_ai_choice("decline")}] -> decline_branch
+
+=== branch_rising_action ===
+{get_ai_dialogue("rising_action")}
+// ... continues with more beats
+```
+
+**Host Implementation** (JavaScript/TypeScript):
+```javascript
+story.BindExternalFunction("get_ai_dialogue", (beatId) => {
+    return aiWriter.generateDialogue(beatId, currentLore, directorCreativity);
+});
+
+story.BindExternalFunction("get_ai_choice", (choiceId) => {
+    return aiWriter.generateChoiceText(choiceId, currentLore);
+});
+```
+
+This enables:
+- Fresh dialogue on each playthrough
+- Director-controlled creativity adjustment in real-time
+- Responsive content that adapts to player choices
+
+### Ink Features NOT Used (M2 Scope)
+
+The following advanced Ink features are **out of scope for M2** to reduce complexity:
+
+| Feature | Reason for Exclusion |
+|---------|---------------------|
+| **Threads** (`<- thread`) | Parallel execution complicates rollback and state management |
+| **Tunnels** (`-> tunnel ->`) | Subroutine patterns not needed for linear branch structure |
+| **Complex conditions in choices** | Keep choice logic simple; complex branching happens at Director level |
+| **Nested knots (deep)** | Limit nesting to 2 levels (knot.stitch) for clarity |
+
+These features may be considered in future phases if player feedback indicates demand for more complex narrative structures.
+
+---
+
 ## Example: Complete Lifecycle
 
 **Scenario**: "Guard confrontation branch"

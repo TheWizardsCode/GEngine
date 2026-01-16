@@ -257,6 +257,9 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - **[Runtime Integration Hooks](../dev/m2-design/runtime-hooks.md)** — 5 safe hook point categories (scene boundaries, choice points, quests, rest/load, combat) with 12-state integration state machine and automatic rollback semantics.
 - **[Telemetry Schema](../dev/m2-design/telemetry-schema.md)** — 6 event types spanning generation, validation, Director decision, presentation, choice, and outcome with 5 observability dashboards and post-launch analysis workflow.
 
+#### Ink Language Integration
+- **[Ink Validation Review](../dev/m2-design/ink-validation-review.md)** — Comprehensive validation of M2 design against Ink language capabilities, terminology consistency review, and implementation recommendations.
+
 ### M2 Schemas
 - **[Branch Proposal Schema](../dev/m2-schemas/branch-proposal.json)** — JSON Schema definition with all required fields for proposal submissions.
 - **[Validation Report Schema](../dev/m2-schemas/validation-report.json)** — Validation pipeline output structure with rule-level diagnostics.
