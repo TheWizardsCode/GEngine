@@ -7,12 +7,13 @@ const inkjs = require('inkjs/full');
 const DEFAULT_MAX_STEPS = 2000;
 
 function usage() {
-  return `Usage: node scripts/replay.js --story <path> --script <path> [--max-steps <n>]\n\n` +
+  return `Usage: node scripts/replay.js --story <path> --script <path> [--max-steps <n>] [--result-out <path>]\n\n` +
     `Runs an Ink story to completion using a scripted choice sequence.\n\n` +
     `Arguments:\n` +
     `  --story <path>       Path to .ink story file\n` +
     `  --script <path>      Path to JSON array of choices (indices or IDs)\n` +
     `  --max-steps <n>      Safety ceiling on total steps (default ${DEFAULT_MAX_STEPS})\n` +
+    `  --result-out <path>  Optional path to write JSON result file (created parent dirs)\n` +
     `  --help               Show this message\n\n` +
     `Script format: JSON array. Each entry may be:\n` +
     `  - number: zero-based choice index\n` +
@@ -21,7 +22,7 @@ function usage() {
 }
 
 function parseArgs(argv) {
-  const args = { story: null, script: null, maxSteps: DEFAULT_MAX_STEPS };
+  const args = { story: null, script: null, maxSteps: DEFAULT_MAX_STEPS, resultOut: null };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     switch (arg) {
@@ -33,6 +34,9 @@ function parseArgs(argv) {
         break;
       case '--max-steps':
         args.maxSteps = parseInt(argv[++i], 10) || DEFAULT_MAX_STEPS;
+        break;
+      case '--result-out':
+        args.resultOut = argv[++i];
         break;
       case '--help':
       case '-h':
@@ -169,10 +173,34 @@ async function main() {
 
   try {
     const result = runReplay({ storyPath: args.story, scriptPath: args.script, maxSteps: args.maxSteps });
+
+    // If a result-out path was provided, write the JSON result there (create parent dirs)
+    if (args.resultOut) {
+      try {
+        const outPath = path.resolve(args.resultOut);
+        const dir = path.dirname(outPath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf8');
+      } catch (werr) {
+        console.error(`Failed to write result-out file: ${werr.message}`);
+      }
+    }
+
     console.log(JSON.stringify(result, null, 2));
     if (!result.pass) process.exitCode = 1;
   } catch (err) {
-    console.error(JSON.stringify({ pass: false, error: err.message }));
+    const failure = { pass: false, error: err.message };
+    console.error(JSON.stringify(failure));
+    if (args.resultOut) {
+      try {
+        const outPath = path.resolve(args.resultOut);
+        const dir = path.dirname(outPath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(outPath, JSON.stringify(failure, null, 2), 'utf8');
+      } catch (werr) {
+        console.error(`Failed to write result-out file: ${werr.message}`);
+      }
+    }
     process.exitCode = 1;
   }
 }
