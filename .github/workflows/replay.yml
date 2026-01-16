@@ -4,8 +4,13 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    # run on PRs targeting main
+    types: [opened, synchronize, reopened]
     branches: [ main ]
+    paths:
+      - 'web/stories/**'
+      - 'scripts/**'
+      - 'tests/golden-path/**'
+      - '.github/workflows/replay.yml'
 
 jobs:
   replay:
