@@ -44,10 +44,10 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Producers review validation reports and can approve, reject, or request refinements.
 - Approved branches are marked eligible for runtime integration; rejected branches are logged for analysis.
 
-#### Runtime operator journey: monitoring and safety
-- Operators observe telemetry events for branch proposals, Director decisions, and player outcomes.
+#### Post-launch analysis journey (between phases)
+- Telemetry events are collected for branch proposals, Director decisions, and player outcomes.
 - Logs and audit trails track all decisions to enable retrospective analysis and improvement of policy rules and Director heuristics for future phases.
-- M2 is fully automated: operators monitor outcomes but do not approve, disable, or revert branches at runtime.
+- M2 is fully automated: no runtime monitoring or intervention. Learning happens between phases based on collected data.
 
 ## Requirements
 
@@ -84,7 +84,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Define automatic rollback semantics: if a branch causes a runtime error, the system automatically reverts to the last checkpoint without corrupting save state.
 - Persistence model: integrated branches are logged to ensure reproducibility and audit trails.
 
-#### Observability for players, producers, and operators
+#### Telemetry and learning
 - Emit telemetry events for each stage: proposal submission, validation result, Director decision, branch integration, player outcome.
 - Minimal schema: event type, timestamp, branch ID, decision outcome, confidence/risk score.
 - Player-facing telemetry: detect whether a player found a branch confusing or satisfying (via post-story survey or behavioral signals).
@@ -192,7 +192,7 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 #### Risk: Emergent branches undermine authored narrative intent
 - Impact: players explore unscripted content that diminishes the story's themes or message.
 - Mitigation: include thematic alignment as a Director risk metric; require branches to include explicit narrative intent statements.
-- Mitigation: empower producers with tools to review and disable problematic branches; maintain a "banned branches" list.
+- Mitigation (post-M2): future phases may add producer tools to review and disable problematic branches based on post-launch analysis.
 
 ## Open Questions
 
