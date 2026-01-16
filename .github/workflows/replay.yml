@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 20
     concurrency:
       group: replay-gate-${{ github.ref }}
-      cancel-in-progress: false
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -33,7 +33,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
@@ -123,7 +123,10 @@ jobs:
             echo "REPLAY_EXIT=$EXIT" >>"$out"
             if [ "$EXIT" -ne 0 ]; then
               echo "Replay failed for $name (exit=$EXIT)"
-              cp "$out" "artifacts/results/replay.${name}.failure.json" || true
+              # copy raw log (.failure.log) and write a small machine-readable JSON summary (.failure.json)
+              cp "$out" "artifacts/results/replay.${name}.failure.log" || true
+              jq -n --arg story "$story" --arg script "$script" --arg log "artifacts/results/replay.${name}.failure.log" --argjson exit "$EXIT" '{ story: $story, script: $script, log: $log, exit: $exit }' >"artifacts/results/replay.${name}.failure.json" || \
+                echo "{ \"story\": \"$story\", \"script\": \"$script\", \"log\": \"artifacts/results/replay.${name}.failure.log\", \"exit\": $EXIT }" >"artifacts/results/replay.${name}.failure.json" || true
             fi
             EXIT_SUM=$((EXIT_SUM + EXIT))
             unset EXIT
@@ -169,11 +172,15 @@ jobs:
             tar -czf artifacts/replay-logs.tgz -C artifacts logs || true
           else
             echo "No logs to compress"
+            # create empty placeholder to avoid upload errors
+            : > artifacts/replay-logs.tgz || true
           fi
           if [ -d artifacts/results ] && [ "$(ls -A artifacts/results)" ]; then
             tar -czf artifacts/replay-results.tgz -C artifacts results || true
           else
             echo "No results to compress"
+            # create empty placeholder to avoid upload errors
+            : > artifacts/replay-results.tgz || true
           fi
 
       - name: Upload replay logs (archive)
