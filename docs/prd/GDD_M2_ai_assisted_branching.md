@@ -46,8 +46,9 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 
 #### Runtime operator journey: monitoring and safety
 - Operators observe telemetry events for branch proposals, Director decisions, and player outcomes.
-- If a branch causes player confusion or breaks immersion, operators can disable or revert it via feature flags.
-- Logs and audit trails track all decisions for post-mortem analysis.
+- If a branch causes player confusion or breaks immersion (detected via telemetry or player feedback), operators can disable or revert it via feature flags for post-mortem analysis.
+- Logs and audit trails track all decisions for retrospective analysis and improvement of policy rules and Director heuristics.
+- **Note**: No human-in-loop approval is required at runtime; all acceptance decisions are automated (policy + Director).
 
 ## Requirements
 
@@ -215,5 +216,11 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 - Should validation run synchronously in authoring tools, or should large proposals be validated asynchronously?
 - Should sanitized diffs be exposed automatically to downstream writers for review?
 
-## Open Questions (Technical Consistency Notes)
-- Document states automated-only; mentions human-in-loop elsewhere but not as requirement; clarify if human-in-loop review is planned for Phase 3 or later.
+## Clarification: No Human-in-Loop at M2 Runtime
+
+**M2 is designed with automated validation only.** The PRD explicitly states (Non-goals, line 19) that "This PRD does not require human-in-loop approval for every branch proposal." All runtime acceptance decisions are made by the policy/sanitization pipeline and AI Director—no human approval is required.
+
+**Post-launch human involvement** is limited to:
+- Operators monitoring telemetry and disabling problematic branches via feature flags (after-the-fact)
+- Producers refining policy rules and Director heuristics based on player feedback (between phases)
+- Future phases (Phase 3+) may introduce human-in-loop if safety concerns emerge at scale
