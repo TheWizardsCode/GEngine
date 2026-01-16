@@ -148,7 +148,7 @@
         },
         "risk_metrics": {
           "type": "object",
-          "description": "Detailed risk metrics from Director evaluation.",
+          "description": "Detailed risk metrics from Director evaluation. Includes thematic_consistency, lore_adherence, character_voice, narrative_pacing, player_preference_fit, and proposal_confidence.",
           "additionalProperties": true
         }
       }

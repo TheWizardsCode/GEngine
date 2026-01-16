@@ -164,11 +164,19 @@ M2 emits events at 7 key decision points:
         "lore_adherence": 0.90,
         "character_voice_consistency": 0.87,
         "narrative_pacing_fit": 0.80,
+        "player_preference_fit": 0.82,
         "proposal_confidence": 0.87
       },
       "weighted_risk_score": 0.14,
       "decision_threshold": 0.30,
-      "return_path_feasible": true
+      "return_path_feasible": true,
+      "player_preference_details": {
+        "branch_type_match": 0.88,
+        "theme_match": 0.79,
+        "complexity_match": 0.85,
+        "historical_engagement": 0.78,
+        "frequency_appropriateness": 0.90
+      }
     },
     
     "player_engagement": {
@@ -189,6 +197,8 @@ M2 emits events at 7 key decision points:
 - Engagement-to-creativity mapping effectiveness
 - Director decision latency
 - Success rate by risk metric
+- Player preference prediction accuracy (compare predicted fit vs. actual engagement)
+- Branch type preference trends across player segments
 
 #### Event 3b: Placement Stage Outcome
 
