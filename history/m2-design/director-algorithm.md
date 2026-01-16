@@ -14,9 +14,10 @@ This document specifies the Director's decision-making logic, risk-scoring algor
 
 1. **Return-path enforcement**: Ensure approved branches have a viable path back to scripted content within N choices
 2. **Risk assessment**: Compute a coherence score reflecting narrative quality and thematic alignment
-3. **Real-time decision**: Approve/reject within <500ms (latency-critical)
-4. **Fail-safe mechanism**: If no return path is found, revert to scripted content and alert operators
-5. **Telemetry emission**: Log all decisions with confidence scores and risk metrics
+3. **Creativity control**: Set the AI Writer's creativity parameter (0.0–1.0) based on player state and desired outcome
+4. **Real-time decision**: Approve/reject incoming proposals within <500ms (latency-critical)
+5. **Fail-safe mechanism**: If no return path is found, revert to scripted content and alert operators
+6. **Telemetry emission**: Log all decisions with confidence scores and risk metrics
 
 ---
 
@@ -457,8 +458,28 @@ def apply_branch_with_failsafe(proposal, branch_proposal_id):
   "character_voice_risk": 0.25,
   "narrative_pacing_risk": 0.30,
   "proposal_confidence_risk": 0.08,
+  "creativity_parameter_set": 0.65,
+  "player_engagement_level": 0.78,
   "decision_latency_ms": 245,
   "director_version": "v1.0.0"
+}
+```
+
+**For each Writer request, also emit:**
+
+```json
+{
+  "event_type": "writer_request",
+  "timestamp": "2026-01-16T10:45:18Z",
+  "story_id": "demo-story-2024",
+  "creativity_parameter": 0.65,
+  "reason_for_creativity_level": "Player engaged (0.78), recent success rate 0.82, climactic phase",
+  "player_state": {
+    "confusion_level": 0.2,
+    "engagement": 0.78,
+    "recent_actions": 3
+  },
+  "narrative_phase": "climactic"
 }
 ```
 
@@ -579,3 +600,59 @@ failsafe:
 3. **Narrative flow analysis**: Use plot structure analysis to detect incongruent branch insertions
 4. **Multi-branch coherence**: Consider multiple concurrent branches and their interactions
 5. **Player state prediction**: Predict player emotional state and match branch intensity accordingly
+6. **Adaptive creativity**: Learn optimal creativity levels from playtest feedback and telemetry
+
+---
+
+## Creativity Control Loop
+
+The Director does not just approve/reject proposals—it also controls the **creativity parameter** sent to the AI Writer when requesting proposals.
+
+**Creativity parameter** (0.0–1.0):
+- `0.0`: Minimal creativity; Writer produces conservative, safe, predictable branches (low temperature)
+- `0.5`: Balanced creativity; Writer produces novel but grounded branches
+- `1.0`: Maximum creativity; Writer produces imaginative, surprising branches (high temperature)
+
+**Director controls creativity based on**:
+- **Player state**: If player is confused or lost, reduce creativity; if player is engaged and progressing well, increase it
+- **Recent success rate**: If recent branches were well-received, increase creativity; if rejected, decrease it
+- **Narrative phase**: In climactic phases, allow higher creativity; in exposition, prefer lower creativity
+- **Risk tolerance**: If risk_score is high, request lower creativity proposals; if low, can request more creative content
+
+**Algorithm**:
+```
+def compute_creativity_parameter(player_state, recent_success_rate, narrative_phase, risk_tolerance):
+    base_creativity = 0.5
+    
+    # Adjust for player engagement
+    if player_state.confusion_level > 0.7:
+        base_creativity -= 0.2  # Reduce creativity if player is confused
+    elif player_state.engagement > 0.8:
+        base_creativity += 0.1  # Increase if highly engaged
+    
+    # Adjust for recent success
+    success_delta = recent_success_rate - 0.75  # Target 75% acceptance rate
+    base_creativity += success_delta * 0.3  # Weight 30% toward success feedback
+    
+    # Adjust for narrative phase
+    phase_creativity = {
+        "exposition": 0.3,
+        "slow_buildup": 0.5,
+        "climactic": 0.8,
+        "resolution": 0.4
+    }
+    base_creativity = 0.6 * base_creativity + 0.4 * phase_creativity.get(narrative_phase, 0.5)
+    
+    # Adjust for risk tolerance
+    risk_multiplier = 1.0 - (risk_tolerance * 0.3)  # Higher risk → lower multiplier
+    base_creativity *= risk_multiplier
+    
+    return clamp(base_creativity, 0.0, 1.0)
+```
+
+**Benefits**:
+- Keeps proposals fresh and varied (no deterministic reproduction)
+- Adapts to player engagement and confusion in real-time
+- Allows Director to "dial down" creativity if safety/coherence concerns arise
+- Learns from feedback loop: success → more creativity; failure → less creativity
+- Prevents monotony (same context won't always produce same proposal type)
