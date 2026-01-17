@@ -84,8 +84,8 @@ const rawArgs = parseArgs(process.argv.slice(2));
 const localCfg = loadLocalConfig();
 
 const targetArg = rawArgs.target || rawArgs.t || process.env.GENGINE_AI_ENDPOINT || process.env.TARGET_URL || localCfg.GENGINE_AI_ENDPOINT;
-const portArg = rawArgs.port || rawArgs.p || process.env.PORT || localCfg.PORT || "8010";
-const verbose = Boolean(rawArgs.verbose || rawArgs.v || localCfg.VERBOSE === 'true' || localCfg.VERBOSE === true);
+const portArg = rawArgs.port || rawArgs.p || process.env.GENGINE_CORS_PROXY_PORT || localCfg.GENGINE_CORS_PROXY_PORT || "8010";
+const verbose = Boolean(rawArgs.verbose || rawArgs.v || process.env.GENGINE_CORS_PROXY_VERBOSE === 'true' || process.env.GENGINE_CORS_PROXY_VERBOSE === '1' || localCfg.GENGINE_CORS_PROXY_VERBOSE === 'true' || localCfg.GENGINE_CORS_PROXY_VERBOSE === true);
 
 if (!targetArg) {
   console.error("[cors-proxy] Missing required --target <url> argument or GENGINE_AI_ENDPOINT/TARGET_URL env or .gengine/config.yaml");
@@ -115,6 +115,11 @@ if (Number.isNaN(port)) {
   process.exit(1);
 }
 
+// Backwards-compatible: if original PORT env is set, prefer it for dev:demo flows that still use PORT
+if (!process.env.PORT && localCfg.PORT) {
+  // localCfg.PORT may exist if user used older example; set process.env.PORT for downstream tools
+  process.env.PORT = String(localCfg.PORT);
+}
 function log(...messages) {
   if (verbose) {
     console.log(...messages);
