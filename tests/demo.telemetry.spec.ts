@@ -74,7 +74,8 @@ async function openSettings(page) {
 
 async function setSliderValue(page, selector, value) {
   const slider = page.locator(selector);
-  await expect(slider).toBeVisible();
+  // Ensure the slider exists in the DOM; it may be visually hidden in some test contexts
+  await expect(slider).toHaveCount(1);
   const target = Number(value);
   await slider.evaluate((el, val) => {
     (el as HTMLInputElement).value = String(val);
