@@ -217,7 +217,15 @@ test('Director high threshold approves more proposals than low threshold', async
     const inkrunner = (window as any).__inkrunner;
     let approvals = 0;
     for (let i = 0; i < 3; i++) {
-      const result = await inkrunner.addAIChoice({ forceDirectorEnabled: true, forceRiskThreshold: 0.2 });
+      const result = await inkrunner.addAIChoice({
+        forceDirectorEnabled: true,
+        forceRiskThreshold: 0.2,
+        mockProposalOverride: {
+          choice_text: `AI suggestion low ${i}`,
+          content: { text: 'Mock AI content for low threshold', return_path: 'pines' },
+          metadata: { confidence_score: 0.1 }
+        }
+      });
       if (result === 'approved') approvals++;
     }
     return approvals;
