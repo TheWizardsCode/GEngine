@@ -191,9 +191,10 @@ test('Director high threshold approves more proposals than low threshold', async
 
   await expect(page.locator('.ai-config-section')).toBeHidden({ timeout: 1 });
 
-  const highApprovals = await page.evaluate(async () => {
+    const highApprovals = await page.evaluate(async () => {
+    // Ensure Director can validate return paths using fallback list
+    window.__proposalValidReturnPaths = ['pines'];
     const inkrunner = (window as any).__inkrunner;
-    const story = inkrunner.__getStory?.() ?? inkrunner.__getStory?.();
     let approvals = 0;
     for (let i = 0; i < 3; i++) {
       const result = await inkrunner.addAIChoice({
