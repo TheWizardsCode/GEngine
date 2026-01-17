@@ -1,0 +1,19 @@
+# GEngine local configuration (example)
+# Place a copy at .gengine/config.yaml to set local defaults for development.
+
+# Minimal settings — only keys consumed by scripts today.
+# Copy to .gengine/config.yaml and edit to match your environment.
+
+# Base URL for the upstream AI endpoint (host only is preferred)
+GENGINE_AI_ENDPOINT: "https://your-endpoint.openai.azure.com"
+
+# Port for the local CORS proxy
+PORT: 8010
+
+# Verbose logging for the proxy (true/false)
+VERBOSE: false
+
+# Notes:
+# - The proxy prefers CLI args, then environment variables, then this file.
+# - To expand settings, update scripts/cors-proxy.js and package.json.
+

@@ -1,9 +1,56 @@
 #!/usr/bin/env node
 "use strict";
 
+const fs = require('fs');
+const path = require('path');
 const http = require("http");
 const https = require("https");
 const { URL } = require("url");
+
+let yamlParser = null;
+try {
+  yamlParser = require('js-yaml');
+} catch (e) {
+  // js-yaml is optional; if missing we will still support minimal key=value style in .gengine/config.yaml
+  yamlParser = null;
+}
+
+function loadLocalConfig() {
+  try {
+    const cfgDir = path.join(process.cwd(), '.gengine');
+    const cfgPath = path.join(cfgDir, 'config.yaml');
+    if (!fs.existsSync(cfgPath)) return {};
+    const raw = fs.readFileSync(cfgPath, 'utf8');
+    if (yamlParser) {
+      try {
+        const parsed = yamlParser.load(raw) || {};
+        // Normalize keys to upper-case environment-like strings for easy lookup
+        const norm = {};
+        Object.keys(parsed).forEach(k => { norm[String(k).toUpperCase()] = parsed[k]; });
+        console.log(`[cors-proxy] Loaded local config from ${cfgPath}`);
+        return norm;
+      } catch (e) {
+        console.error(`[cors-proxy] Failed to parse ${cfgPath}: ${e.message}`);
+        return {};
+      }
+    }
+
+    // Fallback simple parser: lines of KEY: value or key: value
+    const out = {};
+    raw.split(/\r?\n/).forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+      const m = trimmed.match(/^([A-Za-z0-9_\-\.]+)\s*:\s*(.*)$/);
+      if (m) {
+        out[String(m[1]).toUpperCase()] = m[2];
+      }
+    });
+    console.log(`[cors-proxy] Loaded local config (fallback parser) from ${cfgPath}`);
+    return out;
+  } catch (e) {
+    return {};
+  }
+}
 
 function parseArgs(argv) {
   const args = {};
@@ -34,12 +81,14 @@ function parseArgs(argv) {
 }
 
 const rawArgs = parseArgs(process.argv.slice(2));
-const targetArg = rawArgs.target || rawArgs.t || process.env.GENGINE_AI_ENDPOINT || process.env.TARGET_URL;
-const portArg = rawArgs.port || rawArgs.p || process.env.PORT || "8010";
-const verbose = Boolean(rawArgs.verbose || rawArgs.v);
+const localCfg = loadLocalConfig();
+
+const targetArg = rawArgs.target || rawArgs.t || process.env.GENGINE_AI_ENDPOINT || process.env.TARGET_URL || localCfg.GENGINE_AI_ENDPOINT;
+const portArg = rawArgs.port || rawArgs.p || process.env.PORT || localCfg.PORT || "8010";
+const verbose = Boolean(rawArgs.verbose || rawArgs.v || localCfg.VERBOSE === 'true' || localCfg.VERBOSE === true);
 
 if (!targetArg) {
-  console.error("[cors-proxy] Missing required --target <url> argument or GENGINE_AI_ENDPOINT/TARGET_URL env");
+  console.error("[cors-proxy] Missing required --target <url> argument or GENGINE_AI_ENDPOINT/TARGET_URL env or .gengine/config.yaml");
   console.error("Example: node scripts/cors-proxy.js --target https://example.azure.com");
   process.exit(1);
 }
