@@ -426,55 +426,101 @@
    */
   async function addAIChoice() {
     const settings = window.ApiKeyManager?.getSettings() || {};
-    
+
     // Check if AI is enabled
     if (!settings.enabled) {
       return;
     }
-    
+
     // Check if we have an API key
     if (!window.ApiKeyManager?.hasApiKey()) {
       return;
     }
-    
-    // Show loading indicator
+
+    // Show loading indicator while generating
     showLoadingIndicator();
-    
+
+    const writerStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+
     try {
       // Generate AI proposal
       const proposal = await generateAIProposal();
-      
-      // Hide loading indicator
+
+      // Hide generation indicator
       hideLoadingIndicator();
-      
+
       if (!proposal) {
         // Silently skip if generation failed
         return;
       }
-      
+
+      const writerMs = Math.max(0, ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - writerStart);
+
       // Store current proposal
       currentAIProposal = proposal;
-      
-      // Create AI choice button
+
+      // Director evaluation (if enabled)
+      const directorEnabled = (settings.directorEnabled !== false); // default true
+      const riskThreshold = (typeof settings.directorRiskThreshold === 'number') ? settings.directorRiskThreshold : 0.4;
+
+      let directorResult = null;
+      if (directorEnabled && window.Director && typeof window.Director.evaluate === 'function') {
+        // Show evaluating indicator
+        const indicator = createLoadingIndicator();
+        const textEl = indicator.querySelector('.ai-loading-text');
+        if (textEl) textEl.textContent = 'Evaluating AI choice...';
+        indicator.style.display = 'flex';
+        choicesEl.appendChild(indicator);
+
+        try {
+          directorResult = await window.Director.evaluate(proposal, { story }, { riskThreshold });
+        } catch (e) {
+          console.warn('[inkrunner] Director evaluation failed, skipping AI choice', e);
+          hideLoadingIndicator();
+          return;
+        }
+
+        // Hide evaluating indicator
+        hideLoadingIndicator();
+
+        // Log combined latency telemetry
+        const directorMs = (directorResult && typeof directorResult.latencyMs === 'number') ? directorResult.latencyMs : 0;
+        const totalMs = writerMs + directorMs;
+        logTelemetry('ai_evaluation', {
+          proposal_id: proposal.id,
+          decision: directorResult.decision,
+          writerMs,
+          directorMs,
+          totalMs
+        });
+
+        if (directorResult.decision !== 'approve') {
+          // Silent skip but log reason for debugging
+          console.log('[inkrunner] Director rejected AI proposal:', directorResult.reason);
+          return;
+        }
+      }
+
+      // If Director not present or approved, inject AI choice
       const btn = document.createElement('button');
       const styleClass = settings.aiChoiceStyle === 'normal' ? 'ai-choice-normal' : 'ai-choice';
       btn.className = `choice-btn ${styleClass}`;
       btn.textContent = proposal.choice_text;
-      
+
       btn.addEventListener('click', () => {
         playAIBranch(proposal);
       });
       btn.addEventListener('touchstart', () => {
         playAIBranch(proposal);
       }, { passive: true });
-      
+
       choicesEl.appendChild(btn);
-      
+
       logTelemetry('ai_choice_generated', {
         proposal_id: proposal.id,
         scene: proposal._meta?.scene
       });
-      
+
     } catch (e) {
       console.error('[inkrunner] Failed to add AI choice:', e);
       hideLoadingIndicator();
