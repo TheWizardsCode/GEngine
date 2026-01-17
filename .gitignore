@@ -30,3 +30,5 @@ artifacts/
 
 # Local CI artifacts download
 ci-artifacts/
+
+.gengine/config.yaml
