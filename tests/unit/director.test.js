@@ -80,7 +80,7 @@ describe('Director core', () => {
     expect(ok.confidence).toBe(0.9);
     expect(ok.reason).toMatch(/exists/);
 
-    const bad = Director.checkReturnPath('missing_knot', story);
+    const bad = Director.checkReturnPath('nonexistent_knot_xyz', story);
     expect(bad.feasible).toBe(false);
     expect(bad.confidence).toBe(0.0);
     expect(bad.reason).toMatch(/does not exist/);
@@ -160,6 +160,18 @@ describe('Director core', () => {
     const res = await Director.evaluate(proposal, {}, { riskThreshold: 0.8 });
     expect(res.decision).toBe('approve');
     expect(res.riskScore).toBeLessThanOrEqual(0.8);
+  });
+
+  it('rejects proposal when return_path is invalid (missing knot)', async () => {
+    const story = { mainContentContainer: { _namedContent: { campfire: {} } } };
+    const proposal = {
+      content: { text: 'This is low confidence content', return_path: 'nonexistent_knot_xyz' },
+      metadata: { confidence_score: 0.8 }
+    };
+
+    const res = await Director.evaluate(proposal, { story }, { riskThreshold: 0.9 });
+    expect(res.decision).toBe('reject');
+    expect(res.reason).toMatch(/Return path knot does not exist|return path check failed/i);
   });
 
   it('rejects low-confidence proposal without return_path or valid fallback', async () => {
