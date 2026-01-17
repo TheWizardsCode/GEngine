@@ -17,7 +17,35 @@ describe('Director core', () => {
 
     jest.isolateModules(() => {
       Director = require(path.join(process.cwd(), 'web/demo/js/director.js'));
-    });
+  it('approves high-confidence short proposal when fallback return paths include it', async () => {
+    // ensure fallback list is present (no story shape available)
+    global.window.__proposalValidReturnPaths = ['pines'];
+
+    const proposal = {
+      content: { text: 'Short safe content', return_path: 'pines' },
+      metadata: { confidence_score: 0.99 }
+    };
+
+    const res = await Director.evaluate(proposal, {}, { riskThreshold: 0.8 });
+    expect(res.decision).toBe('approve');
+    expect(res.riskScore).toBeLessThanOrEqual(0.8);
+  });
+
+  it('rejects low-confidence proposal without return_path or valid fallback', async () => {
+    // Ensure no fallback and no story
+    delete global.window.__proposalValidReturnPaths;
+
+    const proposal = {
+      content: { text: 'This is low confidence content', return_path: null },
+      metadata: { confidence_score: 0.05 }
+    };
+
+    const res = await Director.evaluate(proposal, {}, { riskThreshold: 0.5 });
+    expect(res.decision).toBe('reject');
+    expect(res.reason).toMatch(/Return path check failed|Unable to verify return path/);
+  });
+
+});
   });
 
   afterEach(() => {
