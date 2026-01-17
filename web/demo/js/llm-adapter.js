@@ -176,16 +176,18 @@ async function generateProposal(options) {
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
-      ],
-      temperature: temperature
+      ]
     };
     
-    // Only include model for non-Azure endpoints (Azure uses deployment name in URL)
     if (!detectAzure) {
+      // Standard OpenAI-compatible endpoints accept temperature + model + max_tokens
+      requestBody.temperature = temperature;
       requestBody.model = model;
       requestBody.max_tokens = 1000;
     } else {
+      // Azure deployments expect max_completion_tokens and often reject custom temperature values
       requestBody.max_completion_tokens = 1000;
+      // Skip temperature to use the deployment default (avoids unsupported_value errors)
     }
     
     // Only include response_format if JSON mode is enabled
