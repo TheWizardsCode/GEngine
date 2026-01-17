@@ -177,13 +177,15 @@ async function generateProposal(options) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: temperature,
-      max_tokens: 1000
+      temperature: temperature
     };
     
     // Only include model for non-Azure endpoints (Azure uses deployment name in URL)
     if (!detectAzure) {
       requestBody.model = model;
+      requestBody.max_tokens = 1000;
+    } else {
+      requestBody.max_completion_tokens = 1000;
     }
     
     // Only include response_format if JSON mode is enabled
