@@ -108,13 +108,19 @@ For development, run the built-in proxy and demo server together, or separately 
 
 ```bash
 # Option A: single command (proxy + demo server)
-# Set AI_ENDPOINT env var and run dev:demo (recommended):
-AI_ENDPOINT="https://your-endpoint.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview" npm run dev:demo
+# Set GENGINE_AI_ENDPOINT env var and run dev:demo (recommended):
+GENGINE_AI_ENDPOINT="https://your-endpoint.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview" npm run dev:demo
 
 # Option B: manual control
-# Start the proxy separately and the demo server separately (use --target or AI_ENDPOINT):
+# Start the proxy separately and the demo server separately (use --target or GENGINE_AI_ENDPOINT):
 npm run dev:cors-proxy -- --target https://...
 npm run serve-demo -- --port 8080
+
+# Or place settings in .gengine/config.yaml and run without env vars:
+# .gengine/config.yaml example keys:
+# GENGINE_AI_ENDPOINT: "https://your-endpoint.openai.azure.com"
+# GENGINE_CORS_PROXY_PORT: 8010
+# GENGINE_CORS_PROXY_VERBOSE: false
 ```
 
 Then in AI Settings:
