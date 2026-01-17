@@ -219,13 +219,15 @@ test('Director high threshold approves more proposals than low threshold', async
     const inkrunner = (window as any).__inkrunner;
     let approvals = 0;
     for (let i = 0; i < 3; i++) {
+      // Low-confidence, very long content to increase risk score above low threshold
+      const longText = 'Bad content '.repeat(80); // ~800+ chars
       const result = await inkrunner.addAIChoice({
         forceDirectorEnabled: true,
         forceRiskThreshold: 0.2,
         mockProposalOverride: {
           choice_text: `AI suggestion low ${i}`,
-          content: { text: 'Mock AI content for low threshold', return_path: 'pines' },
-          metadata: { confidence_score: 0.1 }
+          content: { text: longText, return_path: 'pines' },
+          metadata: { confidence_score: 0.05 }
         }
       });
       if (result === 'approved') approvals++;
