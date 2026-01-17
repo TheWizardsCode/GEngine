@@ -247,7 +247,11 @@ test('Director off restores naive injection', async ({ page }) => {
 
   const directorToggle = page.locator('#director-enabled');
   await expect(directorToggle).toBeChecked();
-  await directorToggle.uncheck();
+  // The visible control is a stylized element; toggle the underlying input directly
+  await directorToggle.evaluate((el: HTMLInputElement) => {
+    el.checked = false;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
 
   await expect(page.locator('.ai-director-controls')).toHaveCSS('display', 'none');
 
