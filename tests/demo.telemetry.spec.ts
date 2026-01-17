@@ -227,7 +227,7 @@ test('Director high threshold approves more proposals than low threshold', async
         forceRiskThreshold: 0.2,
         mockProposalOverride: {
           choice_text: `AI suggestion low ${i}`,
-          content: { text: longText, return_path: 'pines' },
+          content: { text: longText, return_path: 'nope' },
           metadata: { confidence_score: 0.05 }
         }
       });
