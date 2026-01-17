@@ -368,4 +368,175 @@ describe('inkrunner AI integration', () => {
     expect(window.LoreAssembler.recordChoice).toHaveBeenCalledWith('[AI] Test choice');
     expect(window.Telemetry.emit).toHaveBeenCalledWith('ai_branch_played', expect.any(Object));
   });
+
+  it('injects AI choice only when Director approves', async () => {
+    const proposal = {
+      id: 'p-approve',
+      choice_text: 'Approved choice',
+      content: {
+        text: 'AI content',
+        return_path: 'campfire'
+      },
+      metadata: { confidence_score: 0.9 }
+    };
+
+    const evaluateMock = jest.fn(async (_proposal, _ctx, options) => {
+      expect(options).toHaveProperty('riskThreshold', 0.4);
+      return { decision: 'approve', reason: 'ok', riskScore: 0.2, latencyMs: 15 };
+    });
+
+    window.Director = { evaluate: evaluateMock };
+
+    const result = await inkrunner.addAIChoice({ forceDirectorEnabled: true, mockProposalOverride: proposal });
+
+    expect(result).toBe('approved');
+    expect(evaluateMock).toHaveBeenCalledTimes(1);
+
+    const aiButtons = document.querySelectorAll('.choice-btn.ai-choice, .choice-btn.ai-choice-normal');
+    expect(aiButtons.length).toBe(1);
+    expect(aiButtons[0].textContent).toBe('Approved choice');
+
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({
+        proposal_id: 'p-approve',
+        decision: 'approve',
+        writerMs: expect.any(Number),
+        directorMs: 15,
+        totalMs: expect.any(Number)
+      })
+    );
+
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_choice_generated',
+      expect.objectContaining({ proposal_id: 'p-approve' })
+    );
+  });
+
+  it('skips AI choice when Director rejects', async () => {
+    const proposal = {
+      id: 'p-reject',
+      choice_text: 'Rejected choice',
+      content: {
+        text: 'AI content',
+        return_path: 'campfire'
+      },
+      metadata: { confidence_score: 0.2 }
+    };
+
+    window.Director = {
+      evaluate: jest.fn(async () => ({ decision: 'reject', reason: 'too risky', latencyMs: 7, riskScore: 0.9 }))
+    };
+
+    const result = await inkrunner.addAIChoice({ forceDirectorEnabled: true, mockProposalOverride: proposal });
+
+    expect(result).toBe('rejected');
+
+    const aiButtons = Array.from(document.querySelectorAll('.choice-btn')).filter(btn =>
+      btn.classList.contains('ai-choice') || btn.classList.contains('ai-choice-normal')
+    );
+    expect(aiButtons.length).toBe(0);
+
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({
+        proposal_id: 'p-reject',
+        decision: 'reject',
+        directorMs: 7,
+        totalMs: expect.any(Number)
+      })
+    );
+  });
+
+  it('retains authored choices when Director rejects AI injection', async () => {
+    const choicesEl = document.getElementById('choices');
+    const choiceStory = mockStory({ currentChoices: [{ text: 'Authored A' }, { text: 'Authored B' }] });
+    inkrunner.setStory(choiceStory);
+
+    window.Director = {
+      evaluate: jest.fn(async () => ({ decision: 'reject', reason: 'not coherent', latencyMs: 5, riskScore: 0.8 }))
+    };
+
+    await inkrunner.renderChoices();
+
+    const buttons = choicesEl.querySelectorAll('button.choice-btn');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0].textContent).toBe('Authored A');
+    expect(buttons[1].textContent).toBe('Authored B');
+
+    const aiButtons = choicesEl.querySelectorAll('.choice-btn.ai-choice, .choice-btn.ai-choice-normal');
+    expect(aiButtons.length).toBe(0);
+
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({ decision: 'reject' })
+    );
+  });
+
+  it('handles mixed approved and rejected AI evaluations across calls', async () => {
+    window.Director = {
+      evaluate: jest.fn()
+        .mockResolvedValueOnce({ decision: 'approve', reason: 'ok', riskScore: 0.2, latencyMs: 4 })
+        .mockResolvedValueOnce({ decision: 'reject', reason: 'too risky', riskScore: 0.9, latencyMs: 6 })
+    };
+
+    const approved = {
+      id: 'p-1',
+      choice_text: 'Approved choice 1',
+      content: { text: 'AI content 1', return_path: 'campfire' },
+      metadata: { confidence_score: 0.9 }
+    };
+
+    const rejected = {
+      id: 'p-2',
+      choice_text: 'Rejected choice 2',
+      content: { text: 'AI content 2', return_path: 'campfire' },
+      metadata: { confidence_score: 0.1 }
+    };
+
+    const firstResult = await inkrunner.addAIChoice({ forceDirectorEnabled: true, mockProposalOverride: approved });
+    const secondResult = await inkrunner.addAIChoice({ forceDirectorEnabled: true, mockProposalOverride: rejected });
+
+    expect(firstResult).toBe('approved');
+    expect(secondResult).toBe('rejected');
+
+    const aiButtons = document.querySelectorAll('.choice-btn.ai-choice, .choice-btn.ai-choice-normal');
+    expect(aiButtons.length).toBe(1);
+    expect(aiButtons[0].textContent).toBe('Approved choice 1');
+
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({ proposal_id: 'p-1', decision: 'approve' })
+    );
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({ proposal_id: 'p-2', decision: 'reject' })
+    );
+  });
+
+  it('survives a playthrough where Director rejects every AI proposal', async () => {
+    const choicesEl = document.getElementById('choices');
+    const choiceStory = mockStory({ currentChoices: [{ text: 'Authored 1' }, { text: 'Authored 2' }] });
+    inkrunner.setStory(choiceStory);
+
+    window.Director = {
+      evaluate: jest.fn(async () => ({ decision: 'reject', reason: 'all rejected', riskScore: 0.95, latencyMs: 3 }))
+    };
+
+    await inkrunner.renderChoices();
+    await inkrunner.renderChoices(); // simulate next choice point also rejecting
+
+    const buttons = choicesEl.querySelectorAll('button.choice-btn');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0].textContent).toBe('Authored 1');
+    expect(buttons[1].textContent).toBe('Authored 2');
+
+    const aiButtons = choicesEl.querySelectorAll('.choice-btn.ai-choice, .choice-btn.ai-choice-normal');
+    expect(aiButtons.length).toBe(0);
+
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({ decision: 'reject' })
+    );
+  });
 });
