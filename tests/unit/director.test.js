@@ -96,6 +96,33 @@ describe('Director core', () => {
     expect(sLow).toBeGreaterThanOrEqual(s1);
   });
 
+  it('produces low risk for high-confidence proposals', () => {
+    const proposal = { metadata: { confidence_score: 0.9 }, content: { text: 'concise' } };
+    const score = Director.computeRiskScore(proposal, { returnPathCheck: { confidence: 0.9 } }, {});
+    expect(score).toBeLessThan(0.3);
+  });
+
+  it('produces high risk for low-confidence proposals', () => {
+    const proposal = { metadata: { confidence_score: 0.3 }, content: { text: 'concise' } };
+    const score = Director.computeRiskScore(proposal, { returnPathCheck: { confidence: 0.9 } }, {});
+    expect(score).toBeGreaterThan(0.5);
+  });
+
+  it('elevates pacing risk for very long branches', () => {
+    const longText = 'long '.repeat(200); // > 500 chars
+    const proposal = { metadata: { confidence_score: 0.6 }, content: { text: longText } };
+    const score = Director.computeRiskScore(proposal, { returnPathCheck: { confidence: 0.9 } }, {});
+    expect(score).toBeGreaterThan(0.35);
+  });
+
+  it('is deterministic across repeated calls', () => {
+    const proposal = { metadata: { confidence_score: 0.7 }, content: { text: 'stable content' } };
+    const context = { returnPathCheck: { confidence: 0.9 } };
+    const scores = Array.from({ length: 10 }, () => Director.computeRiskScore(proposal, context, {}));
+    const first = scores[0];
+    scores.forEach(s => expect(s).toBeCloseTo(first));
+  });
+
   it('approves high-confidence short proposal when fallback return paths include it', async () => {
     // ensure fallback list is present (no story shape available)
     global.window.__proposalValidReturnPaths = ['pines'];
