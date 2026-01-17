@@ -77,10 +77,13 @@ describe('Director core', () => {
 
     const ok = Director.checkReturnPath('campfire', story);
     expect(ok.feasible).toBe(true);
-    expect(ok.confidence).toBeGreaterThan(0);
+    expect(ok.confidence).toBe(0.9);
+    expect(ok.reason).toMatch(/exists/);
 
     const bad = Director.checkReturnPath('missing_knot', story);
     expect(bad.feasible).toBe(false);
+    expect(bad.confidence).toBe(0.0);
+    expect(bad.reason).toMatch(/does not exist/);
   });
 
   it('checkReturnPath falls back to __proposalValidReturnPaths', () => {
@@ -93,6 +96,18 @@ describe('Director core', () => {
     const bad = Director.checkReturnPath('gamma', null);
     expect(bad.feasible).toBe(false);
   });
+
+  it('checkReturnPath completes within 50ms for existence checks', () => {
+    const story = { mainContentContainer: { _namedContent: { campfire: {}, elsewhere: {} } } };
+    const iterations = 200;
+    const start = performance.now();
+    for (let i = 0; i < iterations; i += 1) {
+      Director.checkReturnPath('campfire', story);
+      Director.checkReturnPath('missing_knot', story);
+    }
+    const duration = performance.now() - start;
+    expect(duration).toBeLessThan(50);
+  }, 100);
 
   it('computeRiskScore is deterministic and sensitive to confidence', () => {
     const pHigh = { metadata: { confidence_score: 0.95 }, content: { text: 'short' } };
