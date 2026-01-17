@@ -104,13 +104,12 @@ These APIs don't include CORS headers for browser requests. Local models (Ollama
 
 #### Development Workaround: CORS Proxy
 
-For development, use `local-cors-proxy` to bypass CORS restrictions:
+For development, run the built-in proxy script and point it at your Azure/OpenAI endpoint:
 
 ```bash
-# Start proxy pointing to your full Azure/OpenAI endpoint
-npx local-cors-proxy \
-  --proxyUrl https://your-endpoint.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview \
-  --proxyPartial ""
+# Terminal 1: run the proxy (defaults to port 8010)
+npm run dev:cors-proxy -- \
+  --target https://your-endpoint.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview
 ```
 
 Then in AI Settings:
@@ -119,6 +118,8 @@ Then in AI Settings:
 - Enable the **Azure OpenAI** toggle if you are proxying an Azure deployment (ensures `api-key` header + Azure-safe payload)
 
 The proxy intercepts requests to `localhost:8010/...` and forwards them to your actual endpoint with proper CORS headers.
+
+> Need more logging? Add `--verbose` to the proxy command.
 
 #### Production Solution
 
