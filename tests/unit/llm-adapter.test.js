@@ -241,6 +241,110 @@ describe('llm-adapter', () => {
       expect(fetchCall[1].headers['X-Custom-Header']).toBe('custom-value');
     });
 
+    it('uses api-key header for Azure OpenAI endpoints', async () => {
+      const azureUrl = 'https://myresource.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15';
+      
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{ message: { content: '{"test": true}' } }]
+        })
+      });
+
+      await LLMAdapter.generateProposal({
+        systemPrompt: 'Test',
+        userPrompt: 'Test',
+        apiKey: 'azure-api-key-12345',
+        baseUrl: azureUrl
+      });
+
+      const fetchCall = global.fetch.mock.calls[0];
+      expect(fetchCall[1].headers['api-key']).toBe('azure-api-key-12345');
+      expect(fetchCall[1].headers['Authorization']).toBeUndefined();
+    });
+
+    it('uses api-key header for Azure Cognitive Services endpoints', async () => {
+      const azureUrl = 'https://myresource.cognitiveservices.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15';
+      
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{ message: { content: '{"test": true}' } }]
+        })
+      });
+
+      await LLMAdapter.generateProposal({
+        systemPrompt: 'Test',
+        userPrompt: 'Test',
+        apiKey: 'azure-api-key-12345',
+        baseUrl: azureUrl
+      });
+
+      const fetchCall = global.fetch.mock.calls[0];
+      expect(fetchCall[1].headers['api-key']).toBe('azure-api-key-12345');
+      expect(fetchCall[1].headers['Authorization']).toBeUndefined();
+    });
+
+    it('omits model field for Azure endpoints', async () => {
+      const azureUrl = 'https://myresource.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15';
+      
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{ message: { content: '{"test": true}' } }]
+        })
+      });
+
+      await LLMAdapter.generateProposal({
+        systemPrompt: 'Test',
+        userPrompt: 'Test',
+        apiKey: 'azure-api-key-12345',
+        baseUrl: azureUrl
+      });
+
+      const fetchCall = global.fetch.mock.calls[0];
+      const body = JSON.parse(fetchCall[1].body);
+      expect(body.model).toBeUndefined();
+    });
+
+    it('includes model field for non-Azure endpoints', async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{ message: { content: '{"test": true}' } }]
+        })
+      });
+
+      await LLMAdapter.generateProposal({
+        systemPrompt: 'Test',
+        userPrompt: 'Test',
+        apiKey: 'sk-test-key-12345678901234567890'
+      });
+
+      const fetchCall = global.fetch.mock.calls[0];
+      const body = JSON.parse(fetchCall[1].body);
+      expect(body.model).toBe('gpt-4o-mini');
+    });
+
+    it('uses Bearer token for non-Azure endpoints', async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{ message: { content: '{"test": true}' } }]
+        })
+      });
+
+      await LLMAdapter.generateProposal({
+        systemPrompt: 'Test',
+        userPrompt: 'Test',
+        apiKey: 'sk-test-key-12345678901234567890'
+      });
+
+      const fetchCall = global.fetch.mock.calls[0];
+      expect(fetchCall[1].headers['Authorization']).toBe('Bearer sk-test-key-12345678901234567890');
+      expect(fetchCall[1].headers['api-key']).toBeUndefined();
+    });
+
     it('includes endpoint in metadata', async () => {
       const customUrl = 'http://localhost:11434/v1/chat/completions';
       
