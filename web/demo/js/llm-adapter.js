@@ -290,10 +290,11 @@ async function generateProposal(options) {
  * @param {Object} [options] - Test options
  * @param {string} [options.baseUrl] - API endpoint URL (defaults to OpenAI)
  * @param {boolean} [options.useJsonMode=true] - Whether to use JSON mode
+ * @param {boolean} [options.isAzure] - Whether this is an Azure OpenAI endpoint
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 async function testConnection(apiKey, options = {}) {
-  const { baseUrl = DEFAULT_BASE_URL, useJsonMode = true } = options;
+  const { baseUrl = DEFAULT_BASE_URL, useJsonMode = true, isAzure = null } = options;
   
   const result = await generateProposal({
     systemPrompt: 'You are a test assistant. Respond with valid JSON.',
@@ -302,7 +303,8 @@ async function testConnection(apiKey, options = {}) {
     creativity: 0,
     timeoutMs: 10000,
     baseUrl: baseUrl,
-    useJsonMode: useJsonMode
+    useJsonMode: useJsonMode,
+    isAzure: isAzure
   });
   
   if (result.error) {
