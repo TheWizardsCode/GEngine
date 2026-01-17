@@ -13,6 +13,7 @@ Thumbs.db
 *.zip
 *.webm
 *.png
+junit-report.xml
 
 # Local validate-story state files
 .validate-story-state.json
