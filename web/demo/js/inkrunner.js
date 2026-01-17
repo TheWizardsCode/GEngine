@@ -12,7 +12,90 @@
   const STORY_PATH = `${window.location.pathname.split('/demo')[0] || ''}/stories/demo.ink`;
 
   let story;
+  const mockProposalQueue = [];
+
+  function cloneProposal(proposal) {
+    if (typeof structuredClone === 'function') {
+      try {
+        return structuredClone(proposal);
+      } catch (e) {
+        // fall through to JSON clone
+      }
+    }
+    try {
+      return JSON.parse(JSON.stringify(proposal));
+    } catch (e) {
+      return Array.isArray(proposal) ? proposal.slice() : Object.assign({}, proposal);
+    }
+  }
+
+  function generateMockId() {
+    return `mock-${Date.now().toString(36)}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function normalizeMockProposal(base = {}) {
+    const proposal = cloneProposal(base);
+    if (!proposal.content || typeof proposal.content !== 'object') {
+      proposal.content = { text: '', return_path: null };
+    }
+    if (typeof proposal.content.text !== 'string') {
+      proposal.content.text = String(proposal.content.text || '');
+    }
+    if (!proposal.choice_text) {
+      proposal.choice_text = 'AI suggestion';
+    }
+    if (!proposal.metadata || typeof proposal.metadata !== 'object') {
+      proposal.metadata = {};
+    }
+    if (!Number.isFinite(proposal.metadata.confidence_score)) {
+      proposal.metadata.confidence_score = 0.5;
+    }
+    if (!proposal.content.return_path && Array.isArray(proposal.validReturnPaths) && proposal.validReturnPaths.length > 0) {
+      proposal.content.return_path = proposal.validReturnPaths[0];
+    }
+    if (!proposal.validReturnPaths && proposal.content.return_path) {
+      proposal.validReturnPaths = [proposal.content.return_path];
+    }
+    if (!proposal.id) {
+      const hasWindow = typeof window !== 'undefined';
+      const generator = hasWindow && window.LLMAdapter && typeof window.LLMAdapter.generateProposalId === 'function'
+        ? window.LLMAdapter.generateProposalId
+        : null;
+      proposal.id = generator ? generator() : generateMockId();
+    }
+    return proposal;
+  }
+
+  function enqueueMockProposal(proposal) {
+    if (!proposal || typeof proposal !== 'object') {
+      throw new Error('Mock proposal must be an object');
+    }
+    mockProposalQueue.push(normalizeMockProposal(proposal));
+  }
   
+  function consumeMockProposal() {
+    if (!mockProposalQueue.length) {
+      return null;
+    }
+    return cloneProposal(mockProposalQueue.shift());
+  }
+
+  function peekMockProposal() {
+    if (!mockProposalQueue.length) {
+      return null;
+    }
+    return mockProposalQueue[0];
+  }
+
+  function hasPendingMockProposals() {
+    return mockProposalQueue.length > 0;
+  }
+
+  function clearMockProposals() {
+    mockProposalQueue.length = 0;
+  }
+
+
   // ============================================================================
   // AI Writer Integration
   // ============================================================================
@@ -162,6 +245,27 @@
   }
   
   /**
+   * Gets a deterministic proposal from the mock queue if present
+   * @returns {Object|null}
+   */
+  function getMockProposalIfAvailable() {
+    if (!hasPendingMockProposals()) {
+      return null;
+    }
+
+    const proposal = consumeMockProposal();
+    // If the mock proposal still has a placeholder return path, attempt to auto-fill
+    if ((!proposal.content || !proposal.content.return_path) && hasPendingMockProposals()) {
+      const peeked = peekMockProposal();
+      if (peeked && peeked.content && peeked.content.return_path) {
+        proposal.content.return_path = peeked.content.return_path;
+      }
+    }
+
+    return proposal;
+  }
+
+  /**
    * Generates an AI branch proposal for the current story state
    * @returns {Promise<Object|null>} The proposal or null on failure
    */
@@ -170,6 +274,11 @@
     const settings = window.ApiKeyManager?.getSettings() || {};
     if (!settings.enabled) {
       return null;
+    }
+    
+    const mockProposal = getMockProposalIfAvailable();
+    if (mockProposal) {
+      return mockProposal;
     }
     
     const apiKey = window.ApiKeyManager?.getApiKey();
@@ -424,49 +533,54 @@
   /**
    * Attempts to generate and add an AI choice to the choices list
    */
-  async function addAIChoice() {
+  async function addAIChoice({ forceDirectorEnabled, forceRiskThreshold, forceMockProposal, mockProposalOverride } = {}) {
     const settings = window.ApiKeyManager?.getSettings() || {};
 
-    // Check if AI is enabled
-    if (!settings.enabled) {
-      return;
-    }
+    const aiEnabled = settings.enabled;
+    const hasKey = window.ApiKeyManager?.hasApiKey?.();
 
-    // Check if we have an API key
-    if (!window.ApiKeyManager?.hasApiKey()) {
-      return;
-    }
+    const directorEnabledSetting = (settings.directorEnabled !== false);
+    const riskThresholdSetting = (typeof settings.directorRiskThreshold === 'number')
+      ? settings.directorRiskThreshold
+      : 0.4;
 
-    // Show loading indicator while generating
-    showLoadingIndicator();
+    const directorEnabled = (forceDirectorEnabled !== undefined) ? forceDirectorEnabled : directorEnabledSetting;
+    const riskThreshold = (typeof forceRiskThreshold === 'number') ? forceRiskThreshold : riskThresholdSetting;
 
-    const writerStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const useMockProposal = forceMockProposal === true;
 
-    try {
-      // Generate AI proposal
-      const proposal = await generateAIProposal();
-
-      // Hide generation indicator
-      hideLoadingIndicator();
-
-      if (!proposal) {
-        // Silently skip if generation failed
+    if (!aiEnabled || !hasKey) {
+      if (!useMockProposal && !mockProposalOverride) {
         return;
       }
+    }
+ 
+    showLoadingIndicator();
+ 
+    const writerStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+ 
+    try {
+      const proposal = mockProposalOverride
+        ? normalizeMockProposal(mockProposalOverride)
+        : (useMockProposal ? getMockProposalIfAvailable() : await generateAIProposal());
+ 
+      hideLoadingIndicator();
 
-      const writerMs = Math.max(0, ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - writerStart);
 
-      // Store current proposal
+      if (!proposal) {
+        return 'no_proposal';
+      }
+
+      const writerMs = Math.max(
+        0,
+        ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - writerStart
+      );
+
       currentAIProposal = proposal;
-
-      // Director evaluation (if enabled)
-      const directorEnabled = (settings.directorEnabled !== false); // default true
-      const riskThreshold = (typeof settings.directorRiskThreshold === 'number') ? settings.directorRiskThreshold : 0.4;
 
       let directorResult = null;
       if (directorEnabled && window.Director && typeof window.Director.evaluate === 'function') {
-        // Show evaluating indicator
-        const indicator = createLoadingIndicator();
+            const indicator = createLoadingIndicator();
         const textEl = indicator.querySelector('.ai-loading-text');
         if (textEl) textEl.textContent = 'Evaluating AI choice...';
         indicator.style.display = 'flex';
@@ -480,10 +594,8 @@
           return;
         }
 
-        // Hide evaluating indicator
         hideLoadingIndicator();
 
-        // Log combined latency telemetry
         const directorMs = (directorResult && typeof directorResult.latencyMs === 'number') ? directorResult.latencyMs : 0;
         const totalMs = writerMs + directorMs;
         logTelemetry('ai_evaluation', {
@@ -495,13 +607,11 @@
         });
 
         if (directorResult.decision !== 'approve') {
-          // Silent skip but log reason for debugging
           console.log('[inkrunner] Director rejected AI proposal:', directorResult.reason);
-          return;
+          return 'rejected';
         }
       }
 
-      // If Director not present or approved, inject AI choice
       const btn = document.createElement('button');
       const styleClass = settings.aiChoiceStyle === 'normal' ? 'ai-choice-normal' : 'ai-choice';
       btn.className = `choice-btn ${styleClass}`;
@@ -520,6 +630,8 @@
         proposal_id: proposal.id,
         scene: proposal._meta?.scene
       });
+
+      return 'approved';
 
     } catch (e) {
       console.error('[inkrunner] Failed to add AI choice:', e);
@@ -602,7 +714,15 @@
     // AI Writer exports for testing
     generateAIProposal,
     playAIBranch,
-    handleChoiceSelection
+    handleChoiceSelection,
+    addAIChoice,
+    enqueueMockProposal,
+    consumeMockProposal,
+    peekMockProposal,
+    hasPendingMockProposals,
+    clearMockProposals,
+    normalizeMockProposal,
+    getMockProposalIfAvailable
   };
 
   if (typeof module !== 'undefined' && module.exports) {

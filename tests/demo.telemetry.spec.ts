@@ -63,6 +63,32 @@ async function loadDemo(page) {
   return { story, choices };
 }
 
+async function openSettings(page) {
+  const settingsBtn = page.locator('#ai-settings-btn');
+  await expect(settingsBtn).toBeVisible();
+  await settingsBtn.click();
+  const panel = page.locator('#ai-settings-panel');
+  await expect(panel).toBeVisible();
+  return panel;
+}
+
+async function setSliderValue(page, selector, value) {
+  const slider = page.locator(selector);
+  await expect(slider).toBeVisible();
+  const target = Number(value);
+  await slider.evaluate((el, val) => {
+    (el as HTMLInputElement).value = String(val);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }, target);
+}
+
+async function waitForAIChoice(page, timeout = 15_000) {
+  const aiChoice = page.locator('.choice-btn.ai-choice, .choice-btn.ai-choice-normal');
+  await expect.poll(async () => aiChoice.count(), { timeout, interval: 500 }).toBeGreaterThan(0);
+  return aiChoice;
+}
+
 async function waitForTelemetry(page, event: string, timeout = 10_000) {
   await expect.poll(async () => {
     return page.evaluate(name => {
@@ -115,4 +141,101 @@ test('emits telemetry events and triggers smoke', async ({ page }) => {
   }
 
   expect(errors, 'Console errors should be empty').toEqual([]);
+});
+
+test('Director threshold slider updates stored settings', async ({ page }) => {
+  await loadDemo(page);
+  await openSettings(page);
+
+  await expect(page.locator('.ai-config-section')).toBeVisible();
+
+  const slider = page.locator('#director-risk-threshold');
+  await expect(slider).toHaveValue('0.4');
+
+  await slider.evaluate((el) => {
+    (el as HTMLInputElement).value = '0.65';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  await expect(page.locator('#director-threshold-value')).toHaveText('0.65');
+
+  const saved = await page.evaluate(() => window.ApiKeyManager.getSettings().directorRiskThreshold);
+  expect(saved).toBeCloseTo(0.65, 2);
+});
+
+test('invalid threshold input clamps to range', async ({ page }) => {
+  await loadDemo(page);
+  await openSettings(page);
+
+  const slider = page.locator('#director-risk-threshold');
+  await slider.evaluate((el) => {
+    (el as HTMLInputElement).value = '2.0';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  await expect(slider).toHaveValue('0.8');
+  const saved = await page.evaluate(() => window.ApiKeyManager.getSettings().directorRiskThreshold);
+  expect(saved).toBeCloseTo(0.8, 2);
+});
+
+test('Director high threshold approves more proposals than low threshold', async ({ page }) => {
+  await loadDemo(page);
+  await openSettings(page);
+
+  await page.locator('#director-enabled').check();
+  await setSliderValue(page, '#director-risk-threshold', 0.8);
+  await page.locator('#ai-settings-close').click();
+
+  await expect(page.locator('.ai-config-section')).toBeHidden({ timeout: 1 });
+
+  const highApprovals = await page.evaluate(async () => {
+    const inkrunner = (window as any).__inkrunner;
+    const story = inkrunner.__getStory?.() ?? inkrunner.__getStory?.();
+    let approvals = 0;
+    for (let i = 0; i < 3; i++) {
+      const result = await inkrunner.addAIChoice({
+        forceDirectorEnabled: true,
+        forceRiskThreshold: 0.8,
+        mockProposalOverride: {
+          choice_text: `AI suggestion ${i}`,
+          content: { text: 'Mock AI content for testing', return_path: 'pines' },
+          metadata: { confidence_score: 0.5 }
+        }
+      });
+      if (result === 'approved') approvals++;
+    }
+    return approvals;
+  });
+
+  await openSettings(page);
+  await setSliderValue(page, '#director-risk-threshold', 0.2);
+  await page.locator('#ai-settings-close').click();
+
+  const lowApprovals = await page.evaluate(async () => {
+    const inkrunner = (window as any).__inkrunner;
+    let approvals = 0;
+    for (let i = 0; i < 3; i++) {
+      const result = await inkrunner.addAIChoice({ forceDirectorEnabled: true, forceRiskThreshold: 0.2 });
+      if (result === 'approved') approvals++;
+    }
+    return approvals;
+  });
+
+  expect(highApprovals).toBeGreaterThan(lowApprovals);
+});
+
+test('Director off restores naive injection', async ({ page }) => {
+  await loadDemo(page);
+  await openSettings(page);
+
+  const directorToggle = page.locator('#director-enabled');
+  await expect(directorToggle).toBeChecked();
+  await directorToggle.uncheck();
+
+  await expect(page.locator('.ai-director-controls')).toHaveCSS('display', 'none');
+
+  const aiChoice = await waitForAIChoice(page);
+  await expect(aiChoice.first()).toBeVisible();
 });

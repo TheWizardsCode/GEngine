@@ -58,7 +58,9 @@ const DEFAULT_SETTINGS = {
   apiEndpoint: 'https://api.openai.com/v1/chat/completions', // OpenAI-compatible endpoint
   useJsonMode: true, // Some endpoints don't support response_format: { type: 'json_object' }
   corsProxyUrl: '', // Optional CORS proxy URL for development (e.g., http://localhost:8010/proxy)
-  isAzure: false // Set to true for Azure OpenAI (uses api-key header instead of Bearer token)
+  isAzure: false, // Set to true for Azure OpenAI (uses api-key header instead of Bearer token)
+  directorEnabled: true,
+  directorRiskThreshold: 0.4
 };
 
 /**
@@ -85,6 +87,14 @@ function validateKeyFormat(key) {
   }
   
   return { valid: true };
+}
+
+function clampRiskThreshold(value) {
+  const num = parseFloat(value);
+  if (!Number.isFinite(num)) {
+    return DEFAULT_SETTINGS.directorRiskThreshold;
+  }
+  return Math.min(0.8, Math.max(0.1, num));
 }
 
 /**
@@ -412,7 +422,7 @@ function initSettingsUI() {
   const settingsBtn = document.createElement('button');
   settingsBtn.id = 'ai-settings-btn';
   settingsBtn.type = 'button';
-  settingsBtn.textContent = 'AI Settings';
+  settingsBtn.innerHTML = '<span class="ai-settings-icon" aria-hidden="true">&#9881;</span><span class="ai-settings-label">Settings</span>';
   settingsBtn.addEventListener('click', showSettingsPanel);
   
   // Insert before the tags span
@@ -436,10 +446,12 @@ function showSettingsPanel() {
   }
   
   const settings = getSettings();
+  settings.directorRiskThreshold = clampRiskThreshold(settings.directorRiskThreshold);
   const hasKey = hasApiKey();
   const maskedKey = hasKey ? maskApiKey(getApiKey()) : 'Not set';
   const currentEndpoint = settings.apiEndpoint || DEFAULT_SETTINGS.apiEndpoint;
   const isDefaultEndpoint = currentEndpoint === DEFAULT_SETTINGS.apiEndpoint;
+  
   
   const panel = document.createElement('div');
   panel.id = 'ai-settings-panel';
@@ -454,83 +466,127 @@ function showSettingsPanel() {
       </label>
     </div>
     
-    <div class="ai-setting-row">
-      <label>API Key: <span class="ai-key-display">${maskedKey}</span></label>
-      <button id="ai-update-key" class="ai-btn ai-btn-small">${hasKey ? 'Update' : 'Set Key'}</button>
-      ${hasKey ? '<button id="ai-clear-key" class="ai-btn ai-btn-small ai-btn-danger">Clear</button>' : ''}
+    <div class="ai-config-section" style="display: ${settings.enabled ? 'block' : 'none'};">
+    <div class="ai-setting-row ai-accordion-section">
+      <details class="ai-accordion" id="ai-generation-settings">
+        <summary><span class="ai-accordion-label">AI Generation Settings</span></summary>
+        <div class="ai-accordion-content">
+          <div class="ai-setting-row">
+            <label>
+              Creativity: <span id="creativity-value">${settings.creativity.toFixed(1)}</span>
+              <input type="range" id="ai-creativity" min="0" max="1" step="0.1" value="${settings.creativity}" />
+            </label>
+          </div>
+        </div>
+      </details>
     </div>
     
-    <div class="ai-setting-row ai-setting-endpoint">
-      <label>
-        API Endpoint:
-        <input type="text" id="ai-endpoint-url" class="ai-endpoint-input" 
-               value="${currentEndpoint}" 
-               placeholder="https://api.openai.com/v1/chat/completions" />
-      </label>
-      <div class="ai-endpoint-hint">
-        ${isDefaultEndpoint ? 'OpenAI (default)' : 'Custom endpoint'}
-        ${!isDefaultEndpoint ? '<button id="ai-reset-endpoint" class="ai-btn ai-btn-small">Reset</button>' : ''}
-      </div>
-      <div id="ai-endpoint-error" class="ai-key-error" style="display: none;"></div>
+    <div class="ai-setting-row ai-accordion-section">
+      <details class="ai-accordion" id="ai-server-settings">
+        <summary><span class="ai-accordion-label">AI Server Settings</span></summary>
+        <div class="ai-accordion-content">
+          <div class="ai-setting-row">
+            <label>API Key: <span class="ai-key-display">${maskedKey}</span></label>
+            <button id="ai-update-key" class="ai-btn ai-btn-small">${hasKey ? 'Update' : 'Set Key'}</button>
+            ${hasKey ? '<button id="ai-clear-key" class="ai-btn ai-btn-small ai-btn-danger">Clear</button>' : ''}
+          </div>
+          
+          <div class="ai-setting-row ai-setting-endpoint">
+            <label>
+              API Endpoint:
+              <input type="text" id="ai-endpoint-url" class="ai-endpoint-input" 
+                     value="${currentEndpoint}" 
+                     placeholder="https://api.openai.com/v1/chat/completions" />
+            </label>
+            <div class="ai-endpoint-hint">
+              ${isDefaultEndpoint ? 'OpenAI (default)' : 'Custom endpoint'}
+              ${!isDefaultEndpoint ? '<button id="ai-reset-endpoint" class="ai-btn ai-btn-small">Reset</button>' : ''}
+            </div>
+            <div id="ai-endpoint-error" class="ai-key-error" style="display: none;"></div>
+          </div>
+          
+          <div class="ai-setting-row">
+            <label>
+              <input type="checkbox" id="ai-json-mode" ${settings.useJsonMode !== false ? 'checked' : ''} />
+              Use JSON response mode
+              <span class="ai-setting-hint">(disable for Ollama/older models)</span>
+            </label>
+          </div>
+          
+          <div class="ai-setting-row">
+            <label>
+              <input type="checkbox" id="ai-azure-mode" ${settings.isAzure === true ? 'checked' : ''} />
+              Azure OpenAI
+              <span class="ai-setting-hint">(uses api-key header)</span>
+            </label>
+          </div>
+          
+          <div class="ai-setting-row ai-setting-endpoint">
+            <label>
+              CORS Proxy (dev only):
+              <input type="text" id="ai-cors-proxy" class="ai-endpoint-input" 
+                     value="${settings.corsProxyUrl || ''}" 
+                     placeholder="http://localhost:8080" />
+            </label>
+            <div class="ai-endpoint-hint">
+              ${settings.corsProxyUrl ? 'Proxy enabled' : 'Not set (direct connection)'}
+              ${settings.corsProxyUrl ? '<button id="ai-clear-proxy" class="ai-btn ai-btn-small">Clear</button>' : ''}
+            </div>
+            <div class="ai-proxy-hint">For cors-anywhere style proxies. See README for local-cors-proxy setup.</div>
+          </div>
+          
+          <div class="ai-setting-row ai-test-connection">
+            <button id="ai-test-connection" class="ai-btn ai-btn-small" ${!hasKey ? 'disabled' : ''}>Test Connection</button>
+            <div id="ai-test-result" class="ai-test-result" style="display: none;"></div>
+          </div>
+        </div>
+      </details>
     </div>
     
-    <div class="ai-setting-row">
-      <label>
-        <input type="checkbox" id="ai-json-mode" ${settings.useJsonMode !== false ? 'checked' : ''} />
-        Use JSON response mode
-        <span class="ai-setting-hint">(disable for Ollama/older models)</span>
-      </label>
+    <div class="ai-setting-row ai-accordion-section">
+      <details class="ai-accordion" id="ai-visual-settings">
+        <summary><span class="ai-accordion-label">Visual Settings</span></summary>
+        <div class="ai-accordion-content">
+          <div class="ai-setting-row">
+            <label>
+              AI Choice Style:
+              <select id="ai-choice-style">
+                <option value="distinct" ${settings.aiChoiceStyle === 'distinct' ? 'selected' : ''}>Distinct (highlighted)</option>
+                <option value="normal" ${settings.aiChoiceStyle === 'normal' ? 'selected' : ''}>Normal (blends in)</option>
+              </select>
+            </label>
+          </div>
+          
+          <div class="ai-setting-row">
+            <label>
+              <input type="checkbox" id="ai-loading-indicator" ${settings.showLoadingIndicator ? 'checked' : ''} />
+              Show loading indicator
+            </label>
+          </div>
+        </div>
+      </details>
     </div>
     
-    <div class="ai-setting-row">
-      <label>
-        <input type="checkbox" id="ai-azure-mode" ${settings.isAzure === true ? 'checked' : ''} />
-        Azure OpenAI
-        <span class="ai-setting-hint">(uses api-key header)</span>
-      </label>
+    <div class="ai-setting-row ai-accordion-section">
+      <details class="ai-accordion" id="ai-director-settings">
+        <summary><span class="ai-accordion-label">Director Settings</span></summary>
+        <div class="ai-accordion-content ai-director-section">
+          <div class="ai-setting-row">
+            <label>
+              <input type="checkbox" id="director-enabled" ${settings.directorEnabled !== false ? 'checked' : ''} />
+              Enable Director filtering
+            </label>
+          </div>
+          <div class="ai-setting-row ai-director-controls" style="display: ${settings.directorEnabled === false ? 'none' : 'block'};">
+            <label class="ai-director-slider">
+              Director Risk Threshold: <span id="director-threshold-value">${Number(settings.directorRiskThreshold ?? DEFAULT_SETTINGS.directorRiskThreshold).toFixed(2)}</span>
+              <input type="range" id="director-risk-threshold" min="0.1" max="0.8" step="0.05" value="${clampRiskThreshold(settings.directorRiskThreshold ?? DEFAULT_SETTINGS.directorRiskThreshold)}" />
+            </label>
+            <div class="ai-setting-hint">Lower = stricter (fewer AI branches)</div>
+          </div>
+        </div>
+      </details>
     </div>
-    
-    <div class="ai-setting-row ai-setting-endpoint">
-      <label>
-        CORS Proxy (dev only):
-        <input type="text" id="ai-cors-proxy" class="ai-endpoint-input" 
-               value="${settings.corsProxyUrl || ''}" 
-               placeholder="http://localhost:8080" />
-      </label>
-      <div class="ai-endpoint-hint">
-        ${settings.corsProxyUrl ? 'Proxy enabled' : 'Not set (direct connection)'}
-        ${settings.corsProxyUrl ? '<button id="ai-clear-proxy" class="ai-btn ai-btn-small">Clear</button>' : ''}
-      </div>
-      <div class="ai-proxy-hint">For cors-anywhere style proxies. See README for local-cors-proxy setup.</div>
-    </div>
-    
-    <div class="ai-setting-row ai-test-connection">
-      <button id="ai-test-connection" class="ai-btn ai-btn-small" ${!hasKey ? 'disabled' : ''}>Test Connection</button>
-      <div id="ai-test-result" class="ai-test-result" style="display: none;"></div>
-    </div>
-    
-    <div class="ai-setting-row">
-      <label>
-        AI Choice Style:
-        <select id="ai-choice-style">
-          <option value="distinct" ${settings.aiChoiceStyle === 'distinct' ? 'selected' : ''}>Distinct (highlighted)</option>
-          <option value="normal" ${settings.aiChoiceStyle === 'normal' ? 'selected' : ''}>Normal (blends in)</option>
-        </select>
-      </label>
-    </div>
-    
-    <div class="ai-setting-row">
-      <label>
-        <input type="checkbox" id="ai-loading-indicator" ${settings.showLoadingIndicator ? 'checked' : ''} />
-        Show loading indicator
-      </label>
-    </div>
-    
-    <div class="ai-setting-row">
-      <label>
-        Creativity: <span id="creativity-value">${settings.creativity.toFixed(1)}</span>
-        <input type="range" id="ai-creativity" min="0" max="1" step="0.1" value="${settings.creativity}" />
-      </label>
     </div>
     
     <button id="ai-settings-close" class="ai-btn ai-btn-primary">Close</button>
@@ -545,8 +601,46 @@ function showSettingsPanel() {
   document.body.appendChild(panel);
   
   // Event listeners
-  document.getElementById('ai-enabled').addEventListener('change', (e) => {
-    saveSettings({ enabled: e.target.checked });
+  const aiConfigSection = document.querySelector('.ai-config-section');
+  const toggleAIConfig = (enabled) => {
+    if (aiConfigSection) {
+      aiConfigSection.style.display = enabled ? 'block' : 'none';
+    }
+  };
+
+  const aiEnabledEl = document.getElementById('ai-enabled');
+  toggleAIConfig(aiEnabledEl.checked);
+  aiEnabledEl.addEventListener('change', (e) => {
+    const enabled = e.target.checked;
+    toggleAIConfig(enabled);
+    saveSettings({ enabled });
+  });
+  
+  const directorControls = document.querySelector('.ai-director-controls');
+  const toggleDirectorControls = (enabled) => {
+    if (directorControls) {
+      directorControls.style.display = enabled ? 'block' : 'none';
+    }
+  };
+
+  const directorEnabledEl = document.getElementById('director-enabled');
+  toggleDirectorControls(directorEnabledEl.checked);
+  directorEnabledEl.addEventListener('change', (e) => {
+    const enabled = e.target.checked;
+    toggleDirectorControls(enabled);
+    saveSettings({ directorEnabled: enabled });
+  });
+  
+  const directorSlider = document.getElementById('director-risk-threshold');
+  const directorValue = document.getElementById('director-threshold-value');
+  directorSlider.addEventListener('input', (e) => {
+    directorValue.textContent = clampRiskThreshold(e.target.value).toFixed(2);
+  });
+  directorSlider.addEventListener('change', (e) => {
+    const clamped = clampRiskThreshold(e.target.value);
+    directorSlider.value = clamped;
+    directorValue.textContent = clamped.toFixed(2);
+    saveSettings({ directorRiskThreshold: clamped });
   });
   
   document.getElementById('ai-choice-style').addEventListener('change', (e) => {
@@ -867,17 +961,21 @@ function injectStyles() {
       background: #f8514922;
     }
     
-    .ai-settings-panel {
-      position: fixed;
-      background: #161b22;
-      border: 1px solid #3c4457;
-      border-radius: 8px;
-      padding: 16px;
-      min-width: 280px;
-      z-index: 999;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-    
+     .ai-settings-panel {
+       position: fixed;
+       background: #161b22;
+       border: 1px solid #3c4457;
+       border-radius: 8px;
+       padding: 16px;
+       min-width: 280px;
+       max-height: calc(100vh - 120px);
+       overflow-y: auto;
+       overscroll-behavior: contain;
+       z-index: 999;
+       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+     }
+     
+
     .ai-settings-panel h3 {
       margin: 0 0 16px 0;
       font-size: 16px;
@@ -885,12 +983,55 @@ function injectStyles() {
     }
     
     .ai-setting-row {
-      margin-bottom: 12px;
-      font-size: 14px;
-      color: #c9d1d9;
-    }
-    
-    .ai-setting-row label {
+       margin-bottom: 12px;
+       font-size: 14px;
+       color: #c9d1d9;
+     }
+     
+     .ai-accordion-section details {
+       border: 1px solid #3c4457;
+       border-radius: 6px;
+       background: #0f1116;
+       padding: 8px 10px;
+       position: relative;
+     }
+     
+     .ai-accordion-section summary {
+       font-weight: 600;
+       cursor: pointer;
+       list-style: none;
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       gap: 8px;
+     }
+     
+     .ai-accordion-section summary::marker {
+       display: none;
+     }
+     
+     .ai-accordion-section summary::after {
+       content: '▸';
+       font-size: 12px;
+       transition: transform 120ms ease;
+     }
+     
+     .ai-accordion-section details[open] summary::after {
+       transform: rotate(90deg);
+     }
+     
+     .ai-accordion-section details:not([open]) summary::after {
+       transform: rotate(0deg);
+     }
+     
+     .ai-accordion-content {
+       margin-top: 8px;
+       border-top: 1px solid #3c4457;
+       padding-top: 8px;
+     }
+     
+     .ai-setting-row label {
+
       display: flex;
       align-items: center;
       gap: 8px;
@@ -915,19 +1056,33 @@ function injectStyles() {
       color: #7d8590;
     }
     
-    #ai-settings-btn {
-      background: #2d3342;
-      color: #e8ecf0;
-      border: 1px solid #3c4457;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-    
-    #ai-settings-btn:hover {
-      background: #3b4356;
-    }
-    
+     #ai-settings-btn {
+       background: #2d3342;
+       color: #e8ecf0;
+       border: 1px solid #3c4457;
+       border-radius: 6px;
+       padding: 8px 12px;
+       cursor: pointer;
+       display: inline-flex;
+       align-items: center;
+       gap: 6px;
+       font-weight: 600;
+     }
+     
+     #ai-settings-btn:hover {
+       background: #3b4356;
+     }
+     
+     .ai-settings-icon {
+       font-size: 14px;
+       line-height: 1;
+     }
+     
+     .ai-settings-label {
+       line-height: 1;
+     }
+     
+
     .ai-setting-endpoint {
       flex-direction: column;
       align-items: stretch;
