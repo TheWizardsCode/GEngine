@@ -11,7 +11,8 @@
     "test:demo": "start-server-and-test \"npm run serve-demo -- --port 4173\" http://127.0.0.1:4173/demo \"npx playwright test --config=playwright.config.ts --reporter=list,html,junit\"",
     "test:replay": "jest tests/replay/replay.spec.js",
     "lint:md": "remark .opencode/command/*.md --quiet --frail",
-    "test:golden": "node tests/golden-path/run-golden.js"
+    "test:golden": "node tests/golden-path/run-golden.js",
+    "dev:cors-proxy": "node scripts/cors-proxy.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
