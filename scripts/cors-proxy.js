@@ -34,12 +34,12 @@ function parseArgs(argv) {
 }
 
 const rawArgs = parseArgs(process.argv.slice(2));
-const targetArg = rawArgs.target || rawArgs.t || process.env.TARGET_URL;
+const targetArg = rawArgs.target || rawArgs.t || process.env.GENGINE_AI_ENDPOINT || process.env.TARGET_URL;
 const portArg = rawArgs.port || rawArgs.p || process.env.PORT || "8010";
 const verbose = Boolean(rawArgs.verbose || rawArgs.v);
 
 if (!targetArg) {
-  console.error("[cors-proxy] Missing required --target <url> argument or TARGET_URL env");
+  console.error("[cors-proxy] Missing required --target <url> argument or GENGINE_AI_ENDPOINT/TARGET_URL env");
   console.error("Example: node scripts/cors-proxy.js --target https://example.azure.com");
   process.exit(1);
 }
