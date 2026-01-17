@@ -255,6 +255,15 @@ test('Director off restores naive injection', async ({ page }) => {
 
   await expect(page.locator('.ai-director-controls')).toHaveCSS('display', 'none');
 
+  // Ensure a mock AI proposal is available and add it via the mock path so naive injection is demonstrated
+  await page.evaluate(() => {
+    const inkrunner = (window as any).__inkrunner;
+    inkrunner.clearMockProposals();
+    inkrunner.enqueueMockProposal({ choice_text: 'Naive AI suggestion', content: { text: 'Naive injection content', return_path: 'pines' }, metadata: { confidence_score: 0.5 } });
+    // Trigger adding AI choice using mock path
+    return inkrunner.addAIChoice({ forceDirectorEnabled: false, forceMockProposal: true });
+  });
+
   const aiChoice = await waitForAIChoice(page);
   await expect(aiChoice.first()).toBeVisible();
 });
