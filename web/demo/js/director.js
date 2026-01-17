@@ -20,6 +20,39 @@ function safeNumber(v, fallback = 0) {
   return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
 }
 
+function clamp01(v, fallback = 0) {
+  const n = safeNumber(v, fallback);
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
+
+function generateUUID() {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch (e) {}
+  // Fallback RFC4122-ish generator
+  const rand = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  return `uuid-${rand()}${rand()}-${rand()}-${rand()}-${rand()}-${rand()}${rand()}${rand()}`;
+}
+
+function buildDecisionMetrics(proposal = {}, context = {}) {
+  const text = (proposal.content && typeof proposal.content.text === 'string') ? proposal.content.text : '';
+  const confidence = clamp01(proposal.metadata && proposal.metadata.confidence_score, 0.5);
+  const pacing = clamp01((text.length - 300) / 700, 0);
+  const returnPath = clamp01(context.returnPathCheck && context.returnPathCheck.confidence, 0);
+  return {
+    confidence,
+    pacing,
+    returnPath,
+    thematic: null,
+    lore: null,
+    voice: null
+  };
+}
+
 /**
  * checkReturnPath(returnPath, story)
  * Minimal existence check: looks for named knots on the inkjs story object
@@ -119,32 +152,47 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
 }
 
 /**
- * emitDecisionTelemetry(decisionResult)
+ * emitDecisionTelemetry(decisionResult, extras)
+ * Emits director_decision events via Telemetry (if available) and buffers last 50 in sessionStorage.
  */
-function emitDecisionTelemetry(decisionResult) {
-  const event = {
-    event: 'director_decision',
+function emitDecisionTelemetry(decisionResult = {}, extras = {}) {
+  const proposalId = decisionResult.proposal_id || (decisionResult.proposal && decisionResult.proposal.id);
+  const payload = Object.assign({}, decisionResult, {
+    proposal_id: proposalId || generateUUID(),
     timestamp: new Date().toISOString(),
-    payload: decisionResult
-  };
+    metrics: Object.assign({
+      confidence: null,
+      pacing: null,
+      returnPath: null,
+      thematic: null,
+      lore: null,
+      voice: null
+    }, decisionResult.metrics || extras.metrics || {})
+  });
+
+  // Ensure required fields exist even if undefined
+  const eventName = 'director_decision';
+
   try {
-    if (window && window.Telemetry && typeof window.Telemetry.emit === 'function') {
-      window.Telemetry.emit('director_decision', decisionResult);
+    if (typeof window !== 'undefined' && window.Telemetry && typeof window.Telemetry.emit === 'function') {
+      window.Telemetry.emit(eventName, payload);
     } else if (typeof console !== 'undefined') {
-      console.log('[director] telemetry', event);
+      console.log('[director] telemetry', payload);
     }
 
     // Buffer in sessionStorage
     if (typeof sessionStorage !== 'undefined') {
       try {
-        const raw = sessionStorage.getItem('director_decisions') || '[]';
+        const raw = sessionStorage.getItem('ge-hch.director.telemetry') || '[]';
         const arr = JSON.parse(raw);
-        arr.push(event);
-        if (arr.length > 50) arr.shift();
-        sessionStorage.setItem('director_decisions', JSON.stringify(arr));
+        arr.push(payload);
+        while (arr.length > 50) arr.shift();
+        sessionStorage.setItem('ge-hch.director.telemetry', JSON.stringify(arr));
       } catch (e) {}
     }
   } catch (e) {}
+
+  return payload;
 }
 
 /**
@@ -207,7 +255,15 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
   const reason = decision === 'approve' ? 'Risk acceptable' : 'Risk above threshold';
 
   const latencyMs = Math.max(0, perf.now() - start);
-  const result = { decision, reason, riskScore, latencyMs };
+  const metrics = buildDecisionMetrics(proposal, context);
+  const result = {
+    proposal_id: proposal.id || proposal.proposal_id,
+    decision,
+    reason,
+    riskScore,
+    latencyMs,
+    metrics
+  };
 
   emitDecisionTelemetry(result);
   return result;
