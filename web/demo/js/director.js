@@ -58,7 +58,7 @@ function buildDecisionMetrics(proposal = {}, context = {}) {
  * Minimal existence check: looks for named knots on the inkjs story object
  * Returns { feasible, reason, confidence }
  */
-function checkReturnPath(returnPath, story) {
+function checkReturnPath(returnPath, story, proposal = {}) {
   if (!returnPath) {
     return { feasible: false, reason: 'No return_path provided', confidence: 0.0 };
   }
@@ -76,8 +76,17 @@ function checkReturnPath(returnPath, story) {
     // fallthrough to fallback check
   }
 
-  // Fallback: if proposal included a validReturnPaths array on generation we can trust that
-  // (inkrunner attaches proposal.validReturnPaths in generation step)
+  // Fallback: if the proposal itself included a validReturnPaths array on generation we can trust that
+  try {
+    if (Array.isArray(proposal && proposal.validReturnPaths)) {
+      if (proposal.validReturnPaths.includes(returnPath)) {
+        return { feasible: true, reason: 'Return path listed in proposal.validReturnPaths', confidence: 0.9 };
+      }
+      return { feasible: false, reason: 'Return path not present in proposal.validReturnPaths', confidence: 0.0 };
+    }
+  } catch (e) {}
+
+  // Secondary fallback: global validReturnPaths (legacy tests)
   try {
     if (Array.isArray(window && window.__proposalValidReturnPaths)) {
       if (window.__proposalValidReturnPaths.includes(returnPath)) {
@@ -230,7 +239,7 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
   let returnCheck = { feasible: true, reason: 'No check performed', confidence: 0.9 };
   try {
     const returnPath = (proposal.content && proposal.content.return_path) || null;
-    returnCheck = checkReturnPath(returnPath, storyContext && storyContext.story);
+    returnCheck = checkReturnPath(returnPath, storyContext && storyContext.story, proposal);
     if (!returnCheck.feasible) {
       const latencyMs = Math.max(0, perf.now() - start);
       const result = { decision: 'reject', reason: `Return path check failed: ${returnCheck.reason}`, riskScore: 1.0, latencyMs };
