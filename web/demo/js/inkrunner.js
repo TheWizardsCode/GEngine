@@ -211,7 +211,8 @@
         creativity: settings.creativity || 0.7,
         timeoutMs: 5000,
         baseUrl: effectiveUrl,
-        useJsonMode: settings.useJsonMode !== false
+        useJsonMode: settings.useJsonMode !== false,
+        isAzure: settings.isAzure === true
       });
       
       // Check for errors

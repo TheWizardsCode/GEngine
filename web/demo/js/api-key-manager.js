@@ -57,7 +57,8 @@ const DEFAULT_SETTINGS = {
   showLoadingIndicator: true,
   apiEndpoint: 'https://api.openai.com/v1/chat/completions', // OpenAI-compatible endpoint
   useJsonMode: true, // Some endpoints don't support response_format: { type: 'json_object' }
-  corsProxyUrl: '' // Optional CORS proxy URL for development (e.g., http://localhost:8010/proxy)
+  corsProxyUrl: '', // Optional CORS proxy URL for development (e.g., http://localhost:8010/proxy)
+  isAzure: false // Set to true for Azure OpenAI (uses api-key header instead of Bearer token)
 };
 
 /**
@@ -179,6 +180,16 @@ function setEndpointUrl(url) {
 function isJsonModeEnabled() {
   const settings = getSettings();
   return settings.useJsonMode !== false; // Default to true
+}
+
+/**
+ * Checks if Azure OpenAI mode is enabled
+ * 
+ * @returns {boolean} True if Azure mode is enabled
+ */
+function isAzureMode() {
+  const settings = getSettings();
+  return settings.isAzure === true;
 }
 
 /**
@@ -471,6 +482,14 @@ function showSettingsPanel() {
       </label>
     </div>
     
+    <div class="ai-setting-row">
+      <label>
+        <input type="checkbox" id="ai-azure-mode" ${settings.isAzure === true ? 'checked' : ''} />
+        Azure OpenAI
+        <span class="ai-setting-hint">(uses api-key header)</span>
+      </label>
+    </div>
+    
     <div class="ai-setting-row ai-setting-endpoint">
       <label>
         CORS Proxy (dev only):
@@ -571,6 +590,11 @@ function showSettingsPanel() {
     saveSettings({ useJsonMode: e.target.checked });
   });
   
+  // Azure mode handling
+  document.getElementById('ai-azure-mode').addEventListener('change', (e) => {
+    saveSettings({ isAzure: e.target.checked });
+  });
+  
   // CORS proxy handling
   const corsProxyInput = document.getElementById('ai-cors-proxy');
   
@@ -622,6 +646,7 @@ function showSettingsPanel() {
       const currentSettings = getSettings();
       const endpoint = endpointInput.value.trim() || DEFAULT_SETTINGS.apiEndpoint;
       const useJsonMode = document.getElementById('ai-json-mode').checked;
+      const isAzure = document.getElementById('ai-azure-mode').checked;
       const proxyUrl = corsProxyInput.value.trim();
       
       // Build effective URL (with proxy if set)
@@ -635,7 +660,8 @@ function showSettingsPanel() {
       if (window.LLMAdapter && typeof window.LLMAdapter.testConnection === 'function') {
         const result = await window.LLMAdapter.testConnection(apiKey, {
           baseUrl: effectiveUrl,
-          useJsonMode: useJsonMode
+          useJsonMode: useJsonMode,
+          isAzure: isAzure
         });
         
         if (result.success) {
@@ -1010,6 +1036,7 @@ const ApiKeyManager = {
   getEndpointUrl,
   setEndpointUrl,
   isJsonModeEnabled,
+  isAzureMode,
   getCorsProxyUrl,
   getEffectiveApiUrl,
   showKeyModal,
