@@ -204,12 +204,14 @@
         ? window.ApiKeyManager.getEffectiveApiUrl(settings.apiEndpoint)
         : (settings.apiEndpoint || window.LLMAdapter.DEFAULT_BASE_URL);
       
+      const timeoutMs = settings.isAzure === true ? 15000 : 5000;
+      
       const proposal = await window.LLMAdapter.generateProposal({
         systemPrompt,
         userPrompt,
         apiKey,
         creativity: settings.creativity || 0.7,
-        timeoutMs: 5000,
+        timeoutMs,
         baseUrl: effectiveUrl,
         useJsonMode: settings.useJsonMode !== false,
         isAzure: settings.isAzure === true
