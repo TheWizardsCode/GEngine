@@ -1,9 +1,6 @@
 # GEngine local configuration (example)
 # Place a copy at .gengine/config.yaml to set local defaults for development.
 
-# Minimal settings — only keys consumed by scripts today.
-# Copy to .gengine/config.yaml and edit to match your environment.
-
 # Base URL for the upstream AI endpoint (host only is preferred)
 GENGINE_AI_ENDPOINT: "https://your-endpoint.openai.azure.com"
 
