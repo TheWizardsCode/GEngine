@@ -37,6 +37,9 @@ describe('Director telemetry emitter', () => {
       reason: 'Risk acceptable',
       riskScore: 0.2,
       latencyMs: 12,
+      writerMs: 5,
+      directorMs: 7,
+      totalMs: 12,
       metrics: { confidence: 0.9, pacing: 0.1, returnPath: 0.8 }
     };
 
@@ -49,7 +52,10 @@ describe('Director telemetry emitter', () => {
         decision: 'approve',
         reason: 'Risk acceptable',
         riskScore: 0.2,
-        latencyMs: 12
+        latencyMs: 12,
+        writerMs: 5,
+        directorMs: 7,
+        totalMs: 12
       })
     );
 
@@ -61,6 +67,9 @@ describe('Director telemetry emitter', () => {
     });
     expect(emitted).toHaveProperty('timestamp');
     expect(Number.isNaN(Date.parse(emitted.timestamp))).toBe(false);
+    expect(typeof emitted.writerMs).toBe('number');
+    expect(typeof emitted.directorMs).toBe('number');
+    expect(typeof emitted.totalMs).toBe('number');
 
     const buffered = JSON.parse(sessionStorage.getItem('ge-hch.director.telemetry'));
     expect(buffered).toHaveLength(1);
@@ -73,6 +82,9 @@ describe('Director telemetry emitter', () => {
       reason: 'Missing proposal id',
       riskScore: 1.0,
       latencyMs: 3,
+      writerMs: 0,
+      directorMs: 3,
+      totalMs: 3,
       metrics: { confidence: 0.1, pacing: 0.2, returnPath: 0.3 }
     });
 
@@ -80,6 +92,9 @@ describe('Director telemetry emitter', () => {
     expect(emitted.proposal_id).toBeTruthy();
     // Should generate a uuid (either native crypto or fallback prefix)
     expect(typeof emitted.proposal_id).toBe('string');
+    expect(typeof emitted.writerMs).toBe('number');
+    expect(typeof emitted.directorMs).toBe('number');
+    expect(typeof emitted.totalMs).toBe('number');
   });
 
   it('caps the sessionStorage buffer at 50 events', () => {
@@ -90,6 +105,9 @@ describe('Director telemetry emitter', () => {
         reason: 'ok',
         riskScore: 0.1,
         latencyMs: 1,
+        writerMs: 0,
+        directorMs: 1,
+        totalMs: 1,
         metrics: { confidence: 0.5, pacing: 0.1, returnPath: 0.9 }
       });
     }
@@ -98,6 +116,11 @@ describe('Director telemetry emitter', () => {
     expect(buffered).toHaveLength(50);
     expect(buffered[0].proposal_id).toBe('p-6');
     expect(buffered[49].proposal_id).toBe('p-55');
+    buffered.forEach((entry) => {
+      expect(typeof entry.writerMs).toBe('number');
+      expect(typeof entry.directorMs).toBe('number');
+      expect(typeof entry.totalMs).toBe('number');
+    });
   });
 
   it('evaluate emits telemetry and buffers entries after multiple choices', async () => {
@@ -109,7 +132,7 @@ describe('Director telemetry emitter', () => {
     }));
 
     for (const proposal of proposals) {
-      await Director.evaluate(proposal, { story }, { riskThreshold: 0.9 });
+      await Director.evaluate(proposal, { story }, { riskThreshold: 0.9, writerMs: 4 });
     }
 
     const buffered = JSON.parse(sessionStorage.getItem('ge-hch.director.telemetry'));
@@ -118,6 +141,10 @@ describe('Director telemetry emitter', () => {
       expect(entry).toHaveProperty('proposal_id');
       expect(entry).toHaveProperty('decision');
       expect(entry.metrics).toBeDefined();
+      expect(typeof entry.writerMs).toBe('number');
+      expect(typeof entry.directorMs).toBe('number');
+      expect(typeof entry.totalMs).toBe('number');
+      expect(entry.totalMs).toBe(entry.writerMs + entry.directorMs);
     });
   });
 });

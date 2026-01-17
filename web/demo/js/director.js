@@ -166,9 +166,16 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
  */
 function emitDecisionTelemetry(decisionResult = {}, extras = {}) {
   const proposalId = decisionResult.proposal_id || (decisionResult.proposal && decisionResult.proposal.id);
+  const writerMs = safeNumber(decisionResult.writerMs ?? extras.writerMs, 0);
+  const directorMs = safeNumber(decisionResult.directorMs ?? decisionResult.latencyMs ?? extras.directorMs, 0);
+  const totalMs = safeNumber(decisionResult.totalMs ?? (writerMs + directorMs), writerMs + directorMs);
+
   const payload = Object.assign({}, decisionResult, {
     proposal_id: proposalId || generateUUID(),
     timestamp: new Date().toISOString(),
+    writerMs,
+    directorMs,
+    totalMs,
     metrics: Object.assign({
       confidence: null,
       pacing: null,
@@ -224,13 +231,13 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
 
     if (!validation || !validation.valid) {
       const latencyMs = Math.max(0, perf.now() - start);
-      const result = { decision: 'reject', reason: validation && validation.reason ? validation.reason : 'Failed policy validation', riskScore: 1.0, latencyMs };
+      const result = { decision: 'reject', reason: validation && validation.reason ? validation.reason : 'Failed policy validation', riskScore: 1.0, latencyMs, writerMs: 0, directorMs: latencyMs, totalMs: latencyMs };
       emitDecisionTelemetry(result);
       return result;
     }
   } catch (e) {
     const latencyMs = Math.max(0, perf.now() - start);
-    const result = { decision: 'reject', reason: 'Validation error', riskScore: 1.0, latencyMs };
+    const result = { decision: 'reject', reason: 'Validation error', riskScore: 1.0, latencyMs, writerMs: 0, directorMs: latencyMs, totalMs: latencyMs };
     emitDecisionTelemetry(result);
     return result;
   }
@@ -241,18 +248,19 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
     const returnPath = (proposal.content && proposal.content.return_path) || null;
     returnCheck = checkReturnPath(returnPath, storyContext && storyContext.story, proposal);
     if (!returnCheck.feasible) {
-      const latencyMs = Math.max(0, perf.now() - start);
-      const result = { decision: 'reject', reason: `Return path check failed: ${returnCheck.reason}`, riskScore: 1.0, latencyMs };
-      emitDecisionTelemetry(result);
-      return result;
-    }
-  } catch (e) {
-    // conservative rejection
     const latencyMs = Math.max(0, perf.now() - start);
-    const result = { decision: 'reject', reason: 'Return path check error', riskScore: 1.0, latencyMs };
+    const result = { decision: 'reject', reason: `Return path check failed: ${returnCheck.reason}`, riskScore: 1.0, latencyMs, writerMs: 0, directorMs: latencyMs, totalMs: latencyMs };
     emitDecisionTelemetry(result);
     return result;
   }
+} catch (e) {
+  // conservative rejection
+  const latencyMs = Math.max(0, perf.now() - start);
+  const result = { decision: 'reject', reason: 'Return path check error', riskScore: 1.0, latencyMs, writerMs: 0, directorMs: latencyMs, totalMs: latencyMs };
+  emitDecisionTelemetry(result);
+  return result;
+}
+
 
   // Step 3: risk scoring
   const context = { returnPathCheck: returnCheck, story: storyContext && storyContext.story };
@@ -264,6 +272,9 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
   const reason = decision === 'approve' ? 'Risk acceptable' : 'Risk above threshold';
 
   const latencyMs = Math.max(0, perf.now() - start);
+  const writerMs = safeNumber(config && config.writerMs, 0);
+  const directorMs = latencyMs;
+  const totalMs = writerMs + directorMs;
   const metrics = buildDecisionMetrics(proposal, context);
   const result = {
     proposal_id: proposal.id || proposal.proposal_id,
@@ -271,6 +282,9 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
     reason,
     riskScore,
     latencyMs,
+    writerMs,
+    directorMs,
+    totalMs,
     metrics
   };
 
