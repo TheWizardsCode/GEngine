@@ -132,6 +132,7 @@ function parseJsonResponse(text) {
  * @param {string} [options.baseUrl] - API endpoint URL (defaults to OpenAI)
  * @param {boolean} [options.useJsonMode=true] - Whether to request JSON response format (some endpoints don't support this)
  * @param {Object} [options.extraHeaders] - Additional headers to include in the request
+ * @param {boolean} [options.isAzure] - Whether this is an Azure OpenAI endpoint (auto-detected from URL)
  * @returns {Promise<Object>} The parsed proposal or error object
  */
 async function generateProposal(options) {
@@ -144,7 +145,8 @@ async function generateProposal(options) {
     model = DEFAULT_MODEL,
     baseUrl = DEFAULT_BASE_URL,
     useJsonMode = true,
-    extraHeaders = {}
+    extraHeaders = {},
+    isAzure = null
   } = options;
   
   // Validate required parameters
@@ -159,6 +161,11 @@ async function generateProposal(options) {
   const temperature = creativityToTemperature(creativity);
   const startTime = Date.now();
   
+  // Auto-detect Azure OpenAI from URL pattern
+  // Azure URLs contain: .openai.azure.com or .cognitiveservices.azure.com
+  const detectAzure = isAzure !== null ? isAzure : 
+    /\.(openai\.azure\.com|cognitiveservices\.azure\.com)/i.test(baseUrl);
+  
   // Create abort controller for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -166,7 +173,6 @@ async function generateProposal(options) {
   try {
     // Build request body
     const requestBody = {
-      model: model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -175,18 +181,28 @@ async function generateProposal(options) {
       max_tokens: 1000
     };
     
+    // Only include model for non-Azure endpoints (Azure uses deployment name in URL)
+    if (!detectAzure) {
+      requestBody.model = model;
+    }
+    
     // Only include response_format if JSON mode is enabled
     // Some OpenAI-compatible endpoints (Ollama, older models) don't support this
     if (useJsonMode) {
       requestBody.response_format = { type: 'json_object' };
     }
     
-    // Build headers
+    // Build headers - Azure uses api-key header, OpenAI uses Bearer token
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
       ...extraHeaders
     };
+    
+    if (detectAzure) {
+      headers['api-key'] = apiKey;
+    } else {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
     
     const response = await fetch(baseUrl, {
       method: 'POST',
