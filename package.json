@@ -13,7 +13,7 @@
     "lint:md": "remark .opencode/command/*.md --quiet --frail",
     "test:golden": "node tests/golden-path/run-golden.js",
     "dev:cors-proxy": "node scripts/cors-proxy.js",
-    "dev:demo": "npm-run-all --parallel \"serve-demo -- --port 8080\" \"dev:cors-proxy -- --target=https://your-endpoint.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview\""
+    "dev:demo": "TARGET_URL=\"${TARGET_URL:-https://your-endpoint.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview}\" npm-run-all --parallel \"serve-demo -- --port 8080\" \"dev:cors-proxy -- --target=$TARGET_URL\""
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
