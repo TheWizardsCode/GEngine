@@ -88,9 +88,9 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
 
   // Weights (configurable)
   const weights = Object.assign({
-    proposal_confidence: 0.5,
-    narrative_pacing: 0.3,
-    return_path_confidence: 0.2,
+    proposal_confidence: 0.75,
+    narrative_pacing: 0.15,
+    return_path_confidence: 0.1,
     thematic_consistency: 0,
     lore_adherence: 0,
     character_voice: 0
