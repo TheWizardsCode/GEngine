@@ -32,3 +32,6 @@ artifacts/
 ci-artifacts/
 
 .gengine/config.yaml
+
+# Local test reports
+junit-report.xml
