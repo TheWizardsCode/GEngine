@@ -56,6 +56,16 @@ describe('Director core', () => {
     expect(res).toHaveProperty('reason');
     expect(res.reason).toMatch(/Blocked|policy|Failed/i);
     expect(res.riskScore).toBe(1.0);
+    expect(res.latencyMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('fails validation with reason "Failed policy validation" on invalid schema', async () => {
+    global.window.ProposalValidator.quickValidate.mockReturnValueOnce({ valid: false, reason: 'Failed policy validation' });
+    const proposal = { content: { text: 'x' }, metadata: { confidence_score: 0.5 } };
+    const res = await Director.evaluate(proposal, {}, { riskThreshold: 0.5 });
+    expect(res.decision).toBe('reject');
+    expect(res.reason).toBe('Failed policy validation');
+    expect(res.latencyMs).toBeGreaterThanOrEqual(0);
   });
 
   it('throws on malformed proposal (non-object)', async () => {
