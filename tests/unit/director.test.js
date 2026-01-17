@@ -133,4 +133,19 @@ describe('Director core', () => {
     expect(res.decision).toBe('reject');
     expect(res.riskScore).toBeGreaterThan(0.01);
   });
+
+  it('emits telemetry event on decision', async () => {
+    const story = { mainContentContainer: { _namedContent: { campfire: {} } } };
+    const proposal = { content: { text: 'Short content', return_path: 'campfire' }, metadata: { confidence_score: 0.9 } };
+
+    await Director.evaluate(proposal, { story }, { riskThreshold: 0.5 });
+
+    expect(global.window.Telemetry.emit).toHaveBeenCalled();
+    const calls = global.window.Telemetry.emit.mock.calls;
+    const directorCalls = calls.filter(c => c[0] === 'director_decision');
+    expect(directorCalls.length).toBeGreaterThan(0);
+    const payload = directorCalls[0][1];
+    expect(payload).toHaveProperty('decision');
+  });
+
 });
