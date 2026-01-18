@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
+    "@xenova/transformers": "^2.15.0",
     "fast-glob": "^3.3.3",
     "http-server": "^14.1.1",
     "inkjs": "^2.3.2",
