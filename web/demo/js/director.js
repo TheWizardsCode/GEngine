@@ -111,12 +111,23 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
   // proposal_confidence_risk: high confidence -> low risk
   const proposal_confidence_risk = 1.0 - Math.max(0, Math.min(1, confidence));
 
-  // narrative_pacing_risk: crude heuristic based on content length
+  // narrative_pacing_risk: heuristic based on content length vs phase target
   const text = (proposal.content && proposal.content.text) || '';
   const len = text.length;
-  // baseline expected length ~300; >500 increases risk
-  const pacingScore = Math.max(0, (len - 300) / 700); // ~0..1
-  const narrative_pacing_risk = Math.min(1, pacingScore);
+  const phase = (context && context.phase) || 'exposition';
+  const defaultPacingTargets = Object.assign({
+    exposition: 300,
+    rising_action: 400,
+    climax: 700,
+    falling_action: 350,
+    resolution: 300
+  }, (config && config.pacingTargets) || {});
+  const expectedLen = Math.max(1, safeNumber(defaultPacingTargets[phase], 300));
+  const toleranceFactor = Math.max(0.05, safeNumber(config && config.pacingToleranceFactor, 0.6));
+  // Risk grows once length exceeds expected; at expected*(1+toleranceFactor) risk reaches ~1
+  const pacingRatio = len / expectedLen;
+  const pacingOver = Math.max(0, pacingRatio - 1);
+  const narrative_pacing_risk = Math.min(1, pacingOver / toleranceFactor);
 
   // return_path_confidence_risk derived from context.returnPathCheck (if present)
   const returnPathConfidence = safeNumber((context && context.returnPathCheck && context.returnPathCheck.confidence), 0.0);
