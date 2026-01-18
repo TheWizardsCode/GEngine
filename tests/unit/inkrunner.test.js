@@ -514,6 +514,57 @@ describe('inkrunner AI integration', () => {
     );
   });
 
+  it('completes a mixed playthrough with approved then rejected AI evaluations', async () => {
+    const choicesEl = document.getElementById('choices');
+    const choiceStory = mockStory({ currentChoices: [{ text: 'Authored 1' }, { text: 'Authored 2' }] });
+    inkrunner.setStory(choiceStory);
+
+    const approved = {
+      id: 'p-approve',
+      choice_text: 'Approved choice',
+      content: { text: 'AI content', return_path: 'campfire' },
+      metadata: { confidence_score: 0.9 }
+    };
+
+    const rejected = {
+      id: 'p-reject',
+      choice_text: 'Rejected choice',
+      content: { text: 'AI content 2', return_path: 'campfire' },
+      metadata: { confidence_score: 0.1 }
+    };
+
+    window.Director = {
+      evaluate: jest.fn()
+        .mockReturnValueOnce({ decision: 'approve', reason: 'ok', riskScore: 0.2, latencyMs: 5 })
+        .mockReturnValueOnce({ decision: 'reject', reason: 'later reject', riskScore: 0.85, latencyMs: 4 })
+    };
+
+    const firstResult = await inkrunner.addAIChoice({ forceDirectorEnabled: true, mockProposalOverride: approved });
+    expect(firstResult).toBe('approved');
+
+    let aiButtons = choicesEl.querySelectorAll('.choice-btn.ai-choice, .choice-btn.ai-choice-normal');
+    expect(aiButtons.length).toBe(1);
+    aiButtons[0].dispatchEvent(new window.Event('click'));
+    expect(choiceStory.ChoosePathString).toHaveBeenCalledWith('campfire');
+
+    const secondResult = await inkrunner.addAIChoice({ forceDirectorEnabled: true, mockProposalOverride: rejected });
+    expect(secondResult).toBe('rejected');
+
+    aiButtons = choicesEl.querySelectorAll('.choice-btn.ai-choice, .choice-btn.ai-choice-normal');
+    expect(aiButtons.length).toBe(0);
+
+    expect(window.Director.evaluate).toHaveBeenCalledTimes(2);
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({ proposal_id: 'p-approve', decision: 'approve' })
+    );
+    expect(window.Telemetry.emit).toHaveBeenCalledWith(
+      'ai_evaluation',
+      expect.objectContaining({ proposal_id: 'p-reject', decision: 'reject' })
+    );
+  });
+
+
   it('survives a playthrough where Director rejects every AI proposal', async () => {
     const choicesEl = document.getElementById('choices');
     const choiceStory = mockStory({ currentChoices: [{ text: 'Authored 1' }, { text: 'Authored 2' }] });
