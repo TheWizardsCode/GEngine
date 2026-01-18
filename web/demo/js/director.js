@@ -127,6 +127,26 @@ function checkReturnPath(returnPath, story, proposal = {}) {
  * Lightweight deterministic scoring using three active metrics and three placeholders.
  * Returns number between 0.0 (low risk) and 1.0 (high risk).
  */
+function getPlayerPreferenceScore(proposal = {}, config = {}) {
+  const override = safeNumber(config && config.playerPreferenceScore, null);
+  if (Number.isFinite(override)) return clamp01(override, 0.5);
+
+  if (config && typeof config.getPreference === 'function') {
+    const val = safeNumber(config.getPreference(proposal), null);
+    if (Number.isFinite(val)) return clamp01(val, 0.5);
+  }
+
+  try {
+    if (typeof PlayerPreference !== 'undefined' && PlayerPreference.getPreference) {
+      const branchType = (proposal && proposal.content && (proposal.content.branch_type || proposal.content.branchType)) || 'default';
+      const val = safeNumber(PlayerPreference.getPreference(branchType), null);
+      if (Number.isFinite(val)) return clamp01(val, 0.5);
+    }
+  } catch (e) {}
+
+  return 0.5;
+}
+
 function computeRiskScore(proposal = {}, context = {}, config = {}) {
   // We want deterministic results given same inputs
   const confidence = safeNumber(proposal.metadata && proposal.metadata.confidence_score, 0.5);
@@ -155,6 +175,10 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
   const returnPathConfidence = safeNumber((context && context.returnPathCheck && context.returnPathCheck.confidence), 0.0);
   const return_path_confidence_risk = 1.0 - Math.max(0, Math.min(1, returnPathConfidence));
 
+  // player preference risk: high preference -> low risk
+  const preferenceScore = getPlayerPreferenceScore(proposal, config);
+  const player_preference_risk = 1.0 - Math.max(0, Math.min(1, preferenceScore));
+
   // Placeholder metrics (thematic, lore, voice)
   const placeholder = safeNumber(config.placeholderDefault, 0.3);
   const thematic_consistency_risk = placeholder;
@@ -163,20 +187,22 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
 
   // Weights (configurable)
   const weights = Object.assign({
-    proposal_confidence: 0.75,
+    proposal_confidence: 0.7,
     narrative_pacing: 0.15,
     return_path_confidence: 0.1,
+    player_preference: 0.05,
     thematic_consistency: 0,
     lore_adherence: 0,
     character_voice: 0
   }, config.weights || {});
 
   // Weighted average of active metrics
-  const activeSum = weights.proposal_confidence + weights.narrative_pacing + weights.return_path_confidence;
+  const activeSum = weights.proposal_confidence + weights.narrative_pacing + weights.return_path_confidence + weights.player_preference;
   const activeScore = (
     proposal_confidence_risk * weights.proposal_confidence +
     narrative_pacing_risk * weights.narrative_pacing +
-    return_path_confidence_risk * weights.return_path_confidence
+    return_path_confidence_risk * weights.return_path_confidence +
+    player_preference_risk * weights.player_preference
   ) / Math.max(1e-6, activeSum);
 
   // Add fraction for placeholders (kept small / configurable)
@@ -357,7 +383,8 @@ const Director = {
   evaluate,
   checkReturnPath,
   computeRiskScore,
-  emitDecisionTelemetry
+  emitDecisionTelemetry,
+  _getPlayerPreferenceScore: getPlayerPreferenceScore
 };
 
 if (typeof module !== 'undefined' && module.exports) {
