@@ -48,6 +48,44 @@ let workerInitError = null;
 const pending = new Map();
 let nextId = 1;
 
+const NODE_FALLBACK_ENABLED = typeof process !== 'undefined' && process.env && (process.env.INTEGRATION_EMBEDDING === '1' || process.env.EMBED_NODE === '1');
+let nodeExtractorPromise = null;
+let nodeExtractorError = null;
+
+async function getNodeExtractor() {
+  if (!NODE_FALLBACK_ENABLED) return null;
+  if (!nodeExtractorPromise) {
+    nodeExtractorPromise = (async () => {
+      let mod = null;
+      try {
+        if (typeof require === 'function') {
+          mod = require('@xenova/transformers');
+        } else {
+          mod = await import('@xenova/transformers');
+        }
+      } catch (primaryErr) {
+        // Fallback to dynamic import if require failed, or vice versa
+        try {
+          mod = await import('@xenova/transformers');
+        } catch (importErr) {
+          throw importErr || primaryErr;
+        }
+      }
+      const transformers = mod && mod.default ? mod.default : mod;
+      if (!transformers || typeof transformers.pipeline !== 'function') {
+        throw new Error('transformers pipeline not available');
+      }
+      return transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    })();
+  }
+  try {
+    return await nodeExtractorPromise;
+  } catch (err) {
+    nodeExtractorError = err;
+    return null;
+  }
+}
+
 function ensureWorker() {
   if (worker || workerInitError) return;
   try {
@@ -112,31 +150,43 @@ function similarity(a, b) {
  */
 async function embed(text) {
   if (!text || typeof text !== 'string') return null;
+
+  // Primary path: Worker (browser-first)
   ensureWorker();
-  if (!worker || workerInitError) {
-    // Graceful fallback
-    return null;
-  }
-  return new Promise((resolve, reject) => {
-    const id = nextId++;
-    pending.set(id, { resolve, reject });
-    try {
-      worker.postMessage({ id, text });
-    } catch (err) {
-      pending.delete(id);
-      resolve(null);
-    }
-    // Safety timeout to avoid dangling promises (15s)
-    setTimeout(() => {
-      if (pending.has(id)) {
+  if (worker && !workerInitError) {
+    return new Promise((resolve, reject) => {
+      const id = nextId++;
+      pending.set(id, { resolve, reject });
+      try {
+        worker.postMessage({ id, text });
+      } catch (err) {
         pending.delete(id);
         resolve(null);
       }
-    }, 15000);
-  });
+      // Safety timeout to avoid dangling promises (15s)
+      setTimeout(() => {
+        if (pending.has(id)) {
+          pending.delete(id);
+          resolve(null);
+        }
+      }, 15000);
+    });
+  }
+
+  // Node fallback for integration/Node environments (opt-in)
+  const extractor = await getNodeExtractor();
+  if (!extractor) return null;
+  try {
+    const output = await extractor(text, { pooling: 'mean', normalize: true });
+    if (output && output.data) return Array.from(output.data);
+    if (output && Array.isArray(output)) return output;
+    return null;
+  } catch (err) {
+    return null;
+  }
 }
 
-const EmbeddingService = { embed, similarity };
+const EmbeddingService = { embed, similarity, _nodeExtractorError: () => nodeExtractorError };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = EmbeddingService;
