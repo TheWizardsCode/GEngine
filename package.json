@@ -13,7 +13,8 @@
     "lint:md": "remark .opencode/command/*.md --quiet --frail",
     "test:golden": "node tests/golden-path/run-golden.js",
     "dev:cors-proxy": "node scripts/cors-proxy.js",
-    "dev:demo": "node scripts/dev-runner.js"
+    "dev:demo": "node scripts/dev-runner.js",
+    "test:integration:embedding": "EMBED_NODE=1 npx jest --runInBand --config jest.config.js --testMatch \"<rootDir>/tests/integration/**/*.test.[jt]s\" --passWithNoTests"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
