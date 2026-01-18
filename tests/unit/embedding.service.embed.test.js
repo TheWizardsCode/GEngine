@@ -6,7 +6,7 @@ describe('EmbeddingService.embed', () => {
     expect(result).toBeNull();
   });
 
-  test('resolves via mocked worker plumbing', async () => {
+  test('resolves via mocked worker plumbing and caches results', async () => {
     // Mock a minimal Worker that immediately responds with a fixed embedding
     const fixedEmbedding = [0.1, 0.2, 0.3];
     const mockPostMessage = jest.fn();
@@ -42,9 +42,11 @@ describe('EmbeddingService.embed', () => {
     jest.resetModules();
     const FreshService = require('../../web/demo/js/embedding-service.js');
 
-    const result = await FreshService.embed('hello world');
-    expect(mockPostMessage).toHaveBeenCalled();
-    expect(result).toEqual(fixedEmbedding);
+    const result1 = await FreshService.embed('hello world');
+    const result2 = await FreshService.embed('hello world');
+    expect(mockPostMessage).toHaveBeenCalledTimes(1);
+    expect(result1).toEqual(fixedEmbedding);
+    expect(result2).toEqual(fixedEmbedding);
 
     // restore
     global.Worker = originalWorker;

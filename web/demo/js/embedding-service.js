@@ -47,6 +47,7 @@ let worker = null;
 let workerInitError = null;
 const pending = new Map();
 let nextId = 1;
+const embeddingCache = new Map();
 
 const NODE_FALLBACK_ENABLED = typeof process !== 'undefined' && process.env && (process.env.INTEGRATION_EMBEDDING === '1' || process.env.EMBED_NODE === '1');
 let nodeExtractorPromise = null;
@@ -152,11 +153,15 @@ async function embed(text) {
   if (!text || typeof text !== 'string') return null;
 
   // Primary path: Worker (browser-first)
+  if (embeddingCache.has(text)) {
+    return embeddingCache.get(text);
+  }
+
   ensureWorker();
   if (worker && !workerInitError) {
-    return new Promise((resolve, reject) => {
+    const promise = new Promise((resolve) => {
       const id = nextId++;
-      pending.set(id, { resolve, reject });
+      pending.set(id, { resolve });
       try {
         worker.postMessage({ id, text });
       } catch (err) {
@@ -170,7 +175,15 @@ async function embed(text) {
           resolve(null);
         }
       }, 15000);
+    }).then((result) => {
+      // Cache successful embeddings only
+      if (result && Array.isArray(result)) {
+        embeddingCache.set(text, result);
+      }
+      return result;
     });
+    embeddingCache.set(text, promise);
+    return promise;
   }
 
   // Node fallback for integration/Node environments (opt-in)
@@ -178,8 +191,11 @@ async function embed(text) {
   if (!extractor) return null;
   try {
     const output = await extractor(text, { pooling: 'mean', normalize: true });
-    if (output && output.data) return Array.from(output.data);
-    if (output && Array.isArray(output)) return output;
+    const embedding = output && output.data ? Array.from(output.data) : (Array.isArray(output) ? output : null);
+    if (embedding && Array.isArray(embedding)) {
+      embeddingCache.set(text, embedding);
+      return embedding;
+    }
     return null;
   } catch (err) {
     return null;
