@@ -133,11 +133,17 @@ describe('Director core', () => {
     expect(score).toBeGreaterThan(0.5);
   });
 
-  it('elevates pacing risk for very long branches', () => {
+  it('scales pacing risk by phase expectations', () => {
     const longText = 'long '.repeat(200); // > 500 chars
     const proposal = { metadata: { confidence_score: 0.6 }, content: { text: longText } };
-    const score = Director.computeRiskScore(proposal, { returnPathCheck: { confidence: 0.9 } }, {});
-    expect(score).toBeGreaterThan(0.35);
+    const ctxDefault = { returnPathCheck: { confidence: 0.9 }, phase: 'exposition' };
+    const defaultScore = Director.computeRiskScore(proposal, ctxDefault, {});
+
+    const ctxClimax = { returnPathCheck: { confidence: 0.9 }, phase: 'climax' };
+    const climaxScore = Director.computeRiskScore(proposal, ctxClimax, {});
+
+    expect(defaultScore).toBeGreaterThan(climaxScore);
+    expect(defaultScore).toBeGreaterThan(0.35);
   });
 
   it('is deterministic across repeated calls', () => {
