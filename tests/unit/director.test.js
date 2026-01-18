@@ -10,6 +10,15 @@ describe('Director core', () => {
     global.window = global.window || {};
     global.window.Telemetry = { emit: jest.fn() };
 
+    // Simple sessionStorage mock
+    const store = new Map();
+    global.sessionStorage = {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: (k) => store.delete(k),
+      clear: () => store.clear(),
+    };
+
     // Default ProposalValidator that approves
     global.window.ProposalValidator = {
       quickValidate: jest.fn(() => ({ valid: true }))
@@ -23,6 +32,7 @@ describe('Director core', () => {
   afterEach(() => {
     // clean up any globals we set
     delete global.window.__proposalValidReturnPaths;
+    delete global.sessionStorage;
   });
 
   it('approves a low-risk proposal and returns latencyMs', async () => {
@@ -217,6 +227,47 @@ describe('Director core', () => {
     expect(directorCalls.length).toBeGreaterThan(0);
     const payload = directorCalls[0][1];
     expect(payload).toHaveProperty('decision');
+  });
+
+  it('telemetry payload includes required fields and ISO timestamp; fills missing proposal_id; buffers 5 decisions', async () => {
+    const story = { mainContentContainer: { _namedContent: { campfire: {} } } };
+    const baseProposal = { content: { text: 'Short content', return_path: 'campfire' }, metadata: { confidence_score: 0.9 } };
+
+    const payloads = [];
+    for (let i = 0; i < 5; i += 1) {
+      const proposal = { ...baseProposal, id: i === 0 ? undefined : `p-${i}` };
+      const res = await Director.evaluate(proposal, { story }, { riskThreshold: 0.5 });
+      expect(res).toHaveProperty('decision');
+      const calls = global.window.Telemetry.emit.mock.calls.filter(c => c[0] === 'director_decision');
+      const call = calls[calls.length - 1];
+      expect(call).toBeTruthy();
+      const payload = call[1];
+      payloads.push(payload);
+    }
+
+    // Required fields
+    payloads.forEach((p) => {
+      expect(p).toHaveProperty('proposal_id');
+      expect(p).toHaveProperty('decision');
+      expect(p).toHaveProperty('reason');
+      expect(p).toHaveProperty('riskScore');
+      expect(p).toHaveProperty('latencyMs');
+      expect(p).toHaveProperty('writerMs');
+      expect(p).toHaveProperty('directorMs');
+      expect(p).toHaveProperty('totalMs');
+      expect(p).toHaveProperty('timestamp');
+      expect(p).toHaveProperty('metrics');
+
+      // Timestamp is valid ISO8601
+      expect(() => new Date(p.timestamp).toISOString()).not.toThrow();
+    });
+
+    // First call had no proposal.id; ensure uuid filled
+    expect(payloads[0].proposal_id).toMatch(/^uuid-|^[0-9a-f]{8}-/i);
+
+    // sessionStorage contains 5 events
+    const stored = JSON.parse(global.sessionStorage.getItem('ge-hch.director.telemetry') || '[]');
+    expect(stored.length).toBe(5);
   });
 
 });
