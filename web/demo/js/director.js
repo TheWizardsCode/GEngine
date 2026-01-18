@@ -1,12 +1,34 @@
 (function() {
 "use strict";
 
-// Lightweight Director module implementing a 5-step decision pipeline.
-// - validation (uses ProposalValidator.quickValidate)
-// - return-path feasibility
-// - risk scoring (3 active metrics + placeholders)
-// - coherence check (simple threshold)
-// - final decision + telemetry
+/**
+ * @module Director
+ * @description
+ * Lightweight AI Director implementing a deterministic 5-step decision pipeline.
+ *
+ * Decision steps:
+ * 1. **Validation**: schema/policy validation via `ProposalValidator.quickValidate` (if present).
+ * 2. **Return-path feasibility**: verifies `proposal.content.return_path` exists in the story.
+ * 3. **Risk scoring**: computes a 0.0–1.0 risk score via {@link module:Director.computeRiskScore}.
+ * 4. **Coherence check**: compares risk to a configurable threshold.
+ * 5. **Final decision + telemetry**: returns a decision result and emits a `director_decision` event.
+ *
+ * This module is written to work in both browser (demo) and Node (unit tests).
+ *
+ * @example
+ * // Browser usage
+ * const proposal = {
+ *   id: 'p-123',
+ *   content: { text: 'A sudden storm breaks the silence…', return_path: 'knot_after_branch' },
+ *   metadata: { confidence_score: 0.72 }
+ * };
+ *
+ * const storyContext = { story: inkStoryInstance, phase: 'rising_action' };
+ * const config = { riskThreshold: 0.4, writerMs: 250 };
+ *
+ * const result = await window.Director.evaluate(proposal, storyContext, config);
+ * // result.decision -> 'approve' | 'reject'
+ */
 
 // Node/browser performance shim
 let perf;
@@ -223,8 +245,35 @@ function emitDecisionTelemetry(decisionResult = {}, extras = {}) {
 }
 
 /**
- * evaluate(proposal, storyContext, config)
- * Main entry point. Returns { decision, reason, riskScore, latencyMs }
+ * Decision result returned by {@link module:Director.evaluate}.
+ *
+ * @typedef {Object} DecisionResult
+ * @property {string} [proposal_id] - Proposal identifier (if provided by the Writer).
+ * @property {'approve'|'reject'} decision - Director decision.
+ * @property {string} reason - Human-readable rationale for the decision.
+ * @property {number} riskScore - Risk score in the range 0.0 (low risk) to 1.0 (high risk).
+ * @property {number} latencyMs - Director evaluation latency in milliseconds.
+ * @property {number} writerMs - Optional Writer latency (passed via config for telemetry).
+ * @property {number} directorMs - Director-only latency in milliseconds.
+ * @property {number} totalMs - writerMs + directorMs.
+ * @property {Object} [metrics] - Metric breakdown used for telemetry/debug.
+ */
+
+/**
+ * Evaluate a Writer proposal and decide whether it can be injected.
+ *
+ * @function evaluate
+ * @memberof module:Director
+ * @async
+ * @param {Object} proposal - Writer proposal to evaluate.
+ * @param {Object} [storyContext={}] - Current story context.
+ * @param {Object} [storyContext.story] - inkjs story instance (used for return-path feasibility).
+ * @param {string} [storyContext.phase] - Narrative phase used for pacing heuristics.
+ * @param {Object} [config={}] - Evaluation configuration.
+ * @param {number} [config.riskThreshold=0.4] - Max acceptable risk for approval.
+ * @param {number} [config.writerMs=0] - Writer latency in ms (optional, telemetry only).
+ * @returns {Promise<DecisionResult>} Decision result.
+ * @throws {Error} If the proposal is missing or malformed.
  */
 async function evaluate(proposal, storyContext = {}, config = {}) {
   const start = perf.now();
