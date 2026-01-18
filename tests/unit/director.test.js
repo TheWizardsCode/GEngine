@@ -133,20 +133,21 @@ describe('Director core', () => {
     expect(score).toBeGreaterThan(0.5);
   });
 
-  it('scales pacing risk by phase expectations', () => {
-    const longText = 'long '.repeat(200); // > 500 chars
-    const proposal = { metadata: { confidence_score: 0.6 }, content: { text: longText } };
-    const ctxDefault = { returnPathCheck: { confidence: 0.9 }, phase: 'exposition' };
-    const defaultScore = Director.computeRiskScore(proposal, ctxDefault, {});
+  it('elevates pacing risk for long exposition branches', () => {
+    const shortProposal = { metadata: { confidence_score: 0.6 }, content: { text: 'concise text' } };
+    const longProposal = { metadata: { confidence_score: 0.6 }, content: { text: 'long '.repeat(220) } }; // ~1100 chars
+    const expositionCtx = { returnPathCheck: { confidence: 0.9 }, phase: 'exposition' };
 
-    const ctxClimax = { returnPathCheck: { confidence: 0.9 }, phase: 'climax' };
-    const climaxScore = Director.computeRiskScore(proposal, ctxClimax, {});
+    const shortScore = Director.computeRiskScore(shortProposal, expositionCtx, {});
+    const longScore = Director.computeRiskScore(longProposal, expositionCtx, {});
+    const climaxScore = Director.computeRiskScore(longProposal, { ...expositionCtx, phase: 'climax' }, {});
 
-    expect(defaultScore).toBeGreaterThan(climaxScore);
-    expect(defaultScore).toBeGreaterThan(0.35);
+    expect(longScore).toBeGreaterThan(shortScore);
+    expect(longScore).toBeGreaterThan(climaxScore);
+    expect(longScore).toBeGreaterThan(0.35);
   });
 
-  it('is deterministic across repeated calls', () => {
+  it('is deterministic across repeated calls (10 runs)', () => {
     const proposal = { metadata: { confidence_score: 0.7 }, content: { text: 'stable content' } };
     const context = { returnPathCheck: { confidence: 0.9 } };
     const scores = Array.from({ length: 10 }, () => Director.computeRiskScore(proposal, context, {}));
