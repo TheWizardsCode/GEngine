@@ -13,7 +13,10 @@
           "path": { "type": "string", "pattern": "^/stories/.+\\.ink$" },
           "description": { "type": "string" },
           "tags": { "type": "array", "items": { "type": "string" } },
-          "generated": { "type": "boolean", "default": false }
+          "generated": { "type": "boolean", "default": false },
+          "testable": { "type": "boolean", "default": false },
+          "aiEnabled": { "type": "boolean", "default": true },
+          "aiChoiceCount": { "type": "integer", "minimum": 0 }
         },
         "additionalProperties": false
       }
