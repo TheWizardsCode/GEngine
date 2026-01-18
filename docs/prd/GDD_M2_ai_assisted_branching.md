@@ -137,3 +137,8 @@ Change log (this update):
 - 2026-01-18: Updated PRD to include ge-hch.5.16 runtime integration specifics: 12-state integration state machine, atomic checkpoint/rollback semantics, persistence and audit logging, and save/load branch history (MVP set to include audit logging and save metadata per requested scope B). Emphasized reliability-first non-functional priorities.
 
 This PRD update is saved at `docs/prd/GDD_M2_ai_assisted_branching.md`. Please review and indicate edits or approval. After you approve I'll run the automated five-stage review pipeline and finalize bead labels as instructed.
+
+### Security & compliance notes
+- Security note: run sanitizers and validation in isolated execution environments; apply input encoding validation before runtime application.
+- Privacy note: redact PII before storing proposals; use role-based access control and encryption-at-rest for audit logs.
+- Compliance note: retain audit logs per policy and support deletion for data subject requests.
