@@ -111,6 +111,17 @@
    * @type {HTMLElement|null}
    */
   let loadingIndicator = null;
+
+  function getDirector() {
+    if (typeof window !== 'undefined' && window.Director) {
+      return window.Director;
+    }
+    try {
+      return require('./director.js');
+    } catch (e) {
+      return null;
+    }
+  }
   
   /**
    * Creates and returns the loading indicator element
@@ -559,58 +570,63 @@
  
     const writerStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
  
-    try {
-      const proposal = mockProposalOverride
-        ? normalizeMockProposal(mockProposalOverride)
-        : (useMockProposal ? getMockProposalIfAvailable() : await generateAIProposal());
+     try {
+       const proposal = mockProposalOverride
+         ? normalizeMockProposal(mockProposalOverride)
+         : (useMockProposal ? getMockProposalIfAvailable() : await generateAIProposal());
  
-      hideLoadingIndicator();
+       hideLoadingIndicator();
 
 
-      if (!proposal) {
-        return 'no_proposal';
-      }
+       if (!proposal) {
+         return 'no_proposal';
+       }
 
-      const writerMs = Math.max(
-        0,
-        ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - writerStart
-      );
+       const writerMs = Math.max(
+         0,
+         ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - writerStart
+       );
 
-      currentAIProposal = proposal;
+       currentAIProposal = proposal;
 
-      let directorResult = null;
-      if (directorEnabled && window.Director && typeof window.Director.evaluate === 'function') {
-            const indicator = createLoadingIndicator();
-        const textEl = indicator.querySelector('.ai-loading-text');
-        if (textEl) textEl.textContent = 'Evaluating AI choice...';
-        indicator.style.display = 'flex';
-        choicesEl.appendChild(indicator);
+       let directorResult = null;
+       const director = directorEnabled ? getDirector() : null;
+       if (director && typeof director.evaluate === 'function') {
+         const indicator = createLoadingIndicator();
+         const textEl = indicator.querySelector('.ai-loading-text');
+         if (textEl) textEl.textContent = 'Evaluating AI choice...';
+         indicator.style.display = 'flex';
+         choicesEl.appendChild(indicator);
 
-        try {
-          directorResult = await window.Director.evaluate(proposal, { story }, { riskThreshold });
-        } catch (e) {
-          console.warn('[inkrunner] Director evaluation failed, skipping AI choice', e);
-          hideLoadingIndicator();
-          return;
-        }
+         try {
+           const maybePromise = director.evaluate(proposal, { story }, { riskThreshold });
+           directorResult = (maybePromise && typeof maybePromise.then === 'function')
+             ? await maybePromise
+             : maybePromise;
+         } catch (e) {
+           console.warn('[inkrunner] Director evaluation failed, skipping AI choice', e);
+           hideLoadingIndicator();
+           return;
+         }
 
-        hideLoadingIndicator();
+         hideLoadingIndicator();
 
-        const directorMs = (directorResult && typeof directorResult.latencyMs === 'number') ? directorResult.latencyMs : 0;
-        const totalMs = writerMs + directorMs;
-        logTelemetry('ai_evaluation', {
-          proposal_id: proposal.id,
-          decision: directorResult.decision,
-          writerMs,
-          directorMs,
-          totalMs
-        });
+         const directorMs = (directorResult && typeof directorResult.latencyMs === 'number') ? directorResult.latencyMs : 0;
+         const totalMs = writerMs + directorMs;
+         logTelemetry('ai_evaluation', {
+           proposal_id: proposal.id,
+           decision: directorResult && directorResult.decision,
+           writerMs,
+           directorMs,
+           totalMs
+         });
 
-        if (directorResult.decision !== 'approve') {
-          console.log('[inkrunner] Director rejected AI proposal:', directorResult.reason);
-          return 'rejected';
-        }
-      }
+         if (!directorResult || directorResult.decision !== 'approve') {
+           console.log('[inkrunner] Director rejected AI proposal:', directorResult && directorResult.reason);
+           return 'rejected';
+         }
+       }
+
 
       const btn = document.createElement('button');
       const styleClass = settings.aiChoiceStyle === 'normal' ? 'ai-choice-normal' : 'ai-choice';
