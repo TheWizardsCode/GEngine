@@ -143,53 +143,71 @@ M2 emits events at 7 key decision points:
 - Risk score distribution by branch type
 - Most common violations (to prioritize rule tuning)
 
-#### Event 3: Director Decision Made
+#### Event 3: Director Decision Made (`director_decision`)
 
-**When**: Director evaluates proposal and makes accept/reject decision
+**When**: Director evaluates a proposal and makes an accept/reject decision.
 
-**Purpose**: Track Director heuristics and decision patterns
+**Purpose**: Track Director heuristics and decision patterns.
+
+##### Schema (web demo payload)
+
+The web demo emits a **flat** `director_decision` payload (no nested `event_data` envelope) with these fields:
+
+| Field | Type | Required | Notes |
+|---|---:|:---:|---|
+| `proposal_id` | string | ✅ | Correlates with proposal lifecycle events; falls back to a UUID if missing. |
+| `decision` | string | ✅ | `approve` or `reject` (demo enums). |
+| `reason` | string | ✅ | Human-readable rationale (e.g., `Risk acceptable`, `Return path check failed`). |
+| `riskScore` | number | ✅ | Overall risk (0.0–1.0). Lower is better. |
+| `latencyMs` | number | ✅ | Director evaluation latency (ms). |
+| `writerMs` | number | ✅ | Writer latency passed in for telemetry (ms). |
+| `directorMs` | number | ✅ | Same as `latencyMs` in the demo (ms). |
+| `totalMs` | number | ✅ | `writerMs + directorMs`. |
+| `timestamp` | string | ✅ | ISO timestamp generated at emission time. |
+| `metrics.confidence` | number \| null | ❌ | Fit metric 0.0–1.0 (higher is better). |
+| `metrics.pacing` | number \| null | ❌ | Fit metric 0.0–1.0 (higher is better). |
+| `metrics.returnPath` | number \| null | ❌ | Fit metric 0.0–1.0 (higher is better). |
+| `metrics.thematic` | number \| null | ❌ | Placeholder fit metric. |
+| `metrics.lore` | number \| null | ❌ | Placeholder fit metric. |
+| `metrics.voice` | number \| null | ❌ | Placeholder fit metric. |
+
+##### Example
 
 ```json
 {
   "event_type": "director_decision",
-  "event_data": {
+  "payload": {
     "proposal_id": "proposal-87f4c290",
-    "decision": "approved_for_runtime",
-    
-    "director_reasoning": {
-      "validation_passed": true,
-      "risk_score": 0.15,
-      "risk_metrics": {
-        "thematic_consistency": 0.85,
-        "lore_adherence": 0.90,
-        "character_voice_consistency": 0.87,
-        "narrative_pacing_fit": 0.80,
-        "player_preference_fit": 0.82,
-        "proposal_confidence": 0.87
-      },
-      "weighted_risk_score": 0.14,
-      "decision_threshold": 0.30,
-      "return_path_feasible": true,
-      "player_preference_details": {
-        "branch_type_match": 0.88,
-        "theme_match": 0.79,
-        "complexity_match": 0.85,
-        "historical_engagement": 0.78,
-        "frequency_appropriateness": 0.90
-      }
-    },
-    
-    "player_engagement": {
-      "recent_action_level": 0.65,
-      "recent_success_rate": 0.82,
-      "narrative_phase": "rising_action",
-      "director_creativity_set_to": 0.65
-    },
-    
-    "decision_time_ms": 125
+    "decision": "approve",
+    "reason": "Risk acceptable",
+    "riskScore": 0.18,
+    "latencyMs": 92,
+    "writerMs": 240,
+    "directorMs": 92,
+    "totalMs": 332,
+    "timestamp": "2026-01-20T14:30:22Z",
+    "metrics": {
+      "confidence": 0.87,
+      "pacing": 0.12,
+      "returnPath": 0.90,
+      "thematic": null,
+      "lore": null,
+      "voice": null
+    }
   }
 }
 ```
+
+##### Implementation note: buffering
+
+In the web demo, `director_decision` events are buffered in **`sessionStorage`** under the key `ge-hch.director.telemetry` as a ring buffer of the **last 50 events**. This ensures:
+- no server dependency for local dev
+- events survive simple page navigations
+- bounded memory vs `localStorage`
+
+(If the buffer is cleared, only in-session telemetry is impacted; gameplay state is unaffected.)
+
+**Design reference**: `docs/dev/m2-design/telemetry-schema.md` (this document) and `docs/dev/m2-design/director-algorithm.md` (Telemetry Emission section).
 
 **Metrics extracted**:
 - Risk score distribution
