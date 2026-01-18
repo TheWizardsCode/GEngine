@@ -380,7 +380,7 @@ describe('inkrunner AI integration', () => {
       metadata: { confidence_score: 0.9 }
     };
 
-    const evaluateMock = jest.fn(async (_proposal, _ctx, options) => {
+    const evaluateMock = jest.fn((_proposal, _ctx, options) => {
       expect(options).toHaveProperty('riskThreshold', 0.4);
       return { decision: 'approve', reason: 'ok', riskScore: 0.2, latencyMs: 15 };
     });
@@ -425,7 +425,7 @@ describe('inkrunner AI integration', () => {
     };
 
     window.Director = {
-      evaluate: jest.fn(async () => ({ decision: 'reject', reason: 'too risky', latencyMs: 7, riskScore: 0.9 }))
+      evaluate: jest.fn(() => ({ decision: 'reject', reason: 'too risky', latencyMs: 7, riskScore: 0.9 }))
     };
 
     const result = await inkrunner.addAIChoice({ forceDirectorEnabled: true, mockProposalOverride: proposal });
