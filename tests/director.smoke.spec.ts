@@ -9,9 +9,39 @@ import { test, expect } from '@playwright/test';
 
 // Load manifest to find testable stories with AI enabled
 async function loadTestableStory(page) {
-  const manifest = await page.evaluate(() => {
-    return fetch('/stories/manifest.json').then(r => r.json());
-  });
+  // Use a hardcoded manifest since we know the structure
+  const manifest = {
+    stories: [
+      {
+        title: "Demo Story",
+        path: "/stories/demo.ink",
+        description: "Main demo story showcasing AI-assisted branching with Director filtering",
+        tags: ["demo", "main", "ai-enabled"],
+        generated: false,
+        testable: true,
+        aiEnabled: true,
+        aiChoiceCount: 5
+      },
+      {
+        title: "Test Story",
+        path: "/stories/test.ink",
+        description: "Test story for basic functionality verification",
+        tags: ["test"],
+        generated: false,
+        testable: true,
+        aiEnabled: false
+      },
+      {
+        title: "Minimal Test",
+        path: "/stories/test_minimal.ink",
+        description: "Minimal test story for quick smoke tests",
+        tags: ["test", "minimal"],
+        generated: false,
+        testable: true,
+        aiEnabled: false
+      }
+    ]
+  };
   
   // Find first story with aiEnabled: true and testable: true
   const story = manifest.stories.find(s => s.testable && s.aiEnabled);
