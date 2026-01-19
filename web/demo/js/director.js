@@ -173,6 +173,9 @@ function getPlayerPreferenceScore(proposal = {}, config = {}) {
 }
 
 function computeRiskScore(proposal = {}, context = {}, config = {}) {
+  // Merge config early so helpers can reference merged values deterministically
+  const mergedCfg = mergeConfig(config || {});
+
   // We want deterministic results given same inputs
   const confidence = safeNumber(proposal.metadata && proposal.metadata.confidence_score, 0.5);
   // proposal_confidence_risk: high confidence -> low risk
@@ -211,7 +214,6 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
   const character_voice_risk = placeholder;
 
   // Weights (configurable)
-  const mergedCfg = mergeConfig(config || {});
   const weights = Object.assign({
     proposal_confidence: 0.7,
     narrative_pacing: 0.15,
