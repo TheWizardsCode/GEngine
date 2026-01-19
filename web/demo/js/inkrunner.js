@@ -751,8 +751,14 @@
       if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
         window.RuntimeHooks.emitParallel('on_restore', { payload, story }).catch(() => {});
       }
-      
-      storyEl.innerHTML = '';
+
+      // Restore rendered story HTML if provided; otherwise clear and let continueStory rebuild visible content
+      if (payload.renderedHtml) {
+        storyEl.innerHTML = payload.renderedHtml;
+      } else {
+        storyEl.innerHTML = '';
+      }
+
       handleTags(story.currentTags || []);
       continueStory();
     } catch (err) {
