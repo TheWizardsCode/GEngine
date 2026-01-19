@@ -138,7 +138,21 @@
   <script src="js/proposal-validator.js"></script>
   <script src="js/director.js"></script>
   <!-- Main runner (must be after AI Writer modules and director) -->
-  <script src="js/runtime-hooks-shim.js"></script>
+  <!-- Prefer bundled HookManager when present (build step writes hook-manager.bundled.js) -->
+  <script>
+    (function(){
+      var el = document.createElement('script');
+      el.src = 'js/hook-manager.bundled.js';
+      el.onload = function() { console.debug('[demo] loaded bundled HookManager'); };
+      el.onerror = function() {
+        console.debug('[demo] bundled HookManager not present, falling back to runtime shim');
+        var shim = document.createElement('script');
+        shim.src = 'js/runtime-hooks-shim.js';
+        document.head.appendChild(shim);
+      };
+      document.head.appendChild(el);
+    })();
+  </script>
   <script src="js/inkrunner.js"></script>
 </body>
 </html>
