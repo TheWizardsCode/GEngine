@@ -36,8 +36,23 @@ The existing M2 work defines proposal lifecycle and Director/Writer behavior, bu
   - Checkpoints capture necessary runtime state (player inventory, variables, scene index, branch progress markers). Checkpoints must be verifiable (checksums) and restorable deterministically.
   - Rollback restores to the last valid checkpoint and clears transient branch markers.
 - Save/load compatibility
-  - Save files must include `branch_history` metadata that records in-progress branches: `branch_id`, `proposal_hash`, `integration_state`, `last_checkpoint_id`, `timestamp`.
-  - Loading a save with `integration_state` in Executing/Injecting must resume the branch at the next safe beat if possible, or rollback automatically and notify the player if inconsistency is detected.
+- Save files must include `branch_history` metadata that records in-progress branches and a minimal resume payload. Required fields (types):
+  - `schema_version` (integer) — branch_history schema version.
+  - `branch_id` (string) — unique branch instance id.
+  - `proposal_hash` (string|null) — content hash of the proposal, if available.
+  - `created_at` (string, date-time)
+  - `updated_at` (string, date-time)
+  - `integration_state` (string, enum: ProposalAccepted, PreInjectCheckpoint, Injecting, Executing, CheckpointOnBeat, CommitPending, Committed, RollbackPending, RollingBack, RolledBack, TerminalSuccess, TerminalFailure)
+  - `last_checkpoint_id` (string|null)
+  - `last_checkpoint_ts` (string, date-time|null)
+  - `resume_payload` (object|null) — small engine-specific payload required to resume (for example: next scene index, pending actions). Keep this minimal to avoid large save files.
+- Minimal resume payload rule: the save should embed only the small, deterministic information required to resume or rollback (ids, timestamps, and a compact `resume_payload`). Full audit logs (detailed transition records, validation reports, director decisions) must not be embedded by default.
+- Audit logs and diagnostics: send full integration logs to the telemetry/external store with configurable retention. Saves may carry `branch_history.audit_ref` (string) which references the external audit id when telemetry is available; loader falls back to embedded data if external logs are unavailable.
+- Privacy & security: embedded `branch_history` must redact PII. Prefer storing sensitive details in the external telemetry store where access control and encryption at rest can be enforced. Document what is considered PII in `docs/dev/`.
+- Migration & versioning: include `schema_version` and a migration strategy. Loaders must accept older `schema_version` values and either migrate them or conservatively rollback if migration is unsafe.
+- Resume policy (deterministic & conservative): when loading, resume a branch only if `last_checkpoint_id` exists and the checkpoint's checksum/version matches the expected value. If a deterministic resume cannot be guaranteed, perform an automatic rollback to the last valid checkpoint, log the decision, and notify the player with the graceful recovery message.
+- Resume timing: resumption should occur at the next safe beat (see hook points `pre_checkpoint`/`post_checkpoint`) so the runtime can re-establish transient systems before continuing execution.
+- Suggested canonical artifacts: provide a canonical JSON Schema and examples to live at `docs/dev/branch-history.schema.json` and `docs/dev/examples/branch-history-example.json` so implementers have an exact reference.
 - Audit logging and persistence
   - Record transitions, decisions, validation references, and rollback causes in an append-only integration log associated with a save id and player id (redact PII).
 - Hook manager API
