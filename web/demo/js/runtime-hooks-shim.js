@@ -64,6 +64,9 @@
   if (typeof window !== 'undefined') {
     if (!window.RuntimeHooks) {
       window.RuntimeHooks = new HookManager();
+      console.debug('[demo] RuntimeHooks shim initialized (fallback)');
+    } else {
+      console.debug('[demo] RuntimeHooks already present; shim skipped');
     }
   }
 
