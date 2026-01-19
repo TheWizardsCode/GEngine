@@ -42,3 +42,6 @@ junit-report.xml
 
 # Local runtime/editor saves that should not be committed
 src/.saves/
+
+# Telemetry runtime output (prototype)
+server/telemetry/events.ndjson
