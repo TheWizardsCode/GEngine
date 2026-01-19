@@ -390,6 +390,11 @@
       window.LoreAssembler.recordChoice(`[AI] ${proposal.choice_text}`);
     }
     
+    // Emit on_commit hook for AI branch play
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+      window.RuntimeHooks.emitParallel('on_commit', { story, proposal }).catch(() => {});
+    }
+
     // Log telemetry
     logTelemetry('ai_branch_played', {
       proposal_id: proposal.id,
@@ -566,6 +571,10 @@
       }
     }
  
+    // Emit pre_inject hook before generation begins
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+      window.RuntimeHooks.emitParallel('pre_inject', { story }).catch(() => {});
+    }
     showLoadingIndicator();
  
     const writerStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
@@ -575,10 +584,14 @@
          ? normalizeMockProposal(mockProposalOverride)
          : (useMockProposal ? getMockProposalIfAvailable() : await generateAIProposal());
  
-       hideLoadingIndicator();
+        // Emit post_inject hook with proposal (non-blocking)
+        if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+          window.RuntimeHooks.emitParallel('post_inject', { story, proposal }).catch(() => {});
+        }
+        hideLoadingIndicator();
 
 
-       if (!proposal) {
+        if (!proposal) {
          return 'no_proposal';
        }
 
@@ -674,6 +687,8 @@
     if (!story) return;
     const payload = {
       story: story.state.toJson(),
+      // Persist rendered HTML so loads can restore exact visible output without re-running story
+      renderedHtml: storyEl ? storyEl.innerHTML : '',
       smoke: window.Smoke.getState(),
       config: {
         duration: Number(durationInput.value) || 3,
@@ -682,10 +697,26 @@
       // Save LORE choice history
       loreHistory: window.LoreAssembler?.getChoiceHistory() || []
     };
+
+    // Emit pre_checkpoint hook; allow subscribers to augment payload or perform side-effects
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitSequential === 'function') {
+      try {
+        // allow handlers to mutate payload
+        window.RuntimeHooks.emitSequential('pre_checkpoint', { payload, story }).catch(() => {});
+      } catch (e) {
+        // swallow
+      }
+    }
+
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+
+    // Emit post_checkpoint hook
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+      window.RuntimeHooks.emitParallel('post_checkpoint', { payload, story }).catch(() => {});
+    }
   }
  
-  function loadState() {
+  async function loadState() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return;
     if (!window.inkjs || (!inkjs.Story)) {
@@ -693,6 +724,17 @@
       return;
     }
     try {
+      // Emit pre_load hook with raw save (allow handlers to inspect/validate)
+      if (window.RuntimeHooks && typeof window.RuntimeHooks.emitSequential === 'function') {
+        try {
+          await window.RuntimeHooks.emitSequential('pre_load', { raw, story }).catch(() => {});
+        } catch (e) {
+          // handler requested stop - abort load
+          console.error('pre_load hook aborted load', e);
+          return;
+        }
+      }
+
       const payload = JSON.parse(raw);
       story.state.LoadJson(payload.story);
       durationInput.value = payload.config?.duration ?? durationInput.value;
@@ -706,12 +748,85 @@
           window.LoreAssembler.recordChoice(choice.text);
         });
       }
-      
-      storyEl.innerHTML = '';
+
+      // Emit on_restore hook
+      if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+        window.RuntimeHooks.emitParallel('on_restore', { payload, story }).catch(() => {});
+      }
+
+      // Restore rendered story HTML if provided; otherwise attempt to reconstruct the visible output
+      if (payload.renderedHtml) {
+        storyEl.innerHTML = payload.renderedHtml;
+        // Render choices from current story state
+        renderChoices();
+      } else {
+        // Try to reconstruct from InkJS saved state's outputStream (demo-friendly fallback)
+        let reconstructed = false;
+        try {
+          const savedState = (typeof payload.story === 'string') ? JSON.parse(payload.story) : payload.story;
+          const flow = savedState && savedState.flows && (savedState.flows.DEFAULT_FLOW || savedState.flows.default);
+          const out = flow && flow.outputStream;
+          if (Array.isArray(out) && out.length) {
+            storyEl.innerHTML = '';
+            out.forEach(item => {
+              if (typeof item !== 'string') return;
+              const text = item.replace(/^\^/, '');
+              if (text.trim() === '') return;
+              appendText(text.replace(/\n/g, '\n'));
+            });
+            reconstructed = true;
+          }
+        } catch (e) {
+          // ignore and fall through to continueStory
+        }
+
+        if (reconstructed) {
+          renderChoices();
+        } else {
+          storyEl.innerHTML = '';
+          continueStory();
+        }
+      }
+
       handleTags(story.currentTags || []);
-      continueStory();
+
     } catch (err) {
       console.error('Failed to load save', err);
+      // Emit on_rollback hook so subscribers can react
+      if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+        window.RuntimeHooks.emitParallel('on_rollback', { error: err }).catch(() => {});
+      }
+
+      // Show a small rollback toast to the user (demo-only). The toast includes a short message and
+      // — when available — a hint where debug saves are stored. Keep this lightweight and non-blocking.
+      try {
+        // only show in demo pages
+        if (window.location && window.location.pathname && window.location.pathname.indexOf('/demo') !== -1) {
+          const toastId = 'demo-rollback-toast';
+          let toast = document.getElementById(toastId);
+          if (!toast) {
+            toast = document.createElement('div');
+            toast.id = toastId;
+            toast.style.position = 'fixed';
+            toast.style.right = '16px';
+            toast.style.bottom = '16px';
+            toast.style.padding = '12px 16px';
+            toast.style.background = 'rgba(220,60,60,0.95)';
+            toast.style.color = '#fff';
+            toast.style.borderRadius = '8px';
+            toast.style.boxShadow = '0 6px 18px rgba(0,0,0,0.25)';
+            toast.style.fontSize = '14px';
+            toast.style.zIndex = 9999;
+            document.body.appendChild(toast);
+          }
+          const debugPath = '/src/.saves/';
+          toast.innerHTML = `<div><strong>Restore failed</strong><div style="font-size:12px;margin-top:6px;">A saved state could not be restored. Debug saves written to ${debugPath} (dev).</div><div style="margin-top:8px;text-align:right;"><button id="close-rollback-toast" style="background:#fff;color:#c0392b;border:0;padding:6px 8px;border-radius:6px;cursor:pointer;font-weight:bold;">Dismiss</button></div></div>`;
+          const btn = document.getElementById('close-rollback-toast');
+          if (btn) btn.addEventListener('click', () => { try { toast.parentNode.removeChild(toast); } catch (e) {} });
+        }
+      } catch (e) {
+        // ignore UI errors
+      }
     }
   }
 

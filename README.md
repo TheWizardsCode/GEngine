@@ -1,5 +1,7 @@
 # GEngine
 
+This project supports a local `.gengine/config.yaml` for development overrides. See the `Configuration` section below for how to tune the Director and proxy settings.
+
 GEngine is an InkJS-based interactive story demo (static HTML/JS) with Playwright smoke tests.
 
 ## Repository layout (high-level)
@@ -16,6 +18,9 @@ GEngine is an InkJS-based interactive story demo (static HTML/JS) with Playwrigh
 The demo is a static site under `web/` that fetches `web/stories/demo.ink` at runtime.
 
 ### Run locally
+
+You can provide local development overrides in `.gengine/config.yaml`. Example keys are in `.gengine/config.example.yaml` and include `directorConfig` for Director tuning.
+
 ```bash
 npm install
 npm run serve-demo

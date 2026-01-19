@@ -38,6 +38,31 @@ try {
   perf = (typeof performance !== 'undefined') ? performance : { now: () => Date.now() };
 }
 
+// Load director tuning defaults from a configurable file when available. This supports
+// live tuning without editing the Director implementation. In bundler/node environments
+// we require the shared config at src/runtime/director-config.js. In browsers, a
+// global window.DirectorConfig may be provided (e.g., set by the demo or test harness).
+let DEFAULT_DIRECTOR_CONFIG = {};
+try {
+  if (typeof require === 'function') {
+    // path from web/demo/js to repo src/runtime
+    DEFAULT_DIRECTOR_CONFIG = require('../../../src/runtime/director-config');
+  }
+} catch (e) {
+  // ignore
+}
+try {
+  if ((!DEFAULT_DIRECTOR_CONFIG || Object.keys(DEFAULT_DIRECTOR_CONFIG).length === 0) && typeof window !== 'undefined' && window.DirectorConfig) {
+    DEFAULT_DIRECTOR_CONFIG = window.DirectorConfig;
+  }
+} catch (e) {}
+
+// Helper to merge config with defaults
+function mergeConfig(cfg) {
+  if (!cfg || typeof cfg !== 'object') cfg = {};
+  return Object.assign({}, DEFAULT_DIRECTOR_CONFIG || {}, cfg);
+}
+
 function safeNumber(v, fallback = 0) {
   return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
 }
@@ -148,6 +173,9 @@ function getPlayerPreferenceScore(proposal = {}, config = {}) {
 }
 
 function computeRiskScore(proposal = {}, context = {}, config = {}) {
+  // Merge config early so helpers can reference merged values deterministically
+  const mergedCfg = mergeConfig(config || {});
+
   // We want deterministic results given same inputs
   const confidence = safeNumber(proposal.metadata && proposal.metadata.confidence_score, 0.5);
   // proposal_confidence_risk: high confidence -> low risk
@@ -163,9 +191,9 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
     climax: 700,
     falling_action: 350,
     resolution: 300
-  }, (config && config.pacingTargets) || {});
+  }, (mergedCfg && mergedCfg.pacingTargets) || (config && config.pacingTargets) || {});
   const expectedLen = Math.max(1, safeNumber(defaultPacingTargets[phase], 300));
-  const toleranceFactor = Math.max(0.05, safeNumber(config && config.pacingToleranceFactor, 0.6));
+  const toleranceFactor = Math.max(0.05, safeNumber((mergedCfg && mergedCfg.pacingToleranceFactor) || config && config.pacingToleranceFactor, 0.6));
   // Risk grows once length exceeds expected; at expected*(1+toleranceFactor) risk reaches ~1
   const pacingRatio = len / expectedLen;
   const pacingOver = Math.max(0, pacingRatio - 1);
@@ -180,7 +208,7 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
   const player_preference_risk = 1.0 - Math.max(0, Math.min(1, preferenceScore));
 
   // Placeholder metrics (thematic, lore, voice)
-  const placeholder = safeNumber(config.placeholderDefault, 0.3);
+  const placeholder = safeNumber((mergedCfg && mergedCfg.placeholderDefault) || config.placeholderDefault, 0.3);
   const thematic_consistency_risk = placeholder;
   const lore_adherence_risk = placeholder;
   const character_voice_risk = placeholder;
@@ -194,7 +222,7 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
     thematic_consistency: 0,
     lore_adherence: 0,
     character_voice: 0
-  }, config.weights || {});
+  }, (mergedCfg && mergedCfg.weights) || config.weights || {});
 
   // Weighted average of active metrics
   const activeSum = weights.proposal_confidence + weights.narrative_pacing + weights.return_path_confidence + weights.player_preference;

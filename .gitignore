@@ -39,3 +39,6 @@ junit-report.xml
 
 # Opencode local temp files
 .opencode/tmp/
+
+# Local runtime/editor saves that should not be committed
+src/.saves/
