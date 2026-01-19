@@ -72,7 +72,11 @@ const defaults = {
 
   pacingToleranceFactor: 0.6,
 
-  placeholderDefault: 0.3
+  placeholderDefault: 0.3,
+
+  // Global default decision threshold used by the Director when not overridden per-call
+  // Value is in 0.0..1.0 where lower is stricter (default 0.4)
+  riskThreshold: 0.4
 };
 
 // Attempt to load local overrides
