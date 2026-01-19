@@ -36,3 +36,6 @@ ci-artifacts/
 
 # Local test reports
 junit-report.xml
+
+# Opencode local temp files
+.opencode/tmp/
