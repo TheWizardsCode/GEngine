@@ -752,15 +752,42 @@
         window.RuntimeHooks.emitParallel('on_restore', { payload, story }).catch(() => {});
       }
 
-      // Restore rendered story HTML if provided; otherwise clear and let continueStory rebuild visible content
+      // Restore rendered story HTML if provided; otherwise attempt to reconstruct the visible output
       if (payload.renderedHtml) {
         storyEl.innerHTML = payload.renderedHtml;
+        // Render choices from current story state
+        renderChoices();
       } else {
-        storyEl.innerHTML = '';
+        // Try to reconstruct from InkJS saved state's outputStream (demo-friendly fallback)
+        let reconstructed = false;
+        try {
+          const savedState = (typeof payload.story === 'string') ? JSON.parse(payload.story) : payload.story;
+          const flow = savedState && savedState.flows && (savedState.flows.DEFAULT_FLOW || savedState.flows.default);
+          const out = flow && flow.outputStream;
+          if (Array.isArray(out) && out.length) {
+            storyEl.innerHTML = '';
+            out.forEach(item => {
+              if (typeof item !== 'string') return;
+              const text = item.replace(/^\^/, '');
+              if (text.trim() === '') return;
+              appendText(text.replace(/\n/g, '\n'));
+            });
+            reconstructed = true;
+          }
+        } catch (e) {
+          // ignore and fall through to continueStory
+        }
+
+        if (reconstructed) {
+          renderChoices();
+        } else {
+          storyEl.innerHTML = '';
+          continueStory();
+        }
       }
 
       handleTags(story.currentTags || []);
-      continueStory();
+
     } catch (err) {
       console.error('Failed to load save', err);
       // Emit on_rollback hook so subscribers can react
