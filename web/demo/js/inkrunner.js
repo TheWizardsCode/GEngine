@@ -687,6 +687,8 @@
     if (!story) return;
     const payload = {
       story: story.state.toJson(),
+      // Persist rendered HTML so loads can restore exact visible output without re-running story
+      renderedHtml: storyEl ? storyEl.innerHTML : '',
       smoke: window.Smoke.getState(),
       config: {
         duration: Number(durationInput.value) || 3,
