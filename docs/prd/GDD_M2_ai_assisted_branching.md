@@ -171,33 +171,34 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 ## Release & Operations
 
 ### Rollout plan
-- Phase 0 — Design (this PRD)
- - Final PRD approval and schema definitions.
- - Spike validation pipeline prototypes in dev.
- - Prototype AI Director and AI Writer interfaces.
- - Define 'return window' semantics and test cases.
+#### Phase 0 — Design (this PRD)
+- Final PRD approval and schema definitions.
+- Spike validation pipeline prototypes in dev.
+- Prototype AI Director and AI Writer interfaces.
+- Define 'return window' semantics and test cases.
 
-### Phase 1 — Validation-only
- - Implement branch proposal validation pipeline.
- - Run validation on candidate branches; collect statistics (acceptance rate, top policy violations).
- - No automatic runtime integration; branches are validated but not yet served to players.
+#### Phase 1 — Validation-only
+- Implement branch proposal validation pipeline.
+- Run validation on candidate branches; collect statistics (acceptance rate, top policy violations).
+- No automatic runtime integration; branches are validated but not yet served to players.
+- Gather feedback from producers on policy ruleset tuning.
 
-### Phase 2 — Limited integration (feature-flagged)
- - Enable runtime hooks for branch integration in a controlled story or demo.
- - Implement AI Director with initial coherence heuristics and 'return window' enforcement.
- - Implement AI Writer with basic LORE-based generation.
- - Pilot with internal playtesters and gather telemetry on Director success rate, player coherence perception.
+#### Phase 2 — Limited integration (feature-flagged)
+- Enable runtime hooks for branch integration in a controlled story or demo.
+- Implement AI Director with initial coherence heuristics and 'return window' enforcement.
+- Implement AI Writer with basic LORE-based generation.
+- Pilot with internal playtesters and gather telemetry on Director success rate, player coherence perception.
 
-### Phase 3 — Soft launch and monitoring
- - Roll out to live players with feature flags and kill-switches.
- - Gather player feedback, Director decision latency, and policy violation patterns.
- - Refine rulesets, Director heuristics, and Writer LORE context based on telemetry.
- - Plan for human-in-loop review if safety concerns emerge.
+#### Phase 3 — Soft launch and monitoring
+- Roll out to live players with feature flags and kill-switches.
+- Gather player feedback, Director decision latency, and policy violation patterns.
+- Refine rulesets, Director heuristics, and Writer LORE context based on telemetry.
+- Plan for human-in-loop review if safety concerns emerge.
 
-### Phase 4 — Scale and iterate (post-M2)
- - Expand to additional stories and narrative scenarios.
- - Add player-facing UX signals (e.g., "this choice was AI-generated"; trust/transparency features).
- - Continuous tuning of Director heuristics and Writer prompts based on production telemetry.
+#### Phase 4 — Scale and iterate (post-M2)
+- Expand to additional stories and narrative scenarios.
+- Add player-facing UX signals (e.g., "this choice was AI-generated"; trust/transparency features).
+- Continuous tuning of Director heuristics and Writer prompts based on production telemetry.
 
 ### Quality gates / definition of done
 - Proposal schema defined, documented, and validated with at least 10 example proposals.
@@ -211,4 +212,136 @@ Players on desktop/mobile browsers who will experience emergent story branches d
 
 ### Risks & mitigations
 
-The file write succeeded. Now proceed to create the new PRD for ge-hch.5.16. The prior attempt to write earlier failed due to modification; this write restored content. Now create new PRD file. Would you like the new PRD to be at `docs/prd/ge-hch.5.16.md`? If yes I'll write it and commit.
+#### Risk: AI Director fails to return to scripted path within the window
+- Impact: player gets stuck in an infinite or dead-end unscripted loop; breaks immersion and breaks the story.
+- Mitigation: implement a deterministic fail-safe that forces a return to scripted content after the window expires; log the event with high priority (alert operators).
+- Mitigation: test the Director's return-path logic exhaustively during Phase 1–2; profile common failure modes.
+
+#### Risk: AI Writer produces content that drifts off-theme or contradicts LORE
+- Impact: player experiences an incoherent or jarring branch; reduces trust in emergent storytelling.
+- Mitigation: enforce strong LORE and character constraints in the Writer's prompt; include embeddings or semantic similarity checks in the validation suite.
+- Mitigation: add style/content tests that flag branches differing >N% from the original story's tone; collect examples from playtesters.
+
+#### Risk: Policy pipeline is over-restrictive or under-restrictive
+- Impact: either rejects too many valid branches (reduces emergent variety) or allows policy violations (safety breach).
+- Mitigation: keep ruleset configurable and provide diagnostics for each rule (why was this branch rejected?); gather feedback from producers in Phase 1.
+- Mitigation: start with a conservative policy and loosen it iteratively based on playtest feedback.
+
+#### Risk: Performance bottleneck in Director decision latency
+- Impact: branch integration is delayed; player sees a stall or "thinking" state; breaks immersion.
+- Mitigation: profile Director decision-making during Phase 2; optimize hot paths (risk scoring, return-path search).
+- Mitigation: consider pre-computing Director decisions for likely player choices (offline analysis).
+
+#### Risk: Emergent branches undermine authored narrative intent
+- Impact: players explore unscripted content that diminishes the story's themes or message.
+- Mitigation: include thematic alignment as a Director risk metric; require branches to include explicit narrative intent statements.
+- Mitigation (post-M2): future phases may add producer tools to review and disable problematic branches based on post-launch analysis.
+
+## Resources
+
+### M2 Design Documents
+
+#### Core Design Specs
+- **[Director Algorithm](../dev/m2-design/director-algorithm.md)** — Complete 5-step real-time governance algorithm with risk-scoring metrics, return-path feasibility validation, and fail-safe mechanisms.
+- **[Policy Ruleset](../dev/m2-design/policy-ruleset.md)** — Validation rules across 5 categories (content safety, narrative consistency, structure, format, return path) with severity levels and tuning parameters.
+- **[Sanitization Transforms](../dev/m2-design/sanitization-transforms.md)** — Deterministic content transformation algorithms (profanity redaction, HTML stripping, whitespace normalization) with test cases.
+- **[Proposal Lifecycle](../dev/m2-design/proposal-lifecycle.md)** — Multi-stage process from Outline through Detail, Placement, Runtime, and Terminal states with key insights on late content generation.
+
+#### AI Writer Design
+- **[LORE Data Model](../dev/m2-design/lore-model.md)** — Complete specification of runtime context (player state, game state, narrative context, player behavior) that feeds Writer generation.
+- **[Writer Prompts](../dev/m2-design/writer-prompts.md)** — 4 prompt templates (dialogue, exploration, combat, consequences) with constraint enforcement mechanisms and latency targets.
+- **[Writer Examples](../dev/m2-design/writer-examples.md)** — 5 detailed proposal examples across branch types showing quality metrics and Writer capabilities.
+- **[Determinism Specification](../dev/m2-design/determinism-spec.md)** — Reproducibility framework via input hashing and LLM seed management with fallback strategies.
+
+#### Runtime & Integration
+- **[Runtime Integration Hooks](../dev/m2-design/runtime-hooks.md)** — 5 safe hook point categories (scene boundaries, choice points, quests, rest/load, combat) with 12-state integration state machine and automatic rollback semantics.
+- **[Telemetry Schema](../dev/m2-design/telemetry-schema.md)** — 6 event types spanning generation, validation, Director decision, presentation, choice, and outcome with 5 observability dashboards and post-launch analysis workflow.
+
+#### Ink Language Integration
+- **[Ink Validation Review](../dev/m2-design/ink-validation-review.md)** — Comprehensive validation of M2 design against Ink language capabilities, terminology consistency review, and implementation recommendations.
+
+### M2 Schemas
+- **[Branch Proposal Schema](../dev/m2-schemas/branch-proposal.json)** — JSON Schema definition with all required fields for proposal submissions.
+- **[Validation Report Schema](../dev/m2-schemas/validation-report.json)** — Validation pipeline output structure with rule-level diagnostics.
+- **[Example Proposals](../dev/m2-schemas/examples/)** — 10 detailed proposal examples across different narrative scenarios.
+
+### Schema Documentation
+- **[Schema Docs](../dev/m2-design/schema-docs.md)** — Field-by-field explanation of branch proposal schema with integration guidance.
+
+---
+
+## Design Decisions
+
+The following decisions have been finalized for M2 implementation:
+
+### Runtime Constraints
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Return window** | 3–5 player choice points | Balances emergent exploration with narrative coherence; prevents infinite loops while allowing meaningful detours |
+| **Director latency target** | < 500ms | Player-facing decision must feel instantaneous; validation happens on pre-approved structures |
+| **Writer latency target** | 1–3s per beat | Acceptable for background/async generation; masked by player reading time during execution |
+
+### AI Writer and LORE
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **LORE capture method** | Hybrid (auto-extracted + manual annotations) | Auto-extract player actions, inventory, relationships; manual annotations for narrative themes and character arcs |
+| **Minimum LORE context** | 5–15 KB compressed | Sufficient for coherent generation; fits in LLM context windows; see lore-model.md for field specifications |
+| **Creativity parameter mapping** | 0.0 = temperature 0.0 (deterministic); 1.0 = temperature 1.5 (high variance) | Linear mapping provides intuitive control; clamped to prevent incoherent outputs |
+| **Proposal caching** | Yes, by context hash | Avoid redundant generation for identical contexts; cache invalidated when LORE changes |
+| **Embedding model** | text-embedding-ada-002 (or equivalent) | Industry standard for semantic similarity; used in validation and Director risk scoring |
+
+### Policy and Safety
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Policy rule categories** | Content safety (profanity, explicit, hate speech), Narrative consistency (LORE, character voice, theme), Structural (length, format, Ink syntax), Return path validation | Comprehensive coverage; see policy-ruleset.md for full specification |
+| **Policy scope** | Global defaults + story-specific overrides | Global rules ensure baseline safety; story-specific rules allow genre-appropriate content (e.g., darker themes in horror stories) |
+
+### Storage & Access
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Proposal retention** | 2 years for audit logs; 6 months for raw proposals with content | Compliance requirement; enables post-launch learning; older proposals archived |
+| **Data handling** | Encrypt at rest; redact PII before storage; access limited to analytics roles | Privacy by design; GDPR-compatible |
+
+### Player Experience
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Coherence measurement** | Behavioral signals (reload frequency, skip rate, session continuation) + optional post-story survey | Non-intrusive primary measurement; explicit feedback for deep analysis |
+| **AI transparency** | Seamless by default (no indication); opt-in transparency mode in settings | Prioritizes immersion; respects player choice for those who want to know |
+
+### Validation UX
+
+| Decision | Value | Rationale |
+|----------|-------|-----------|
+| **Authoring validation** | Asynchronous for proposals > 1000 tokens; synchronous for smaller proposals | Responsive UX for quick edits; background processing for large content |
+| **Sanitization visibility** | Sanitized diffs logged but not auto-exposed; available on request | Reduces noise; diffs available for debugging when needed |
+
+## Remaining Open Questions
+
+The following questions require stakeholder input before Phase 1 implementation:
+
+### Story-Specific Configuration
+- What story-specific policy overrides are needed for the initial pilot story?
+- Which characters have custom voice profiles that need explicit constraints?
+
+### Operational Readiness
+- What alerting channels should receive fail-safe notifications (Slack, PagerDuty, email)?
+- Who is the on-call contact for Phase 2 pilot issues?
+
+### Player Research
+- Should we conduct A/B testing with AI-branches enabled vs. disabled?
+- What is the target sample size for coherence perception surveys?
+
+## Clarification: No Human-in-Loop in M2
+
+**M2 is designed with fully automated validation and approval.** The PRD explicitly states (Non-goals, line 19) that "This PRD does not require human-in-loop approval for every branch proposal." All runtime acceptance decisions are made by the policy/sanitization pipeline and AI Director—no human approval or intervention is required.
+
+**M2 has no operator disable/revert mechanism at runtime.** Operators observe telemetry to understand system behavior and detect issues, but cannot disable or revert branches once approved. All acceptance/rejection decisions are automated; there is no human gate at runtime.
+
+**Human involvement is limited to between-phase improvements**:
+- Producers analyzing telemetry and player feedback to refine policy rules and Director heuristics
+- Future phases (Phase 3+) may introduce human-in-loop oversight if safety concerns emerge at scale
