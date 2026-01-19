@@ -796,6 +796,37 @@
       if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
         window.RuntimeHooks.emitParallel('on_rollback', { error: err }).catch(() => {});
       }
+
+      // Show a small rollback toast to the user (demo-only). The toast includes a short message and
+      // — when available — a hint where debug saves are stored. Keep this lightweight and non-blocking.
+      try {
+        // only show in demo pages
+        if (window.location && window.location.pathname && window.location.pathname.indexOf('/demo') !== -1) {
+          const toastId = 'demo-rollback-toast';
+          let toast = document.getElementById(toastId);
+          if (!toast) {
+            toast = document.createElement('div');
+            toast.id = toastId;
+            toast.style.position = 'fixed';
+            toast.style.right = '16px';
+            toast.style.bottom = '16px';
+            toast.style.padding = '12px 16px';
+            toast.style.background = 'rgba(220,60,60,0.95)';
+            toast.style.color = '#fff';
+            toast.style.borderRadius = '8px';
+            toast.style.boxShadow = '0 6px 18px rgba(0,0,0,0.25)';
+            toast.style.fontSize = '14px';
+            toast.style.zIndex = 9999;
+            document.body.appendChild(toast);
+          }
+          const debugPath = '/src/.saves/';
+          toast.innerHTML = `<div><strong>Restore failed</strong><div style="font-size:12px;margin-top:6px;">A saved state could not be restored. Debug saves written to ${debugPath} (dev).</div><div style="margin-top:8px;text-align:right;"><button id="close-rollback-toast" style="background:#fff;color:#c0392b;border:0;padding:6px 8px;border-radius:6px;cursor:pointer;font-weight:bold;">Dismiss</button></div></div>`;
+          const btn = document.getElementById('close-rollback-toast');
+          if (btn) btn.addEventListener('click', () => { try { toast.parentNode.removeChild(toast); } catch (e) {} });
+        }
+      } catch (e) {
+        // ignore UI errors
+      }
     }
   }
 

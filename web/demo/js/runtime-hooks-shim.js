@@ -9,6 +9,29 @@
     if (HMConstructor) {
       if (typeof window !== 'undefined') {
         if (!window.RuntimeHooks) window.RuntimeHooks = new HMConstructor();
+
+        // Attempt to wire demo-only persistence subscriber when running in a bundler/node environment
+        // This will write debug save artifacts to src/.saves for developer inspection. It is skipped in
+        // plain browser loads where Node APIs are not available.
+        try {
+          // relative path from web/demo/js to project src
+          const createDemoPersistence = require('../../src/runtime/subscribers/demo-persistence');
+          if (typeof createDemoPersistence === 'function') {
+            try {
+              const demoPersistence = createDemoPersistence({ logger: console });
+              if (demoPersistence && window.RuntimeHooks && typeof window.RuntimeHooks.on === 'function') {
+                if (demoPersistence.post_checkpoint) window.RuntimeHooks.on('post_checkpoint', demoPersistence.post_checkpoint.bind(demoPersistence));
+                if (demoPersistence.on_rollback) window.RuntimeHooks.on('on_rollback', demoPersistence.on_rollback.bind(demoPersistence));
+                console.info('[demo] demo-persistence subscriber registered');
+              }
+            } catch (e) {
+              // swallow registration errors
+              console.warn('[demo] failed to register demo-persistence subscriber', e);
+            }
+          }
+        } catch (e) {
+          // not available in this environment (likely plain browser load); ignore
+        }
       }
       if (typeof module !== 'undefined' && module.exports) module.exports = window.RuntimeHooks;
       return;
