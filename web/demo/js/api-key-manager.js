@@ -241,9 +241,23 @@ function getEffectiveApiUrl(endpoint) {
 function getSettings() {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
+    // Prefer a runtime-provided default from window.DirectorConfig when present and no stored value exists
+    let externalDirectorDefault = undefined;
+    try {
+      if (typeof window !== 'undefined' && window.DirectorConfig && typeof window.DirectorConfig.riskThreshold === 'number') {
+        externalDirectorDefault = window.DirectorConfig.riskThreshold;
+      }
+    } catch (e) {}
+
     if (stored) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored);
+      // If stored does not include directorRiskThreshold but external default exists, merge it in
+      const merged = { ...DEFAULT_SETTINGS, ...(externalDirectorDefault !== undefined ? { directorRiskThreshold: externalDirectorDefault } : {}), ...parsed };
+      return merged;
     }
+
+    // No stored settings: use external default if available
+    return { ...DEFAULT_SETTINGS, ...(externalDirectorDefault !== undefined ? { directorRiskThreshold: externalDirectorDefault } : {}) };
   } catch (e) {
     console.error('[api-key-manager] Failed to read settings', e);
   }
