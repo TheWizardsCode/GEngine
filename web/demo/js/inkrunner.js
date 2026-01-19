@@ -390,6 +390,11 @@
       window.LoreAssembler.recordChoice(`[AI] ${proposal.choice_text}`);
     }
     
+    // Emit on_commit hook for AI branch play
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+      window.RuntimeHooks.emitParallel('on_commit', { story, proposal }).catch(() => {});
+    }
+
     // Log telemetry
     logTelemetry('ai_branch_played', {
       proposal_id: proposal.id,
@@ -566,6 +571,10 @@
       }
     }
  
+    // Emit pre_inject hook before generation begins
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+      window.RuntimeHooks.emitParallel('pre_inject', { story }).catch(() => {});
+    }
     showLoadingIndicator();
  
     const writerStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
@@ -575,10 +584,14 @@
          ? normalizeMockProposal(mockProposalOverride)
          : (useMockProposal ? getMockProposalIfAvailable() : await generateAIProposal());
  
-       hideLoadingIndicator();
+        // Emit post_inject hook with proposal (non-blocking)
+        if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+          window.RuntimeHooks.emitParallel('post_inject', { story, proposal }).catch(() => {});
+        }
+        hideLoadingIndicator();
 
 
-       if (!proposal) {
+        if (!proposal) {
          return 'no_proposal';
        }
 
@@ -682,10 +695,26 @@
       // Save LORE choice history
       loreHistory: window.LoreAssembler?.getChoiceHistory() || []
     };
+
+    // Emit pre_checkpoint hook; allow subscribers to augment payload or perform side-effects
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitSequential === 'function') {
+      try {
+        // allow handlers to mutate payload
+        window.RuntimeHooks.emitSequential('pre_checkpoint', { payload, story }).catch(() => {});
+      } catch (e) {
+        // swallow
+      }
+    }
+
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+
+    // Emit post_checkpoint hook
+    if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+      window.RuntimeHooks.emitParallel('post_checkpoint', { payload, story }).catch(() => {});
+    }
   }
  
-  function loadState() {
+  async function loadState() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return;
     if (!window.inkjs || (!inkjs.Story)) {
@@ -693,6 +722,17 @@
       return;
     }
     try {
+      // Emit pre_load hook with raw save (allow handlers to inspect/validate)
+      if (window.RuntimeHooks && typeof window.RuntimeHooks.emitSequential === 'function') {
+        try {
+          await window.RuntimeHooks.emitSequential('pre_load', { raw, story }).catch(() => {});
+        } catch (e) {
+          // handler requested stop - abort load
+          console.error('pre_load hook aborted load', e);
+          return;
+        }
+      }
+
       const payload = JSON.parse(raw);
       story.state.LoadJson(payload.story);
       durationInput.value = payload.config?.duration ?? durationInput.value;
@@ -706,12 +746,21 @@
           window.LoreAssembler.recordChoice(choice.text);
         });
       }
+
+      // Emit on_restore hook
+      if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+        window.RuntimeHooks.emitParallel('on_restore', { payload, story }).catch(() => {});
+      }
       
       storyEl.innerHTML = '';
       handleTags(story.currentTags || []);
       continueStory();
     } catch (err) {
       console.error('Failed to load save', err);
+      // Emit on_rollback hook so subscribers can react
+      if (window.RuntimeHooks && typeof window.RuntimeHooks.emitParallel === 'function') {
+        window.RuntimeHooks.emitParallel('on_rollback', { error: err }).catch(() => {});
+      }
     }
   }
 
