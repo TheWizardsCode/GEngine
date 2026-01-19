@@ -143,9 +143,9 @@
     (function(){
       var el = document.createElement('script');
       el.src = 'js/hook-manager.bundled.js';
-      el.onload = function() { console.debug('[demo] loaded bundled HookManager'); };
+      el.onload = function() { console.info('[demo] loaded bundled HookManager'); };
       el.onerror = function() {
-        console.debug('[demo] bundled HookManager not present, falling back to runtime shim');
+        console.info('[demo] bundled HookManager not present, falling back to runtime shim');
         var shim = document.createElement('script');
         shim.src = 'js/runtime-hooks-shim.js';
         document.head.appendChild(shim);

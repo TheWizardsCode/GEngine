@@ -58,6 +58,7 @@ return HookManager;
 })();
 if (typeof window !== 'undefined') {
   try {
+    console.info('[demo] initializing bundled HookManager');
     const HM = (function(){ // Simple async HookManager for runtime integration points
 // - Promise-based handlers
 // - Handlers are non-blocking: failures are caught and do not stop other handlers
