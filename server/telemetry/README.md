@@ -1,5 +1,15 @@
 Telemetry Receiver Prototype
 
+Purpose:
+
+This receiver is a development prototype for collecting telemetry events emitted by the Director and related runtime components. It is intended for local testing and experimentation only — not for production use. Use it to:
+
+- Capture and inspect `director_decision` events emitted by the Director during playtests.
+- Exercise telemetry payload shapes and validate downstream processing or analysis scripts.
+- Provide a simple, disposable storage backend (newline-delimited JSON) for quick local debugging.
+
+Do not rely on this receiver for production telemetry: it has no authentication, no retention/rotation, and minimal error handling.
+
 Run locally:
 
 - Node (>= 14) is required
@@ -9,7 +19,18 @@ Run locally:
 
 It listens on `/` for HTTP POST JSON payloads.
 
+Accepted events:
+
 Only events with `type: "director_decision"` (or `event_type` or nested `event.type`) are accepted and persisted to `server/telemetry/events.ndjson`.
+
+Expected payload shape (example):
+
+  {
+    "type": "director_decision",
+    "decision": "accept",
+    "reason": "low_risk",
+    "meta": { "user": "test" }
+  }
 
 Example curl test:
 
@@ -25,4 +46,7 @@ Expected responses:
 - 404 for non-POST or other paths
 
 Storage:
-- Events are appended to `server/telemetry/events.ndjson` as newline-delimited JSON lines with `received_at` timestamp.
+- Events are appended to `server/telemetry/events.ndjson` as newline-delimited JSON lines with a `received_at` timestamp.
+
+Notes / next steps:
+- This is intentionally minimal. For follow-up work consider adding SQLite persistence, simple schema validation, or basic authentication before using in shared environments.
