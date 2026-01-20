@@ -5,6 +5,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const ndjsonBackend = require('../telemetry/backend-ndjson')
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4005;
 const DATA_DIR = path.resolve(__dirname);
@@ -45,21 +46,19 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    const line = JSON.stringify({ received_at: new Date().toISOString(), payload });
-
-    fs.appendFile(OUTFILE, line + '\n', (err) => {
-      if (err) {
-        console.error('Failed to persist event', err);
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ error: 'Failed to persist event' }));
-        return;
-      }
-
+    const event = { received_at: new Date().toISOString(), payload };
+    // write via simple ndjson backend (appends to events.ndjson)
+    try {
+      ndjsonBackend.emit(event);
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ ok: true }));
-    });
+    } catch (err) {
+      console.error('Failed to persist event', err);
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Failed to persist event' }));
+    }
   });
 
   req.on('error', (err) => {

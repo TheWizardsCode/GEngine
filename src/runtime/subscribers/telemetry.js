@@ -1,30 +1,31 @@
 // Telemetry subscriber for runtime HookManager
 // Emits console-based telemetry events; in prod this should hook into telemetry module
 
-module.exports = function createTelemetrySubscriber(telemetry = console) {
+const { defaultTelemetry } = require('../../telemetry/emitter');
+
+// Map runtime hook names to telemetry event types
+const HOOK_EVENT_MAP = {
+  pre_inject: 'generation',
+  post_inject: 'presentation',
+  pre_checkpoint: 'pre_checkpoint',
+  post_checkpoint: 'post_checkpoint'
+};
+
+module.exports = function createTelemetrySubscriber(telemetryBackend) {
+  const telemetry = telemetryBackend || defaultTelemetry;
   return {
     name: 'runtime-telemetry-subscriber',
     async pre_inject(payload) {
-      try {
-        telemetry.log('telemetry.event', { event: 'pre_inject', payload });
-      } catch (err) {
-        // swallow
-      }
+      try { telemetry.emit(HOOK_EVENT_MAP.pre_inject, payload); } catch (err) { }
     },
     async post_inject(payload) {
-      try {
-        telemetry.log('telemetry.event', { event: 'post_inject', payload });
-      } catch (err) {}
+      try { telemetry.emit(HOOK_EVENT_MAP.post_inject, payload); } catch (err) { }
     },
     async pre_checkpoint(payload) {
-      try {
-        telemetry.log('telemetry.event', { event: 'pre_checkpoint', payload });
-      } catch (err) {}
+      try { telemetry.emit(HOOK_EVENT_MAP.pre_checkpoint, payload); } catch (err) { }
     },
     async post_checkpoint(payload) {
-      try {
-        telemetry.log('telemetry.event', { event: 'post_checkpoint', payload });
-      } catch (err) {}
+      try { telemetry.emit(HOOK_EVENT_MAP.post_checkpoint, payload); } catch (err) { }
     }
   };
 };
