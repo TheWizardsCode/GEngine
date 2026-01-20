@@ -21,6 +21,29 @@ Before starting a session that will change something other than `.beads/issues.j
 - Agent-optimized: JSON output, ready work detection, discovered-from links
 - Prevents duplicate tracking systems and confusion
 
+**Bead Lifecycle Overview**
+
+Beads maintain their stage and stage though a combination of status and labels. Status is a single value representing the current state of the bead, while labels provide additional context and categorization. To set the status of a bead, use the `--status` flag with the `bd update` command. To add or remove labels, use the `--add-label` and `--remove-label` flags respectively. 
+
+Whenever a bead moves between stages, ensure that the appropriate stage label is added and any previous stage labels are removed to accurately reflect its current state.
+
+Status Values:
+  - open - Ready to be worked on
+  - in_progress - Currently being worked on
+  - blocked - Cannot proceed (waiting on dependencies)
+  - deferred - Deliberately put on ice for later
+  - closed - Work completed
+  - tombstone - Deleted issue (suppresses resurrections)
+
+Stage Labels:
+  - stage:idea - Initial idea stage`
+  - stage:prd_complete - PRD/requirements complete
+  - stage:milestones_defined - Milestones (top level epics for the PRD) defined
+  - stage:planned - Full implementation plan, in the form of subtasks, created   
+  - stage:in_progress - Work in progress
+  - stage:in_review - code complete, PR created, working on passing review/QA
+  - stage:done - Completed work, PR merged
+
 **Create new issues:**
 
 1. Before creating a new issue ensure that all details are clear. Pause and ask the user for more information and clarifications as necessary; provide advice and guidance when possible;
@@ -31,20 +54,23 @@ Before starting a session that will change something other than `.beads/issues.j
    ``` 
 4. Use clear markdown formatting (in string form) in issue content; Use templates when possible (discoverable with `bd template list` and viewable with `bd template show $NAME`)
 5. Select a team member (see `docs/dev/team.md`) as ASSIGNEE. If in doubt use `$USER`.
-6. Create the issue and capture the ISSUE_ID with a command such as:
+6. Always provide a state label (use `--add-label stage:idea` as default if unsure).
+7. Only epics can be created without a parent; all other issue types must have a parent specified with `--parent <parent-id>`.
+8. Create the issue and capture the ISSUE_ID with a command such as:
    ```bash
-   bd create "Issue title" -t bug|feature|task -p 0-4 --description "Issue description" --json
-   bd create "Issue title" -p 1 --deps discovered-from:bd-123 --description "Issue description" --json
-   bd create "Subtask" --parent <epic-id> --description "Issue description" --json  # Hierarchical subtask (gets ID like epic-id.1)
+   bd create "Issue title" -t bug|feature|task -p 0-4 --description "Issue description" --assignee <assignee> --add-label stage:idea --validate --json
+   bd create "Issue title" -p 1 --deps discovered-from:bd-123 --description "Issue description" --validate --assignee <assignee> --add-label stage:idea --json
+   bd create "Subtask" --parent <epic-id> --description "Issue description" --assignee <assignee> --add-label stage:idea --validate --json  # Hierarchical subtask (gets ID like epic-id.1)
    ```
-7. Assign the issue to the chosen owner:
+9. Assign the issue to the chosen owner:
    ```bash
-   bd update $ISSUE_ID --assignee $ASSIGNEE --json
+   bd update <bead-id> --assignee <assignee> --json
    ```
 
 **Claim and update:**
 ```bash
-bd update bd-42 --status in_progress --json
+bd update bd-42 --status in_progress --add-label stage:in_progress --remove-label stage:plan_complete --json
+bd update bd-42 --add-label stage:in_review --remove-label stage:in_progress --json
 bd update bd-42 --priority 1 --json
 ```
 
@@ -55,8 +81,11 @@ bd comments add bd-42 --file /tmp/comment.md --actor @your-agent-name --json
 ```
 
 **Complete work:**
+
+Issues should only be closed when ALL acceptance criteria are met, all child issues (if any) are also complete and any associated PRs have been merged.
+
 ```bash
-bd close bd-42 --reason "Completed" --json
+bd close bd-42 --reason "Completed" --add-label stage:done --remove-label stage:in_review --json
 ```
 
 ### Issue Types
