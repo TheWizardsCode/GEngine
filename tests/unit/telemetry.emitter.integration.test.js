@@ -8,7 +8,7 @@ describe('telemetry emitter buffer', () => {
     const fakeBackend = { emit: (ev) => calls.push(ev) }
     defaultTelemetry.addBackend(fakeBackend)
 
-    defaultTelemetry.emit('generation', { userEmail: 'alice@example.com', choice: 'X' })
+    defaultTelemetry.emit('generation', { sessionId: 's-1', userEmail: 'alice@example.com', choice: 'X' })
 
     const events = defaultTelemetry.query()
     expect(events.length).toBe(1)

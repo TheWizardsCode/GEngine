@@ -7,8 +7,8 @@ const { defaultTelemetry } = require('../../telemetry/emitter');
 const HOOK_EVENT_MAP = {
   pre_inject: 'generation',
   post_inject: 'presentation',
-  pre_checkpoint: 'pre_checkpoint',
-  post_checkpoint: 'post_checkpoint'
+  pre_checkpoint: 'validation',
+  post_checkpoint: 'outcome'
 };
 
 module.exports = function createTelemetrySubscriber(telemetryBackend) {

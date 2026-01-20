@@ -18,7 +18,23 @@ class Telemetry {
 
   emit(type, payload = {}) {
     const ts = new Date().toISOString()
-    const event = { type, timestamp: ts, payload: redact(payload) }
+    const redacted = redact(payload)
+    const event = { type, timestamp: ts, payload: redacted }
+    // validate against schema if available
+    try {
+      const { validate } = require('./schema')
+      const res = validate(type, redacted)
+      if (!res.valid) {
+        // emit a validation event instead of storing the invalid payload
+        const v = { type: 'validation', timestamp: ts, payload: { valid: false, errors: res.errors, originalType: type } }
+        this._push(v)
+        for (const b of this.backends) { try { b.emit(v) } catch (e) {} }
+        return
+      }
+    } catch (e) {
+      // ignore schema failures
+    }
+
     this._push(event)
     for (const b of this.backends) {
       try { b.emit(event) } catch (e) { console.error('telemetry backend emit failed', e) }

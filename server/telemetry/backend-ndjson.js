@@ -13,7 +13,9 @@ function ensureDir() {
 function emit(event) {
   try {
     ensureDir()
-    fs.appendFileSync(LOG_FILE, JSON.stringify(event) + '\n', 'utf8')
+    // If event looks like a wrapped { received_at, payload } keep that shape
+    if (event && event.received_at && event.payload) fs.appendFileSync(LOG_FILE, JSON.stringify(event) + '\n', 'utf8')
+    else fs.appendFileSync(LOG_FILE, JSON.stringify({ received_at: new Date().toISOString(), payload: event }) + '\n', 'utf8')
   } catch (e) {
     console.error('ndjson backend write failed', e)
   }
