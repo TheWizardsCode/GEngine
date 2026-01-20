@@ -42,17 +42,9 @@ VAR piecereturned = false
 VAR longgrasshooperframe = false
 
 
-// DEBUG mode adds a few shortcuts - remember to set to false in release!
+// DEBUG mode had shortcuts; remove them for CI and always start at `start`.
 VAR DEBUG = false
-{DEBUG:
-	IN DEBUG MODE!
-	*	[Beginning...] 	-> start
-	* 	[Framing Hooper...] -> claim_hooper_took_component
-	* 	[In with Hooper...] -> inside_hoopers_hut
-- else:
-	// First diversion: where do we begin?
- -> start
-}
+-> start
 
  /*--------------------------------------------------------------------------------
 	Wrap up character movement using functions, in case we want to develop this logic in future
