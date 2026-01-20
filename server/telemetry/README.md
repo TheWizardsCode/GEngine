@@ -1,52 +1,66 @@
-Telemetry Receiver Prototype
+Telemetry receiver (dev prototype)
 
-Purpose:
+Purpose
+-------
+Lightweight development receiver that accepts POSTed JSON events and persists director decision telemetry for local analysis.
 
-This receiver is a development prototype for collecting telemetry events emitted by the Director and related runtime components. It is intended for local testing and experimentation only — not for production use. Use it to:
+What it does
+------------
+- Accepts POST requests to `/` with a JSON body.
+- Validates that the event represents a `director_decision` (accepts payloads with `type: "director_decision"` or same under `event_type` or `event.type`).
+- Appends accepted events as NDJSON lines to `server/telemetry/events.ndjson` (dev ingestion store).
 
-- Capture and inspect `director_decision` events emitted by the Director during playtests.
-- Exercise telemetry payload shapes and validate downstream processing or analysis scripts.
-- Provide a simple, disposable storage backend (newline-delimited JSON) for quick local debugging.
+Run locally
+-----------
+```bash
+# starts the receiver on port 4005 by default
+node server/telemetry/receiver.js
 
-Do not rely on this receiver for production telemetry: it has no authentication, no retention/rotation, and minimal error handling.
+# to choose a different port (useful in tests):
+PORT=0 node server/telemetry/receiver.js
+```
 
-Run locally:
+The process prints the listening URL to stdout when ready, e.g. `Telemetry receiver listening on http://localhost:4005/`.
 
-- Node (>= 14) is required
-- Start the receiver:
+API (single endpoint)
+---------------------
+- POST /
+  - Content-Type: application/json
+  - Body: arbitrary JSON representing an event
+  - Success (200): when the payload identifies as a `director_decision` and was persisted
+  - Client error (400): when payload is invalid JSON or not a supported event type
+  - Server error (500): when writing to storage failed
 
-  PORT=4005 node server/telemetry/receiver.js
+Example payload (director_decision)
+----------------------------------
+```json
+{
+  "type": "director_decision",
+  "proposal_id": "p1",
+  "decision": "approve",
+  "riskScore": 0.12,
+  "reason": "low_risk",
+  "metrics": { "latencyMs": 120 }
+}
+```
 
-It listens on `/` for HTTP POST JSON payloads.
+Curl example
+------------
+```bash
+curl -X POST http://localhost:4005/ \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"director_decision","proposal_id":"p1","decision":"approve","riskScore":0.12}'
+```
 
-Accepted events:
+Inspecting persisted events
+---------------------------
+Events are appended to `server/telemetry/events.ndjson` as one JSON object per line. To inspect recent events:
 
-Only events with `type: "director_decision"` (or `event_type` or nested `event.type`) are accepted and persisted to `server/telemetry/events.ndjson`.
+```bash
+tail -n 50 server/telemetry/events.ndjson | jq .
+```
 
-Expected payload shape (example):
-
-  {
-    "type": "director_decision",
-    "decision": "accept",
-    "reason": "low_risk",
-    "meta": { "user": "test" }
-  }
-
-Example curl test:
-
-  curl -v -X POST \
-    -H "Content-Type: application/json" \
-    -d '{"type":"director_decision","decision":"accept","meta":{"user":"test"}}' \
-    http://localhost:4005/
-
-Expected responses:
-- 200 {"ok":true} for valid director_decision events
-- 400 {"error":"Invalid or unsupported event type"} for invalid event types
-- 400 {"error":"Invalid JSON"} for malformed JSON
-- 404 for non-POST or other paths
-
-Storage:
-- Events are appended to `server/telemetry/events.ndjson` as newline-delimited JSON lines with a `received_at` timestamp.
-
-Notes / next steps:
-- This is intentionally minimal. For follow-up work consider adding SQLite persistence, simple schema validation, or basic authentication before using in shared environments.
+Development notes
+-----------------
+- This receiver is intentionally small and intended for dev/testing only. Production work (SQLite storage, schema validation, auth/token protection, log rotation) is tracked in `ge-apq.1` and should be implemented before using this in production.
+- The receiver uses `server/telemetry/backend-ndjson.js` as the storage backend; swap or extend backends as needed.
