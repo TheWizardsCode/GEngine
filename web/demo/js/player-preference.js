@@ -12,25 +12,48 @@
     }
   }
 
+  // In-memory cache to avoid repeated JSON.parse on hot paths.
+  // We still detect external changes to localStorage by comparing the raw string.
+  let _cachedRaw = null;
+  let _cachedState = null;
+
   function loadState() {
     if (typeof localStorage === 'undefined') return { events: [], totals: {} };
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { events: [], totals: {} };
+      // If nothing stored, normalize to null for comparison
+      const normRaw = raw || null;
+      if (_cachedRaw === normRaw && _cachedState) return _cachedState;
+      if (!raw) {
+        _cachedRaw = null;
+        _cachedState = { events: [], totals: {} };
+        return _cachedState;
+      }
       const parsed = safeParse(raw);
-      if (!parsed || typeof parsed !== 'object') return { events: [], totals: {} };
+      if (!parsed || typeof parsed !== 'object') {
+        _cachedRaw = null;
+        _cachedState = { events: [], totals: {} };
+        return _cachedState;
+      }
       const events = Array.isArray(parsed.events) ? parsed.events : [];
       const totals = parsed.totals && typeof parsed.totals === 'object' ? parsed.totals : {};
-      return { events, totals };
+      _cachedRaw = normRaw;
+      _cachedState = { events, totals };
+      return _cachedState;
     } catch (_) {
-      return { events: [], totals: {} };
+      _cachedRaw = null;
+      _cachedState = { events: [], totals: {} };
+      return _cachedState;
     }
   }
 
   function saveState(state) {
     if (typeof localStorage === 'undefined') return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const raw = JSON.stringify(state);
+      localStorage.setItem(STORAGE_KEY, raw);
+      _cachedRaw = raw || null;
+      _cachedState = state;
     } catch (_) {
       // ignore write errors
     }
