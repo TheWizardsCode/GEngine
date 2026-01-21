@@ -9,7 +9,21 @@
   const intensityInput = document.getElementById('smoke-intensity');
   const SAVE_KEY = 'ge-hch.smoke.save';
   // Support GitHub Pages project path prefixes (e.g., /GEngine/demo/)
-  const STORY_PATH = `${window.location.pathname.split('/demo')[0] || ''}/stories/demo.ink`;
+  // Allow selecting a story via the `?story=` query parameter. If provided,
+  // the param should be a site-root-relative path (eg. `/stories/test-story.ink`).
+  const _basePrefix = window.location.pathname.split('/demo')[0] || '';
+  const _params = new URLSearchParams(window.location.search || '');
+  const _storyParam = _params.get('story');
+  let STORY_PATH;
+  if (_storyParam) {
+    // If the provided param is absolute (starts with '/'), respect it and prefix
+    // with the repository base path to support project pages. Otherwise treat
+    // it as site-root-relative by adding a leading '/'.
+    const normalized = _storyParam.startsWith('/') ? _storyParam : `/${_storyParam}`;
+    STORY_PATH = `${_basePrefix}${normalized}`;
+  } else {
+    STORY_PATH = `${_basePrefix}/stories/demo.ink`;
+  }
 
   let story;
   const mockProposalQueue = [];
@@ -448,14 +462,19 @@
       console.error('InkJS Compiler missing; ensure vendor/ink.js is the ink-full build and server serves /demo/vendor/ink.js fresh.');
       return;
     }
+    // Diagnostic logging: show which story path we're about to fetch
+    try { console.log('[inkrunner] loadStory: computed STORY_PATH ->', STORY_PATH); } catch(e) {}
     let source;
     try {
       const res = await fetch(STORY_PATH, { cache: 'no-cache' });
+      // Log fetch diagnostics
+      try { console.log('[inkrunner] fetch', STORY_PATH, 'status', res.status, 'content-type', res.headers.get('content-type')); } catch(e) {}
       if (!res.ok) {
         console.error(`Failed to fetch Ink story at ${STORY_PATH} (status ${res.status}). Serve from repo root or web/.`);
         return;
       }
       source = await res.text();
+      try { console.log('[inkrunner] fetched source preview:\n', source.slice(0,400).replace(/\n/g,'\\n')); } catch(e) {}
     } catch (err) {
       console.error(`Failed to fetch Ink story at ${STORY_PATH}`, err);
       return;
@@ -463,8 +482,15 @@
     try {
       const compiled = new inkjs.Compiler(source).Compile();
       story = compiled instanceof inkjs.Story ? compiled : new inkjs.Story(compiled);
+      try { console.log('[inkrunner] compiled story OK, story object set:', !!story); } catch(e) {}
     } catch (err) {
       console.error('Failed to load Ink story', err, { usingSource: 'fetched', protocol: window.location.protocol });
+      try {
+        if (err && err.compilerErrors) console.error('[inkrunner] compile exception.compilerErrors:', err.compilerErrors);
+        if (typeof inkjs !== 'undefined' && inkjs.Compiler && inkjs.Compiler._errors) {
+          console.error('[inkrunner] compiler._errors:', inkjs.Compiler._errors);
+        }
+      } catch (_){ }
       return;
     }
     
