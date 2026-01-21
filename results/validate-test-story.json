@@ -1,0 +1,11 @@
+[
+  {
+    "story": "/home/rgardler/projects/GEngine/web/stories/test-story.ink",
+    "pass": false,
+    "steps": 0,
+    "path": [],
+    "error": "Parse/compile error: Compilation failed.",
+    "rotationOpportunity": false,
+    "exhausted": false
+  }
+]
