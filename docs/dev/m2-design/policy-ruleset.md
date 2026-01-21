@@ -14,6 +14,45 @@ This document defines the **automated policy rules** that the validation pipelin
 
 ## Rule Categories
 
+## Ruleset Configuration & Overrides
+
+The validation pipeline is **configurable** at runtime. The default ruleset is merged with any overrides provided via:
+
+1. **Browser runtime overrides**
+   - `window.PolicyRuleset`
+   - `window.DirectorConfig.policyRuleset`
+   - `window.DirectorConfig.validationRuleset`
+
+2. **Validator options**
+   - `validateProposal(proposal, { ruleset })`
+   - `quickValidate(proposal, { ruleset })`
+   - `validateProposal(proposal, { rulesetPath })` (Node-only JSON file path)
+
+Overrides are merged on top of the default ruleset (deep merge). Only the provided keys are overridden, so you can change a single rule without redefining the entire ruleset. The resulting ruleset version is included in the validation report metadata.
+
+Example (browser override):
+
+```js
+window.PolicyRuleset = {
+  version: 'v1.0.1-test',
+  rules: {
+    profanity_filter: { action: 'reject' }
+  }
+};
+```
+
+Example (per-call override):
+
+```js
+ProposalValidator.validateProposal(proposal, {
+  ruleset: {
+    rules: {
+      length_limit_check: { maxLength: 1600, warnLength: 1200 }
+    }
+  }
+});
+```
+
 ### 1. Content Safety (Critical)
 
 These rules check for harmful, explicit, or offensive content. **Violations trigger auto-rejection.**
