@@ -1,0 +1,45 @@
+[
+  {
+    "story": "/home/rgardler/projects/GEngine/web/stories/demo.ink",
+    "pass": true,
+    "steps": 21,
+    "path": [
+      3,
+      0,
+      1,
+      1,
+      1
+    ],
+    "rotationOpportunity": true,
+    "exhausted": false
+  },
+  {
+    "story": "/home/rgardler/projects/GEngine/web/stories/test-story.ink",
+    "pass": false,
+    "steps": 0,
+    "path": [],
+    "error": "Parse/compile error: Compilation failed.",
+    "rotationOpportunity": false,
+    "exhausted": false
+  },
+  {
+    "story": "/home/rgardler/projects/GEngine/web/stories/test.ink",
+    "pass": true,
+    "steps": 4,
+    "path": [
+      1
+    ],
+    "rotationOpportunity": true,
+    "exhausted": false
+  },
+  {
+    "story": "/home/rgardler/projects/GEngine/web/stories/test_minimal.ink",
+    "pass": true,
+    "steps": 3,
+    "path": [
+      0
+    ],
+    "rotationOpportunity": true,
+    "exhausted": false
+  }
+]
