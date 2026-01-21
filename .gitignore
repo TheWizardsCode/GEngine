@@ -45,3 +45,6 @@ src/.saves/
 
 # Telemetry runtime output (prototype)
 server/telemetry/events.ndjson
+
+# Generated validation results
+results/
