@@ -1,7 +1,3 @@
 # Demo notes
 
-Run the embedding integration test locally:
-
-	npm run test:integration:embedding
-
-Set EMBED_NODE=1 to force Node fallback if needed.
+Run `npm run test:integration:embedding` locally; set `EMBED_NODE=1` to force the Node fallback if needed.
