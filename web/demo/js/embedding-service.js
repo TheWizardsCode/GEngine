@@ -53,6 +53,46 @@ const NODE_FALLBACK_ENABLED = typeof process !== 'undefined' && process.env && (
 let nodeExtractorPromise = null;
 let nodeExtractorError = null;
 
+function createSharpStub() {
+  const stub = function sharpUnavailable() {
+    throw new Error('sharp unavailable');
+  };
+  stub.default = stub;
+  return stub;
+}
+
+function withSharpStub(loadFn) {
+  if (typeof require !== 'function') {
+    return loadFn();
+  }
+  let Module = null;
+  try {
+    Module = require('module');
+  } catch (err) {
+    return loadFn();
+  }
+  let sharpPath = null;
+  try {
+    sharpPath = require.resolve('sharp');
+  } catch (err) {
+    return loadFn();
+  }
+  const existing = require.cache[sharpPath];
+  const stubModule = new Module(sharpPath);
+  stubModule.exports = createSharpStub();
+  stubModule.loaded = true;
+  require.cache[sharpPath] = stubModule;
+  try {
+    return loadFn();
+  } finally {
+    if (existing) {
+      require.cache[sharpPath] = existing;
+    } else {
+      delete require.cache[sharpPath];
+    }
+  }
+}
+
 async function getNodeExtractor() {
   if (!NODE_FALLBACK_ENABLED) return null;
   if (!nodeExtractorPromise) {
@@ -60,14 +100,14 @@ async function getNodeExtractor() {
       let mod = null;
       try {
         if (typeof require === 'function') {
-          mod = require('@xenova/transformers');
+          mod = withSharpStub(() => require('@xenova/transformers'));
         } else {
-          mod = await import('@xenova/transformers');
+          mod = await withSharpStub(() => import('@xenova/transformers'));
         }
       } catch (primaryErr) {
         // Fallback to dynamic import if require failed, or vice versa
         try {
-          mod = await import('@xenova/transformers');
+          mod = await withSharpStub(() => import('@xenova/transformers'));
         } catch (importErr) {
           throw importErr || primaryErr;
         }
