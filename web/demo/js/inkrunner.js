@@ -358,10 +358,21 @@
       }
       
       // Step 5: Validate proposal
-      const validation = window.ProposalValidator.quickValidate(proposal);
+      const validation = window.ProposalValidator.quickValidate(proposal, {
+        validReturnPaths,
+        storyThemes: lore.game_state?.story_themes || [],
+        narrativePhase: lore.game_state?.narrative_phase || null
+      });
       if (!validation.valid) {
         console.warn('[inkrunner] AI proposal failed validation:', validation.reason);
         return null;
+      }
+
+      if (validation.sanitizedProposal) {
+        proposal.choice_text = validation.sanitizedProposal.choice_text || proposal.choice_text;
+        if (validation.sanitizedProposal.content?.text) {
+          proposal.content.text = validation.sanitizedProposal.content.text;
+        }
       }
       
       // Add metadata

@@ -149,7 +149,7 @@ describe('proposal-validator', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('blocks profanity', () => {
+    it('sanitizes profanity in choice text', () => {
       const proposal = {
         choice_text: 'A damn good choice',
         content: {
@@ -159,11 +159,11 @@ describe('proposal-validator', () => {
       };
 
       const result = ProposalValidator.quickValidate(proposal);
-      expect(result.valid).toBe(false);
-      expect(result.reason).toContain('safety filter');
+      expect(result.valid).toBe(true);
+      expect(result.sanitizedProposal.choice_text).toContain('[expletive]');
     });
 
-    it('blocks profanity in content', () => {
+    it('sanitizes profanity in content', () => {
       const proposal = {
         choice_text: 'Clean choice',
         content: {
@@ -173,6 +173,34 @@ describe('proposal-validator', () => {
       };
 
       const result = ProposalValidator.quickValidate(proposal);
+      expect(result.valid).toBe(true);
+      expect(result.sanitizedProposal.content.text).toContain('[expletive]');
+    });
+
+    it('fails on explicit content', () => {
+      const proposal = {
+        choice_text: 'Look closer',
+        content: {
+          text: 'The chamber was a torture chamber filled with gore.',
+          return_path: 'campfire'
+        }
+      };
+
+      const result = ProposalValidator.quickValidate(proposal);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain('Explicit content');
+    });
+
+    it('fails on ending return path', () => {
+      const proposal = {
+        choice_text: 'End it',
+        content: {
+          text: 'The story ends here.',
+          return_path: 'rescue_end'
+        }
+      };
+
+      const result = ProposalValidator.quickValidate(proposal, { validReturnPaths: [] });
       expect(result.valid).toBe(false);
     });
   });
@@ -198,6 +226,31 @@ describe('proposal-validator', () => {
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
+      expect(result.report).toBeTruthy();
+    });
+
+    it('reports sanitization transforms', () => {
+      const proposal = {
+        choice_text: 'A damn good choice',
+        content: {
+          branch_type: 'narrative_delta',
+          text: 'Line 1\n\n\nLine 2 with <b>markup</b>.',
+          return_path: 'campfire'
+        },
+        metadata: {
+          confidence_score: 0.7
+        }
+      };
+
+      const result = ProposalValidator.validateProposal(proposal, {
+        validReturnPaths: ['campfire']
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.report.status).toBe('rejected_with_sanitization');
+      expect(result.report.rules.some(rule => rule.result === 'sanitized')).toBe(true);
+      expect(result.sanitizedProposal.content.text).not.toContain('<b>');
+      expect(result.sanitizedProposal.choice_text).toContain('[expletive]');
     });
   });
 });

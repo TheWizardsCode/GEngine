@@ -340,7 +340,9 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
   // Step 1: validation (schema + quick safety)
   try {
     const validation = (typeof ProposalValidator !== 'undefined' && ProposalValidator.quickValidate)
-      ? ProposalValidator.quickValidate(proposal)
+      ? ProposalValidator.quickValidate(proposal, {
+        validReturnPaths: storyContext && storyContext.validReturnPaths
+      })
       : { valid: true };
 
     if (!validation || !validation.valid) {
@@ -348,6 +350,10 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
       const result = { decision: 'reject', reason: validation && validation.reason ? validation.reason : 'Failed policy validation', riskScore: 1.0, latencyMs, writerMs: 0, directorMs: latencyMs, totalMs: latencyMs };
       emitDecisionTelemetry(result);
       return result;
+    }
+
+    if (validation.sanitizedProposal) {
+      proposal = validation.sanitizedProposal;
     }
   } catch (e) {
     const latencyMs = Math.max(0, perf.now() - start);
