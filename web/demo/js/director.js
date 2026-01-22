@@ -407,22 +407,36 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
     if (embeddingsEnabled) {
       const EmbeddingService = (typeof window !== 'undefined' && window.EmbeddingService) ? window.EmbeddingService : (typeof require === 'function' ? require('../../../web/demo/js/embedding-service') : null);
       if (EmbeddingService && typeof EmbeddingService.embed === 'function' && typeof EmbeddingService.similarity === 'function') {
-        try {
+      try {
           const text = (proposal.content && proposal.content.text) || '';
-          // We compute embedding and compare to any provided context embeddings
-          // on storyContext (theme/lore/voice). These context embeddings are
-          // optional and must be arrays of numbers. Failures produce no-op.
-          const emb = await (EmbeddingService.embed ? EmbeddingService.embed(text) : null);
-          if (emb && Array.isArray(emb)) {
-            const emMetrics = {};
-            const themeEmb = storyContext && storyContext.themeEmbedding;
-            const loreEmb = storyContext && storyContext.loreEmbedding;
-            const voiceEmb = storyContext && storyContext.voiceEmbedding;
-            if (themeEmb && Array.isArray(themeEmb)) emMetrics.thematic = EmbeddingService.similarity(emb, themeEmb);
-            if (loreEmb && Array.isArray(loreEmb)) emMetrics.lore = EmbeddingService.similarity(emb, loreEmb);
-            if (voiceEmb && Array.isArray(voiceEmb)) emMetrics.voice = EmbeddingService.similarity(emb, voiceEmb);
-            finalConfig = Object.assign({}, config, { embeddingMetrics: emMetrics });
+          // Capture embedding timing and fallback status for telemetry
+          let emb = null;
+          let emMetrics = null;
+          let embeddingTelemetry = { used: false, latencyMs: 0, fallback: true };
+          try {
+            const embStart = perf.now();
+            emb = await (EmbeddingService.embed ? EmbeddingService.embed(text) : null);
+            embeddingTelemetry.latencyMs = Math.max(0, Math.round(perf.now() - embStart));
+            embeddingTelemetry.used = Boolean(emb && Array.isArray(emb));
+            embeddingTelemetry.fallback = !embeddingTelemetry.used;
+
+            if (emb && Array.isArray(emb)) {
+              emMetrics = {};
+              const themeEmb = storyContext && storyContext.themeEmbedding;
+              const loreEmb = storyContext && storyContext.loreEmbedding;
+              const voiceEmb = storyContext && storyContext.voiceEmbedding;
+              if (themeEmb && Array.isArray(themeEmb)) emMetrics.thematic = EmbeddingService.similarity(emb, themeEmb);
+              if (loreEmb && Array.isArray(loreEmb)) emMetrics.lore = EmbeddingService.similarity(emb, loreEmb);
+              if (voiceEmb && Array.isArray(voiceEmb)) emMetrics.voice = EmbeddingService.similarity(emb, voiceEmb);
+              finalConfig = Object.assign({}, config, { embeddingMetrics: emMetrics });
+            }
+          } catch (innerErr) {
+            // treat as fallback - keep embeddingTelemetry indicating fallback
           }
+          // expose embedding telemetry/metrics to outer scope via finalConfig extras
+          if (!finalConfig) finalConfig = config;
+          finalConfig._embeddingTelemetry = embeddingTelemetry;
+          finalConfig._embeddingMetrics = emMetrics;
         } catch (e) {
           // ignore embedding failures and continue with placeholder behavior
         }
@@ -452,6 +466,16 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
     totalMs,
     metrics
   };
+  // If embedding telemetry was captured in finalConfig, include it in the
+  // director telemetry payload under `metrics.embedding` so ingestion can
+  // observe embedding inference timing and fallback status.
+  try {
+    const emt = finalConfig && finalConfig._embeddingTelemetry;
+    const emm = finalConfig && finalConfig._embeddingMetrics;
+    if (emt || emm) {
+      result.metrics = Object.assign({}, result.metrics, { embedding: Object.assign({}, emt || {}, { metrics: emm || null }) });
+    }
+  } catch (e) {}
 
   emitDecisionTelemetry(result);
   return result;
