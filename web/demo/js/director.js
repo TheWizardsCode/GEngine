@@ -40,8 +40,9 @@ try {
 
 // Load director tuning defaults from a configurable file when available. This supports
 // live tuning without editing the Director implementation. In bundler/node environments
-// we require the shared config at src/runtime/director-config.js. In browsers, a
-// global window.DirectorConfig may be provided (e.g., set by the demo or test harness).
+// we require the shared config at src/runtime/director-config.js. In browsers, we prefer
+// the latest window.DirectorConfig set by director-config-loader (which may load after
+// this script executes), so we access it at call-time.
 let DEFAULT_DIRECTOR_CONFIG = {};
 try {
   if (typeof require === 'function') {
@@ -51,16 +52,20 @@ try {
 } catch (e) {
   // ignore
 }
-try {
-  if ((!DEFAULT_DIRECTOR_CONFIG || Object.keys(DEFAULT_DIRECTOR_CONFIG).length === 0) && typeof window !== 'undefined' && window.DirectorConfig) {
-    DEFAULT_DIRECTOR_CONFIG = window.DirectorConfig;
-  }
-} catch (e) {}
+
+function getDefaultDirectorConfig() {
+  try {
+    if (typeof window !== 'undefined' && window.DirectorConfig && Object.keys(window.DirectorConfig).length > 0) {
+      return window.DirectorConfig;
+    }
+  } catch (e) {}
+  return DEFAULT_DIRECTOR_CONFIG || {};
+}
 
 // Helper to merge config with defaults
 function mergeConfig(cfg) {
   if (!cfg || typeof cfg !== 'object') cfg = {};
-  return Object.assign({}, DEFAULT_DIRECTOR_CONFIG || {}, cfg);
+  return Object.assign({}, getDefaultDirectorConfig() || {}, cfg);
 }
 
 function safeNumber(v, fallback = 0) {
@@ -90,14 +95,14 @@ function buildDecisionMetrics(proposal = {}, context = {}) {
   const confidence = clamp01(proposal.metadata && proposal.metadata.confidence_score, 0.5);
   const pacing = clamp01((text.length - 300) / 700, 0);
   const returnPath = clamp01(context.returnPathCheck && context.returnPathCheck.confidence, 0);
-  return {
-    confidence,
-    pacing,
-    returnPath,
-    thematic: null,
-    lore: null,
-    voice: null
-  };
+    return {
+      confidence,
+      pacing,
+      returnPath,
+      thematic: null,
+      lore: null,
+      voice: null
+    };
 }
 
 /**
@@ -209,9 +214,22 @@ function computeRiskScore(proposal = {}, context = {}, config = {}) {
 
   // Placeholder metrics (thematic, lore, voice)
   const placeholder = safeNumber((mergedCfg && mergedCfg.placeholderDefault) || config.placeholderDefault, 0.3);
-  const thematic_consistency_risk = placeholder;
-  const lore_adherence_risk = placeholder;
-  const character_voice_risk = placeholder;
+  let thematic_consistency_risk = placeholder;
+  let lore_adherence_risk = placeholder;
+  let character_voice_risk = placeholder;
+
+  // If the caller provided precomputed embedding similarity metrics in
+  // config.embeddingMetrics (values 0..1), use them to derive risks. This
+  // keeps computeRiskScore synchronous and test-friendly while allowing the
+  // async evaluate() path to supply embedding-derived metrics.
+  try {
+    const em = config && config.embeddingMetrics;
+    if (em && typeof em === 'object') {
+      if (Number.isFinite(em.thematic)) thematic_consistency_risk = 1.0 - clamp01(em.thematic, placeholder);
+      if (Number.isFinite(em.lore)) lore_adherence_risk = 1.0 - clamp01(em.lore, placeholder);
+      if (Number.isFinite(em.voice)) character_voice_risk = 1.0 - clamp01(em.voice, placeholder);
+    }
+  } catch (e) {}
 
   // Weights (configurable)
   const weights = Object.assign({
@@ -384,7 +402,53 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
 
   // Step 3: risk scoring
   const context = { returnPathCheck: returnCheck, story: storyContext && storyContext.story };
-  const riskScore = computeRiskScore(proposal, context, config);
+
+  // If embeddings are enabled, attempt to compute embedding similarity metrics
+  // asynchronously and pass them into computeRiskScore via config.embeddingMetrics.
+  let finalConfig = config;
+  try {
+    const mergedCfg = mergeConfig(config || {});
+    const embeddingsEnabled = Boolean((mergedCfg && mergedCfg.enableEmbeddings) || config.enableEmbeddings);
+    if (embeddingsEnabled) {
+      const EmbeddingService = (typeof window !== 'undefined' && window.EmbeddingService) ? window.EmbeddingService : (typeof require === 'function' ? require('../../../web/demo/js/embedding-service') : null);
+      if (EmbeddingService && typeof EmbeddingService.embed === 'function' && typeof EmbeddingService.similarity === 'function') {
+      try {
+          const text = (proposal.content && proposal.content.text) || '';
+          // Capture embedding timing and fallback status for telemetry
+          let emb = null;
+          let emMetrics = null;
+          let embeddingTelemetry = { used: false, latencyMs: 0, fallback: true };
+          try {
+            const embStart = perf.now();
+            emb = await (EmbeddingService.embed ? EmbeddingService.embed(text) : null);
+            embeddingTelemetry.latencyMs = Math.max(0, Math.round(perf.now() - embStart));
+            embeddingTelemetry.used = Boolean(emb && Array.isArray(emb));
+            embeddingTelemetry.fallback = !embeddingTelemetry.used;
+
+            if (emb && Array.isArray(emb)) {
+              emMetrics = {};
+              const themeEmb = storyContext && storyContext.themeEmbedding;
+              const loreEmb = storyContext && storyContext.loreEmbedding;
+              const voiceEmb = storyContext && storyContext.voiceEmbedding;
+              if (themeEmb && Array.isArray(themeEmb)) emMetrics.thematic = EmbeddingService.similarity(emb, themeEmb);
+              if (loreEmb && Array.isArray(loreEmb)) emMetrics.lore = EmbeddingService.similarity(emb, loreEmb);
+              if (voiceEmb && Array.isArray(voiceEmb)) emMetrics.voice = EmbeddingService.similarity(emb, voiceEmb);
+              finalConfig = Object.assign({}, config, { embeddingMetrics: emMetrics });
+            }
+          } catch (innerErr) {
+            // treat as fallback - keep embeddingTelemetry indicating fallback
+          }
+          // expose embedding telemetry/metrics to outer scope via finalConfig extras
+          if (!finalConfig) finalConfig = config;
+          finalConfig._embeddingTelemetry = embeddingTelemetry;
+          finalConfig._embeddingMetrics = emMetrics;
+        } catch (e) {
+          // ignore embedding failures and continue with placeholder behavior
+        }
+      }
+    }
+  } catch (e) {}
+  const riskScore = computeRiskScore(proposal, context, finalConfig);
 
   // Step 4: coherence check (threshold)
   const threshold = safeNumber((config && config.riskThreshold), 0.4);
@@ -407,6 +471,16 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
     totalMs,
     metrics
   };
+  // If embedding telemetry was captured in finalConfig, include it in the
+  // director telemetry payload under `metrics.embedding` so ingestion can
+  // observe embedding inference timing and fallback status.
+  try {
+    const emt = finalConfig && finalConfig._embeddingTelemetry;
+    const emm = finalConfig && finalConfig._embeddingMetrics;
+    if (emt || emm) {
+      result.metrics = Object.assign({}, result.metrics, { embedding: Object.assign({}, emt || {}, { metrics: emm || null }) });
+    }
+  } catch (e) {}
 
   emitDecisionTelemetry(result);
   return result;

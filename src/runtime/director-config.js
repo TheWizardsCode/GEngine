@@ -74,6 +74,13 @@ const defaults = {
 
   placeholderDefault: 0.3,
 
+  // Enable embedding-based scoring in the runtime. Disabled by default.
+  // Can be toggled via local .gengine/config.yaml or environment overrides
+  // (see loadLocalConfig/ENV parsing in this file). When enabled the Director
+  // will attempt to compute semantic embeddings for proposals and use
+  // similarity-derived metrics for thematic/lore/voice scoring.
+  enableEmbeddings: false,
+
   // Global default decision threshold used by the Director when not overridden per-call
   // Value is in 0.0..1.0 where lower is stricter (default 0.4)
   riskThreshold: 0.4

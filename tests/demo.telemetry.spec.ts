@@ -151,7 +151,9 @@ test('Director threshold slider updates stored settings', async ({ page }) => {
   await expect(page.locator('.ai-config-section')).toBeVisible();
 
   const slider = page.locator('#director-risk-threshold');
-  await expect(slider).toHaveValue('0.4');
+  // Wait for defaults to hydrate from ApiKeyManager. Expect UI default (0.4)
+  // regardless of server-provided director-config.
+  await expect(slider).toHaveValue('0.4', { timeout: 5000 });
 
   await slider.evaluate((el) => {
     (el as HTMLInputElement).value = '0.65';
@@ -161,8 +163,10 @@ test('Director threshold slider updates stored settings', async ({ page }) => {
 
   await expect(page.locator('#director-threshold-value')).toHaveText('0.65');
 
+  // Allow change handler to persist before reading (input -> change is async for storage)
+  await page.waitForTimeout(50);
   const saved = await page.evaluate(() => window.ApiKeyManager.getSettings().directorRiskThreshold);
-  expect(saved).toBeCloseTo(0.65, 2);
+  await expect(saved).toBeCloseTo(0.65, 2);
 });
 
 test('invalid threshold input clamps to range', async ({ page }) => {

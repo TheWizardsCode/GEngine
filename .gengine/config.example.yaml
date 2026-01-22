@@ -38,8 +38,10 @@ directorConfig:
   # Default director risk threshold used by the demo UI and Director when not set per-call
   # Value between 0.0 (strict) and 1.0 (lenient). Default: 0.4
   riskThreshold: 0.4
+  
+  # Enable use of embeddings in the local GEngine environment (true/false)
+  enableEmbeddings: true
 
 # Notes:
 # - The proxy prefers CLI args, then environment variables, then this file.
 # - To expand settings, update scripts/cors-proxy.js and package.json.
-

@@ -17,5 +17,6 @@
   },
   "pacingToleranceFactor": 0.6,
   "placeholderDefault": 0.3,
-  "riskThreshold": 0.4
+  "enableEmbeddings": true,
+  "riskThreshold": 0.8
 }

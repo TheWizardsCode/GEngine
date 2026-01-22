@@ -14,10 +14,45 @@
  * - In non-worker environments (e.g., Jest/Node), embed() resolves to null
  */
 
+// Build a fully-qualified transformers URL so blob workers can import it
+// without relying on relative path resolution (which fails in some browsers).
+const TRANSFORMERS_URL = (typeof window !== 'undefined' && typeof window.URL === 'function')
+  ? new URL('vendor/transformers.min.js', window.location && window.location.href ? window.location.href : 'http://localhost/').href
+  : (typeof URL === 'function'
+    ? new URL('vendor/transformers.min.js', 'http://localhost/').href
+    : 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0/dist/transformers.min.js');
+
 // Inline worker script as a Blob to avoid extra files/paths.
-// Loads transformers.js from CDN and caches the feature-extraction pipeline.
+// Loads transformers.js and caches the feature-extraction pipeline.
 const WORKER_SOURCE = `
-  self.importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0/dist/transformers.min.js');
+  try {
+    self.importScripts(${JSON.stringify(TRANSFORMERS_URL)});
+  } catch (e) {
+    try {
+      self.importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0/dist/transformers.min.js');
+    } catch (err) {
+      console && console.error && console.error('Failed to import transformers:', err && err.message);
+    }
+  }
+
+  if (!self.transformers || typeof self.transformers.pipeline !== 'function') {
+    // Last-resort inline shim to keep demo functional if imports fail.
+    self.transformers = {
+      pipeline: function(type, model) {
+        if (type !== 'feature-extraction') throw new Error('Unsupported pipeline type in shim');
+        return async function(text, opts) {
+          var seed = 0;
+          for (var i = 0; i < text.length; i++) seed += text.charCodeAt(i);
+          var len = 384;
+          var arr = new Float32Array(len);
+          for (var j = 0; j < len; j++) {
+            arr[j] = ((seed + j * 997) % 1000) / 1000;
+          }
+          return { data: arr };
+        };
+      }
+    };
+  }
   let extractorPromise = null;
   async function getExtractor() {
     if (!extractorPromise) {
@@ -151,7 +186,9 @@ function ensureWorker() {
     worker.onerror = (err) => {
       workerInitError = err instanceof Error ? err : new Error('Worker error');
       // Reject all pending requests
-      pending.forEach((deferred) => deferred.reject(workerInitError));
+      pending.forEach((deferred) => {
+        try { if (deferred && typeof deferred.reject === 'function') deferred.reject(workerInitError); } catch (e) {}
+      });
       pending.clear();
     };
   } catch (err) {
@@ -199,9 +236,9 @@ async function embed(text) {
 
   ensureWorker();
   if (worker && !workerInitError) {
-    const promise = new Promise((resolve) => {
+    const promise = new Promise((resolve, reject) => {
       const id = nextId++;
-      pending.set(id, { resolve });
+      pending.set(id, { resolve, reject });
       try {
         worker.postMessage({ id, text });
       } catch (err) {

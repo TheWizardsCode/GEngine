@@ -1,4 +1,4 @@
-/** @jest-environment node */
+/** @jest-environment ./tests/helpers/node-no-webstorage-environment.js */
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
