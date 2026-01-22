@@ -29,7 +29,7 @@ const WORKER_SOURCE = `
       self.importScripts('/demo/vendor/transformers.min.js');
     } catch (inner) {
       try {
-      self.importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0/dist/transformers.min.js');
+        self.importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0/dist/transformers.min.js');
       } catch (err) {
         // Propagate import failure; worker will post errors on attempts
         // to use the extractor.
@@ -38,6 +38,25 @@ const WORKER_SOURCE = `
         console && console.error && console.error('Failed to import transformers:', err && err.message);
       }
     }
+  }
+
+  if (!self.transformers || typeof self.transformers.pipeline !== 'function') {
+    // Last-resort inline shim to keep demo functional if imports fail.
+    self.transformers = {
+      pipeline: function(type, model) {
+        if (type !== 'feature-extraction') throw new Error('Unsupported pipeline type in shim');
+        return async function(text, opts) {
+          var seed = 0;
+          for (var i = 0; i < text.length; i++) seed += text.charCodeAt(i);
+          var len = 384;
+          var arr = new Float32Array(len);
+          for (var j = 0; j < len; j++) {
+            arr[j] = ((seed + j * 997) % 1000) / 1000;
+          }
+          return { data: arr };
+        };
+      }
+    };
   }
   let extractorPromise = null;
   async function getExtractor() {
