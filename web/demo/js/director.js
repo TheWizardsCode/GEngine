@@ -40,8 +40,9 @@ try {
 
 // Load director tuning defaults from a configurable file when available. This supports
 // live tuning without editing the Director implementation. In bundler/node environments
-// we require the shared config at src/runtime/director-config.js. In browsers, a
-// global window.DirectorConfig may be provided (e.g., set by the demo or test harness).
+// we require the shared config at src/runtime/director-config.js. In browsers, we prefer
+// the latest window.DirectorConfig set by director-config-loader (which may load after
+// this script executes), so we access it at call-time.
 let DEFAULT_DIRECTOR_CONFIG = {};
 try {
   if (typeof require === 'function') {
@@ -51,16 +52,20 @@ try {
 } catch (e) {
   // ignore
 }
-try {
-  if ((!DEFAULT_DIRECTOR_CONFIG || Object.keys(DEFAULT_DIRECTOR_CONFIG).length === 0) && typeof window !== 'undefined' && window.DirectorConfig) {
-    DEFAULT_DIRECTOR_CONFIG = window.DirectorConfig;
-  }
-} catch (e) {}
+
+function getDefaultDirectorConfig() {
+  try {
+    if (typeof window !== 'undefined' && window.DirectorConfig && Object.keys(window.DirectorConfig).length > 0) {
+      return window.DirectorConfig;
+    }
+  } catch (e) {}
+  return DEFAULT_DIRECTOR_CONFIG || {};
+}
 
 // Helper to merge config with defaults
 function mergeConfig(cfg) {
   if (!cfg || typeof cfg !== 'object') cfg = {};
-  return Object.assign({}, DEFAULT_DIRECTOR_CONFIG || {}, cfg);
+  return Object.assign({}, getDefaultDirectorConfig() || {}, cfg);
 }
 
 function safeNumber(v, fallback = 0) {

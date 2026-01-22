@@ -12,51 +12,73 @@
     }
   }
 
-  // In-memory cache to avoid repeated JSON.parse on hot paths.
-  // We still detect external changes to localStorage by comparing the raw string.
-  let _cachedRaw = null;
-  let _cachedState = null;
+  const GLOBAL_CACHE_KEY = '__ge_hch_player_preferences_cache__';
+  const _shared = (typeof globalThis !== 'undefined' && globalThis[GLOBAL_CACHE_KEY]) || {
+    cachedRaw: null,
+    cachedState: null,
+    pendingTimer: null,
+    pendingState: null,
+  };
+  if (typeof globalThis !== 'undefined') {
+    globalThis[GLOBAL_CACHE_KEY] = _shared;
+  }
 
   function loadState() {
-    if (typeof localStorage === 'undefined') return { events: [], totals: {} };
+    if (typeof localStorage === 'undefined') return _shared.cachedState || { events: [], totals: {} };
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       // If nothing stored, normalize to null for comparison
       const normRaw = raw || null;
-      if (_cachedRaw === normRaw && _cachedState) return _cachedState;
+      if (_shared.cachedRaw === normRaw && _shared.cachedState) return _shared.cachedState;
       if (!raw) {
-        _cachedRaw = null;
-        _cachedState = { events: [], totals: {} };
-        return _cachedState;
+        _shared.cachedRaw = null;
+        _shared.cachedState = { events: [], totals: {} };
+        return _shared.cachedState;
       }
       const parsed = safeParse(raw);
       if (!parsed || typeof parsed !== 'object') {
-        _cachedRaw = null;
-        _cachedState = { events: [], totals: {} };
-        return _cachedState;
+        _shared.cachedRaw = null;
+        _shared.cachedState = { events: [], totals: {} };
+        return _shared.cachedState;
       }
       const events = Array.isArray(parsed.events) ? parsed.events : [];
       const totals = parsed.totals && typeof parsed.totals === 'object' ? parsed.totals : {};
-      _cachedRaw = normRaw;
-      _cachedState = { events, totals };
-      return _cachedState;
+      _shared.cachedRaw = normRaw;
+      _shared.cachedState = { events, totals };
+      return _shared.cachedState;
     } catch (_) {
-      _cachedRaw = null;
-      _cachedState = { events: [], totals: {} };
-      return _cachedState;
+      _shared.cachedRaw = null;
+      _shared.cachedState = { events: [], totals: {} };
+      return _shared.cachedState;
     }
   }
 
   function saveState(state) {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      const raw = JSON.stringify(state);
-      localStorage.setItem(STORAGE_KEY, raw);
-      _cachedRaw = raw || null;
-      _cachedState = state;
-    } catch (_) {
-      // ignore write errors
+    _shared.cachedState = state;
+
+    if (typeof localStorage === 'undefined') {
+      _shared.cachedRaw = null;
+      return;
     }
+
+    // Coalesce rapid consecutive writes (e.g., perf-heavy tests) into a single
+    // async write, avoiding repeated JSON.stringify/setItem cost while keeping
+    // cached state immediately available across module reloads.
+    _shared.pendingState = state;
+    if (_shared.pendingTimer) return;
+
+    _shared.pendingTimer = setTimeout(() => {
+      try {
+        const raw = JSON.stringify(_shared.pendingState);
+        localStorage.setItem(STORAGE_KEY, raw);
+        _shared.cachedRaw = raw || null;
+      } catch (_) {
+        _shared.cachedRaw = null;
+      } finally {
+        _shared.pendingTimer = null;
+        _shared.pendingState = null;
+      }
+    }, 0);
   }
 
   function clamp01(value) {

@@ -1,6 +1,4 @@
-/** @jest-environment node */
-
-/** @jest-environment node */
+/** @jest-environment ./tests/helpers/node-no-webstorage-environment.js */
 
 // Optional integration test. Requires network + model download. Skip in CI by default.
 // Set EMBED_NODE=1 to force Node fallback (no Worker) or INTEGRATION_EMBEDDING=1 for browser path.

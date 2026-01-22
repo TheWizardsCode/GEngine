@@ -1,4 +1,4 @@
-/** @jest-environment node */
+/** @jest-environment ./tests/helpers/node-no-webstorage-environment.js */
 const cp = require('child_process')
 const path = require('path')
 const fs = require('fs')
@@ -7,7 +7,10 @@ const os = require('os')
 const CLI = path.resolve(__dirname, '../../scripts/validate-story.js')
 
 function runCLI(args, env = {}){
-  const res = cp.spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', env: { ...process.env, ...env } })
+  const res = cp.spawnSync(process.execPath, [CLI, ...args], {
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
+  })
   return res
 }
 

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "npx playwright install --with-deps chromium",
     "serve-demo": "http-server web",
     "build": "echo 'no-op build'",
     "validate-story": "node scripts/validate-story.js --glob \"web/stories/**/*.ink\" --output json --max-steps 2000",
