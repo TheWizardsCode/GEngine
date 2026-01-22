@@ -443,7 +443,7 @@ async function evaluate(proposal, storyContext = {}, config = {}) {
       }
     }
   } catch (e) {}
-  const riskScore = computeRiskScore(proposal, context, config);
+  const riskScore = computeRiskScore(proposal, context, finalConfig);
 
   // Step 4: coherence check (threshold)
   const threshold = safeNumber((config && config.riskThreshold), 0.4);
