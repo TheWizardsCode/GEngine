@@ -1,12 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const demoPort = process.env.DEMO_PORT || '4173';
+const baseURL = process.env.DEMO_BASE_URL || `http://127.0.0.1:${demoPort}`;
+
 export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.spec.ts',
   timeout: 20_000,
   retries: 0,
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL,
     headless: true,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
