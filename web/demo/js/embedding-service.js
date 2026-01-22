@@ -151,7 +151,9 @@ function ensureWorker() {
     worker.onerror = (err) => {
       workerInitError = err instanceof Error ? err : new Error('Worker error');
       // Reject all pending requests
-      pending.forEach((deferred) => deferred.reject(workerInitError));
+      pending.forEach((deferred) => {
+        try { if (deferred && typeof deferred.reject === 'function') deferred.reject(workerInitError); } catch (e) {}
+      });
       pending.clear();
     };
   } catch (err) {
@@ -199,9 +201,9 @@ async function embed(text) {
 
   ensureWorker();
   if (worker && !workerInitError) {
-    const promise = new Promise((resolve) => {
+    const promise = new Promise((resolve, reject) => {
       const id = nextId++;
-      pending.set(id, { resolve });
+      pending.set(id, { resolve, reject });
       try {
         worker.postMessage({ id, text });
       } catch (err) {
