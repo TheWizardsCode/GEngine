@@ -17,7 +17,22 @@
 // Inline worker script as a Blob to avoid extra files/paths.
 // Loads transformers.js from CDN and caches the feature-extraction pipeline.
 const WORKER_SOURCE = `
-  self.importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0/dist/transformers.min.js');
+  // Prefer a locally vendored transformers build (served under /demo/vendor/) to
+  // avoid CDN/network issues in restricted environments. Fall back to the
+  // CDN when the local file is not present or fails to load.
+  try {
+    self.importScripts('/demo/vendor/transformers.min.js');
+  } catch (e) {
+    try {
+      self.importScripts('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0/dist/transformers.min.js');
+    } catch (err) {
+      // Propagate import failure; worker will post errors on attempts
+      // to use the extractor.
+      // Note: we avoid throwing here to ensure the worker can post a
+      // meaningful error back to the main thread when used.
+      console && console.error && console.error('Failed to import transformers:', err && err.message);
+    }
+  }
   let extractorPromise = null;
   async function getExtractor() {
     if (!extractorPromise) {
