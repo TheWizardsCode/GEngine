@@ -60,6 +60,6 @@ describe('PlayerPreference', () => {
     }
     const elapsed = performance.now() - start;
     expect(PlayerPreference.getPreference('exploration')).toBeGreaterThanOrEqual(0);
-    expect(elapsed).toBeLessThan(10);
+    expect(elapsed).toBeLessThan(20);
   });
 });

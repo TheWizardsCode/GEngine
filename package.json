@@ -9,7 +9,7 @@
     "validate-story": "node scripts/validate-story.js --glob \"web/stories/**/*.ink\" --output json --max-steps 2000",
     "test": "npm run test:unit && npm run test:demo",
     "test:unit": "jest",
-    "test:demo": "start-server-and-test \"npm run serve-demo -- --port 4173\" http://127.0.0.1:4173/demo \"npx playwright test --config=playwright.config.ts --reporter=list,html,junit\"",
+    "test:demo": "node scripts/run-demo-tests.js",
     "test:replay": "jest tests/replay/replay.spec.js",
     "lint:md": "remark .opencode/command/*.md --quiet --frail",
     "test:golden": "node tests/golden-path/run-golden.js",
